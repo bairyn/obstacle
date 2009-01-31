@@ -7024,7 +7024,6 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
         {
             G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
             Cmd_RestartOC_f( ent );
-            return;
         }
         ent->health = ent->client->ps.stats[ STAT_MAX_HEALTH ];
 
@@ -7079,14 +7078,12 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
               {
                 G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
                 Cmd_RestartOC_f( ent );
-                return;
               }
             }
             else
             {
               G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
               Cmd_RestartOC_f( ent );
-              return;
             }
         }
         else if( ent->client->pers.teamSelection == PTE_ALIENS )
@@ -7125,22 +7122,16 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
               else
               {
                 G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
-                Cmd_RestartOC_f( ent );
-                return;
               }
             }
             else
             {
               G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
-              Cmd_RestartOC_f( ent );
-              return;
             }
         }
         else
         {
             G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
-            Cmd_RestartOC_f( ent );
-        return;
         }
         VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);
         ent->client->pers.aliveTime = 0;
