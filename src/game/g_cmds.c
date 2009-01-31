@@ -7056,7 +7056,6 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
         else
         {
             G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
-            Cmd_RestartOC_f( ent );
         }
         ent->health = ent->client->ps.stats[ STAT_MAX_HEALTH ];
 
@@ -7110,13 +7109,11 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
               else
               {
                 G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
-                Cmd_RestartOC_f( ent );
               }
             }
             else
             {
               G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT );
-              Cmd_RestartOC_f( ent );
             }
         }
         else if( ent->client->pers.teamSelection == PTE_ALIENS )
