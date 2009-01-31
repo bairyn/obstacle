@@ -6995,7 +6995,7 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
         {
           for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
           {
-            if(i != WP_MACHINEGUN)
+            if(i != WP_MACHINEGUN && i != WP_BLASTER && i != WP_NONE)
             {
                 if(BG_InventoryContainsWeapon(i, ent->client->ps.stats))
                 {
