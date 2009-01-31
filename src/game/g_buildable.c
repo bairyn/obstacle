@@ -3199,9 +3199,10 @@ int G_OCPlayerSpawn(gentity_t *ent)
         if(ent && ent->client)
         {
             ent->client->pers.lastAliveTime = trap_Milliseconds( );
+            BG_FindAmmoForWeapon( ent->client->ps.weapon, &maxAmmo, &maxClips );
             if( BG_FindUsesEnergyForWeapon( ent->client->ps.weapon ) &&
-              BG_InventoryContainsUpgrade( UP_BATTPACK, ent->client->ps.stats ) )
-            maxAmmo = (int)( (float)maxAmmo * BATTPACK_MODIFIER );
+                BG_InventoryContainsUpgrade( UP_BATTPACK, ent->client->ps.stats ) )
+              maxAmmo = (int)( (float)maxAmmo * BATTPACK_MODIFIER );
             BG_PackAmmoArray( ent->client->ps.weapon, ent->client->ps.ammo, ent->client->ps.misc, maxAmmo, maxClips );
             G_AddCreditToClient( ent->client, HUMAN_MAX_CREDITS, qtrue );
             VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);
