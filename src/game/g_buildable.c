@@ -3377,7 +3377,7 @@ int G_OCSingleScrim( void )  // are no more than one players per team active?
     int numberOf[MAX_SCRIM_TEAMS];
 
     if(!level.oc)
-        return 0l
+        return 0;
 
     // do not check for an active scrim playing because the function can be
     // called to determine how to start a scrim
@@ -3391,7 +3391,7 @@ int G_OCSingleScrim( void )  // are no more than one players per team active?
     {
         ent = &g_entities[ i ];
 
-        if(ent->client && pers.connected == CON_CONNECTED && ent->client->pers.ocTeam < MAX_SCRIM_TEAMS)
+        if(ent->client && ent->client->pers.connected == CON_CONNECTED && ent->client->pers.ocTeam < MAX_SCRIM_TEAMS)
             numberOf[ent->client->pers.ocTeam]++;
     }
 
