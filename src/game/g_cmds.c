@@ -1771,6 +1771,12 @@ void Cmd_CallVote_f( gentity_t *ent )
         return;
     }
 
+    if( !ent->client->pers.ocTeam )
+    {
+        G_ClientPrint( ent, "Cannot do this when not on a scrim team", 0 );
+        return;
+    }
+
     Com_sprintf( level.voteString, sizeof( level.voteString ),
       "!startscrim %c", arg2[ 0 ] );
     Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
@@ -2120,7 +2126,7 @@ void Cmd_Vote_f( gentity_t *ent )
 
   if( !ent->client->pers.ocTeam && G_StrFind( level.voteString, "!startscrim" ) )
   {
-    G_ClientPrint( ent, "Cannot vote for this when not on a scrim team", 0 );
+    G_ClientPrint( ent, "Cannot do this when not on a scrim team", 0 );
     return;
   }
 
