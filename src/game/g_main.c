@@ -2546,9 +2546,9 @@ void G_RunFrame( int levelTime )
       for( i = 0; i < level.maxclients; i++ )
       {
         client = &g_entities[ i ];
-        if( client && client->client->pers.ocTeam )
+        if( client && client->client && client->client->pers.ocTeam )
         {
-            G_RestartClient(&g_entities[i], 0, 0);
+            G_RestartClient(client, 0, 0);
         }
       }
       level.ocScrimState = OC_STATE_PLAY;
@@ -2557,7 +2557,7 @@ void G_RunFrame( int levelTime )
 
   if( level.oc && level.ocScrimState == OC_STATE_PREP )
   {
-    if(g_ocWarmup.integer > 0 || G_OCSingleScrim())
+    if(g_ocWarmup.integer > 0 && !G_OCSingleScrim())
     {
         level.ocScrimState = OC_STATE_WARM;
     }
@@ -2566,9 +2566,9 @@ void G_RunFrame( int levelTime )
       for( i = 0; i < level.maxclients; i++ )
       {
         client = &g_entities[ i ];
-        if( client && client->client->pers.ocTeam )
+        if( client && client->client && client->client->pers.ocTeam )
         {
-            G_RestartClient(&g_entities[i], 0, 0);
+            G_RestartClient(client, 0, 0);
         }
       }
 
