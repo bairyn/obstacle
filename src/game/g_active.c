@@ -1907,7 +1907,7 @@ void ClientThink_real( gentity_t *ent )
     }
   }
 
-  if( level.time >= client->pers.nextWeaponTime && level.oc && level.ocScrimState >= OC_STATE_WARM && !client->pers.override && !G_admin_canEditOC( ent ) )
+  if( level.time >= client->pers.nextWeaponTime && level.oc && !client->pers.override && !G_admin_canEditOC( ent ) )
   {
     int maxAmmo, maxClips;
     oc_scrimTeam_t *t;
@@ -1915,7 +1915,7 @@ void ClientThink_real( gentity_t *ent )
     client->pers.nextWeaponTime += OC_WEAPON_FRAME_TIME;
     if(client->pers.nextWeaponTime < level.time - OC_WEAPON_FRAME_TIME * 10)  // only up to 10 frames behind
         client->pers.nextWeaponTime = level.time + OC_WEAPON_FRAME_TIME;
-    if( client->pers.ocTeam )
+    if( client->pers.ocTeam && level.ocScrimState >= OC_STATE_WARM )
     {
         // always give scrim players max ammo
         BG_FindAmmoForWeapon( client->ps.weapon, &maxAmmo, &maxClips );
