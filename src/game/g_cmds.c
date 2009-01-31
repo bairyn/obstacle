@@ -6988,7 +6988,6 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
 
     if(quick)
     {
-        int i, maxAmmo, maxClips;
         gentity_t *dest;
         vec3_t spawn_origin, spawn_angles, infestOrigin;
 
@@ -7024,15 +7023,6 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
             BG_RemoveUpgradeFromInventory( UP_GRENADE, ent->client->ps.stats );
           if( !BG_InventoryContainsUpgrade( UP_MEDKIT, ent->client->ps.stats ) )
             BG_AddUpgradeToInventory( UP_MEDKIT, ent->client->ps.stats );
-
-          BG_FindAmmoForWeapon( ent->client->ps.weapon, &maxAmmo, &maxClips );
-
-          if( BG_FindUsesEnergyForWeapon( ent->client->ps.weapon ) &&
-              BG_InventoryContainsUpgrade( UP_BATTPACK, ent->client->ps.stats ) )
-            maxAmmo = (int)( (float)maxAmmo * BATTPACK_MODIFIER );
-
-          BG_PackAmmoArray( ent->client->ps.weapon, ent->client->ps.ammo, ent->client->ps.misc, maxAmmo, maxClips );
-          G_AddCreditToClient( ent->client, HUMAN_MAX_CREDITS, qtrue );
         }
         else if( ent->client->pers.teamSelection == PTE_ALIENS )
         {
@@ -7173,6 +7163,7 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
         ent->client->pers.aliveTime = 0;
         ent->client->pers.lastAliveTime = trap_Milliseconds( );
         ent->client->pers.hasCheated = 0;
+        G_OCPlayerSpawn(ent);
     }
     else
     {

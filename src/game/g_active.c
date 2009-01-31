@@ -1942,7 +1942,7 @@ void ClientThink_real( gentity_t *ent )
             G_ForceWeaponChange( ent, t->weapon );
         }
     }
-    else
+    else if(!ent->client->pers.arms || !G_AllArms(ent->client->pers.medis))
     {
         G_WeaponRemoveReserved( ent );
         if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats))
