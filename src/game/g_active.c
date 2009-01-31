@@ -619,11 +619,11 @@ void ClientTimerActions( gentity_t *ent, int msec )
       client->ps.stats[ STAT_STAMINA ] = MAX_STAMINA;
       if( ent->client->pers.ocTimeDisplay )
       {
-        if(ent->client->pers.ocTeam)
+        if(ent->client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
         {
             G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( ent->client->pers.aliveTime ), SECS( ent->client->pers.aliveTime ), MSEC( ent->client->pers.aliveTime ) ), "^t^i^m^e", CLIENT_SPECTATORS );
         }
-        else if(level.ocScrimState >= OC_STATE_PLAY)
+        else
         {
             G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( level.time - (level.ocStartTime + g_ocWarmup.integer) ), SECS( level.time - (level.ocStartTime + g_ocWarmup.integer) ), MSEC( level.time - (level.ocStartTime + g_ocWarmup.integer) ) ), "^t^i^m^e", CLIENT_SPECTATORS );
         }
