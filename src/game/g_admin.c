@@ -94,7 +94,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "(^5xnum^7) (^5#skip^7) (^5-name|num^7) (^5a|h^7)",
     },
 
-    {"cancelvote", G_admin_cancelvote, "c",
+    {"cancelvote", G_admin_cancelvote, "v",
       "cancel a vote taking place",
       ""
     },
@@ -284,7 +284,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
       ""
     },
 
-    {"passvote", G_admin_passvote, "p",
+    {"passvote", G_admin_passvote, "v",
       "pass a vote currently taking place",
       ""
     },

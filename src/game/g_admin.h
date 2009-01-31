@@ -66,7 +66,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * (   - has extensive admin control *
  *
  * b   - bans
- * c   - client control (hide, unhide, etc)
+ * c   - client control, primarily hide (hide, unhide, etc)
  * d   - can fix deconstructions (buildlog & revert)
  * h   - help
  * i   - inactive commands (spec999, etc)
