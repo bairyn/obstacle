@@ -6988,6 +6988,7 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
 
     if(quick)
     {
+        int i;
         gentity_t *dest;
         vec3_t spawn_origin, spawn_angles, infestOrigin;
 

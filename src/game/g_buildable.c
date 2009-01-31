@@ -3192,7 +3192,7 @@ int G_OCPlayerCheckpoint(gentity_t *checkpoint, gentity_t *ent)
 
 int G_OCPlayerSpawn(gentity_t *ent)
 {
-    int i, maxAmmo, maxClips;
+    int maxAmmo, maxClips;
 
     if(level.oc)
     {
