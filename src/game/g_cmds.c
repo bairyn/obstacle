@@ -2118,6 +2118,12 @@ void Cmd_Vote_f( gentity_t *ent )
     return;
   }
 
+  if( !ent->client->pers.ocTeam && G_StrFind( level.voteString, "!startscrim" ) )
+  {
+    G_ClientPrint( ent, "Cannot vote for this when not on a scrim team", 0 );
+    return;
+  }
+
   trap_SendServerCommand( ent-g_entities, "print \"Vote cast\n\"" );
 
   trap_Argv( 1, msg, sizeof( msg ) );
@@ -6090,6 +6096,13 @@ static void Cmd_RestartOC_f( gentity_t *ent )
     return;
   }
 
+  if( g_floodMinTime.integer )
+    if ( G_Flood_Limited( ent ) )
+    {
+      trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
+      return;
+    }
+
   G_RestartClient( ent, 0, 1 );
 }
 
@@ -6112,6 +6125,13 @@ static void Cmd_LeaveScrim_f( gentity_t *ent )
     ADMP( va( "You are not in an oc scrim\n" ) );
     return;
   }
+
+  if( g_floodMinTime.integer )
+    if ( G_Flood_Limited( ent ) )
+    {
+      trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
+      return;
+    }
 
   G_OCScrimTeamRemovePlayer( ent );
 }
@@ -6140,11 +6160,24 @@ static void Cmd_JoinScrim_f( gentity_t *ent )
     return;
   }
 
+  if( level.ocScrimState > OC_STATE_NONE )
+  {
+    ADMP( "The scrim has already started\n" );
+    return;
+  }
+
   if(trap_Argc() < 3)
   {
     ADMP( va( "Usage: /joinScrim [weaponIfNewTeam] [team]\n" ) );
     return;
   }
+
+  if( g_floodMinTime.integer )
+    if ( G_Flood_Limited( ent ) )
+    {
+      trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
+      return;
+    }
 
   teamName = ConcatArgs( 2 );
   trap_Argv( 1, weaponName, sizeof( weaponName ) );

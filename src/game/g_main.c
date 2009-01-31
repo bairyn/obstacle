@@ -286,7 +286,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_voteMinTime, "g_voteMinTime", "120", CVAR_ARCHIVE, 0, qfalse },
   { &g_mapvoteMaxTime, "g_mapvoteMaxTime", "240", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVotePercent, "g_suddenDeathVotePercent", "51", CVAR_ARCHIVE, 0, qfalse },
-  { &g_startScrimVotePercent, "g_startScrimVotePercent", "45", CVAR_ARCHIVE, 0, qfalse },
+  { &g_startScrimVotePercent, "g_startScrimVotePercent", "85", CVAR_ARCHIVE, 0, qfalse },
   { &g_endScrimVotePercent, "g_endScrimVotePercent", "90", CVAR_ARCHIVE, 0, qfalse },
   { &g_mapVotesPercent, "g_mapVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
   { &g_ocVotesPercent, "g_ocVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
@@ -2557,8 +2557,10 @@ void G_RunFrame( int levelTime )
 
   if( level.oc && level.ocScrimState == OC_STATE_PREP )
   {
-    if(g_ocWarmup.integer > 0)
+    if(g_ocWarmup.integer > 0 || G_OCSingleScrim())
+    {
         level.ocScrimState = OC_STATE_WARM;
+    }
     else
     {
       for( i = 0; i < level.maxclients; i++ )

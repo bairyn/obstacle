@@ -3370,6 +3370,40 @@ int G_WeaponRemoveReserved( gentity_t *ent )
     return res;
 }
 
+int G_OCSingleScrim( void )  // are no more than one players per team active?
+{
+    int i;
+    gentity_t *ent;
+    int numberOf[MAX_SCRIM_TEAMS];
+
+    if(!level.oc)
+        return 0l
+
+    // do not check for an active scrim playing because the function can be
+    // called to determine how to start a scrim
+
+    for(i = 0; i < MAX_SCRIM_TEAMS; i++)
+    {
+        numberOf[i] = 0;
+    }
+
+    for(i = 0; i < level.maxclients; i++)
+    {
+        ent = &g_entities[ i ];
+
+        if(ent->client && pers.connected == CON_CONNECTED && ent->client->pers.ocTeam < MAX_SCRIM_TEAMS)
+            numberOf[ent->client->pers.ocTeam]++;
+    }
+
+    for(i = 1; i < MAX_SCRIM_TEAMS; i++)  // skip the NULL oc team
+    {
+        if(numberOf[i] > 1)
+            return 0;
+    }
+
+    return 1;
+}
+
 int G_OCScrimEnd( void )
 {
     int i;

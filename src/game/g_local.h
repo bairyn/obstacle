@@ -745,7 +745,7 @@ typedef struct
 //    struct oc_scrimTeam_t *next;
 } oc_scrimTeam_t;
 
-#define MAX_SCRIM_TEAMS 64
+#define MAX_SCRIM_TEAMS 64  // really up to MAX_SCRIM_TEAMS - 1 are allowed
 
 /*
 #define OC_GETTEAM(d, s, n) \
@@ -1060,6 +1060,7 @@ int               G_OCScrimValidTeamName( char *name );
 int               G_OCScrimTeamEmpty( void );
 int               G_OCScrimTeamRemovePlayer( gentity_t *ent );
 int               G_OCScrimAllWon( void );
+int               G_OCSingleScrim( void );
 int               G_OCScrimEnd( void );
 
 qboolean          AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideExit );
