@@ -2429,6 +2429,8 @@ int G_UseMedi( gentity_t *ent, gentity_t *medi )
                 AP(va("print \"^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s\n\"", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
                 G_LogPrintf(va("^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
                 G_ClientCP(ent, va("Medical Stations: %d/%d\n^2You Win!", level.totalMedistations, level.totalMedistations), NULL, CLIENT_SPECTATORS);
+                if(G_StrFind(record, "^s^f^r^e^e"))
+                    G_Free(record);
                 return 0;
             }
             G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
@@ -2718,6 +2720,8 @@ int G_UseArm( gentity_t *ent, gentity_t *arm )
                         G_ClientCP(ent, va("^a^r^m^2You Win!"), "^a^r^m", CLIENT_SPECTATORS);
                     }
                 }
+                if(G_StrFind(record, "^s^f^r^e^e"))
+                    G_Free(record);
                 return 0;
             }
             G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);

@@ -4475,7 +4475,11 @@ char *G_MediStats( gentity_t *ent, int count, int time )
   trap_FS_FCloseFile( f );
 
   if( record )
-    return va(" ^7^2New Record!: #%d^7", record );
+  {
+    char *s = G_Alloc(MAX_STRING_CHARS);
+    Com_sprintf(s, MAX_STRING_CHARS, " ^s^f^r^e^e^2New Record!: #%d^7", record);
+    return s;
+  }
   return "";
 }
 
@@ -4770,7 +4774,11 @@ char *G_WinStats( gentity_t *ent, int count, int time )
   trap_FS_FCloseFile( f );
 
   if( record )
-    return va(" ^7^2New Record!: #%d^7", record );
+  {
+    char *s = G_Alloc(MAX_STRING_CHARS);
+    Com_sprintf(s, MAX_STRING_CHARS, " ^s^f^r^e^e^2New Record!: #%d^7", record);
+    return s;
+  }
   return "";
 }
 
