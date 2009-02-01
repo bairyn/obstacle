@@ -1291,7 +1291,6 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   char      guid[ 33 ];
   char      ip[ 16 ] = {""};
   char      reason[ MAX_STRING_CHARS ] = {""};
-  int       hidden, hiddenTime;
   int       i;
 
   ent = &g_entities[ clientNum ];
@@ -1393,26 +1392,6 @@ char *ClientConnect( int clientNum, qboolean firstTime )
     client->sess.restartTeam = PTE_NONE;
   }
 
-  if( level.oc &&
-//      g_allowHiding.integer &&
-        G_admin_hide_check( userinfo, reason, sizeof( reason ), &hidden, &hiddenTime, NULL ) )
-  {
-    ent->client->pers.hiddenTime = hiddenTime;
-    Q_strncpyz(ent->client->pers.hiddenReason, reason, sizeof(ent->client->pers.hiddenReason));
-    if( hidden )
-    {
-        G_StopFromFollowing( ent );
-        ent->r.svFlags |= SVF_SINGLECLIENT;
-        ent->r.singleClient = clientNum;
-        ent->client->pers.hidden = qtrue;
-    }
-    else
-    {
-        ent->r.svFlags &= ~SVF_SINGLECLIENT;
-        ent->client->pers.hidden = qfalse;
-    }
-  }
-
   if( MAX_CP > 0 )
   {
     ent->client->pers.clientCP = G_Alloc( sizeof( mix_cp_t ) * MAX_CP );
@@ -1434,6 +1413,8 @@ void ClientBegin( int clientNum )
 {
   gentity_t *ent;
   gclient_t *client;
+  char      reason[ MAX_STRING_CHARS ] = {""};
+  int       hidden, hiddenTime;
   int       flags;
 
   ent = g_entities + clientNum;
@@ -1469,6 +1450,26 @@ void ClientBegin( int clientNum )
 
   if( level.oc )
   {
+
+    if(
+//        g_allowHiding.integer &&
+        G_admin_hide_check( userinfo, reason, sizeof( reason ), &hidden, &hiddenTime, NULL ) )
+    {
+        ent->client->pers.hiddenTime = hiddenTime;
+        Q_strncpyz(ent->client->pers.hiddenReason, reason, sizeof(ent->client->pers.hiddenReason));
+        if( hidden )
+        {
+            G_StopFromFollowing( ent );
+            ent->r.svFlags |= SVF_SINGLECLIENT;
+            ent->r.singleClient = clientNum;
+            ent->client->pers.hidden = qtrue;
+        }
+        else
+        {
+            ent->r.svFlags &= ~SVF_SINGLECLIENT;
+            ent->client->pers.hidden = qfalse;
+        }
+    }
     if( !Q_stricmp( client->pers.guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" ) )
     {
         trap_SendServerCommand( client->ps.clientNum, "print \"^3Your client is out of date.  You will ^1NOT^3 be able to set records.  Please replace your client executable with the one at ^2http://trem.tjw.org/backport/^3 and reconnect.\n\"" );
