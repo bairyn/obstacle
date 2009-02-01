@@ -1414,6 +1414,7 @@ void ClientBegin( int clientNum )
   gentity_t *ent;
   gclient_t *client;
   char      reason[ MAX_STRING_CHARS ] = {""};
+  char      userinfo[ MAX_INFO_STRING ];
   int       hidden, hiddenTime;
   int       flags;
 
@@ -1448,6 +1449,7 @@ void ClientBegin( int clientNum )
 
   ClientSpawn( ent, NULL, NULL, NULL );
 
+  trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
   if( level.oc )
   {
 

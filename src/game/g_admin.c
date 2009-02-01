@@ -547,6 +547,20 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len, int
     return qfalse;
   }
 
+  if( !Q_stricmp( name2, "name" ) )  // name might conflict with stats
+  {
+    Q_strncpyz( err, va( "The name '%s^7' is invalid here", name2 ),
+      len );
+    return qfalse;
+  }
+
+  if( !Q_stricmp( name2, "noname" ) )  // noname might conflict with stats
+  {
+    Q_strncpyz( err, va( "The name '%s^7' is invalid here", name2 ),
+      len );
+    return qfalse;
+  }
+
   if( !testUnnamed )
   {
       for( i = 0; i < level.maxclients; i++ )
