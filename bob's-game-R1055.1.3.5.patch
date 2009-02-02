@@ -17669,7 +17669,7 @@ Index: src/game/g_client.c
 -  {
 -    if( !spot->spawned )
 -      continue;
-+    if( level.oc )
++    if( level.oc && !not )
 +    {
 +        if(ent->client->pers.ocTeam)
 +        {
@@ -17781,7 +17781,7 @@ Index: src/game/g_client.c
 -  {
 -    if( !spot->spawned )
 -      continue;
-+    if( level.oc )
++    if( level.oc && !not )
 +    {
 +        if(ent->client->pers.ocTeam)
 +        {
@@ -17842,7 +17842,7 @@ Index: src/game/g_client.c
 +        if( spot->clientSpawnTime > 0 && !level.oc )
 +          continue;
 +
-+        if( not && spot == not )
++        if( spot == not )
 +          continue;
 +
 +        if( G_CheckSpawnPoint( spot->s.number, spot->s.origin,
@@ -24254,7 +24254,7 @@ Index: src/game/g_cmds.c
      ADMP( va( "%s\n", str ) );
  
      G_LogPrintf( "%s: %s: %s: %s\n",
-@@ -3163,3 +6950,488 @@
+@@ -3163,3 +6950,491 @@
    }
  }
  
@@ -24733,9 +24733,12 @@ Index: src/game/g_cmds.c
 +
 +void G_ToLowerCase(char *str)
 +{
++    if(!str)
++        return;
++
 +    while(*str)
 +    {
-+        if(*str >= 'A' || *str <= 'Z')
++        if(*str >= 'A' && *str <= 'Z')
 +        {
 +            *str -= 'A' - 'a';
 +        }
