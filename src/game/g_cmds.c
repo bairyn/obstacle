@@ -7425,9 +7425,12 @@ void G_ClientPrint( gentity_t *ent, char *message, int mode )
 
 void G_ToLowerCase(char *str)
 {
+    if(!str)
+        return;
+
     while(*str)
     {
-        if(*str >= 'A' || *str <= 'Z')
+        if(*str >= 'A' && *str <= 'Z')
         {
             *str -= 'A' - 'a';
         }
