@@ -737,6 +737,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
 
   // load up a custom building layout if there is one
 
+  G_ToLowerCase(level.layout);
   layout = level.layout;
 
   if (*(layout) == 'o' && *((layout) + 1) == 'c')
@@ -2535,6 +2536,10 @@ void G_RunFrame( int levelTime )
   // if we are waiting for the level to restart, do nothing
   if( level.restarted )
     return;
+
+  // occasionally ensure that level.layout is lowercase
+  if(level.time % 1000 == 0)
+    G_ToLowerCase(level.layout);
 
   // TODO: this belongs in g_buildable.c
   if( level.oc && level.ocScrimState == OC_STATE_WARM )

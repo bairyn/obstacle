@@ -4276,6 +4276,7 @@ char *G_MediStats( gentity_t *ent, int count, int time )
     G_Printf( "MediStats( ): no map is loaded\n" );
     return "";
   }
+  G_ToLowerCase(level.layout);
   Com_sprintf( fileName, sizeof( fileName ), "stats/%s/%s/med.dat", map, level.layout );
 
   if( !ip || !Q_stricmp( ip, "noip" ) || !Q_stricmp( ent->client->pers.guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" ) )
@@ -4574,6 +4575,7 @@ char *G_WinStats( gentity_t *ent, int count, int time )
     G_Printf( "WinStats( ): no map is loaded\n" );
     return "";
   }
+  G_ToLowerCase(level.layout);
   Com_sprintf( fileName, sizeof( fileName ), "stats/%s/%s/win.dat", map, level.layout );
 
   if( !ip || !Q_stricmp( ip, "noip" ) || !Q_stricmp( ent->client->pers.guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" ) )
@@ -7418,5 +7420,18 @@ void G_ClientPrint( gentity_t *ent, char *message, int mode )
             Com_sprintf(buf, sizeof(buf), "print \"%s\n\"", message);
             trap_SendServerCommand(i - g_entities, buf);
         }
+    }
+}
+
+void G_ToLowerCase(char *str)
+{
+    while(*str)
+    {
+        if(*str >= 'A' || *str <= 'Z')
+        {
+            *str -= 'A' - 'a';
+        }
+
+        str++;
     }
 }

@@ -990,6 +990,7 @@ void      G_UpdateCP( void );
 void      G_ClientCP( gentity_t *ent, char *message, char *find, int mode );
 void      G_ClientPrint( gentity_t *ent, char *message, int mode );
 void      G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam );
+void      G_ToLowerCase(char *str);
 
 //
 // g_physics.c
