@@ -342,7 +342,7 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
     count = 0;
     spot = NULL;
 
-    if( level.oc )
+    if( level.oc && !not )
     {
         if(ent->client->pers.ocTeam)
         {
@@ -425,7 +425,7 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
     count = 0;
     spot = NULL;
 
-    if( level.oc )
+    if( level.oc && !not )
     {
         if(ent->client->pers.ocTeam)
         {
@@ -471,7 +471,7 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
         if( spot->clientSpawnTime > 0 && !level.oc )
           continue;
 
-        if( not && spot == not )
+        if( spot == not )
           continue;
 
         if( G_CheckSpawnPoint( spot->s.number, spot->s.origin,
