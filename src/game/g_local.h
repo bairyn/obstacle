@@ -63,7 +63,7 @@ typedef struct gclient_s gclient_t;
 /*
  * We can either load insanely long by reading the file MAX_SPAWNGROUP times,
  * or read it a few times and put it in fragmented tables.  The problem
- * with fragmented tables is that spawn groups may not spawn right.
+ * with fragmented tables is that spawn groups may not spawn in the right order.
  * Each table is loaded in order, but each table is loaded in order as well.
  * This rare issue is only ever a problem when a structure is built over
  * (over, so it relies on another structure's spawnGroup) and the two (or
