@@ -2845,19 +2845,19 @@ int G_StructureBuilt( gentity_t *ent )
     if(!level.oc)
         return 0;
 
-    // mistakes do happen
-    if(ent == lastBuiltStructure)
-    {
-        lastBuiltStructure = NULL;  // do our best to let the same address be used again
-                                    // this, of course, assumes that only a max of one redundant
-                                    // function call is used.
-        return 0;
-    }
-
-    lastBuiltStructure = ent;
-
     if(ent->s.modelindex == BA_H_MEDISTAT)
     {
+        // mistakes do happen
+        if(ent == lastBuiltStructure)
+        {
+            lastBuiltStructure = NULL;  // do our best to let the same address be used again
+                                        // this, of course, assumes that only a max of one redundant
+                                        // function call is used.
+            return 0;
+        }
+
+        lastBuiltStructure = ent;
+
         level.totalMedistations++;
 
 //        for(si = level.scrimTeam + 1; si; si = si->next)
@@ -2910,6 +2910,17 @@ int G_StructureBuilt( gentity_t *ent )
     }
     else if(ent->s.modelindex == BA_H_ARMOURY)
     {
+        // mistakes do happen
+        if(ent == lastBuiltStructure)
+        {
+            lastBuiltStructure = NULL;  // do our best to let the same address be used again
+                                        // this, of course, assumes that only a max of one redundant
+                                        // function call is used.
+            return 0;
+        }
+
+        lastBuiltStructure = ent;
+
         level.totalArmouries++;
 
 //        for(si = level.scrimTeam + 1; si; si = si->next)
@@ -2975,19 +2986,22 @@ int G_StructureDecon( gentity_t *ent )
     if(!level.oc)
         return 0;
 
-    // mistakes do happen
-    if(ent == lastDeconStructure)
-    {
-        lastDeconStructure = NULL;  // do our best to let the same address be used again
-                                    // this, of course, assumes that only a max of one redundant
-                                    // function call is used.
+    if(!ent->powered)
         return 0;
-    }
-
-    lastDeconStructure = ent;
 
     if(ent->s.modelindex == BA_H_MEDISTAT)
     {
+        // mistakes do happen
+        if(ent == lastDeconStructure)
+        {
+            lastDeconStructure = NULL;  // do our best to let the same address be used again
+                                        // this, of course, assumes that only a max of one redundant
+                                        // function call is used.
+            return 0;
+        }
+
+        lastDeconStructure = ent;
+
         level.totalMedistations--;
 
         if(level.totalMedistations)
@@ -3051,6 +3065,17 @@ int G_StructureDecon( gentity_t *ent )
     }
     else if(ent->s.modelindex == BA_H_ARMOURY)
     {
+        // mistakes do happen
+        if(ent == lastDeconStructure)
+        {
+            lastDeconStructure = NULL;  // do our best to let the same address be used again
+                                        // this, of course, assumes that only a max of one redundant
+                                        // function call is used.
+            return 0;
+        }
+
+        lastDeconStructure = ent;
+
         level.totalArmouries--;
 
         if(level.totalArmouries)
