@@ -2894,8 +2894,6 @@ int G_StructureBuilt( gentity_t *ent )
     }
     else if(ent->s.modelindex == BA_H_ARMOURY)
     {
-        lastBuiltStructure = ent;
-
         level.totalArmouries++;
 
 //        for(si = level.scrimTeam + 1; si; si = si->next)
