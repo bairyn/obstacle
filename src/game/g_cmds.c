@@ -504,13 +504,9 @@ qboolean G_TestLayoutFlag( char *layout, char *flag )
   int i;
   char *flagPtr = flag;    // the flag to test
   char *flags   = layout;  // the layout to test
-  while(*flags)
-  {
-    if (*flags >= 'A' && *flags <= 'Z')
-        *flags -= ('A' - 'a');
-    flags++;
-  }
-  flags = layout;
+
+  G_ToLowerCase(flags);
+  G_ToLowerCase(layout);
 
   if( !layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c' )  // must be an oc
     return qfalse;
@@ -1949,6 +1945,8 @@ void Cmd_CallVote_f( gentity_t *ent )
 
     if (arg3[ 0 ])
     {
+        G_ToLowerCase(arg3);
+
         if( !trap_FS_FOpenFile( va( "maps/%s.bsp", arg2 ), NULL, FS_READ ) )
         {
           trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
@@ -5999,17 +5997,55 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
 
         // set oc data
-        if(level.oc)
+        if(level.oc && !connection->hasCheated && !ent->client->pers.hasCheated)
         {
             ent->client->pers.lastOCCheckpoint = connection->lastOCCheckpoint;
-            // this isn't effecient because if intially the connection data
-            // was bigger and, per se a medi was deconned, instead of filtering
-            // non-medis it copies from the start, and chances are that it
-            // is going to lose something
-            if( ent->client->pers.medisLastCheckpoint && connection->medisLastCheckpoint )
-              memcpy( ent->client->pers.medisLastCheckpoint, connection->medisLastCheckpoint, G_NumberOfMedis( ent->client->pers.connection->medisLastCheckpoint ) < level.totalMedistations - 1 ? G_NumberOfMedis( ent->client->pers.connection->medisLastCheckpoint ) : level.totalMedistations - 1 ); // be safe
-            if( ent->client->pers.armsLastCheckpoint && connection->armsLastCheckpoint )
-              memcpy( ent->client->pers.armsLastCheckpoint, connection->armsLastCheckpoint, G_NumberOfArms( ent->client->pers.armsLastCheckpoint ) < level.totalArmouries - 1 ? G_NumberOfArms( ent->client->pers.connection->armsLastCheckpoint ) : level.totalArmouries - 1 ); // be safe
+            if( level.totalMedistations && connection->totalMedistations && ent->client->pers.medisLastCheckpoint )
+            {
+                gentity_t **tmp;
+                if(level.totalMedistations > connection->totalMedistations)
+                {
+                    tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+                    memcpy(tmp, connection, connection->totalMedistations + 1);
+                    G_SyncMedis(tmp, level.totalMedistations);
+                }
+                else
+                {
+                    tmp = G_Alloc((connection->totalMedistations + 1) * sizeof(gentity_t *));
+                    memcpy(tmp, connection, level.totalMedistations + 1);
+                    G_SyncMedis(tmp, connection->totalMedistations);
+                }
+                if(tmp[level.totalMedistations])
+                {
+                    G_ClientPrint(ent, "^1Error restoring ptrc", CLIENT_SPECTATORS);
+                    return;
+                }
+                memcpy(ent->client->pers.medisLastCheckpoint, tmp, (level.totalMedistations + 1) * sizeof(gentity_t *));
+                G_Free(tmp);
+            }
+            if( level.totalArmouries && connection->totalArmouries && ent->client->pers.armsLastCheckpoint )
+            {
+                gentity_t **tmp;
+                if(level.totalArmouries > connection->totalArmouries)
+                {
+                    tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+                    memcpy(tmp, connection, connection->totalArmouries + 1);
+                    G_SyncArms(tmp, level.totalArmouries);
+                }
+                else
+                {
+                    tmp = G_Alloc((connection->totalArmouries + 1) * sizeof(gentity_t *));
+                    memcpy(tmp, connection, level.totalArmouries + 1);
+                    G_SyncArms(tmp, connection->totalArmouries);
+                }
+                if(tmp[level.totalArmouries])
+                {
+                    G_ClientPrint(ent, "^1Error restoring ptrc", CLIENT_SPECTATORS);
+                    return;
+                }
+                memcpy(ent->client->pers.armsLastCheckpoint, tmp, (level.totalArmouries + 1) * sizeof(gentity_t *));
+                G_Free(tmp);
+            }
             ent->client->pers.lastAliveTime = connection->lastAliveTime;
             ent->client->pers.aliveTime = connection->aliveTime;
             ent->client->pers.hasCheated = connection->hasCheated;
@@ -6466,6 +6502,55 @@ static void Cmd_AutoAngle_f( gentity_t *ent )
     }
 }
 
+static void Cmd_CPMode_f( gentity_t *ent )
+{
+    char cmd[MAX_STRING_CHARS];
+    char mode[MAX_STRING_CHARS];
+
+    if( g_floodMinTime.integer )
+    {
+        if ( G_Flood_Limited( ent ) )
+        {
+          trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
+          return;
+        }
+    }
+
+    trap_Argv(0, cmd, sizeof(cmd));
+    trap_Argv(1, mode, sizeof(mode));
+
+    switch(mode[0])
+    {
+        case 'E':
+        case 'e':
+        case CP_MODE_ENABLED + '0':
+        case 'y':
+        case 'Y':
+            ent->client->pers.CPMode = CP_MODE_ENABLED;
+            G_ClientPrint(ent, va("%s: CP's are enabled", cmd), 0);
+            break;
+        case 'P':
+        case 'p':
+        case CP_MODE_PRINT + '0':
+        case 'o':
+        case 'O':
+            ent->client->pers.CPMode = CP_MODE_PRINT;
+            G_ClientPrint(ent, va("%s: CP's are printed", cmd), 0);
+            break;
+        case 'D':
+        case 'd':
+        case CP_MODE_DISABLED + '0':
+        case 'n':
+        case 'N':
+            ent->client->pers.CPMode = CP_MODE_DISABLED;
+            G_ClientPrint(ent, va("%s: CP's are disabled", cmd), 0);
+            break;
+        default:
+            G_ClientPrint(ent, va("Usage: %s <Enabled/Print/Disabled>", cmd), 0);
+            break;
+    }
+}
+
 static void Cmd_AutoUnAngle_f( gentity_t *ent )
 {
     if( level.oc && ent && ent->client )
@@ -6551,6 +6636,8 @@ commands_t cmds[ ] = {
 
   { "mystats", 0, Cmd_Mystats_f },
   { "stats", 0, Cmd_Stats_f },
+
+  { "CPMode", 0, Cmd_CPMode_f },
 
   // oc
   { "restartOC", CMD_TEAM, Cmd_RestartOC_f },
@@ -7265,6 +7352,16 @@ void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
         if(ent)  // ent->client does need to exist but checking here is unnecessary because it was already checked above
             trap_SendServerCommand( ent - g_entities, va( "cp \"%s\n\"", message ) );
         return;
+    }
+
+    switch(ent->client->pers.CPMode)
+    {
+        case CP_MODE_PRINT:
+            G_ClientPrint(ent, message, mode);
+        case CP_MODE_DISABLED:
+            return;
+        default:
+            break;
     }
 
     Q_strncpyz(buf, message, sizeof(buf));

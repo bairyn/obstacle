@@ -3221,13 +3221,14 @@ qboolean G_admin_layoutsave( gentity_t *ent, int skiparg )
 
   if( G_SayArgc( ) < 2 + skiparg )
   {
-    ADMP( "^3!layoutsave: ^7usage: !layoutsave [layout]\n" );
+    ADMP( va( "^3!%s: ^7usage: !%s [layout]\n", cmd, cmd ) );
     return qfalse;
   }
 
   G_SayArgv( skiparg + 1, layout, sizeof( layout ) );
+  G_ToLowerCase(layout);
 
-  if( !( *layout == 'o' && *(layout + 1) == 'c' ) || ( g_ocReview.integer && !Q_stricmp( cmd, "layoutsave" ) ) )
+  if( !( *layout == 'o' && *(layout + 1) == 'c' ) || !( g_ocReview.integer && Q_stricmp( cmd, "layoutsave" ) ) )
   {
     trap_SendConsoleCommand( EXEC_APPEND, va( "layoutsave %s", layout ) );
     Q_strncpyz( output, va( "layout saved as '%s'", layout ), sizeof( output ));

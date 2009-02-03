@@ -2439,6 +2439,72 @@ int G_UseMedi( gentity_t *ent, gentity_t *medi )
     return 0;
 }
 
+// sync can be an expensive function
+int G_SyncMedis( gentity_t **medis, int len )
+{
+    // medis should contain a null terminator at medis[len]
+    int i, j, k, tmp, tmp2;
+
+    // first eliminate anything that isn't powered or isn't a medi
+    for(i = 0; i < len; i++)
+    {
+        if(medis[i])
+        {
+            if(medis[i]->s.modelindex != BA_H_MEDISTAT)
+            {
+                medis[i] = NULL;
+                continue;
+            }
+            if(!medis[i]->powered)
+            {
+                medis[i] = NULL;
+                continue;
+            }
+        }
+    }
+
+    // eliminate duplicates
+    for(i = 0; i < len; i++)
+    {
+        for(j = i + 1; j < len; j++)
+        {
+            for(k = 0; k < 2; k++)
+            {
+                memcpy(&tmp, &medis[i], sizeof(gentity_t *));
+                memcpy(&tmp2, &medis[j], sizeof(gentity_t *));
+                tmp  ^= tmp2;
+                tmp2 ^= tmp;
+                tmp  ^= tmp2;
+                memcpy(&medis[j], &tmp2, sizeof(gentity_t *));
+                memcpy(&medis[i], &tmp, sizeof(gentity_t *));
+            }
+        }
+    }
+
+    // continually move empty elements right (the stupid and expensive part)
+    for(i = 0; i < len; i++)
+    {
+        for(j = 0; i < len; i++)
+        {
+            if(!medis[j])
+            {
+                if(medis[j] != medis[j + 1])
+                {
+                    memcpy(&tmp, &medis[j], sizeof(gentity_t *));
+                    memcpy(&tmp2, &medis[j + 1], sizeof(gentity_t *));
+                    tmp  ^= tmp2;
+                    tmp2 ^= tmp;
+                    tmp  ^= tmp2;
+                    memcpy(&medis[j + 1], &tmp2, sizeof(gentity_t *));
+                    memcpy(&medis[j], &tmp, sizeof(gentity_t *));
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 int G_MergeMedis( gentity_t **dst, gentity_t **src)
 {
     int i;
@@ -2724,6 +2790,72 @@ int G_UseArm( gentity_t *ent, gentity_t *arm )
             G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
             G_ClientCP(ent, va("^a^r^mArmouries: %d/%d", G_NumberOfArms(ent->client->pers.arms), level.totalArmouries), "^a^r^m", CLIENT_SPECTATORS);
             G_ClientPrint(ent, va("New Armoury! (%d/%d)", G_NumberOfArms(ent->client->pers.arms), level.totalArmouries), CLIENT_SPECTATORS);
+        }
+    }
+
+    return 0;
+}
+
+// sync can be an expensive function
+int G_SyncArms( gentity_t **arms, int len )
+{
+    // arms should contain a null terminator at arms[len]
+    int i, j, k, tmp, tmp2;
+
+    // first eliminate anything that isn't powered or isn't an arm
+    for(i = 0; i < len; i++)
+    {
+        if(arms[i])
+        {
+            if(arms[i]->s.modelindex != BA_H_ARMOURY)
+            {
+                arms[i] = NULL;
+                continue;
+            }
+            if(!arms[i]->powered)
+            {
+                arms[i] = NULL;
+                continue;
+            }
+        }
+    }
+
+    // eliminate duplicates
+    for(i = 0; i < len; i++)
+    {
+        for(j = i + 1; j < len; j++)
+        {
+            for(k = 0; k < 2; k++)
+            {
+                memcpy(&tmp, &arms[i], sizeof(gentity_t *));
+                memcpy(&tmp2, &arms[j], sizeof(gentity_t *));
+                tmp  ^= tmp2;
+                tmp2 ^= tmp;
+                tmp  ^= tmp2;
+                memcpy(&arms[j], &tmp2, sizeof(gentity_t *));
+                memcpy(&arms[i], &tmp, sizeof(gentity_t *));
+            }
+        }
+    }
+
+    // continually move empty elements right (the stupid and expensive part)
+    for(i = 0; i < len; i++)
+    {
+        for(j = 0; i < len; i++)
+        {
+            if(!arms[j])
+            {
+                if(arms[j] != arms[j + 1])
+                {
+                    memcpy(&tmp, &arms[j], sizeof(gentity_t *));
+                    memcpy(&tmp2, &arms[j + 1], sizeof(gentity_t *));
+                    tmp  ^= tmp2;
+                    tmp2 ^= tmp;
+                    tmp  ^= tmp2;
+                    memcpy(&arms[j + 1], &tmp2, sizeof(gentity_t *));
+                    memcpy(&arms[j], &tmp, sizeof(gentity_t *));
+                }
+            }
         }
     }
 

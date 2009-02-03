@@ -411,6 +411,8 @@ typedef struct connectionRecord_s
   gentity_t  *lastOCCheckpoint;
   gentity_t  **medisLastCheckpoint;
   gentity_t  **armsLastCheckpoint;
+  int        totalMedistations;
+  int        totalArmouries;
   int        lastAliveTime;
   int        aliveTime;
   int        hasCheated;
@@ -498,6 +500,10 @@ typedef struct
 
   qboolean            firstConnect;        // This is the first map since connect
   int                 crashTime;
+  int                 CPMode;
+#define CP_MODE_ENABLED  0
+#define CP_MODE_PRINT    1
+#define CP_MODE_DISABLED 2
 
   // oc data
   int                 cheated;
@@ -1031,6 +1037,7 @@ typedef enum
 } itemBuildError_t;
 
 int               G_UseMedi( gentity_t *medi, gentity_t *ent );
+int               G_SyncMedis( gentity_t **medis, int len );
 int               G_MergeMedis ( gentity_t **dst, gentity_t **src);
 int               G_AppendMedi( gentity_t **medis, gentity_t *medi);
 int               G_RemoveMedi( gentity_t **medis, gentity_t *medi);
@@ -1039,6 +1046,7 @@ int               G_HasMediBeenUsed(gentity_t *medi, gentity_t **medis);
 int               G_NumberOfMedis( gentity_t **medis );
 int               G_ClearMedis(gentity_t **medis);
 int               G_UseArm( gentity_t *ent, gentity_t *arm );
+int               G_SyncArms( gentity_t **arms, int len );
 int               G_MergeArms ( gentity_t **dst, gentity_t **src);
 int               G_AppendArm( gentity_t **arms, gentity_t *arm);
 int               G_RemoveArm( gentity_t **arms, gentity_t *arm);

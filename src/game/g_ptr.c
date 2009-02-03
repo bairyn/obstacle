@@ -68,18 +68,34 @@ void G_UpdatePTRConnection( gclient_t *client )
     client->pers.connection->clientTeam = client->pers.teamSelection;
     if( level.oc )
     {
-        if( client->pers.medisLastCheckpoint && client->pers.connection->medisLastCheckpoint )
+        if( level.totalMedistations && client->pers.medisLastCheckpoint )
         {
           if( !client->pers.connection->medisLastCheckpoint )
             client->pers.connection->medisLastCheckpoint = G_Alloc( ( level.totalMedistations ) * sizeof( gentity_t * ) );
           memcpy( client->pers.connection->medisLastCheckpoint, client->pers.medisLastCheckpoint, level.totalMedistations + 1);
         }
-        if( client->pers.armsLastCheckpoint )
+        else
+        {
+            if(client->pers.connection->medisLastCheckpoint)
+                G_Free(client->pers.connection->medisLastCheckpoint);
+            client->pers.connection->medisLastCheckpoint = NULL;
+        }
+
+        if( level.totalArmouries && client->pers.armsLastCheckpoint )
         {
           if( !client->pers.connection->armsLastCheckpoint )
             client->pers.connection->armsLastCheckpoint = G_Alloc( ( level.totalArmouries ) * sizeof( gentity_t * ) );
           memcpy( client->pers.connection->armsLastCheckpoint, client->pers.armsLastCheckpoint, level.totalArmouries + 1);
         }
+        else
+        {
+            if(client->pers.connection->armsLastCheckpoint)
+                G_Free(client->pers.connection->armsLastCheckpoint);
+            client->pers.connection->armsLastCheckpoint = NULL;
+        }
+
+        client->pers.connection->totalMedistations = level.totalMedistations;
+        client->pers.connection->totalArmouries = level.totalArmouries;
         client->pers.connection->lastOCCheckpoint = client->pers.lastOCCheckpoint;
         client->pers.connection->aliveTime = client->pers.aliveTime;
         client->pers.connection->lastAliveTime = client->pers.lastAliveTime;
