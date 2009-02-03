@@ -6006,13 +6006,13 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
                 if(level.totalMedistations > connection->totalMedistations)
                 {
                     tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
-                    memcpy(tmp, connection, connection->totalMedistations + 1);
+                    memcpy(tmp, connection->medisLastCheckpoint, connection->totalMedistations + 1);
                     G_SyncMedis(tmp, level.totalMedistations);
                 }
                 else
                 {
                     tmp = G_Alloc((connection->totalMedistations + 1) * sizeof(gentity_t *));
-                    memcpy(tmp, connection, level.totalMedistations + 1);
+                    memcpy(tmp, connection->medisLastCheckpoint, level.totalMedistations + 1);
                     G_SyncMedis(tmp, connection->totalMedistations);
                 }
                 if(tmp[level.totalMedistations])
@@ -6029,13 +6029,13 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
                 if(level.totalArmouries > connection->totalArmouries)
                 {
                     tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
-                    memcpy(tmp, connection, connection->totalArmouries + 1);
+                    memcpy(tmp, connection->armsLastCheckpoint, connection->totalArmouries + 1);
                     G_SyncArms(tmp, level.totalArmouries);
                 }
                 else
                 {
                     tmp = G_Alloc((connection->totalArmouries + 1) * sizeof(gentity_t *));
-                    memcpy(tmp, connection, level.totalArmouries + 1);
+                    memcpy(tmp, connection->armsLastCheckpoint, level.totalArmouries + 1);
                     G_SyncArms(tmp, connection->totalArmouries);
                 }
                 if(tmp[level.totalArmouries])
