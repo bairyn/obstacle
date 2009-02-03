@@ -670,7 +670,6 @@ Called when an alien spawn dies
 void ASpawn_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod )
 {
   buildHistory_t *new;
-  G_StructureDecon( self );
   new = G_Alloc( sizeof( buildHistory_t ) );
   new->ID = ( ++level.lastBuildID > 1000 ) ? ( level.lastBuildID = 1 ) : level.lastBuildID;
   new->ent = ( attacker && attacker->client ) ? attacker : NULL;
@@ -1012,7 +1011,6 @@ Called when an alien spawn dies
 void ABarricade_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod )
 {
   buildHistory_t *new;
-  G_StructureDecon( self );
   new = G_Alloc( sizeof( buildHistory_t ) );
   new->ID = ( ++level.lastBuildID > 1000 ) ? ( level.lastBuildID = 1 ) : level.lastBuildID;
   new->ent = ( attacker && attacker->client ) ? attacker : NULL;
@@ -1601,7 +1599,6 @@ void AHovel_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 {
   vec3_t  dir;
   buildHistory_t *new;
-  G_StructureDecon( self );
   new = G_Alloc( sizeof( buildHistory_t ) );
   new->ID = ( ++level.lastBuildID > 1000 ) ? ( level.lastBuildID = 1 ) : level.lastBuildID;
   new->ent = ( attacker && attacker->client ) ? attacker : NULL;
@@ -2834,8 +2831,6 @@ int G_ClearArms(gentity_t **arms)
     return 0;
 }
 
-static gentity_t *lastBuiltStructure = NULL;
-
 int G_StructureBuilt( gentity_t *ent )
 {
     int i;
@@ -2847,17 +2842,6 @@ int G_StructureBuilt( gentity_t *ent )
 
     if(ent->s.modelindex == BA_H_MEDISTAT)
     {
-        // mistakes do happen
-        if(ent == lastBuiltStructure)
-        {
-            lastBuiltStructure = NULL;  // do our best to let the same address be used again
-                                        // this, of course, assumes that only a max of one redundant
-                                        // function call is used.
-            return 0;
-        }
-
-        lastBuiltStructure = ent;
-
         level.totalMedistations++;
 
 //        for(si = level.scrimTeam + 1; si; si = si->next)
@@ -2910,15 +2894,6 @@ int G_StructureBuilt( gentity_t *ent )
     }
     else if(ent->s.modelindex == BA_H_ARMOURY)
     {
-        // mistakes do happen
-        if(ent == lastBuiltStructure)
-        {
-            lastBuiltStructure = NULL;  // do our best to let the same address be used again
-                                        // this, of course, assumes that only a max of one redundant
-                                        // function call is used.
-            return 0;
-        }
-
         lastBuiltStructure = ent;
 
         level.totalArmouries++;
@@ -2975,8 +2950,6 @@ int G_StructureBuilt( gentity_t *ent )
     return 0;
 }
 
-static gentity_t *lastDeconStructure = NULL;
-
 int G_StructureDecon( gentity_t *ent )
 {
     int i;
@@ -2991,17 +2964,6 @@ int G_StructureDecon( gentity_t *ent )
 
     if(ent->s.modelindex == BA_H_MEDISTAT)
     {
-        // mistakes do happen
-        if(ent == lastDeconStructure)
-        {
-            lastDeconStructure = NULL;  // do our best to let the same address be used again
-                                        // this, of course, assumes that only a max of one redundant
-                                        // function call is used.
-            return 0;
-        }
-
-        lastDeconStructure = ent;
-
         level.totalMedistations--;
 
         if(level.totalMedistations)
@@ -3065,17 +3027,6 @@ int G_StructureDecon( gentity_t *ent )
     }
     else if(ent->s.modelindex == BA_H_ARMOURY)
     {
-        // mistakes do happen
-        if(ent == lastDeconStructure)
-        {
-            lastDeconStructure = NULL;  // do our best to let the same address be used again
-                                        // this, of course, assumes that only a max of one redundant
-                                        // function call is used.
-            return 0;
-        }
-
-        lastDeconStructure = ent;
-
         level.totalArmouries--;
 
         if(level.totalArmouries)
@@ -4432,7 +4383,6 @@ Called when a human spawn dies
 void HSpawn_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod )
 {
   buildHistory_t *new;
-  G_StructureDecon( self );
   new = G_Alloc( sizeof( buildHistory_t ) );
   new->ID = ( ++level.lastBuildID > 1000 ) ? ( level.lastBuildID = 1 ) : level.lastBuildID;
   new->ent = ( attacker && attacker->client ) ? attacker : NULL;
@@ -5480,6 +5430,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
     built->health = BG_FindHealthForBuildable( buildable );
     built->buildTime = built->s.time =
       level.time - BG_FindBuildTimeForBuildable( buildable );
+    if(level.oc)
+    {
+        built->groupID = 2;  // UNPOWERED
+    }
   }
 
   //things that vary for each buildable that aren't in the dbase
@@ -5802,8 +5756,6 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
 
   built = G_Build( ent, buildable, ent->s.pos.trBase, ent->s.angles );
   G_FreeEntity( ent );
-
-    G_StructureBuilt( built );
 
   built->takedamage = qtrue;
   built->spawned = qtrue; //map entities are already spawned
@@ -6179,6 +6131,9 @@ gentity_t *G_InstantBuild( buildable_t buildable, vec3_t origin, vec3_t angles, 
   G_SetOrigin( built, tr.endpos );
 
   trap_LinkEntity( built );
+
+  G_StructureBuilt( built );
+
   return built;
 }
 
