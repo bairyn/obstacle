@@ -2215,13 +2215,13 @@ void HArmoury_Think( gentity_t *self )
   {
     if( !self->powered && !self->verifyUnpowered )
     {
-      self->verifyUnpowered = qtrue;
       G_StructureDecon( self );
+      self->verifyUnpowered = qtrue;
     }
     if( self->powered && self->verifyUnpowered )  // rare case of repowering
     {
-      self->verifyUnpowered = qfalse;
       G_StructureBuilt( self );
+      self->verifyUnpowered = qfalse;
     }
   }
 }
@@ -3089,7 +3089,7 @@ int G_StructureDecon( gentity_t *ent )
     if(!level.oc)
         return 0;
 
-    if(!ent->powered)
+    if(!ent->powered && ent->verifyUnpowered)
         return 0;
 
     if(ent->s.modelindex == BA_H_MEDISTAT)
@@ -3934,13 +3934,13 @@ void HMedistat_Think( gentity_t *self )
   {
     if( !self->powered && !self->verifyUnpowered )
     {
-      self->verifyUnpowered = qtrue;
       G_StructureDecon( self );
+      self->verifyUnpowered = qtrue;
     }
     if( self->powered && self->verifyUnpowered )  // rare case of repowering
     {
-      self->verifyUnpowered = qfalse;
       G_StructureBuilt( self );
+      self->verifyUnpowered = qfalse;
     }
   }
 

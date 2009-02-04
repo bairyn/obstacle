@@ -396,30 +396,30 @@ typedef enum
 
 typedef enum
 {
-  BA_NONE,
+  BA_NONE,         // 0
 
-  BA_A_SPAWN,
-  BA_A_OVERMIND,
+  BA_A_SPAWN,      // 1
+  BA_A_OVERMIND,   // 2
 
-  BA_A_BARRICADE,
-  BA_A_ACIDTUBE,
-  BA_A_TRAPPER,
-  BA_A_BOOSTER,
-  BA_A_HIVE,
+  BA_A_BARRICADE,  // 3
+  BA_A_ACIDTUBE,   // 4
+  BA_A_TRAPPER,    // 5
+  BA_A_BOOSTER,    // 6
+  BA_A_HIVE,       // 7
 
-  BA_A_HOVEL,
+  BA_A_HOVEL,      // 8
 
-  BA_H_SPAWN,
+  BA_H_SPAWN,      // 9
 
-  BA_H_MGTURRET,
-  BA_H_TESLAGEN,
+  BA_H_MGTURRET,   // 10
+  BA_H_TESLAGEN,   // 11
 
-  BA_H_ARMOURY,
-  BA_H_DCC,
-  BA_H_MEDISTAT,
+  BA_H_ARMOURY,    // 12
+  BA_H_DCC,        // 13
+  BA_H_MEDISTAT,   // 14
 
-  BA_H_REACTOR,
-  BA_H_REPEATER,
+  BA_H_REACTOR,    // 15
+  BA_H_REPEATER,   //16
 
   BA_NUM_BUILDABLES
 } buildable_t;
