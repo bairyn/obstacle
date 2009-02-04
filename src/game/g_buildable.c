@@ -5560,7 +5560,7 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
     built->health = BG_FindHealthForBuildable( buildable );
     built->buildTime = built->s.time =
       level.time - BG_FindBuildTimeForBuildable( buildable );
-    if(level.oc && built->s.modelindex != BA_H_SPAWN && build->s.modelindex != BA_A_SPAWN)
+    if(level.oc && built->s.modelindex != BA_H_SPAWN && built->s.modelindex != BA_A_SPAWN)
     {
         built->groupID = 2;  // UNPOWERED
     }
