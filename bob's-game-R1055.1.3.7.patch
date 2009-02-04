@@ -4979,7 +4979,7 @@ Index: src/game/g_local.h
    int               spectatorTime;    // for determining next-in-line to play
    spectatorState_t  spectatorState;
    int               spectatorClient;  // for chasecam and follow mode
-@@ -307,13 +405,44 @@
+@@ -307,13 +405,46 @@
  // data to store details of clients that have abnormally disconnected
  typedef struct connectionRecord_s
  {
@@ -4992,6 +4992,8 @@ Index: src/game/g_local.h
 +  gentity_t  *lastOCCheckpoint;
 +  gentity_t  **medisLastCheckpoint;
 +  gentity_t  **armsLastCheckpoint;
++  int        totalMedistations;
++  int        totalArmouries;
 +  int        lastAliveTime;
 +  int        aliveTime;
 +  int        hasCheated;
@@ -5027,7 +5029,7 @@ Index: src/game/g_local.h
  // client data that stays across multiple respawns, but is cleared
  // on each level change or team change at ClientBegin()
  typedef struct
-@@ -342,20 +471,68 @@
+@@ -342,20 +473,72 @@
    int                 nameChangeTime;
    int                 nameChanges;
  
@@ -5061,6 +5063,10 @@ Index: src/game/g_local.h
 +
 +  qboolean            firstConnect;        // This is the first map since connect
 +  int                 crashTime;
++  int                 CPMode;
++#define CP_MODE_ENABLED  0
++#define CP_MODE_PRINT    1
++#define CP_MODE_DISABLED 2
 +
 +  // oc data
 +  int                 cheated;
@@ -5099,7 +5105,7 @@ Index: src/game/g_local.h
  } clientPersistant_t;
  
  #define MAX_UNLAGGED_MARKERS 10
-@@ -455,11 +632,16 @@
+@@ -455,11 +638,16 @@
  
    int                 lastFlameBall;        // s.number of the last flame ball fired
  
@@ -5116,7 +5122,7 @@ Index: src/game/g_local.h
  };
  
  
-@@ -477,7 +659,8 @@
+@@ -477,7 +665,8 @@
  int       G_GetSpawnQueueLength( spawnQueue_t *sq );
  int       G_PopSpawnQueue( spawnQueue_t *sq );
  int       G_PeekSpawnQueue( spawnQueue_t *sq );
@@ -5126,7 +5132,7 @@ Index: src/game/g_local.h
  qboolean  G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum );
  int       G_GetPosInSpawnQueue( spawnQueue_t *sq, int clientNum );
  
-@@ -518,6 +701,32 @@
+@@ -518,6 +707,32 @@
    TW_PASSED
  } timeWarning_t;
  
@@ -5159,7 +5165,7 @@ Index: src/game/g_local.h
  //
  // this structure is cleared as each map is entered
  //
-@@ -526,14 +735,42 @@
+@@ -526,14 +741,42 @@
  
  typedef struct
  {
@@ -5204,7 +5210,7 @@ Index: src/game/g_local.h
    fileHandle_t      logFile;
  
    // store latched cvars here that we want to get at often
-@@ -542,6 +779,7 @@
+@@ -542,6 +785,7 @@
    int               framenum;
    int               time;                         // in msec
    int               previousTime;                 // so movers can back up when blocked
@@ -5212,7 +5218,7 @@ Index: src/game/g_local.h
  
    int               startTime;                    // level.time the map was started
  
-@@ -558,13 +796,14 @@
+@@ -558,13 +802,14 @@
    int               numPlayingClients;            // connected, non-spectators
    int               sortedClients[MAX_CLIENTS];   // sorted by score
  
@@ -5229,7 +5235,7 @@ Index: src/game/g_local.h
    int               voteTime;                     // level.time vote was called
    int               voteExecuteTime;              // time the vote is executed
    int               voteYes;
-@@ -634,6 +873,9 @@
+@@ -634,6 +879,9 @@
  
    pTeam_t           lastWin;
  
@@ -5239,7 +5245,7 @@ Index: src/game/g_local.h
    timeWarning_t     suddenDeathWarning;
    timeWarning_t     timelimitWarning;
  
-@@ -649,6 +891,8 @@
+@@ -649,6 +897,8 @@
    qboolean          uncondHumanWin;
    qboolean          alienTeamLocked;
    qboolean          humanTeamLocked;
@@ -5248,7 +5254,7 @@ Index: src/game/g_local.h
  
    int unlaggedIndex;
    int unlaggedTimes[ MAX_UNLAGGED_MARKERS ];
-@@ -656,17 +900,48 @@
+@@ -656,17 +906,48 @@
    char              layout[ MAX_QPATH ];
  
    pTeam_t           surrenderTeam;
@@ -5305,7 +5311,7 @@ Index: src/game/g_local.h
  typedef struct
  {
    char *cmdName;
-@@ -689,11 +964,13 @@
+@@ -689,11 +970,13 @@
  // g_cmds.c
  //
  void      Cmd_Score_f( gentity_t *ent );
@@ -5319,7 +5325,7 @@ Index: src/game/g_local.h
  int       G_SayArgc( void );
  qboolean  G_SayArgv( int n, char *buffer, int bufferLength );
  char      *G_SayConcatArgs( int start );
-@@ -702,6 +979,18 @@
+@@ -702,6 +985,18 @@
  void      G_ChangeTeam( gentity_t *ent, pTeam_t newTeam );
  void      G_SanitiseName( char *in, char *out );
  void      G_PrivateMessage( gentity_t *ent );
@@ -5338,11 +5344,12 @@ Index: src/game/g_local.h
  
  //
  // g_physics.c
-@@ -741,27 +1030,70 @@
+@@ -741,27 +1036,72 @@
    IBE_MAXERRORS
  } itemBuildError_t;
  
 +int               G_UseMedi( gentity_t *medi, gentity_t *ent );
++int               G_SyncMedis( gentity_t **medis, int len );
 +int               G_MergeMedis ( gentity_t **dst, gentity_t **src);
 +int               G_AppendMedi( gentity_t **medis, gentity_t *medi);
 +int               G_RemoveMedi( gentity_t **medis, gentity_t *medi);
@@ -5351,6 +5358,7 @@ Index: src/game/g_local.h
 +int               G_NumberOfMedis( gentity_t **medis );
 +int               G_ClearMedis(gentity_t **medis);
 +int               G_UseArm( gentity_t *ent, gentity_t *arm );
++int               G_SyncArms( gentity_t **arms, int len );
 +int               G_MergeArms ( gentity_t **dst, gentity_t **src);
 +int               G_AppendArm( gentity_t **arms, gentity_t *arm);
 +int               G_RemoveArm( gentity_t **arms, gentity_t *arm);
@@ -5413,7 +5421,7 @@ Index: src/game/g_local.h
  
  //
  // g_utils.c
-@@ -905,15 +1237,20 @@
+@@ -905,15 +1245,20 @@
  //
  void      G_AddCreditToClient( gclient_t *client, short credit, qboolean cap );
  team_t    TeamCount( int ignoreClientNum, int team );
@@ -5437,7 +5445,7 @@ Index: src/game/g_local.h
  
  //
  // g_svcmds.c
-@@ -939,12 +1276,17 @@
+@@ -939,12 +1284,17 @@
  void ScoreboardMessage( gentity_t *client );
  void MoveClientToIntermission( gentity_t *client );
  void G_MapConfigs( const char *mapname );
@@ -5455,7 +5463,7 @@ Index: src/game/g_local.h
  void QDECL G_Error( const char *fmt, ... );
  void G_Vote( gentity_t *ent, qboolean voting );
  void G_TeamVote( gentity_t *ent, qboolean voting );
-@@ -952,6 +1294,10 @@
+@@ -952,6 +1302,10 @@
  void CheckTeamVote( int teamnum );
  void LogExit( const char *string );
  int  G_TimeTilSuddenDeath( void );
@@ -5466,7 +5474,7 @@ Index: src/game/g_local.h
  
  //
  // g_client.c
-@@ -961,6 +1307,7 @@
+@@ -961,6 +1315,7 @@
  void ClientDisconnect( int clientNum );
  void ClientBegin( int clientNum );
  void ClientCommand( int clientNum );
@@ -5474,7 +5482,7 @@ Index: src/game/g_local.h
  
  //
  // g_active.c
-@@ -1102,15 +1449,26 @@
+@@ -1102,15 +1457,26 @@
  extern  vmCvar_t  g_maxclients;     // allow this many total, including spectators
  extern  vmCvar_t  g_maxGameClients;   // allow this many active
  extern  vmCvar_t  g_restarted;
@@ -5501,7 +5509,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_friendlyBuildableFire;
  extern  vmCvar_t  g_password;
  extern  vmCvar_t  g_needpass;
-@@ -1131,6 +1489,14 @@
+@@ -1131,6 +1497,14 @@
  extern  vmCvar_t  g_blood;
  extern  vmCvar_t  g_allowVote;
  extern  vmCvar_t  g_voteLimit;
@@ -5516,7 +5524,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_teamAutoJoin;
  extern  vmCvar_t  g_teamForceBalance;
  extern  vmCvar_t  g_banIPs;
-@@ -1139,6 +1505,8 @@
+@@ -1139,6 +1513,8 @@
  extern  vmCvar_t  pmove_fixed;
  extern  vmCvar_t  pmove_msec;
  extern  vmCvar_t  g_rankings;
@@ -5525,7 +5533,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_enableDust;
  extern  vmCvar_t  g_enableBreath;
  extern  vmCvar_t  g_singlePlayer;
-@@ -1155,7 +1523,10 @@
+@@ -1155,7 +1531,10 @@
  extern  vmCvar_t  g_alienMaxStage;
  extern  vmCvar_t  g_alienStage2Threshold;
  extern  vmCvar_t  g_alienStage3Threshold;
@@ -5536,7 +5544,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_unlagged;
  
  extern  vmCvar_t  g_disabledEquipment;
-@@ -1163,12 +1534,15 @@
+@@ -1163,12 +1542,15 @@
  extern  vmCvar_t  g_disabledBuildables;
  
  extern  vmCvar_t  g_markDeconstruct;
@@ -5552,7 +5560,7 @@ Index: src/game/g_local.h
  
  extern  vmCvar_t  g_shove;
  
-@@ -1180,11 +1554,46 @@
+@@ -1180,11 +1562,46 @@
  extern  vmCvar_t  g_admin;
  extern  vmCvar_t  g_adminLog;
  extern  vmCvar_t  g_adminParseSay;
@@ -5603,7 +5611,7 @@ Index: src/game/g_ptr.c
 ===================================================================
 --- src/game/g_ptr.c	(revision 1055)
 +++ src/game/g_ptr.c	(working copy)
-@@ -61,11 +61,40 @@
+@@ -61,11 +61,56 @@
  {
    if( client && client->pers.connection )
    {
@@ -5616,18 +5624,34 @@ Index: src/game/g_ptr.c
 +    client->pers.connection->clientTeam = client->pers.teamSelection;
 +    if( level.oc )
 +    {
-+        if( client->pers.medisLastCheckpoint && client->pers.connection->medisLastCheckpoint )
++        if( level.totalMedistations && client->pers.medisLastCheckpoint )
 +        {
 +          if( !client->pers.connection->medisLastCheckpoint )
 +            client->pers.connection->medisLastCheckpoint = G_Alloc( ( level.totalMedistations ) * sizeof( gentity_t * ) );
 +          memcpy( client->pers.connection->medisLastCheckpoint, client->pers.medisLastCheckpoint, level.totalMedistations + 1);
 +        }
-+        if( client->pers.armsLastCheckpoint )
++        else
++        {
++            if(client->pers.connection->medisLastCheckpoint)
++                G_Free(client->pers.connection->medisLastCheckpoint);
++            client->pers.connection->medisLastCheckpoint = NULL;
++        }
++
++        if( level.totalArmouries && client->pers.armsLastCheckpoint )
 +        {
 +          if( !client->pers.connection->armsLastCheckpoint )
 +            client->pers.connection->armsLastCheckpoint = G_Alloc( ( level.totalArmouries ) * sizeof( gentity_t * ) );
 +          memcpy( client->pers.connection->armsLastCheckpoint, client->pers.armsLastCheckpoint, level.totalArmouries + 1);
 +        }
++        else
++        {
++            if(client->pers.connection->armsLastCheckpoint)
++                G_Free(client->pers.connection->armsLastCheckpoint);
++            client->pers.connection->armsLastCheckpoint = NULL;
++        }
++
++        client->pers.connection->totalMedistations = level.totalMedistations;
++        client->pers.connection->totalArmouries = level.totalArmouries;
 +        client->pers.connection->lastOCCheckpoint = client->pers.lastOCCheckpoint;
 +        client->pers.connection->aliveTime = client->pers.aliveTime;
 +        client->pers.connection->lastAliveTime = client->pers.lastAliveTime;
@@ -6652,7 +6676,7 @@ Index: src/game/g_active.c
 +            G_ForceWeaponChange( ent, t->weapon );
 +        }
 +    }
-+    else if(!ent->client->pers.arms || !G_AllArms(ent->client->pers.medis))
++    else if(client->pers.teamSelection == PTE_HUMANS && !(ent->client->pers.arms || G_AllArms(ent->client->pers.medis)))
 +    {
 +        G_WeaponRemoveReserved( ent );
 +        if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats))
@@ -7760,13 +7784,13 @@ Index: src/game/g_buildable.c
 +  {
 +    if( !self->powered && !self->verifyUnpowered )
 +    {
-+      self->verifyUnpowered = qtrue;
 +      G_StructureDecon( self );
++      self->verifyUnpowered = qtrue;
 +    }
 +    if( self->powered && self->verifyUnpowered )  // rare case of repowering
 +    {
-+      self->verifyUnpowered = qfalse;
 +      G_StructureBuilt( self );
++      self->verifyUnpowered = qfalse;
 +    }
 +  }
 +}
@@ -7778,7 +7802,7 @@ Index: src/game/g_buildable.c
  /*
  ================
  HDCC_Think
-@@ -1772,14 +2236,1522 @@
+@@ -1772,14 +2236,1654 @@
  void HDCC_Think( gentity_t *self )
  {
    //make sure we have power
@@ -7981,6 +8005,72 @@ Index: src/game/g_buildable.c
 +            G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
 +            G_ClientCP(ent, va("Medical Stations: %d/%d", G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations), "Medical Stations", CLIENT_SPECTATORS);
 +            G_ClientPrint(ent, va("New Medi! (%d/%d)", G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations), CLIENT_SPECTATORS);
++        }
++    }
++
++    return 0;
++}
++
++// sync can be an expensive function
++int G_SyncMedis( gentity_t **medis, int len )
++{
++    // medis should contain a null terminator at medis[len]
++    int i, j, k, tmp, tmp2;
++
++    // first eliminate anything that isn't powered or isn't a medi
++    for(i = 0; i < len; i++)
++    {
++        if(medis[i])
++        {
++            if(medis[i]->s.modelindex != BA_H_MEDISTAT)
++            {
++                medis[i] = NULL;
++                continue;
++            }
++            if(!medis[i]->powered)
++            {
++                medis[i] = NULL;
++                continue;
++            }
++        }
++    }
++
++    // eliminate duplicates
++    for(i = 0; i < len; i++)
++    {
++        for(j = i + 1; j < len; j++)
++        {
++            for(k = 0; k < 2; k++)
++            {
++                memcpy(&tmp, &medis[i], sizeof(gentity_t *));
++                memcpy(&tmp2, &medis[j], sizeof(gentity_t *));
++                tmp  ^= tmp2;
++                tmp2 ^= tmp;
++                tmp  ^= tmp2;
++                memcpy(&medis[j], &tmp2, sizeof(gentity_t *));
++                memcpy(&medis[i], &tmp, sizeof(gentity_t *));
++            }
++        }
++    }
++
++    // continually move empty elements right (the stupid and expensive part)
++    for(i = 0; i < len; i++)
++    {
++        for(j = 0; i < len; i++)
++        {
++            if(!medis[j])
++            {
++                if(medis[j] != medis[j + 1])
++                {
++                    memcpy(&tmp, &medis[j], sizeof(gentity_t *));
++                    memcpy(&tmp2, &medis[j + 1], sizeof(gentity_t *));
++                    tmp  ^= tmp2;
++                    tmp2 ^= tmp;
++                    tmp  ^= tmp2;
++                    memcpy(&medis[j + 1], &tmp2, sizeof(gentity_t *));
++                    memcpy(&medis[j], &tmp, sizeof(gentity_t *));
++                }
++            }
 +        }
 +    }
 +
@@ -8278,6 +8368,72 @@ Index: src/game/g_buildable.c
 +    return 0;
 +}
 +
++// sync can be an expensive function
++int G_SyncArms( gentity_t **arms, int len )
++{
++    // arms should contain a null terminator at arms[len]
++    int i, j, k, tmp, tmp2;
++
++    // first eliminate anything that isn't powered or isn't an arm
++    for(i = 0; i < len; i++)
++    {
++        if(arms[i])
++        {
++            if(arms[i]->s.modelindex != BA_H_ARMOURY)
++            {
++                arms[i] = NULL;
++                continue;
++            }
++            if(!arms[i]->powered)
++            {
++                arms[i] = NULL;
++                continue;
++            }
++        }
++    }
++
++    // eliminate duplicates
++    for(i = 0; i < len; i++)
++    {
++        for(j = i + 1; j < len; j++)
++        {
++            for(k = 0; k < 2; k++)
++            {
++                memcpy(&tmp, &arms[i], sizeof(gentity_t *));
++                memcpy(&tmp2, &arms[j], sizeof(gentity_t *));
++                tmp  ^= tmp2;
++                tmp2 ^= tmp;
++                tmp  ^= tmp2;
++                memcpy(&arms[j], &tmp2, sizeof(gentity_t *));
++                memcpy(&arms[i], &tmp, sizeof(gentity_t *));
++            }
++        }
++    }
++
++    // continually move empty elements right (the stupid and expensive part)
++    for(i = 0; i < len; i++)
++    {
++        for(j = 0; i < len; i++)
++        {
++            if(!arms[j])
++            {
++                if(arms[j] != arms[j + 1])
++                {
++                    memcpy(&tmp, &arms[j], sizeof(gentity_t *));
++                    memcpy(&tmp2, &arms[j + 1], sizeof(gentity_t *));
++                    tmp  ^= tmp2;
++                    tmp2 ^= tmp;
++                    tmp  ^= tmp2;
++                    memcpy(&arms[j + 1], &tmp2, sizeof(gentity_t *));
++                    memcpy(&arms[j], &tmp, sizeof(gentity_t *));
++                }
++            }
++        }
++    }
++
++    return 0;
++}
++
 +int G_MergeArms( gentity_t **dst, gentity_t **src)
 +{
 +    int i;
@@ -8505,7 +8661,7 @@ Index: src/game/g_buildable.c
 +    if(!level.oc)
 +        return 0;
 +
-+    if(!ent->powered)
++    if(!ent->powered && ent->verifyUnpowered)
 +        return 0;
 +
 +    if(ent->s.modelindex == BA_H_MEDISTAT)
@@ -9303,7 +9459,7 @@ Index: src/game/g_buildable.c
  //==================================================================================
  
  /*
-@@ -1794,13 +3766,54 @@
+@@ -1794,13 +3898,54 @@
    int       entityList[ MAX_GENTITIES ];
    vec3_t    mins, maxs;
    int       i, num;
@@ -9345,13 +9501,13 @@ Index: src/game/g_buildable.c
 +  {
 +    if( !self->powered && !self->verifyUnpowered )
 +    {
-+      self->verifyUnpowered = qtrue;
 +      G_StructureDecon( self );
++      self->verifyUnpowered = qtrue;
 +    }
 +    if( self->powered && self->verifyUnpowered )  // rare case of repowering
 +    {
-+      self->verifyUnpowered = qfalse;
 +      G_StructureBuilt( self );
++      self->verifyUnpowered = qfalse;
 +    }
 +  }
 +
@@ -9361,7 +9517,7 @@ Index: src/game/g_buildable.c
    {
      if( self->active )
      {
-@@ -1832,6 +3845,8 @@
+@@ -1832,6 +3977,8 @@
      {
        player = &g_entities[ entityList[ i ] ];
  
@@ -9370,7 +9526,7 @@ Index: src/game/g_buildable.c
        if( player->client && player->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
        {
          if( player->health < player->client->ps.stats[ STAT_MAX_HEALTH ] &&
-@@ -1850,7 +3865,10 @@
+@@ -1850,7 +3997,10 @@
        {
          player = &g_entities[ entityList[ i ] ];
  
@@ -9382,7 +9538,7 @@ Index: src/game/g_buildable.c
          {
            if( player->health < player->client->ps.stats[ STAT_MAX_HEALTH ] &&
                player->client->ps.pm_type != PM_DEAD )
-@@ -1864,7 +3882,7 @@
+@@ -1864,7 +4014,7 @@
                self->active = qtrue;
              }
            }
@@ -9391,7 +9547,7 @@ Index: src/game/g_buildable.c
              BG_AddUpgradeToInventory( UP_MEDKIT, player->client->ps.stats );
          }
        }
-@@ -1883,11 +3901,12 @@
+@@ -1883,11 +4033,12 @@
        if( self->enemy->client && self->enemy->client->ps.stats[ STAT_STATE ] & SS_POISONED )
          self->enemy->client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
  
@@ -9406,7 +9562,7 @@ Index: src/game/g_buildable.c
          BG_AddUpgradeToInventory( UP_MEDKIT, self->enemy->client->ps.stats );
      }
    }
-@@ -1995,9 +4014,15 @@
+@@ -1995,9 +4146,15 @@
    trace_t   trace;
    gentity_t *traceEnt;
  
@@ -9422,7 +9578,7 @@ Index: src/game/g_buildable.c
    if( !target->client )
      return qfalse;
  
-@@ -2101,13 +4126,40 @@
+@@ -2101,13 +4258,40 @@
  {
    int firespeed = BG_FindFireSpeedForBuildable( self->s.modelindex );
  
@@ -9465,7 +9621,7 @@ Index: src/game/g_buildable.c
    {
      self->nextthink = level.time + POWER_REFRESH_TIME;
      return;
-@@ -2172,10 +4224,37 @@
+@@ -2172,10 +4356,37 @@
    int       i, num;
    gentity_t *enemy;
  
@@ -9505,7 +9661,7 @@ Index: src/game/g_buildable.c
    {
      self->s.eFlags &= ~EF_FIRING;
      self->nextthink = level.time + POWER_REFRESH_TIME;
-@@ -2197,9 +4276,12 @@
+@@ -2197,9 +4408,12 @@
      {
        enemy = &g_entities[ entityList[ i ] ];
  
@@ -9519,7 +9675,7 @@ Index: src/game/g_buildable.c
        {
          VectorSubtract( enemy->s.pos.trBase, self->s.pos.trBase, dir );
          VectorNormalize( dir );
-@@ -2298,13 +4380,31 @@
+@@ -2298,13 +4512,31 @@
  */
  void HSpawn_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod )
  {
@@ -9552,7 +9708,7 @@ Index: src/game/g_buildable.c
  
    if( self->spawned )
    {
-@@ -2361,7 +4461,7 @@
+@@ -2361,7 +4593,7 @@
      if( self->s.groundEntityNum )
      {
        if( ( ent = G_CheckSpawnPoint( self->s.number, self->s.origin,
@@ -9561,7 +9717,7 @@ Index: src/game/g_buildable.c
        {
          if( ent->s.eType == ET_BUILDABLE || ent->s.number == ENTITYNUM_WORLD ||
              ent->s.eType == ET_MOVER )
-@@ -2369,10 +4469,45 @@
+@@ -2369,10 +4601,45 @@
            G_Damage( self, NULL, NULL, NULL, NULL, 10000, 0, MOD_SUICIDE );
            return;
          }
@@ -9607,7 +9763,7 @@ Index: src/game/g_buildable.c
      }
  
      //spawn under attack
-@@ -2386,12 +4521,33 @@
+@@ -2386,12 +4653,33 @@
      self->lastHealth = self->health;
    }
  
@@ -9642,7 +9798,7 @@ Index: src/game/g_buildable.c
  //==================================================================================
  
  
-@@ -2470,7 +4626,7 @@
+@@ -2470,7 +4758,7 @@
    //pack health, power and dcc
  
    //toggle spawned flag for buildables
@@ -9651,7 +9807,7 @@ Index: src/game/g_buildable.c
    {
      if( ent->buildTime + bTime < level.time )
        ent->spawned = qtrue;
-@@ -2533,7 +4689,7 @@
+@@ -2533,7 +4821,7 @@
  Check whether a point is within some range of a type of buildable
  ===============
  */
@@ -9660,7 +9816,7 @@ Index: src/game/g_buildable.c
  {
    int       entityList[ MAX_GENTITIES ];
    vec3_t    range;
-@@ -2557,10 +4713,10 @@
+@@ -2557,10 +4845,10 @@
        continue;
  
      if( ent->s.modelindex == buildable && ent->spawned )
@@ -9673,7 +9829,7 @@ Index: src/game/g_buildable.c
  }
  
  /*
-@@ -2608,7 +4764,7 @@
+@@ -2608,7 +4896,7 @@
    VectorAdd( minsB, originB, minsB );
    VectorAdd( maxsB, originB, maxsB );
  
@@ -9682,7 +9838,7 @@ Index: src/game/g_buildable.c
  }
  
  /*
-@@ -2712,14 +4868,31 @@
+@@ -2712,14 +5000,31 @@
  {
    int       i;
    gentity_t *ent;
@@ -9715,7 +9871,7 @@ Index: src/game/g_buildable.c
      G_FreeEntity( ent );
    }
  }
-@@ -2881,7 +5054,7 @@
+@@ -2881,7 +5186,7 @@
    }
  
    // We still need build points, but have no candidates for removal
@@ -9724,7 +9880,7 @@ Index: src/game/g_buildable.c
      return bpError;
  
    // Collided with something we can't remove
-@@ -2913,7 +5086,7 @@
+@@ -2913,7 +5218,7 @@
    }
  
    // Make sure we're not removing the last spawn
@@ -9733,7 +9889,7 @@ Index: src/game/g_buildable.c
      return bpError;
  
    // Not enough points yielded
-@@ -2969,14 +5142,19 @@
+@@ -2969,14 +5274,19 @@
    int               buildPoints;
  
    // Stop all buildables from interacting with traces
@@ -9756,7 +9912,7 @@ Index: src/game/g_buildable.c
    VectorCopy( entity_origin, origin );
  
    VectorCopy( tr1.plane.normal, normal );
-@@ -2984,14 +5162,14 @@
+@@ -2984,14 +5294,14 @@
    invert = BG_FindInvertNormalForBuildable( buildable );
  
    //can we build at this angle?
@@ -9774,7 +9930,7 @@ Index: src/game/g_buildable.c
      reason = IBE_NORMAL;
  
    contents = trap_PointContents( entity_origin, -1 );
-@@ -3002,7 +5180,7 @@
+@@ -3002,7 +5312,7 @@
      //alien criteria
  
      // Check there is an Overmind
@@ -9783,7 +9939,7 @@ Index: src/game/g_buildable.c
      {
          tempent = G_FindBuildable( BA_A_OVERMIND );
  
-@@ -3011,7 +5189,7 @@
+@@ -3011,7 +5321,7 @@
      }
  
      //check there is creep near by for building on
@@ -9792,7 +9948,7 @@ Index: src/game/g_buildable.c
      {
        if( !G_IsCreepHere( entity_origin ) )
          reason = IBE_NOCREEP;
-@@ -3024,12 +5202,12 @@
+@@ -3024,12 +5334,12 @@
        //this assumes the adv builder is the biggest thing that'll use the hovel
        BG_FindBBoxForClass( PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL );
  
@@ -9807,7 +9963,7 @@ Index: src/game/g_buildable.c
        reason = IBE_PERMISSION;
    }
    else if( ent->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
-@@ -3037,7 +5215,7 @@
+@@ -3037,7 +5347,7 @@
      //human criteria
  
      // Check for power
@@ -9816,7 +9972,7 @@ Index: src/game/g_buildable.c
      {
        //tell player to build a repeater to provide power
        if( buildable != BA_H_REACTOR && buildable != BA_H_REPEATER )
-@@ -3045,11 +5223,11 @@
+@@ -3045,11 +5355,11 @@
      }
  
      //this buildable requires a DCC
@@ -9830,7 +9986,7 @@ Index: src/game/g_buildable.c
      {
        tempent = G_FindBuildable( BA_H_REACTOR );
  
-@@ -3062,16 +5240,16 @@
+@@ -3062,16 +5372,16 @@
      }
  
      // Check permission to build here
@@ -9850,7 +10006,7 @@ Index: src/game/g_buildable.c
    {
      tempent = G_FindBuildable( buildable );
      if( tempent && !tempent->deconstruct )
-@@ -3097,11 +5275,11 @@
+@@ -3097,11 +5407,11 @@
      }
    }
  
@@ -9864,7 +10020,7 @@ Index: src/game/g_buildable.c
      reason = IBE_NOROOM;
  
    if( reason != IBE_NONE )
-@@ -3113,7 +5291,29 @@
+@@ -3113,7 +5423,29 @@
    return reason;
  }
  
@@ -9894,7 +10050,7 @@ Index: src/game/g_buildable.c
  /*
  ================
  G_Build
-@@ -3124,8 +5324,16 @@
+@@ -3124,8 +5456,16 @@
  static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t origin, vec3_t angles )
  {
    gentity_t *built;
@@ -9911,7 +10067,7 @@ Index: src/game/g_buildable.c
    // Free existing buildables
    G_FreeMarkedBuildables( );
  
-@@ -3179,13 +5387,51 @@
+@@ -3179,13 +5519,51 @@
    built->takedamage = qtrue;
    built->spawned = qfalse;
    built->buildTime = built->s.time = level.time;
@@ -9964,7 +10120,7 @@ Index: src/game/g_buildable.c
    }
  
    //things that vary for each buildable that aren't in the dbase
-@@ -3244,6 +5490,7 @@
+@@ -3244,6 +5622,7 @@
      case BA_H_SPAWN:
        built->die = HSpawn_Die;
        built->think = HSpawn_Think;
@@ -9972,7 +10128,7 @@ Index: src/game/g_buildable.c
        break;
  
      case BA_H_MGTURRET:
-@@ -3292,13 +5539,20 @@
+@@ -3292,13 +5671,20 @@
    }
  
    built->s.number = built - g_entities;
@@ -9996,10 +10152,12 @@ Index: src/game/g_buildable.c
    else
      built->builtBy = -1;
  
-@@ -3348,6 +5602,33 @@
+@@ -3348,6 +5734,35 @@
  
    trap_LinkEntity( built );
  
++  G_StructureBuilt( built );
++
 +  // ok we're all done building, so what we log here should be the final values
 +  if( builder && builder->client ) // log ingame building only
 +  {
@@ -10030,7 +10188,7 @@ Index: src/game/g_buildable.c
    return built;
  }
  
-@@ -3485,12 +5766,12 @@
+@@ -3485,12 +5900,12 @@
  
    trap_Trace( &tr, built->s.origin, built->r.mins, built->r.maxs, dest, built->s.number, built->clipmask );
  
@@ -10045,16 +10203,7 @@ Index: src/game/g_buildable.c
    }
  
    //point items in the correct direction
-@@ -3502,6 +5783,8 @@
-   G_SetOrigin( built, tr.endpos );
- 
-   trap_LinkEntity( built );
-+
-+  G_StructureBuilt( built );
- }
- 
- /*
-@@ -3514,7 +5797,7 @@
+@@ -3514,7 +5929,7 @@
  be on an entity that hasn't spawned yet.
  ============
  */
@@ -10063,7 +10212,7 @@ Index: src/game/g_buildable.c
  {
    ent->s.modelindex = buildable;
  
-@@ -3522,8 +5805,64 @@
+@@ -3522,8 +5937,66 @@
    // spawns until the third frame so they can ride trains
    ent->nextthink = level.time + FRAMETIME * 2;
    ent->think = G_FinishSpawningBuildable;
@@ -10071,6 +10220,8 @@ Index: src/game/g_buildable.c
 +  ent->groupID = groupID;
 +  ent->spawnGroup = spawnGroup;
 +  ent->reserved2 = reserved2;
++
++  G_StructureBuilt(ent);
  }
  
 + /*
@@ -10128,7 +10279,7 @@ Index: src/game/g_buildable.c
  /*
  ============
  G_LayoutSave
-@@ -3562,7 +5901,7 @@
+@@ -3562,7 +6035,7 @@
      if( ent->s.eType != ET_BUILDABLE )
        continue;
  
@@ -10137,7 +10288,7 @@ Index: src/game/g_buildable.c
        ent->s.modelindex,
        ent->s.pos.trBase[ 0 ],
        ent->s.pos.trBase[ 1 ],
-@@ -3575,7 +5914,11 @@
+@@ -3575,7 +6048,11 @@
        ent->s.origin2[ 2 ],
        ent->s.angles2[ 0 ],
        ent->s.angles2[ 1 ],
@@ -10150,7 +10301,7 @@ Index: src/game/g_buildable.c
      trap_FS_Write( s, strlen( s ), f );
    }
    trap_FS_FCloseFile( f );
-@@ -3716,7 +6059,7 @@
+@@ -3716,7 +6193,7 @@
  ============
  */
  static void G_LayoutBuildItem( buildable_t buildable, vec3_t origin,
@@ -10159,7 +10310,7 @@ Index: src/game/g_buildable.c
  {
    gentity_t *builder;
  
-@@ -3726,46 +6069,300 @@
+@@ -3726,46 +6203,298 @@
    VectorCopy( angles, builder->s.angles );
    VectorCopy( origin2, builder->s.origin2 );
    VectorCopy( angles2, builder->s.angles2 );
@@ -10224,8 +10375,6 @@ Index: src/game/g_buildable.c
 +  G_SetOrigin( built, tr.endpos );
 +
 +  trap_LinkEntity( built );
-+
-+  G_StructureBuilt( built );
 +
 +  return built;
 +}
@@ -10473,7 +10622,7 @@ Index: src/game/g_buildable.c
    while( *layout )
    {
      if( i >= sizeof( line ) - 1 )
-@@ -3779,21 +6376,150 @@
+@@ -3779,21 +6508,150 @@
      if( *layout == '\n' )
      {
        i = 0;
@@ -10628,7 +10777,7 @@ Index: src/game/g_buildable.c
  }
  
  /*
-@@ -3821,3 +6547,38 @@
+@@ -3821,3 +6679,38 @@
    }
  }
  
@@ -13946,7 +14095,7 @@ Index: src/game/g_admin.c
    if( G_SayArgc( ) < 2 + skiparg )
    {
      ADMP( "^3!map: ^7usage: !map [map] (layout)\n" );
-@@ -1993,12 +3159,571 @@
+@@ -1993,12 +3159,572 @@
  
    trap_SendConsoleCommand( EXEC_APPEND, va( "map %s", map ) );
    level.restarted = qtrue;
@@ -14013,13 +14162,14 @@ Index: src/game/g_admin.c
 +
 +  if( G_SayArgc( ) < 2 + skiparg )
 +  {
-+    ADMP( "^3!layoutsave: ^7usage: !layoutsave [layout]\n" );
++    ADMP( va( "^3!%s: ^7usage: !%s [layout]\n", cmd, cmd ) );
 +    return qfalse;
 +  }
 +
 +  G_SayArgv( skiparg + 1, layout, sizeof( layout ) );
++  G_ToLowerCase(layout);
 +
-+  if( !( *layout == 'o' && *(layout + 1) == 'c' ) || ( g_ocReview.integer && !Q_stricmp( cmd, "layoutsave" ) ) )
++  if( !( *layout == 'o' && *(layout + 1) == 'c' ) || !( g_ocReview.integer && Q_stricmp( cmd, "layoutsave" ) ) )
 +  {
 +    trap_SendConsoleCommand( EXEC_APPEND, va( "layoutsave %s", layout ) );
 +    Q_strncpyz( output, va( "layout saved as '%s'", layout ), sizeof( output ));
@@ -14519,7 +14669,7 @@ Index: src/game/g_admin.c
  qboolean G_admin_mute( gentity_t *ent, int skiparg )
  {
    int pids[ MAX_CLIENTS ], found;
-@@ -2059,6 +3784,208 @@
+@@ -2059,6 +3785,208 @@
    return qtrue;
  }
  
@@ -14728,7 +14878,7 @@ Index: src/game/g_admin.c
  qboolean G_admin_denybuild( gentity_t *ent, int skiparg )
  {
    int pids[ MAX_CLIENTS ], found;
-@@ -2112,6 +4039,10 @@
+@@ -2112,6 +4040,10 @@
      }
      vic->client->pers.denyBuild = qtrue;
      vic->client->ps.stats[ STAT_BUILDABLE ] = BA_NONE;
@@ -14739,7 +14889,7 @@ Index: src/game/g_admin.c
      CPx( pids[ 0 ], "cp \"^1You've lost your building rights\"" );
      AP( va(
        "print \"^3!denybuild: ^7building rights for ^7%s^7 revoked by ^7%s\n\"",
-@@ -2125,16 +4056,12 @@
+@@ -2125,16 +4057,12 @@
  qboolean G_admin_listadmins( gentity_t *ent, int skiparg )
  {
    int i, found = 0;
@@ -14756,7 +14906,7 @@ Index: src/game/g_admin.c
    for( i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[ i ]; i++ )
    {
      if( g_admin_admins[ i ]->level == 0 )
-@@ -2154,9 +4081,9 @@
+@@ -2154,9 +4082,9 @@
      {
        if( s[ i ] >= '0' && s[ i ] <= '9' )
          continue;
@@ -14768,7 +14918,7 @@ Index: src/game/g_admin.c
      {
        start = atoi( s );
        if( start > 0 )
-@@ -2211,12 +4138,12 @@
+@@ -2211,12 +4139,12 @@
    char *s;
    char layout[ MAX_QPATH ] = { "" };
    int i = 0;
@@ -14784,7 +14934,7 @@ Index: src/game/g_admin.c
    count = G_LayoutList( map, list, sizeof( list ) );
    ADMBP_begin( );
    ADMBP( va( "^3!listlayouts:^7 %d layouts found for '%s':\n", count, map ) );
-@@ -2225,6 +4152,7 @@
+@@ -2225,6 +4153,7 @@
    {
      if( *s == ' ' )
      {
@@ -14792,7 +14942,7 @@ Index: src/game/g_admin.c
        ADMBP( va ( " %s\n", layout ) );
        layout[ 0 ] = '\0';
        i = 0;
-@@ -2237,7 +4165,10 @@
+@@ -2237,7 +4166,10 @@
      s++;
    }
    if( layout[ 0 ] )
@@ -14803,7 +14953,7 @@ Index: src/game/g_admin.c
    ADMBP_end( );
    return qtrue;
  }
-@@ -2253,7 +4184,7 @@
+@@ -2253,7 +4185,7 @@
    char lname[ MAX_NAME_LENGTH ];
    char lname2[ MAX_NAME_LENGTH ];
    char guid_stub[ 9 ];
@@ -14812,7 +14962,7 @@ Index: src/game/g_admin.c
    int l;
    char lname_fmt[ 5 ];
  
-@@ -2286,7 +4217,7 @@
+@@ -2286,7 +4218,7 @@
        continue;
      }
  
@@ -14821,7 +14971,7 @@ Index: src/game/g_admin.c
        guid_stub[ j ] = p->pers.guid[ j + 24 ];
      guid_stub[ j ] = '\0';
  
-@@ -2301,6 +4232,20 @@
+@@ -2301,6 +4233,20 @@
        Q_strncpyz( denied, "B", sizeof( denied ) );
      }
  
@@ -14842,7 +14992,7 @@ Index: src/game/g_admin.c
      l = 0;
      G_SanitiseName( p->pers.netname, n2 );
      n[ 0 ] = '\0';
-@@ -2310,7 +4255,7 @@
+@@ -2310,7 +4256,7 @@
        {
  
          // don't gather aka or level info if the admin is incognito
@@ -14851,7 +15001,7 @@ Index: src/game/g_admin.c
          {
            break;
          }
-@@ -2341,16 +4286,17 @@
+@@ -2341,16 +4287,17 @@
        }
  
      }
@@ -14872,7 +15022,7 @@ Index: src/game/g_admin.c
                  muted,
                  denied,
                  p->pers.netname,
-@@ -2376,7 +4322,6 @@
+@@ -2376,7 +4323,6 @@
  qboolean G_admin_showbans( gentity_t *ent, int skiparg )
  {
    int i, found = 0;
@@ -14880,7 +15030,7 @@ Index: src/game/g_admin.c
    int t;
    char duration[ 32 ];
    char name_fmt[ 32 ] = { "%s" };
-@@ -2391,7 +4336,7 @@
+@@ -2391,7 +4337,7 @@
    char n1[ MAX_NAME_LENGTH ] = {""};
    char n2[ MAX_NAME_LENGTH ] = {""};
  
@@ -14889,7 +15039,7 @@ Index: src/game/g_admin.c
  
    for( i = 0; i < MAX_ADMIN_BANS && g_admin_bans[ i ]; i++ )
    {
-@@ -2417,7 +4362,7 @@
+@@ -2417,7 +4363,7 @@
    if( start >= MAX_ADMIN_BANS || start < 0 )
      start = 0;
  
@@ -14898,7 +15048,7 @@ Index: src/game/g_admin.c
      && ( i - start ) < MAX_ADMIN_SHOWBANS; i++ )
    {
      G_DecolorString( g_admin_bans[ i ]->name, n1 );
-@@ -2463,12 +4408,12 @@
+@@ -2463,12 +4409,12 @@
      G_DecolorString( g_admin_bans[ i ]->name, n1 );
      Com_sprintf( name_fmt, sizeof( name_fmt ), "%%%is",
        ( max_name + strlen( g_admin_bans[ i ]->name ) - strlen( n1 ) ) );
@@ -14913,7 +15063,7 @@ Index: src/game/g_admin.c
  
      ADMBP( va( "%4i %s^7 %-15s %-8s %s^7 %-10s\n     \\__ %s\n",
               ( i + 1 ),
-@@ -2495,6 +4440,128 @@
+@@ -2495,6 +4441,128 @@
    return qtrue;
  }
  
@@ -15042,7 +15192,7 @@ Index: src/game/g_admin.c
  qboolean G_admin_help( gentity_t *ent, int skiparg )
  {
    int i;
-@@ -2507,7 +4574,7 @@
+@@ -2507,7 +4575,7 @@
      ADMBP_begin();
      for( i = 0; i < adminNumCmds; i++ )
      {
@@ -15051,7 +15201,7 @@ Index: src/game/g_admin.c
        {
          ADMBP( va( "^3!%-12s", g_admin_cmds[ i ].keyword ) );
          j++;
-@@ -2516,7 +4583,7 @@
+@@ -2516,7 +4584,7 @@
        // show 6 commands per line
        if( j == 6 )
        {
@@ -15060,7 +15210,7 @@ Index: src/game/g_admin.c
          j = 0;
        }
      }
-@@ -2530,12 +4597,12 @@
+@@ -2530,12 +4598,12 @@
        // show 6 commands per line
        if( j == 6 )
        {
@@ -15075,7 +15225,7 @@ Index: src/game/g_admin.c
      ADMBP( va( "^3!help: ^7%i available commands\n", count ) );
      ADMBP( "run !help [^3command^7] for help with a specific command.\n" );
      ADMBP_end();
-@@ -2545,8 +4612,10 @@
+@@ -2545,8 +4613,10 @@
    else
    {
      //!help param
@@ -15086,7 +15236,7 @@ Index: src/game/g_admin.c
  
      G_SayArgv( 1 + skiparg, param, sizeof( param ) );
      cmd = ( param[0] == '!' ) ? &param[1] : &param[0];
-@@ -2555,7 +4624,7 @@
+@@ -2555,7 +4625,7 @@
      {
        if( !Q_stricmp( cmd, g_admin_cmds[ i ].keyword ) )
        {
@@ -15095,7 +15245,7 @@ Index: src/game/g_admin.c
          {
            ADMBP( va( "^3!help: ^7you have no permission to use '%s'\n",
                     g_admin_cmds[ i ].keyword ) );
-@@ -2567,7 +4636,17 @@
+@@ -2567,7 +4637,17 @@
          ADMBP( va( " ^3Function: ^7%s\n", g_admin_cmds[ i ].function ) );
          ADMBP( va( " ^3Syntax: ^7!%s %s\n", g_admin_cmds[ i ].keyword,
                   g_admin_cmds[ i ].syntax ) );
@@ -15114,7 +15264,7 @@ Index: src/game/g_admin.c
          ADMBP_end();
          return qtrue;
        }
-@@ -2597,6 +4676,85 @@
+@@ -2597,6 +4677,85 @@
    }
  }
  
@@ -15200,7 +15350,7 @@ Index: src/game/g_admin.c
  qboolean G_admin_admintest( gentity_t *ent, int skiparg )
  {
    int i, l = 0;
-@@ -2663,18 +4821,25 @@
+@@ -2663,18 +4822,25 @@
      cl->readyToExit = 1;
    }
    AP( va( "print \"^3!allready:^7 %s^7 says everyone is READY now\n\"",
@@ -15228,7 +15378,7 @@ Index: src/game/g_admin.c
    level.voteNo = level.numConnectedClients;
    level.voteYes = 0;
    CheckVote( );
-@@ -2710,6 +4875,24 @@
+@@ -2710,6 +4876,24 @@
    return qtrue;
  }
  
@@ -15253,7 +15403,7 @@ Index: src/game/g_admin.c
  qboolean G_admin_spec999( gentity_t *ent, int skiparg )
  {
    int i;
-@@ -2728,13 +4911,51 @@
+@@ -2728,13 +4912,51 @@
      {
        G_ChangeTeam( vic, PTE_NONE );
        AP( va( "print \"^3!spec999: ^7%s^7 moved ^7%s^7 to spectators\n\"",
@@ -15306,7 +15456,7 @@ Index: src/game/g_admin.c
  qboolean G_admin_rename( gentity_t *ent, int skiparg )
  {
    int pids[ MAX_CLIENTS ], found;
-@@ -2767,7 +4988,7 @@
+@@ -2767,7 +4989,7 @@
          " level than you\n" );
      return qfalse;
    }
@@ -15315,7 +15465,7 @@ Index: src/game/g_admin.c
    {
      ADMP( va( "^3!rename: ^7%s\n", err ) );
      return qfalse;
-@@ -2780,16 +5001,20 @@
+@@ -2780,16 +5002,20 @@
    Info_SetValueForKey( userinfo, "name", newname );
    trap_SetUserinfo( pids[ 0 ], userinfo );
    ClientUserinfoChanged( pids[ 0 ] );
@@ -15340,7 +15490,7 @@ Index: src/game/g_admin.c
  
    if( G_SayArgc( ) > 1 + skiparg )
    {
-@@ -2798,23 +5023,80 @@
+@@ -2798,23 +5024,80 @@
      trap_Cvar_VariableStringBuffer( "mapname", map, sizeof( map ) );
      G_SayArgv( skiparg + 1, layout, sizeof( layout ) );
  
@@ -15430,7 +15580,7 @@ Index: src/game/g_admin.c
    return qtrue;
  }
  
-@@ -2850,7 +5132,7 @@
+@@ -2850,7 +5133,7 @@
      if( search[0] )
      {
        found = qfalse;
@@ -15439,7 +15589,7 @@ Index: src/game/g_admin.c
          g_admin_namelog[ i ]->name[ j ][ 0 ]; j++ )
        {
          G_SanitiseName( g_admin_namelog[ i ]->name[ j ], n2 );
-@@ -2864,22 +5146,22 @@
+@@ -2864,22 +5147,22 @@
          continue;
      }
      printed++;
@@ -15467,7 +15617,7 @@ Index: src/game/g_admin.c
    ADMBP( va( "^3!namelog:^7 %d recent clients found\n", printed ) );
    ADMBP_end();
    return qtrue;
-@@ -2930,7 +5212,7 @@
+@@ -2930,7 +5213,7 @@
      ( team == PTE_ALIENS ) ? "Alien" : "Human",
      ( ent ) ? ent->client->pers.netname : "console" ) );
    return qtrue;
@@ -15476,7 +15626,7 @@ Index: src/game/g_admin.c
  
  qboolean G_admin_unlock( gentity_t *ent, int skiparg )
  {
-@@ -2952,7 +5234,7 @@
+@@ -2952,7 +5235,7 @@
      ADMP( va( "^3!unlock: ^7invalid team\"%c\"\n", teamName[0] ) );
      return qfalse;
    }
@@ -15485,7 +15635,7 @@ Index: src/game/g_admin.c
    if( team == PTE_ALIENS )
    {
      if( !level.alienTeamLocked )
-@@ -2977,8 +5259,984 @@
+@@ -2977,8 +5260,984 @@
      ( team == PTE_ALIENS ) ? "Alien" : "Human",
      ( ent ) ? ent->client->pers.netname : "console" ) );
    return qtrue;
@@ -16471,7 +16621,7 @@ Index: src/game/g_admin.c
  /*
  ================
   G_admin_print
-@@ -3041,6 +6299,11 @@
+@@ -3041,6 +6300,11 @@
      G_Free( g_admin_bans[ i ] );
      g_admin_bans[ i ] = NULL;
    }
@@ -18429,6 +18579,54 @@ Index: src/game/bg_public.h
  
  typedef enum
  {
+@@ -395,30 +396,30 @@
+ 
+ typedef enum
+ {
+-  BA_NONE,
++  BA_NONE,         // 0
+ 
+-  BA_A_SPAWN,
+-  BA_A_OVERMIND,
++  BA_A_SPAWN,      // 1
++  BA_A_OVERMIND,   // 2
+ 
+-  BA_A_BARRICADE,
+-  BA_A_ACIDTUBE,
+-  BA_A_TRAPPER,
+-  BA_A_BOOSTER,
+-  BA_A_HIVE,
++  BA_A_BARRICADE,  // 3
++  BA_A_ACIDTUBE,   // 4
++  BA_A_TRAPPER,    // 5
++  BA_A_BOOSTER,    // 6
++  BA_A_HIVE,       // 7
+ 
+-  BA_A_HOVEL,
++  BA_A_HOVEL,      // 8
+ 
+-  BA_H_SPAWN,
++  BA_H_SPAWN,      // 9
+ 
+-  BA_H_MGTURRET,
+-  BA_H_TESLAGEN,
++  BA_H_MGTURRET,   // 10
++  BA_H_TESLAGEN,   // 11
+ 
+-  BA_H_ARMOURY,
+-  BA_H_DCC,
+-  BA_H_MEDISTAT,
++  BA_H_ARMOURY,    // 12
++  BA_H_DCC,        // 13
++  BA_H_MEDISTAT,   // 14
+ 
+-  BA_H_REACTOR,
+-  BA_H_REPEATER,
++  BA_H_REACTOR,    // 15
++  BA_H_REPEATER,   // 16
+ 
+   BA_NUM_BUILDABLES
+ } buildable_t;
 @@ -433,15 +434,15 @@
    BIT_NUM_TEAMS
  } buildableTeam_t;
@@ -18641,7 +18839,7 @@ Index: src/game/g_cmds.c
  
      j = strlen( entry );
  
-@@ -328,9 +338,335 @@
+@@ -328,9 +338,331 @@
    return line;
  }
  
@@ -18811,13 +19009,9 @@ Index: src/game/g_cmds.c
 +  int i;
 +  char *flagPtr = flag;    // the flag to test
 +  char *flags   = layout;  // the layout to test
-+  while(*flags)
-+  {
-+    if (*flags >= 'A' && *flags <= 'Z')
-+        *flags -= ('A' - 'a');
-+    flags++;
-+  }
-+  flags = layout;
++
++  G_ToLowerCase(flags);
++  G_ToLowerCase(layout);
 +
 +  if( !layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c' )  // must be an oc
 +    return qfalse;
@@ -18977,7 +19171,7 @@ Index: src/game/g_cmds.c
  Cmd_Give_f
  
  Give items to a client
-@@ -347,8 +683,11 @@
+@@ -347,8 +679,11 @@
  
    if( give_all || Q_stricmp( name, "health" ) == 0 )
    {
@@ -18991,7 +19185,7 @@ Index: src/game/g_cmds.c
    }
  
    if( give_all || Q_stricmpn( name, "funds", 5 ) == 0 )
-@@ -381,8 +720,7 @@
+@@ -381,8 +716,7 @@
          BG_InventoryContainsUpgrade( UP_BATTPACK, client->ps.stats ) )
        maxAmmo = (int)( (float)maxAmmo * BATTPACK_MODIFIER );
  
@@ -19001,7 +19195,7 @@ Index: src/game/g_cmds.c
    }
  }
  
-@@ -400,12 +738,19 @@
+@@ -400,12 +734,19 @@
  {
    char  *msg;
  
@@ -19021,7 +19215,7 @@ Index: src/game/g_cmds.c
  
    trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", msg ) );
  }
-@@ -424,12 +769,19 @@
+@@ -424,12 +765,19 @@
  {
    char  *msg;
  
@@ -19041,7 +19235,7 @@ Index: src/game/g_cmds.c
  
    trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", msg ) );
  }
-@@ -446,12 +798,19 @@
+@@ -446,12 +794,19 @@
  {
    char  *msg;
  
@@ -19061,7 +19255,7 @@ Index: src/game/g_cmds.c
  
    trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", msg ) );
  }
-@@ -489,7 +848,7 @@
+@@ -489,7 +844,7 @@
      return;
    }
  
@@ -19070,7 +19264,7 @@ Index: src/game/g_cmds.c
    {
      ent->flags &= ~FL_GODMODE;
      ent->client->ps.stats[ STAT_HEALTH ] = ent->health = 0;
-@@ -521,8 +880,10 @@
+@@ -521,8 +876,10 @@
    gentity_t *ent;
    int       i;
  
@@ -19081,7 +19275,7 @@ Index: src/game/g_cmds.c
    else if( team == PTE_HUMANS )
      G_RemoveFromSpawnQueue( &level.humanSpawnQueue, self->client->ps.clientNum );
    else
-@@ -541,14 +902,6 @@
+@@ -541,14 +898,6 @@
        G_FreeEntity( ent );
      if( ent->client && ent->client->pers.connected == CON_CONNECTED )
      {
@@ -19096,7 +19290,7 @@ Index: src/game/g_cmds.c
        // cure poison
        if( ent->client->ps.stats[ STAT_STATE ] & SS_POISONCLOUDED &&
            ent->client->lastPoisonCloudedClient == self )
-@@ -568,52 +921,55 @@
+@@ -568,52 +917,55 @@
  void G_ChangeTeam( gentity_t *ent, pTeam_t newTeam )
  {
    pTeam_t oldTeam = ent->client->pers.teamSelection;
@@ -19181,7 +19375,7 @@ Index: src/game/g_cmds.c
    }
  
    ent->client->pers.classSelection = PCL_NONE;
-@@ -624,6 +980,7 @@
+@@ -624,6 +976,7 @@
  
    //update ClientInfo
    ClientUserinfoChanged( ent->client->ps.clientNum );
@@ -19189,7 +19383,7 @@ Index: src/game/g_cmds.c
  }
  
  /*
-@@ -649,6 +1006,16 @@
+@@ -649,6 +1002,16 @@
    else if( oldteam == PTE_HUMANS )
      humans--;
  
@@ -19206,7 +19400,7 @@ Index: src/game/g_cmds.c
    trap_Argv( 1, s, sizeof( s ) );
  
    if( !strlen( s ) )
-@@ -660,6 +1027,15 @@
+@@ -660,6 +1023,15 @@
  
    if( !Q_stricmp( s, "spectate" ) )
      team = PTE_NONE;
@@ -19222,7 +19416,7 @@ Index: src/game/g_cmds.c
    else if( !force && oldteam == PTE_NONE && g_maxGameClients.integer &&
             level.numPlayingClients >= g_maxGameClients.integer )
    {
-@@ -668,13 +1044,19 @@
+@@ -668,13 +1040,19 @@
        g_maxGameClients.integer ) );
      return;
    }
@@ -19244,7 +19438,7 @@ Index: src/game/g_cmds.c
      }
      else if( level.humanTeamLocked )
      {
-@@ -683,7 +1065,7 @@
+@@ -683,7 +1061,7 @@
        force = qtrue;
      }
  
@@ -19253,7 +19447,7 @@ Index: src/game/g_cmds.c
      {
        G_TriggerMenu( ent - g_entities, MN_A_TEAMFULL );
        return;
-@@ -693,11 +1075,11 @@
+@@ -693,11 +1071,11 @@
    }
    else if( !Q_stricmp( s, "humans" ) )
    {
@@ -19267,7 +19461,7 @@ Index: src/game/g_cmds.c
      }
      else if( level.alienTeamLocked )
      {
-@@ -706,7 +1088,7 @@
+@@ -706,7 +1084,7 @@
        force = qtrue;
      }
  
@@ -19276,7 +19470,7 @@ Index: src/game/g_cmds.c
      {
        G_TriggerMenu( ent - g_entities, MN_H_TEAMFULL );
        return;
-@@ -741,27 +1123,69 @@
+@@ -741,27 +1119,69 @@
      return;
  
    //guard against build timer exploit
@@ -19355,7 +19549,7 @@ Index: src/game/g_cmds.c
  }
  
  
-@@ -772,7 +1196,7 @@
+@@ -772,7 +1192,7 @@
  */
  static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, const char *name, const char *message )
  {
@@ -19364,7 +19558,7 @@ Index: src/game/g_cmds.c
  
    if( !other )
      return;
-@@ -786,22 +1210,28 @@
+@@ -786,22 +1206,28 @@
    if( other->client->pers.connected != CON_CONNECTED )
      return;
  
@@ -19398,7 +19592,7 @@ Index: src/game/g_cmds.c
      ( ignore ) ? "[skipnotify]" : "",
      name, Q_COLOR_ESCAPE, color, message ) );
  }
-@@ -819,21 +1249,33 @@
+@@ -819,21 +1245,33 @@
    char        text[ MAX_SAY_TEXT ];
    char        location[ 64 ];
  
@@ -19435,7 +19629,7 @@ Index: src/game/g_cmds.c
      }
    }
    else
-@@ -870,34 +1312,99 @@
+@@ -870,34 +1308,99 @@
            ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
        color = COLOR_MAGENTA;
        break;
@@ -19541,7 +19735,7 @@ Index: src/game/g_cmds.c
  /*
  ==================
  Cmd_Say_f
-@@ -907,28 +1414,115 @@
+@@ -907,28 +1410,115 @@
  {
    char    *p;
    char    *args;
@@ -19659,7 +19853,7 @@ Index: src/game/g_cmds.c
    G_Say( ent, NULL, mode, p );
  }
  
-@@ -987,15 +1581,42 @@
+@@ -987,15 +1577,42 @@
    int   i;
    char  arg1[ MAX_STRING_TOKENS ];
    char  arg2[ MAX_STRING_TOKENS ];
@@ -19702,7 +19896,7 @@ Index: src/game/g_cmds.c
    if( level.voteTime )
    {
      trap_SendServerCommand( ent-g_entities, "print \"A vote is already in progress\n\"" );
-@@ -1003,7 +1624,7 @@
+@@ -1003,7 +1620,7 @@
    }
  
    if( g_voteLimit.integer > 0
@@ -19711,7 +19905,7 @@ Index: src/game/g_cmds.c
      && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
    {
      trap_SendServerCommand( ent-g_entities, va(
-@@ -1012,11 +1633,19 @@
+@@ -1012,11 +1629,19 @@
      return;
    }
  
@@ -19732,7 +19926,7 @@ Index: src/game/g_cmds.c
    {
      trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
      return;
-@@ -1029,12 +1658,19 @@
+@@ -1029,12 +1654,19 @@
      trap_SendConsoleCommand( EXEC_APPEND, va( "%s\n", level.voteString ) );
    }
  
@@ -19753,7 +19947,7 @@ Index: src/game/g_cmds.c
  
      if( !arg2[ 0 ] )
      {
-@@ -1043,17 +1679,24 @@
+@@ -1043,17 +1675,24 @@
        return;
      }
  
@@ -19782,7 +19976,7 @@ Index: src/game/g_cmds.c
      if( clientNum != -1 &&
        level.clients[ clientNum ].pers.connected == CON_DISCONNECTED )
      {
-@@ -1065,6 +1708,9 @@
+@@ -1065,6 +1704,9 @@
        Q_strncpyz( name, level.clients[ clientNum ].pers.netname,
          sizeof( name ) );
        Q_CleanStr( name );
@@ -19792,7 +19986,7 @@ Index: src/game/g_cmds.c
      }
      else
      {
-@@ -1073,23 +1719,89 @@
+@@ -1073,23 +1715,89 @@
        return;
      }
    }
@@ -19885,7 +20079,7 @@ Index: src/game/g_cmds.c
    else if( !Q_stricmp( arg1, "mute" ) )
    {
      if( level.clients[ clientNum ].pers.muted )
-@@ -1103,6 +1815,7 @@
+@@ -1103,6 +1811,7 @@
      {
        trap_SendServerCommand( ent-g_entities,
          "print \"callvote: admin is immune from vote mute\n\"" );
@@ -19893,7 +20087,7 @@ Index: src/game/g_cmds.c
        return;
      }
      Com_sprintf( level.voteString, sizeof( level.voteString ),
-@@ -1123,61 +1836,256 @@
+@@ -1123,61 +1832,258 @@
      Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
        "Un-Mute player \'%s\'", name );
    }
@@ -20020,6 +20214,8 @@ Index: src/game/g_cmds.c
 +
 +    if (arg3[ 0 ])
 +    {
++        G_ToLowerCase(arg3);
++
 +        if( !trap_FS_FOpenFile( va( "maps/%s.bsp", arg2 ), NULL, FS_READ ) )
 +        {
 +          trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
@@ -20167,7 +20363,7 @@ Index: src/game/g_cmds.c
  /*
  ==================
  Cmd_Vote_f
-@@ -1189,6 +2097,23 @@
+@@ -1189,6 +2095,23 @@
  
    if( !level.voteTime )
    {
@@ -20191,7 +20387,7 @@ Index: src/game/g_cmds.c
      trap_SendServerCommand( ent-g_entities, "print \"No vote in progress\n\"" );
      return;
    }
-@@ -1199,6 +2124,12 @@
+@@ -1199,6 +2122,12 @@
      return;
    }
  
@@ -20204,7 +20400,7 @@ Index: src/game/g_cmds.c
    trap_SendServerCommand( ent-g_entities, "print \"Vote cast\n\"" );
  
    trap_Argv( 1, msg, sizeof( msg ) );
-@@ -1221,7 +2152,11 @@
+@@ -1221,7 +2150,11 @@
    char  arg2[ MAX_STRING_TOKENS ];
    int   clientNum = -1;
    char  name[ MAX_NETNAME ];
@@ -20217,7 +20413,7 @@ Index: src/game/g_cmds.c
    team = ent->client->pers.teamSelection;
  
    if( team == PTE_ALIENS )
-@@ -1240,7 +2175,7 @@
+@@ -1240,7 +2173,7 @@
    }
  
    if( g_voteLimit.integer > 0
@@ -20226,7 +20422,7 @@ Index: src/game/g_cmds.c
      && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
    {
      trap_SendServerCommand( ent-g_entities, va(
-@@ -1249,6 +2184,24 @@
+@@ -1249,6 +2182,24 @@
      return;
    }
  
@@ -20251,7 +20447,7 @@ Index: src/game/g_cmds.c
    // make sure it is a valid command to vote on
    trap_Argv( 1, arg1, sizeof( arg1 ) );
    trap_Argv( 2, arg2, sizeof( arg2 ) );
-@@ -1258,13 +2211,17 @@
+@@ -1258,13 +2209,17 @@
      trap_SendServerCommand( ent-g_entities, "print \"Invalid team vote string\n\"" );
      return;
    }
@@ -20271,7 +20467,7 @@ Index: src/game/g_cmds.c
  
      if( !arg2[ 0 ] )
      {
-@@ -1273,24 +2230,31 @@
+@@ -1273,24 +2228,31 @@
        return;
      }
  
@@ -20308,7 +20504,7 @@ Index: src/game/g_cmds.c
      if( clientNum != -1 &&
        level.clients[ clientNum ].pers.connected == CON_DISCONNECTED )
      {
-@@ -1302,6 +2266,11 @@
+@@ -1302,6 +2264,11 @@
        Q_strncpyz( name, level.clients[ clientNum ].pers.netname,
          sizeof( name ) );
        Q_CleanStr( name );
@@ -20320,7 +20516,7 @@ Index: src/game/g_cmds.c
      }
      else
      {
-@@ -1317,6 +2286,7 @@
+@@ -1317,6 +2284,7 @@
      {
        trap_SendServerCommand( ent-g_entities,
          "print \"callteamvote: admin is immune from vote kick\n\"" );
@@ -20328,7 +20524,7 @@ Index: src/game/g_cmds.c
        return;
      }
  
-@@ -1324,8 +2294,8 @@
+@@ -1324,8 +2292,8 @@
      // use ip in case this player disconnects before the vote ends
      Com_sprintf( level.teamVoteString[ cs_offset ],
        sizeof( level.teamVoteString[ cs_offset ] ),
@@ -20339,7 +20535,7 @@ Index: src/game/g_cmds.c
      Com_sprintf( level.teamVoteDisplayString[ cs_offset ],
          sizeof( level.teamVoteDisplayString[ cs_offset ] ),
          "Kick player '%s'", name );
-@@ -1343,6 +2313,7 @@
+@@ -1343,6 +2311,7 @@
      {
        trap_SendServerCommand( ent-g_entities,
          "print \"callteamvote: admin is immune from denybuild\n\"" );
@@ -20347,7 +20543,7 @@ Index: src/game/g_cmds.c
        return;
      }
  
-@@ -1367,31 +2338,87 @@
+@@ -1367,31 +2336,87 @@
          sizeof( level.teamVoteDisplayString[ cs_offset ] ),
          "Allow '%s' to build", name );
    }
@@ -20442,7 +20638,7 @@ Index: src/game/g_cmds.c
    ent->client->pers.teamVote = qtrue;
  
    for( i = 0 ; i < level.maxclients ; i++ )
-@@ -1400,13 +2427,12 @@
+@@ -1400,13 +2425,12 @@
        level.clients[ i ].ps.eFlags &= ~EF_TEAMVOTED;
    }
  
@@ -20457,7 +20653,7 @@ Index: src/game/g_cmds.c
    trap_SetConfigstring( CS_TEAMVOTE_NO + cs_offset, "0" );
  }
  
-@@ -1480,7 +2506,7 @@
+@@ -1480,7 +2504,7 @@
  
  #define AS_OVER_RT3         ((ALIENSENSE_RANGE*0.5f)/M_ROOT3)
  
@@ -20466,7 +20662,7 @@ Index: src/game/g_cmds.c
    vec3_t newOrigin )
  {
    vec3_t    fromMins, fromMaxs;
-@@ -1522,17 +2548,17 @@
+@@ -1522,17 +2546,17 @@
    //compute a place up in the air to start the real trace
    VectorCopy( newOrigin, temp );
    temp[ 2 ] += nudgeHeight;
@@ -20487,7 +20683,7 @@ Index: src/game/g_cmds.c
  
    //check there is room to evolve
    if( !tr.startsolid && tr.fraction == 1.0f )
-@@ -1552,41 +2578,152 @@
+@@ -1552,41 +2576,152 @@
    int       clientNum;
    int       i;
    vec3_t    infestOrigin;
@@ -20654,7 +20850,7 @@ Index: src/game/g_cmds.c
        return;
      }
  
-@@ -1596,7 +2733,8 @@
+@@ -1596,7 +2731,8 @@
        if( ( ent->client->ps.stats[ STAT_STATE ] & SS_WALLCLIMBING ) ||
            ( ent->client->ps.stats[ STAT_STATE ] & SS_WALLCLIMBINGCEILING ) )
        {
@@ -20664,7 +20860,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -1605,30 +2743,35 @@
+@@ -1605,30 +2741,35 @@
        VectorSubtract( ent->client->ps.origin, range, mins );
  
        num = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
@@ -20707,7 +20903,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -1639,10 +2782,82 @@
+@@ -1639,10 +2780,82 @@
        if( G_RoomForClassChange( ent, newClass, infestOrigin ) )
        {
          //...check we can evolve to that class
@@ -20792,7 +20988,7 @@ Index: src/game/g_cmds.c
            ent->client->pers.evolveHealthFraction = (float)ent->client->ps.stats[ STAT_HEALTH ] /
              (float)BG_FindHealthForClass( currentClass );
  
-@@ -1652,7 +2867,8 @@
+@@ -1652,7 +2865,8 @@
              ent->client->pers.evolveHealthFraction = 1.0f;
  
            //remove credit
@@ -20802,7 +20998,7 @@ Index: src/game/g_cmds.c
            ent->client->pers.classSelection = newClass;
            ClientUserinfoChanged( clientNum );
            VectorCopy( infestOrigin, ent->s.pos.trBase );
-@@ -1662,7 +2878,7 @@
+@@ -1662,7 +2876,7 @@
          else
          {
            trap_SendServerCommand( ent-g_entities,
@@ -20811,7 +21007,7 @@ Index: src/game/g_cmds.c
            return;
          }
        }
-@@ -1673,7 +2889,7 @@
+@@ -1673,7 +2887,7 @@
        }
      }
      else
@@ -20820,7 +21016,7 @@ Index: src/game/g_cmds.c
        //spawning from an egg
        for( i = 0; i < numClasses; i++ )
        {
-@@ -1681,6 +2897,15 @@
+@@ -1681,6 +2895,15 @@
              BG_FindStagesForClass( newClass, g_alienStage.integer ) &&
              BG_ClassIsAllowed( newClass ) )
          {
@@ -20836,7 +21032,7 @@ Index: src/game/g_cmds.c
            ent->client->pers.classSelection =
              ent->client->ps.stats[ STAT_PCLASS ] = newClass;
            G_PushSpawnQueue( &level.alienSpawnQueue, clientNum );
-@@ -1689,10 +2914,10 @@
+@@ -1689,10 +2912,10 @@
        }
        trap_SendServerCommand( ent-g_entities, va( "print \"You cannot spawn as this class\n\"" ) );
        return;
@@ -20849,7 +21045,7 @@ Index: src/game/g_cmds.c
      //humans cannot use this command whilst alive
      if( ent->client->pers.classSelection != PCL_NONE )
      {
-@@ -1718,11 +2943,35 @@
+@@ -1718,11 +2941,35 @@
        return;
      }
  
@@ -20886,7 +21082,7 @@ Index: src/game/g_cmds.c
  /*
  =================
  Cmd_Destroy_f
-@@ -1743,12 +2992,32 @@
+@@ -1743,12 +2990,32 @@
      return;
    }
  
@@ -20920,7 +21116,7 @@ Index: src/game/g_cmds.c
  
    if( !( ent->client->ps.stats[ STAT_STATE ] & SS_INFESTING ) )
    {
-@@ -1760,19 +3029,30 @@
+@@ -1760,19 +3027,30 @@
  
      if( tr.fraction < 1.0f &&
          ( traceEnt->s.eType == ET_BUILDABLE ) &&
@@ -20954,7 +21150,7 @@ Index: src/game/g_cmds.c
        {
          if( ent->client->pers.teamSelection == PTE_ALIENS &&
              traceEnt->s.modelindex == BA_A_SPAWN )
-@@ -1793,9 +3073,16 @@
+@@ -1793,9 +3071,16 @@
          return;
  
        // Don't allow destruction of buildables that cannot be rebuilt
@@ -20973,7 +21169,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -1805,32 +3092,56 @@
+@@ -1805,32 +3090,55 @@
          return;
        }
  
@@ -21013,7 +21209,6 @@ Index: src/game/g_cmds.c
 +          new->next = NULL;
 +          new->marked = NULL;
 +          G_LogBuild( new );
-+          G_StructureDecon( traceEnt );
  
 +           if( traceEnt->health > 0 )
 +           {
@@ -21042,7 +21237,7 @@ Index: src/game/g_cmds.c
              ent->client->ps.stats[ STAT_MISC ] +=
                BG_FindBuildDelayForWeapon( ent->s.weapon ) >> 2;
          }
-@@ -1852,12 +3163,19 @@
+@@ -1852,12 +3160,19 @@
    char  s[ MAX_TOKEN_CHARS ];
    int   upgrade, weapon;
  
@@ -21063,7 +21258,7 @@ Index: src/game/g_cmds.c
    else if( weapon != WP_NONE && BG_InventoryContainsWeapon( weapon, ent->client->ps.stats ) )
      G_ForceWeaponChange( ent, weapon );
    else
-@@ -1877,6 +3195,11 @@
+@@ -1877,6 +3192,11 @@
    char  s[ MAX_TOKEN_CHARS ];
    int   upgrade;
  
@@ -21075,7 +21270,7 @@ Index: src/game/g_cmds.c
    trap_Argv( 1, s, sizeof( s ) );
    upgrade = BG_FindUpgradeNumForName( s );
  
-@@ -1897,6 +3220,11 @@
+@@ -1897,6 +3217,11 @@
    char  s[ MAX_TOKEN_CHARS ];
    int   upgrade, weapon, i;
  
@@ -21087,7 +21282,7 @@ Index: src/game/g_cmds.c
    trap_Argv( 1, s, sizeof( s ) );
    upgrade = BG_FindUpgradeNumForName( s );
    weapon = BG_FindWeaponNumForName( s );
-@@ -1954,6 +3282,13 @@
+@@ -1954,6 +3279,13 @@
    qboolean  buyingEnergyAmmo = qfalse;
    qboolean  hasEnergyWeapon = qfalse;
  
@@ -21101,7 +21296,7 @@ Index: src/game/g_cmds.c
    for( i = UP_NONE; i < UP_NUM_UPGRADES; i++ )
    {
      if( BG_InventoryContainsUpgrade( i, ent->client->ps.stats ) )
-@@ -1981,23 +3316,26 @@
+@@ -1981,23 +3313,26 @@
      buyingEnergyAmmo = hasEnergyWeapon;
    }
  
@@ -21133,7 +21328,7 @@ Index: src/game/g_cmds.c
        return;
      }
    }
-@@ -2012,20 +3350,21 @@
+@@ -2012,20 +3347,21 @@
      }
  
      //can afford this?
@@ -21158,7 +21353,7 @@ Index: src/game/g_cmds.c
      {
        //shouldn't need a fancy dialog
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't buy alien items\n\"" ) );
-@@ -2033,62 +3372,96 @@
+@@ -2033,62 +3369,96 @@
      }
  
      //are we /allowed/ to buy this?
@@ -21276,7 +21471,7 @@ Index: src/game/g_cmds.c
      {
        //shouldn't need a fancy dialog
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't buy alien items\n\"" ) );
-@@ -2096,14 +3469,15 @@
+@@ -2096,14 +3466,15 @@
      }
  
      //are we /allowed/ to buy this?
@@ -21294,7 +21489,7 @@ Index: src/game/g_cmds.c
      {
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't buy this item\n\"" ) );
        return;
-@@ -2111,37 +3485,39 @@
+@@ -2111,37 +3482,39 @@
  
      if( upgrade == UP_AMMO )
        G_GiveClientMaxAmmo( ent, buyingEnergyAmmo );
@@ -21354,7 +21549,7 @@ Index: src/game/g_cmds.c
    //update ClientInfo
    ClientUserinfoChanged( ent->client->ps.clientNum );
  }
-@@ -2160,10 +3536,18 @@
+@@ -2160,10 +3533,18 @@
  
    trap_Argv( 1, s, sizeof( s ) );
  
@@ -21375,7 +21570,7 @@ Index: src/game/g_cmds.c
      return;
    }
  
-@@ -2173,20 +3557,33 @@
+@@ -2173,20 +3554,33 @@
    if( weapon != WP_NONE )
    {
      //are we /allowed/ to sell this?
@@ -21413,7 +21608,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -2203,7 +3600,7 @@
+@@ -2203,7 +3597,7 @@
    else if( upgrade != UP_NONE )
    {
      //are we /allowed/ to sell this?
@@ -21422,7 +21617,7 @@ Index: src/game/g_cmds.c
      {
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't sell this item\n\"" ) );
        return;
-@@ -2211,21 +3608,6 @@
+@@ -2211,21 +3605,6 @@
      //remove upgrade if carried
      if( BG_InventoryContainsUpgrade( upgrade, ent->client->ps.stats ) )
      {
@@ -21444,7 +21639,7 @@ Index: src/game/g_cmds.c
        //add to inventory
        BG_RemoveUpgradeFromInventory( upgrade, ent->client->ps.stats );
  
-@@ -2242,9 +3624,10 @@
+@@ -2242,9 +3621,10 @@
      {
        //guard against selling the HBUILD weapons exploit
        if( ( i == WP_HBUILD || i == WP_HBUILD2 ) &&
@@ -21457,7 +21652,7 @@ Index: src/game/g_cmds.c
          continue;
        }
  
-@@ -2270,21 +3653,6 @@
+@@ -2270,21 +3650,6 @@
        if( BG_InventoryContainsUpgrade( i, ent->client->ps.stats ) &&
            BG_FindPurchasableForUpgrade( i ) )
        {
@@ -21479,7 +21674,7 @@ Index: src/game/g_cmds.c
          BG_RemoveUpgradeFromInventory( i, ent->client->ps.stats );
  
          if( i == UP_BATTPACK )
-@@ -2298,8 +3666,7 @@
+@@ -2298,8 +3663,7 @@
                  BG_FindUsesEnergyForWeapon( j ) &&
                  !BG_FindInfinteAmmoForWeapon( j ) )
              {
@@ -21489,7 +21684,7 @@ Index: src/game/g_cmds.c
              }
            }
          }
-@@ -2312,6 +3679,15 @@
+@@ -2312,6 +3676,15 @@
    else
      trap_SendServerCommand( ent-g_entities, va( "print \"Unknown item\n\"" ) );
  
@@ -21505,7 +21700,7 @@ Index: src/game/g_cmds.c
    //update ClientInfo
    ClientUserinfoChanged( ent->client->ps.clientNum );
  }
-@@ -2330,7 +3706,7 @@
+@@ -2330,7 +3703,7 @@
    vec3_t        origin;
    pTeam_t       team;
  
@@ -21514,7 +21709,7 @@ Index: src/game/g_cmds.c
    {
      trap_SendServerCommand( ent-g_entities,
        "print \"Your building rights have been revoked\n\"" );
-@@ -2340,15 +3716,42 @@
+@@ -2340,15 +3713,42 @@
    trap_Argv( 1, s, sizeof( s ) );
  
    buildable = BG_FindBuildNumForName( s );
@@ -21559,7 +21754,7 @@ Index: src/game/g_cmds.c
    {
      dist = BG_FindBuildDistForClass( ent->client->ps.stats[ STAT_PCLASS ] );
  
-@@ -2406,7 +3809,210 @@
+@@ -2406,7 +3806,210 @@
      trap_SendServerCommand( ent-g_entities, va( "print \"Cannot build this item\n\"" ) );
  }
  
@@ -21770,7 +21965,7 @@ Index: src/game/g_cmds.c
  /*
  =================
  Cmd_Boost_f
-@@ -2421,23 +4027,1562 @@
+@@ -2421,23 +4024,1562 @@
    if( ent->client->pers.cmd.buttons & BUTTON_WALKING )
      return;
  
@@ -23335,7 +23530,7 @@ Index: src/game/g_cmds.c
  G_StopFollowing
  
  If the client being followed leaves the game, or you just want to drop
-@@ -2448,10 +5593,27 @@
+@@ -2448,10 +5590,27 @@
  {
    ent->client->ps.persistant[ PERS_TEAM ] = TEAM_SPECTATOR;
    ent->client->sess.sessionTeam = TEAM_SPECTATOR;
@@ -23365,7 +23560,7 @@ Index: src/game/g_cmds.c
  
    ent->client->ps.stats[ STAT_STATE ] &= ~SS_WALLCLIMBING;
    ent->client->ps.stats[ STAT_STATE ] &= ~SS_WALLCLIMBINGCEILING;
-@@ -2503,6 +5665,10 @@
+@@ -2503,6 +5662,10 @@
      if( clientnum < 0 )
        clientnum = level.maxclients - 1;
  
@@ -23376,7 +23571,7 @@ Index: src/game/g_cmds.c
      // avoid selecting existing follow target
      if( clientnum == original && !selectAny )
        continue; //effectively break;
-@@ -2516,9 +5682,20 @@
+@@ -2516,9 +5679,20 @@
        continue;
  
      // can't follow another spectator
@@ -23399,7 +23594,7 @@ Index: src/game/g_cmds.c
      // this is good, we can use it
      ent->client->sess.spectatorClient = clientnum;
      ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
-@@ -2538,10 +5715,107 @@
+@@ -2538,10 +5712,107 @@
  {
    if( ent->client->sess.spectatorState == SPECTATOR_FOLLOW )
      G_StopFollowing( ent );
@@ -23508,7 +23703,7 @@ Index: src/game/g_cmds.c
  /*
  =================
  Cmd_Follow_f
-@@ -2553,12 +5827,17 @@
+@@ -2553,12 +5824,17 @@
    int   pids[ MAX_CLIENTS ];
    char  arg[ MAX_TOKEN_CHARS ];
  
@@ -23528,7 +23723,7 @@ Index: src/game/g_cmds.c
    {
      trap_Argv( 1, arg, sizeof( arg ) );
      if( G_ClientNumbersFromString( arg, pids, MAX_CLIENTS ) == 1 )
-@@ -2577,14 +5856,36 @@
+@@ -2577,14 +5853,36 @@
        }
      }
  
@@ -23566,7 +23761,7 @@ Index: src/game/g_cmds.c
      ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
      ent->client->sess.spectatorClient = i;
    }
-@@ -2605,9 +5906,10 @@
+@@ -2605,9 +5903,10 @@
      dir = -1;
  
    // won't work unless spectating
@@ -23580,23 +23775,63 @@ Index: src/game/g_cmds.c
    G_FollowNewClient( ent, dir );
  }
  
-@@ -2695,6 +5997,23 @@
+@@ -2695,6 +5994,63 @@
          // set the correct credit
          ent->client->ps.persistant[ PERS_CREDIT ] = 0;
          G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
 +
 +        // set oc data
-+        if(level.oc)
++        if(level.oc && !connection->hasCheated && !ent->client->pers.hasCheated)
 +        {
 +            ent->client->pers.lastOCCheckpoint = connection->lastOCCheckpoint;
-+            // this isn't effecient because if intially the connection data
-+            // was bigger and, per se a medi was deconned, instead of filtering
-+            // non-medis it copies from the start, and chances are that it
-+            // is going to lose something
-+            if( ent->client->pers.medisLastCheckpoint && connection->medisLastCheckpoint )
-+              memcpy( ent->client->pers.medisLastCheckpoint, connection->medisLastCheckpoint, G_NumberOfMedis( ent->client->pers.connection->medisLastCheckpoint ) < level.totalMedistations - 1 ? G_NumberOfMedis( ent->client->pers.connection->medisLastCheckpoint ) : level.totalMedistations - 1 ); // be safe
-+            if( ent->client->pers.armsLastCheckpoint && connection->armsLastCheckpoint )
-+              memcpy( ent->client->pers.armsLastCheckpoint, connection->armsLastCheckpoint, G_NumberOfArms( ent->client->pers.armsLastCheckpoint ) < level.totalArmouries - 1 ? G_NumberOfArms( ent->client->pers.connection->armsLastCheckpoint ) : level.totalArmouries - 1 ); // be safe
++            if( level.totalMedistations && connection->totalMedistations && ent->client->pers.medisLastCheckpoint && ent->client->pers.medis )
++            {
++                gentity_t **tmp;
++                if(level.totalMedistations > connection->totalMedistations)
++                {
++                    tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
++                    memcpy(tmp, connection->medisLastCheckpoint, connection->totalMedistations + 1);
++                    G_SyncMedis(tmp, level.totalMedistations);
++                }
++                else
++                {
++                    tmp = G_Alloc((connection->totalMedistations + 1) * sizeof(gentity_t *));
++                    memcpy(tmp, connection->medisLastCheckpoint, level.totalMedistations + 1);
++                    G_SyncMedis(tmp, connection->totalMedistations);
++                }
++                if(tmp[level.totalMedistations])
++                {
++                    G_ClientPrint(ent, "^1Error restoring ptrc", CLIENT_SPECTATORS);
++                    return;
++                }
++                memcpy(ent->client->pers.medisLastCheckpoint, tmp, (level.totalMedistations + 1) * sizeof(gentity_t *));
++                G_Free(tmp);
++                memcpy(ent->client->pers.medis, ent->client->pers.medisLastCheckpoint, (level.totalMedistations + 1) * sizeof(gentity_t *));
++            }
++            if( level.totalArmouries && connection->totalArmouries && ent->client->pers.armsLastCheckpoint && ent->client->pers.arms )
++            {
++                gentity_t **tmp;
++                if(level.totalArmouries > connection->totalArmouries)
++                {
++                    tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
++                    memcpy(tmp, connection->armsLastCheckpoint, connection->totalArmouries + 1);
++                    G_SyncArms(tmp, level.totalArmouries);
++                }
++                else
++                {
++                    tmp = G_Alloc((connection->totalArmouries + 1) * sizeof(gentity_t *));
++                    memcpy(tmp, connection->armsLastCheckpoint, level.totalArmouries + 1);
++                    G_SyncArms(tmp, connection->totalArmouries);
++                }
++                if(tmp[level.totalArmouries])
++                {
++                    G_ClientPrint(ent, "^1Error restoring ptrc", CLIENT_SPECTATORS);
++                    return;
++                }
++                memcpy(ent->client->pers.armsLastCheckpoint, tmp, (level.totalArmouries + 1) * sizeof(gentity_t *));
++                G_Free(tmp);
++                memcpy(ent->client->pers.arms, ent->client->pers.armsLastCheckpoint, (level.totalMedistations + 1) * sizeof(gentity_t *));
++            }
 +            ent->client->pers.lastAliveTime = connection->lastAliveTime;
 +            ent->client->pers.aliveTime = connection->aliveTime;
 +            ent->client->pers.hasCheated = connection->hasCheated;
@@ -23604,7 +23839,7 @@ Index: src/game/g_cmds.c
        }
      }
    }
-@@ -2726,7 +6045,7 @@
+@@ -2726,7 +6082,7 @@
    }
  
    Q_strncpyz( name, ConcatArgs( 1 ), sizeof( name ) );
@@ -23613,7 +23848,7 @@ Index: src/game/g_cmds.c
    if( matches < 1 )
    {
      trap_SendServerCommand( ent-g_entities, va( "print \"[skipnotify]"
-@@ -2773,6 +6092,392 @@
+@@ -2773,6 +6129,441 @@
    }
  }
  
@@ -23991,6 +24226,55 @@ Index: src/game/g_cmds.c
 +    }
 +}
 +
++static void Cmd_CPMode_f( gentity_t *ent )
++{
++    char cmd[MAX_STRING_CHARS];
++    char mode[MAX_STRING_CHARS];
++
++    if( g_floodMinTime.integer )
++    {
++        if ( G_Flood_Limited( ent ) )
++        {
++          trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
++          return;
++        }
++    }
++
++    trap_Argv(0, cmd, sizeof(cmd));
++    trap_Argv(1, mode, sizeof(mode));
++
++    switch(mode[0])
++    {
++        case 'E':
++        case 'e':
++        case CP_MODE_ENABLED + '0':
++        case 'y':
++        case 'Y':
++            ent->client->pers.CPMode = CP_MODE_ENABLED;
++            G_ClientPrint(ent, va("%s: CP's are enabled", cmd), 0);
++            break;
++        case 'P':
++        case 'p':
++        case CP_MODE_PRINT + '0':
++        case 'o':
++        case 'O':
++            ent->client->pers.CPMode = CP_MODE_PRINT;
++            G_ClientPrint(ent, va("%s: CP's are printed", cmd), 0);
++            break;
++        case 'D':
++        case 'd':
++        case CP_MODE_DISABLED + '0':
++        case 'n':
++        case 'N':
++            ent->client->pers.CPMode = CP_MODE_DISABLED;
++            G_ClientPrint(ent, va("%s: CP's are disabled", cmd), 0);
++            break;
++        default:
++            G_ClientPrint(ent, va("Usage: %s <Enabled/Print/Disabled>", cmd), 0);
++            break;
++    }
++}
++
 +static void Cmd_AutoUnAngle_f( gentity_t *ent )
 +{
 +    if( level.oc && ent && ent->client )
@@ -24006,7 +24290,7 @@ Index: src/game/g_cmds.c
  commands_t cmds[ ] = {
    // normal commands
    { "team", 0, Cmd_Team_f },
-@@ -2784,11 +6489,16 @@
+@@ -2784,11 +6575,16 @@
    { "tell", CMD_MESSAGE, Cmd_Tell_f },
    { "callvote", CMD_MESSAGE, Cmd_CallVote_f },
    { "callteamvote", CMD_MESSAGE|CMD_TEAM, Cmd_CallTeamVote_f },
@@ -24023,7 +24307,7 @@ Index: src/game/g_cmds.c
  
    { "score", CMD_INTERMISSION, ScoreboardMessage },
  
-@@ -2807,10 +6517,13 @@
+@@ -2807,10 +6603,13 @@
    { "ptrcverify", 0, Cmd_PTRCVerify_f },
    { "ptrcrestore", 0, Cmd_PTRCRestore_f },
  
@@ -24040,7 +24324,7 @@ Index: src/game/g_cmds.c
    { "where", CMD_TEAM, Cmd_Where_f },
    { "teamvote", CMD_TEAM, Cmd_TeamVote_f },
    { "class", CMD_TEAM, Cmd_Class_f },
-@@ -2818,13 +6531,63 @@
+@@ -2818,13 +6617,65 @@
    { "build", CMD_TEAM|CMD_LIVING, Cmd_Build_f },
    { "deconstruct", CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
  
@@ -24071,6 +24355,8 @@ Index: src/game/g_cmds.c
 +
 +  { "mystats", 0, Cmd_Mystats_f },
 +  { "stats", 0, Cmd_Stats_f },
++
++  { "CPMode", 0, Cmd_CPMode_f },
 +
 +  // oc
 +  { "restartOC", CMD_TEAM, Cmd_RestartOC_f },
@@ -24111,7 +24397,7 @@ Index: src/game/g_cmds.c
  };
  static int numCmds = sizeof( cmds ) / sizeof( cmds[ 0 ] );
  
-@@ -2861,7 +6624,7 @@
+@@ -2861,7 +6712,7 @@
  
    // do tests here to reduce the amount of repeated code
  
@@ -24120,7 +24406,7 @@ Index: src/game/g_cmds.c
      return;
  
    if( cmds[ i ].cmdFlags & CMD_CHEAT && !g_cheats.integer )
-@@ -2872,7 +6635,11 @@
+@@ -2872,7 +6723,11 @@
    }
  
    if( cmds[ i ].cmdFlags & CMD_MESSAGE && ent->client->pers.muted )
@@ -24132,7 +24418,7 @@ Index: src/game/g_cmds.c
  
    if( cmds[ i ].cmdFlags & CMD_TEAM &&
        ent->client->pers.teamSelection == PTE_NONE )
-@@ -2898,7 +6665,7 @@
+@@ -2898,7 +6753,7 @@
    }
  
    if( cmds[ i ].cmdFlags & CMD_HUMAN &&
@@ -24141,7 +24427,7 @@ Index: src/game/g_cmds.c
    {
      trap_SendServerCommand( clientNum,
        "print \"Must be human to use this command\n\"" );
-@@ -2907,13 +6674,19 @@
+@@ -2907,13 +6762,19 @@
  
    if( cmds[ i ].cmdFlags & CMD_LIVING &&
      ( ent->client->ps.stats[ STAT_HEALTH ] <= 0 ||
@@ -24162,7 +24448,7 @@ Index: src/game/g_cmds.c
    cmds[ i ].cmdHandler( ent );
  }
  
-@@ -2929,7 +6702,7 @@
+@@ -2929,7 +6790,7 @@
    {
      if( *s == ' ' )
      {
@@ -24171,7 +24457,7 @@ Index: src/game/g_cmds.c
        if( *s != ' ' )
        {
          c++;
-@@ -3019,7 +6792,7 @@
+@@ -3019,7 +6880,7 @@
  }
  
  void G_DecolorString( char *in, char *out )
@@ -24180,7 +24466,7 @@ Index: src/game/g_cmds.c
    while( *in ) {
      if( *in == 27 || *in == '^' ) {
        in++;
-@@ -3053,6 +6826,13 @@
+@@ -3053,6 +6914,13 @@
      return;
    }
  
@@ -24194,7 +24480,7 @@ Index: src/game/g_cmds.c
    G_SayArgv( 0, cmd, sizeof( cmd ) );
    if( !Q_stricmp( cmd, "say" ) || !Q_stricmp( cmd, "say_team" ) )
    {
-@@ -3102,6 +6882,17 @@
+@@ -3102,6 +6970,17 @@
  
    color = teamonly ? COLOR_CYAN : COLOR_YELLOW;
  
@@ -24212,7 +24498,7 @@ Index: src/game/g_cmds.c
    Q_strncpyz( str,
      va( "^%csent to %i player%s: ^7", color, matches,
        ( matches == 1 ) ? "" : "s" ),
-@@ -3123,13 +6914,7 @@
+@@ -3123,13 +7002,7 @@
        color,
        msg,
        ent ? ent-g_entities : -1 ) );
@@ -24227,7 +24513,7 @@ Index: src/game/g_cmds.c
        "cp \"^%cprivate message from ^7%s^7\"", color,
        ( ent ) ? ent->client->pers.netname : "console" ) );
    }
-@@ -3139,7 +6924,9 @@
+@@ -3139,7 +7012,9 @@
        name ) );
    else
    {
@@ -24238,7 +24524,7 @@ Index: src/game/g_cmds.c
      ADMP( va( "%s\n", str ) );
  
      G_LogPrintf( "%s: %s: %s: %s\n",
-@@ -3163,3 +6950,491 @@
+@@ -3163,3 +7038,501 @@
    }
  }
  
@@ -24557,6 +24843,16 @@ Index: src/game/g_cmds.c
 +        if(ent)  // ent->client does need to exist but checking here is unnecessary because it was already checked above
 +            trap_SendServerCommand( ent - g_entities, va( "cp \"%s\n\"", message ) );
 +        return;
++    }
++
++    switch(ent->client->pers.CPMode)
++    {
++        case CP_MODE_PRINT:
++            G_ClientPrint(ent, message, mode);
++        case CP_MODE_DISABLED:
++            return;
++        default:
++            break;
 +    }
 +
 +    Q_strncpyz(buf, message, sizeof(buf));
