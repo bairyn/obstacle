@@ -5734,6 +5734,8 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
 
   trap_LinkEntity( built );
 
+  G_StructureBuilt( built );
+
   // ok we're all done building, so what we log here should be the final values
   if( builder && builder->client ) // log ingame building only
   {
@@ -5915,8 +5917,6 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
   G_SetOrigin( built, tr.endpos );
 
   trap_LinkEntity( built );
-
-  G_StructureBuilt( built );
 }
 
 /*
@@ -6261,8 +6261,6 @@ gentity_t *G_InstantBuild( buildable_t buildable, vec3_t origin, vec3_t angles, 
   G_SetOrigin( built, tr.endpos );
 
   trap_LinkEntity( built );
-
-  G_StructureBuilt( built );
 
   return built;
 }

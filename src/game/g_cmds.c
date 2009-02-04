@@ -3115,7 +3115,6 @@ void Cmd_Destroy_f( gentity_t *ent )
           new->next = NULL;
           new->marked = NULL;
           G_LogBuild( new );
-          G_StructureDecon( traceEnt );
 
            if( traceEnt->health > 0 )
            {
