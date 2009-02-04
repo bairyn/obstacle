@@ -6000,7 +6000,7 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         if(level.oc && !connection->hasCheated && !ent->client->pers.hasCheated)
         {
             ent->client->pers.lastOCCheckpoint = connection->lastOCCheckpoint;
-            if( level.totalMedistations && connection->totalMedistations && ent->client->pers.medisLastCheckpoint )
+            if( level.totalMedistations && connection->totalMedistations && ent->client->pers.medisLastCheckpoint && ent->client->pers.medis )
             {
                 gentity_t **tmp;
                 if(level.totalMedistations > connection->totalMedistations)
@@ -6022,8 +6022,9 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
                 }
                 memcpy(ent->client->pers.medisLastCheckpoint, tmp, (level.totalMedistations + 1) * sizeof(gentity_t *));
                 G_Free(tmp);
+                memcpy(ent->client->pers.medis, ent->client->pers.medisLastCheckpoint, (level.totalMedistations + 1) * sizeof(gentity_t *));
             }
-            if( level.totalArmouries && connection->totalArmouries && ent->client->pers.armsLastCheckpoint )
+            if( level.totalArmouries && connection->totalArmouries && ent->client->pers.armsLastCheckpoint && ent->client->pers.arms )
             {
                 gentity_t **tmp;
                 if(level.totalArmouries > connection->totalArmouries)
@@ -6045,6 +6046,7 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
                 }
                 memcpy(ent->client->pers.armsLastCheckpoint, tmp, (level.totalArmouries + 1) * sizeof(gentity_t *));
                 G_Free(tmp);
+                memcpy(ent->client->pers.arms, ent->client->pers.armsLastCheckpoint, (level.totalMedistations + 1) * sizeof(gentity_t *));
             }
             ent->client->pers.lastAliveTime = connection->lastAliveTime;
             ent->client->pers.aliveTime = connection->aliveTime;
