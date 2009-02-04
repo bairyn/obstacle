@@ -4,6 +4,8 @@
 # GNU Make required
 #
 
+GAMESUM=$(shell cat src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
+
 COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]')
 
 COMPILE_ARCH=$(shell uname -m | sed -e s/i.86/x86/)
@@ -191,7 +193,7 @@ ifeq ($(PLATFORM),linux)
   endif
   endif
 
-  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
+  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -DGAMESUM ${GAMESUM} \
     -pipe -DUSE_ICON $(shell sdl-config --cflags)
 
   ifeq ($(USE_OPENAL),1)
