@@ -419,7 +419,7 @@ typedef enum
   BA_H_MEDISTAT,   // 14
 
   BA_H_REACTOR,    // 15
-  BA_H_REPEATER,   //16
+  BA_H_REPEATER,   // 16
 
   BA_NUM_BUILDABLES
 } buildable_t;
