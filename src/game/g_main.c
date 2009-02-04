@@ -24,7 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 
 #define VERSION "1.3.7"
-#define BUILDID "\""GAMESUM"\""
+#define BUILDID GAMESUM
+#define STRINGIFY(x) #x
 
 level_locals_t  level;
 
@@ -210,7 +211,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { NULL, "P", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "ff", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "g_version", VERSION, CVAR_ROM, 0, qfalse  },
-  { NULL, "g_build", BUILDID, CVAR_ROM, 0, qfalse  },
+  { NULL, "g_build", STRINGIFY(BUILDID), CVAR_ROM, 0, qfalse  },
 
   // latched vars
 
