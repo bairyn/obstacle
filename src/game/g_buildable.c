@@ -5941,6 +5941,8 @@ void G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int s
   ent->groupID = groupID;
   ent->spawnGroup = spawnGroup;
   ent->reserved2 = reserved2;
+
+  G_StructureBuilt(ent);
 }
 
  /*
