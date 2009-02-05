@@ -1251,7 +1251,7 @@ void ClientUserinfoChanged( int clientNum )
   if( *s && atoi( s ) )
     client->pers.flySpeed = atoi( s );
   else
-    client->pers.flySpeed = BG_FindSpeedForClass( PCL_NONE );
+    client->pers.flySpeed = BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
 
   // teamInfo
   s = Info_ValueForKey( userinfo, "teamoverlay" );
