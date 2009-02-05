@@ -3446,7 +3446,7 @@ qboolean G_admin_speed( gentity_t *ent, int skiparg )
   ent->client->pers.hasCheated = 1;
   ent->client->pers.speed = !ent->client->pers.speed;
 
-  trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", ( ent->flags & FL_GODMODE ) ? ("speedmode ON\n") : ("speedmode OFF\n") ));
+  trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", ( ent->client->pers.speed ) ? ("speedmode ON\n") : ("speedmode OFF\n") ));
 
     AP( va(
       "print \"^3!cheat-speed: ^7%s^7 cheats.\n\"",
