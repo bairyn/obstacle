@@ -7375,16 +7375,6 @@ void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
         return;
     }
 
-    switch(ent->client->pers.CPMode)
-    {
-        case CP_MODE_PRINT:
-            G_ClientPrint(ent, message, mode);
-        case CP_MODE_DISABLED:
-            return;
-        default:
-            break;
-    }
-
     Q_strncpyz(buf, message, sizeof(buf));
 
     // iterate for each client
@@ -7431,6 +7421,16 @@ void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
 
         if(target)
         {
+            switch(i->client->pers.CPMode)
+            {
+                case CP_MODE_PRINT:
+                    G_ClientPrint(i, message, mode);
+                case CP_MODE_DISABLED:
+                    return;
+                default:
+                    break;
+            }
+
             // now fragmented
 //            // stop if the client has already reached his max cp's
 //            if(i->client->pers.clientCP[MAX_CP - 1].active)
