@@ -6611,7 +6611,7 @@ commands_t cmds[ ] = {
   { "god", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_God_f },
   { "speed", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Speed_f },
   { "notarget", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Notarget_f },
-  { "noclip", CMD_CHEAT_TEAM|CMD_LIVING, Cmd_Noclip_f },
+  { "noclip", CMD_CHEAT_TEAM, Cmd_Noclip_f },
   { "levelshot", CMD_CHEAT, Cmd_LevelShot_f },
   { "setviewpos", CMD_CHEAT_TEAM, Cmd_SetViewpos_f },
   { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
