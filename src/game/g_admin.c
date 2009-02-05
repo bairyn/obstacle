@@ -3005,6 +3005,7 @@ qboolean G_admin_putscrimteam( gentity_t *ent, int skiparg )
     // existing team
     if(vic->client->pers.ocTeam)
         G_OCScrimTeamRemovePlayer(vic);
+    G_OCScrimTeam(teamName)->notSingleTeam = 1;
     vic->client->pers.ocTeam = G_OCScrimTeam(teamName) - level.scrimTeam;
     G_ClientPrint(NULL, va("%s^7 was put on to scrim team %s^7 (%ss^7) by %s", vic->client->pers.netname, level.scrimTeam[vic->client->pers.ocTeam].name, BG_FindHumanNameForWeapon(level.scrimTeam[vic->client->pers.ocTeam].weapon), ( ent ) ? ent->client->pers.netname : "console"), 0);
     return qtrue;

@@ -6255,6 +6255,7 @@ static void Cmd_JoinScrim_f( gentity_t *ent )
   if(G_OCScrimTeam(teamName))
   {
     // existing team
+    G_OCScrimTeam(teamName)->notSingleTeam = 1;
     ent->client->pers.ocTeam = G_OCScrimTeam(teamName) - level.scrimTeam;
     G_ClientPrint(NULL, va("%s^7 joined scrim team %s^7 (%ss^7)", ent->client->pers.netname, level.scrimTeam[ent->client->pers.ocTeam].name, BG_FindHumanNameForWeapon(level.scrimTeam[ent->client->pers.ocTeam].weapon)), 0);
   }

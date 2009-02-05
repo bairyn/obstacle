@@ -744,6 +744,7 @@ struct buildHistory_s
 typedef struct
 {
     int       active;
+    int       notSingleTeam;
     char      name[MAX_NAME_LENGTH];
     int       time;
     gentity_t **arms;
