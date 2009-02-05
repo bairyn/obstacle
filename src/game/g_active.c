@@ -395,6 +395,8 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
 
   if( client->sess.spectatorState == SPECTATOR_LOCKED || client->sess.spectatorState == SPECTATOR_FOLLOW )
     client->ps.pm_type = PM_FREEZE;
+  else if( client->noclip )
+    client->ps.pm_type = PM_NOCLIP;
   else
     client->ps.pm_type = PM_SPECTATOR;
 
@@ -411,7 +413,10 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
 
   if (doPmove)
   {
-    client->ps.speed = BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
+    if(client->pers.flySpeed)
+        client->ps.speed = client->pers.flySpeed;
+    else
+        client->ps.speed = BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
 
     client->ps.stats[ STAT_STAMINA ] = 0;
     client->ps.stats[ STAT_MISC ] = 0;
@@ -1546,7 +1551,10 @@ void ClientThink_real( gentity_t *ent )
   }
 
   // set speed
-  client->ps.speed = g_speed.value * BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
+  if( ( client->ps.pm_type == PM_NOCLIP || client->pers.speed ) && client->pers.flySpeed )
+    client->ps.speed = client->pers.flySpeed;
+  else
+    client->ps.speed = g_speed.value * BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
 
   if( client->lastCreepSlowTime + CREEP_TIMEOUT < level.time )
     client->ps.stats[ STAT_STATE ] &= ~SS_CREEPSLOWED;

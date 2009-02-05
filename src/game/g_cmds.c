@@ -754,6 +754,30 @@ void Cmd_God_f( gentity_t *ent )
 
 /*
 ==================
+Cmd_Speed_f
+
+Sets client to speedmode
+
+argv(0) speed
+==================
+*/
+void Cmd_Speed_f( gentity_t *ent )
+{
+  char  *msg;
+
+  ent->client->pers.speed = !ent->client->pers.speed;
+
+  if( !ent->client->pers.speed )
+    msg = "speedmode OFF\n";
+  else
+    msg = "speedmode ON\n";
+
+  trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", msg ) );
+}
+
+
+/*
+==================
 Cmd_Notarget_f
 
 Sets client to notarget
@@ -765,19 +789,12 @@ void Cmd_Notarget_f( gentity_t *ent )
 {
   char  *msg;
 
- if( !g_devmapNoGod.integer )
- {
   ent->flags ^= FL_NOTARGET;
 
   if( !( ent->flags & FL_NOTARGET ) )
     msg = "notarget OFF\n";
   else
     msg = "notarget ON\n";
- }
- else
- {
-  msg = "Godmode has been disabled.\n";
- }
 
   trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", msg ) );
 }
@@ -6591,10 +6608,11 @@ commands_t cmds[ ] = {
   // cheats
   { "give", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Give_f },
   { "god", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_God_f },
+  { "speed", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Speed_f },
   { "notarget", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Notarget_f },
-  { "noclip", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Noclip_f },
+  { "noclip", CMD_CHEAT_TEAM|CMD_LIVING, Cmd_Noclip_f },
   { "levelshot", CMD_CHEAT, Cmd_LevelShot_f },
-  { "setviewpos", CMD_CHEAT, Cmd_SetViewpos_f },
+  { "setviewpos", CMD_CHEAT_TEAM, Cmd_SetViewpos_f },
   { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
 
   { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
@@ -6610,7 +6628,7 @@ commands_t cmds[ ] = {
   { "follownext", 0, Cmd_FollowCycle_f },
   { "followprev", 0, Cmd_FollowCycle_f },
 
-  { "where", CMD_TEAM, Cmd_Where_f },
+  { "where", 0, Cmd_Where_f },
   { "teamvote", CMD_TEAM, Cmd_TeamVote_f },
   { "class", CMD_TEAM, Cmd_Class_f },
 
@@ -6736,7 +6754,8 @@ void ClientCommand( int clientNum )
     return;
   }
 
-  if( cmds[ i ].cmdFlags & CMD_NOTEAM &&
+  if( ( cmds[ i ].cmdFlags & CMD_NOTEAM ||
+      ( cmds[ i ].cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer ) ) &&
       ent->client->pers.teamSelection != PTE_NONE )
   {
     trap_SendServerCommand( clientNum,

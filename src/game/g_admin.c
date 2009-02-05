@@ -160,8 +160,13 @@ g_admin_cmd_t g_admin_cmds[ ] =
     },
 
     {"cheat-set", G_admin_setCheat, "^^c",
-      "notarget - requires cheats",
+      "set cheat - requires cheats",
       "[^3name|slot#^7]"
+    },
+
+    {"cheat-speed", G_admin_speed, "^c",
+      "speed - requires cheats",
+      ""
     },
 
     {"cheat-notarget", G_admin_notarget, "^c",
@@ -3418,6 +3423,32 @@ qboolean G_admin_god( gentity_t *ent, int skiparg )
 
     AP( va(
       "print \"^3!cheat-god: ^7%s^7 cheats.\n\"",
+      ( ent ) ? ent->client->pers.netname : "console" ) );
+
+  return qtrue;
+}
+
+qboolean G_admin_speed( gentity_t *ent, int skiparg )
+{
+  if (!ent || ent->client->pers.teamSelection == PTE_NONE || ent->client->sess.sessionTeam == TEAM_SPECTATOR || ent->client->ps.stats[ STAT_HEALTH ] <= 0)
+  {
+    ADMP( "Join a team first / Must be living to use this command / Cannot be run as console\n" );
+    return qfalse;
+  }
+
+  if ( !g_cheats.integer && !g_allowAdminCheats.integer )
+  {
+    ADMP( "^3!cheat-speed: ^7Cheats are not enabled on this server\n" );
+    return qfalse;
+  }
+
+  ent->client->pers.hasCheated = 1;
+  ent->client->pers.speed = !ent->client->pers.speed;
+
+  trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", ( ent->flags & FL_GODMODE ) ? ("speedmode ON\n") : ("speedmode OFF\n") ));
+
+    AP( va(
+      "print \"^3!cheat-speed: ^7%s^7 cheats.\n\"",
       ( ent ) ? ent->client->pers.netname : "console" ) );
 
   return qtrue;

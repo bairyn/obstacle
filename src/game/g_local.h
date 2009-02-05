@@ -459,6 +459,8 @@ typedef struct
   int                 enterTime;          // level.time the client entered the game
   playerTeamState_t   teamState;          // status in teamplay games
   int                 voteCount;          // to prevent people from constantly calling votes
+  float               flySpeed;           // for spectator/noclip moves
+  int                 speed;              // cheat to force the player to his speed
   qboolean            teamInfo;           // send team overlay updates?
 
   pClass_t            classSelection;     // player class (copied to ent->client->ps.stats[ STAT_PCLASS ] once spawned)
@@ -939,14 +941,15 @@ typedef struct
 #define OC_MODE_ARM  2
 
 #define CMD_CHEAT         0x00000001
-#define CMD_MESSAGE       0x00000002 // sends message to others (skip when muted)
-#define CMD_TEAM          0x00000004 // must be on a team
-#define CMD_NOTEAM        0x00000008 // must not be on a team
-#define CMD_ALIEN         0x00000010
-#define CMD_HUMAN         0x00000020
-#define CMD_LIVING        0x00000040
-#define CMD_INTERMISSION  0x00000080 // valid during intermission
-#define CMD_STEALTH       0x00000100 // will print Unknown command if command has permission to run
+#define CMD_CHEAT_TEAM    0x00000002
+#define CMD_MESSAGE       0x00000004 // sends message to others (skip when muted)
+#define CMD_TEAM          0x00000008 // must be on a team
+#define CMD_NOTEAM        0x00000010 // must not be on a team
+#define CMD_ALIEN         0x00000020
+#define CMD_HUMAN         0x00000040
+#define CMD_LIVING        0x00000080
+#define CMD_INTERMISSION  0x00000100 // valid during intermission
+#define CMD_STEALTH       0x00000200 // will print Unknown command if command has permission to run
 
 typedef struct
 {

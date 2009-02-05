@@ -270,6 +270,7 @@ qboolean G_admin_endscrim( gentity_t *ent, int skiparg );
 qboolean G_admin_startscrim( gentity_t *ent, int skiparg );
 qboolean G_admin_flag( gentity_t *ent, int skiparg );
 qboolean G_admin_setCheat( gentity_t *ent, int skiparg );
+qboolean G_admin_speed( gentity_t *ent, int skiparg );
 
 qboolean G_admin_canEditOC( gentity_t *ent );
 
