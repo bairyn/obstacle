@@ -352,8 +352,14 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
 
                 if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, 0) == NULL)
                     return spot;
-//                else if(spot)
-//                    return NULL;
+                // when a buildable is built, it only checks for humans
+                // and since players can always spawn as dretches which will always
+                // work aliens need to always spawn on their checkpoint
+                else if(spot)
+                    return spot;
+                // but if the booster was deconned they will be spawned randomly
+    //            else if(spot)
+    //                return NULL;
             }
         }
         else if(ent->client->pers.lastOCCheckpoint)
@@ -362,6 +368,12 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
 
             if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, 0) == NULL)
                 return spot;
+            // when a buildable is built, it only checks for humans
+            // and since players can always spawn as dretches which will always
+            // work aliens need to always spawn on their checkpoint
+            else if(spot)
+                return spot;
+            // but if the booster was deconned they will be spawned randomly
 //            else if(spot)
 //                return NULL;
         }
