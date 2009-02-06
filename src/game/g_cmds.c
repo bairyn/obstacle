@@ -6289,17 +6289,18 @@ static void Cmd_Hide_f( gentity_t *ent )
         }
         else if( level.time > ent->client->pers.hiddenTime )
         {
+            ent->client->pers.hidden = !ent->client->pers.hidden;
             if( ent->client->pers.hidden )
             {
-                ADMP( va( "You are already hidden\n" ) );
-            }
-            else
-            {
-                ent->client->pers.hidden = 1;
                 G_StopFromFollowing( ent );
                 ent->r.svFlags |= SVF_SINGLECLIENT;
                 ent->r.singleClient = ent-g_entities;
-                ADMP( va( "You have been marked as hidden\n" ) );
+                ADMP( va( "You have been hidden\n" ) );
+            }
+            else
+            {
+                ent->r.svFlags &= ~SVF_SINGLECLIENT;
+                ADMP( va( "You have become visible\n" ) );
             }
         }
         else
@@ -6309,6 +6310,7 @@ static void Cmd_Hide_f( gentity_t *ent )
     }
 }
 
+/*
 static void Cmd_Unhide_f( gentity_t *ent )
 {
     if( level.oc )
@@ -6337,6 +6339,7 @@ static void Cmd_Unhide_f( gentity_t *ent )
         }
     }
 }
+*/
 
 static void Cmd_TestHidden_f( gentity_t *ent )
 {
@@ -6664,10 +6667,10 @@ commands_t cmds[ ] = {
   { "leaveScrim", CMD_MESSAGE, Cmd_LeaveScrim_f },
   { "joinScrim", CMD_MESSAGE, Cmd_JoinScrim_f },
   { "hide", CMD_TEAM|CMD_LIVING, Cmd_Hide_f },
-  { "unhide", CMD_TEAM|CMD_LIVING, Cmd_Unhide_f },
+//  { "unhide", CMD_TEAM|CMD_LIVING, Cmd_Unhide_f },
   { "testHidden", 0, Cmd_TestHidden_f },
 //  { "normalTime", 0, Cmd_TimeDisplay_f },
-  { "ocTime", 0, Cmd_TimeDisplay_f },
+  { "OCTime", 0, Cmd_TimeDisplay_f },
   { "teleboost", CMD_TEAM|CMD_LIVING, Cmd_TeleportToCheckpoint_f },
   { "quickRestartOC", CMD_TEAM|CMD_LIVING, Cmd_QuickRestartOC_f },
   { "EnableAutoAngle", CMD_TEAM|CMD_LIVING, Cmd_AutoAngle_f },
