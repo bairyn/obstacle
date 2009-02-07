@@ -5985,6 +5985,7 @@ void G_Unescape( char *input, char *output, int len )
 qboolean G_StringReplaceCvars( char *input, char *output, int len )
 {
   int i, outNum = 0;
+  char tmp;
   char cvarName[ 64 ], cvarValue[ MAX_CVAR_VALUE_STRING ];
   char *outputBuffer;
   qboolean doneAnything = qfalse;
@@ -6012,7 +6013,56 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
       cvarName[ i ] = '\0';
       if( *input == '}' )
         input++;
-      trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
+
+      tmp = cvarName[strlen("oc-rating")];
+      cvarName[strlen("oc-rating")] = 0;
+      if(strcmp(cvarName, "oc-rating") == 0)
+      {
+        // ${oc-rating atcs oc}
+        char *s;
+        char map[ MAX_STRING_CHARS ] = {""};
+        char layout[ MAX_STRING_CHARS ] = {""};
+
+        cvarValue[0] = 0;
+        cvarName[strlen("oc-rating")] = tmp;
+        s = cvarName + strlen("oc-rating");
+        i = 0;
+        while(*s != ' ' && *s != '\t' && *s != '-')
+        {
+            if(!*s)
+            {
+                break;
+            }
+
+            map[i++] = *s;
+            map[i] = 0;
+
+            s++;
+        }
+        while(*s == ' ' && *s == '\t') s++;
+        while(*s != ' ' && *s != '\t' && *s != '-')
+        {
+            if(!*s)
+            {
+                break;
+            }
+
+            layout[i++] = *s;
+            layout[i] = 0;
+
+            s++;
+        }
+        if(s && *s && map[0] && layout[0] && (s = G_LayoutRating(map, layout)) && s[0])
+        {
+            Q_strncpyz(cvarValue, s, sizeof(cvarValue));
+        }
+      }
+      else
+      {
+        cvarName[strlen("oc-rating")] = tmp;
+        trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
+      }
+
       if( cvarValue[ 0 ] )
       {
         for( i = 0; cvarValue[ i ] && outNum < len; i++ )

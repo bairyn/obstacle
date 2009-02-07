@@ -39,7 +39,15 @@ typedef struct
     float reserved2;
 } layout_table_t;
 
+typedef struct
+{
+    char mapname[ MAX_STRING_CHARS ];
+    char layoutname[ MAX_STRING_CHARS ];
+    char rating[ MAX_STRING_CHARS ];
+} ratings_table_t;
+
 static layout_table_t *layout_table = NULL;
+static ratings_table_t *ratings_table = NULL;
 
 /*
 ================
@@ -6737,4 +6745,190 @@ int G_CountBuildLog( void )
     return g_buildLogMaxLength.integer;
   }
   return i;
+}
+
+/*
+============
+G_LoadLayoutRatings
+
+load info/info-ratings.dat file
+============
+*/
+void G_LoadLayoutRatings( void )
+{
+    fileHandle_t f;
+    int len;
+    int i = 0;
+    char line[ MAX_STRING_CHARS ], *l, *l2, tmp;
+    char mapname[ MAX_STRING_CHARS ], layoutname[ MAX_STRING_CHARS ], rating[ MAX_STRING_CHARS ];
+    char *ratings;
+    ratings_table_t *r;
+
+    len = trap_FS_FOpenFile( "info/info-ratings.dat",
+           &f, FS_READ );
+    if( len < 0 )
+    {
+        G_Printf( "WARNING: info/info-ratings.dat could not be opened\n" );
+        return;
+    }
+
+    ratings = G_Alloc( len + 1 );
+    trap_FS_Read( ratings, len, f );
+    *( ratings + len ) = '\0';
+    trap_FS_FCloseFile( f );
+
+    while( *ratings )
+    {
+        if( i >= sizeof( line ) - 1 )
+        {
+            G_Printf( S_COLOR_RED "ERROR: line overflow in info/info-ratings.dat before \"%s\"\n", line );
+            return;
+        }
+        line[ i++ ] = *ratings;
+        line[ i ] = '\0';
+        if( *ratings == '\n' )
+        {
+            i = 0;
+
+            // first extract mapname
+            l = line;
+            while(*l != ' ' && *l != '\t' && *l != '\n')
+            {
+                if(!*l)
+                {
+                    G_Printf( S_COLOR_RED "ERROR: malformed line in info/info-ratings.dat before \"%s\"\n", line );
+                    return;
+                }
+
+                l++;
+            }
+
+            tmp = *l;
+            *l = 0;
+            Q_strncpyz(mapname, line, sizeof(mapname));
+            *l = tmp;
+
+            // next extract layoutname
+            //set l2 to the first non-whitespace character and l the first
+            //first whitespace character
+            l2 = l;
+            while(*l2 == ' ' && *l != '\t' && *l2 == '\n')
+            {
+                if(!*l2)
+                {
+                    G_Printf( S_COLOR_RED "ERROR: malformed line in info/info-ratings.dat before \"%s\"\n", line );
+                    return;
+                }
+
+                l2++;
+            }
+
+            l = l2;
+            while(*l != ' ' && *l != '\t' && *l != '\n')
+            {
+                if(!*l)
+                {
+                    G_Printf( S_COLOR_RED "ERROR: malformed line in info/info-ratings.dat before \"%s\"\n", line );
+                    return;
+                }
+
+                l++;
+            }
+
+            tmp = *l;
+            *l = 0;
+            Q_strncpyz(layoutname, l2, sizeof(layoutname));
+            *l = tmp;
+
+            // next extract rating
+            //set l2 to the first non-whitespace character and l the first
+            //first whitespace character
+            l2 = l;
+            while(*l2 == ' ' && *l != '\t' && *l2 == '\n')
+            {
+                if(!*l2)
+                {
+                    G_Printf( S_COLOR_RED "ERROR: malformed line in info/info-ratings.dat before \"%s\"\n", line );
+                    return;
+                }
+
+                l2++;
+            }
+
+            l = l2;
+//            while(*l != ' ' && *l != '\t' && *l != '\n')
+            while(*l != '\n')
+            {
+//                if(!*l)
+//                {
+//                    G_Printf( S_COLOR_RED "ERROR: malformed line in info/info-ratings.dat before \"%s\"\n", line );
+//                    return;
+//                }
+
+                l++;
+            }
+
+            tmp = *l;
+            *l = 0;
+            Q_strncpyz(rating, l2, sizeof(rating));
+            *l = tmp;
+
+            if(!ratings_table)
+            {
+                // allocate room for the table
+                ratings_table = G_Alloc(MAX_LAYOUT_RATINGS);
+            }
+
+            for(r = ratings_table; r < ratings_table + MAX_LAYOUT_RATINGS; r++)
+            {
+                if(!*((const char *)r))
+                {
+                    Q_strncpyz(r->mapname, mapname, sizeof(r->mapname));
+                    Q_strncpyz(r->layoutname, mapname, sizeof(r->layoutname));
+                    Q_strncpyz(r->rating, mapname, sizeof(r->rating));
+                    break;
+                }
+            }
+
+            if(r >= ratings_table + MAX_LAYOUT_RATINGS)
+            {
+                G_Printf( S_COLOR_RED "ERROR: too many ratings to hold (%d) on line \"%s\"", MAX_LAYOUT_RATINGS, line );
+                return;
+            }
+        }
+
+        ratings++;
+    }
+}
+
+char *G_LayoutRating( char *mapname, char *layoutname )
+{
+    ratings_table_t *r;
+
+    if(!ratings_table)
+        G_LoadLayoutRatings();
+
+    if(!ratings_table)
+        return NULL;
+
+    if(!layoutname)
+        layoutname = level.layout;
+
+    if(mapname)
+    {
+        for(r = ratings_table; r < ratings_table + MAX_LAYOUT_RATINGS; r++)
+        {
+            if(!*((const char *)r))
+            {
+                return NULL;
+            }
+
+            if(strcmp(mapname, r->mapname) == 0 && strcmp(layoutname, r->layoutname) == 0)
+            {
+                return r->rating;
+            }
+        }
+    }
+
+    return NULL;
 }

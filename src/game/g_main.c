@@ -181,6 +181,7 @@ vmCvar_t  g_ocAutoVotes;
 vmCvar_t  g_ocEditMode;
 vmCvar_t  g_allowHiding;
 vmCvar_t  g_hideTimeCallvoteMinutes;
+vmCvar_t  g_hideNotTimeCallvoteMinutes;
 vmCvar_t  g_statsEnabled;
 vmCvar_t  g_statsRecords;
 vmCvar_t  g_disableCPMixes;
@@ -242,6 +243,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_ocEditMode, "g_ocEditMode", "0", CVAR_ARCHIVE, 0, qtrue  },
   { &g_allowHiding, "g_allowHiding", "1", CVAR_ARCHIVE, 0, qtrue  },
   { &g_hideTimeCallvoteMinutes, "g_hideTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_hideNotTimeCallvoteMinutes, "g_hideNotTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  },
   { &g_statsEnabled, "g_statsEnabled", "0", CVAR_ARCHIVE, 0, qtrue  },
   { &g_statsRecords, "g_statsRecords", "10", CVAR_ARCHIVE, 0, qtrue  },
   { &g_disableCPMixes, "g_disableCPMixes", "1", CVAR_ARCHIVE, 0, qtrue  },
@@ -810,6 +812,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
     level.humanTeamLocked=qtrue;
     trap_Cvar_Set( "g_lockTeamsAtStart", "0" );
   }
+
+  G_LoadLayoutRatings( );
 }
 
 /*

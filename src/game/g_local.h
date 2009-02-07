@@ -79,6 +79,7 @@ typedef struct gclient_s gclient_t;
 // TODO: keep G_Alloc from crashing server when (and only when) trying different memory sizes it can't handle.
 // until then, both these are somewhat low
 #define MIN_LAYOUT_BUILDABLES 512
+#define MAX_LAYOUT_RATINGS 4096
 
 #define FRAMETIME     100         // msec
 #define CARNAGE_REWARD_TIME 3000
@@ -1098,6 +1099,8 @@ void              G_LayoutSave( char *name );
 int               G_LayoutList( const char *map, char *list, int len );
 void              G_LayoutSelect( void );
 void              G_LayoutLoad( char *layout );
+void              G_LoadLayoutRatings( void );
+char              *G_LayoutRating( char *mapname, char *layoutname );
 int               G_AddArmouryToClient( gentity_t *ent, int *test, int *test2 );
 void              G_BaseSelfDestruct( pTeam_t team );
 gentity_t         *G_InstantBuild( buildable_t buildable, vec3_t origin, vec3_t angles, vec3_t origin2, vec3_t angles2 );
