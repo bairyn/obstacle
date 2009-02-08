@@ -79,7 +79,7 @@ typedef struct gclient_s gclient_t;
 // TODO: keep G_Alloc from crashing server when (and only when) trying different memory sizes it can't handle.
 // until then, both these are somewhat low
 #define MIN_LAYOUT_BUILDABLES 512
-#define MAX_LAYOUT_RATINGS 4096
+#define MAX_LAYOUT_RATINGS 1024
 
 #define FRAMETIME     100         // msec
 #define CARNAGE_REWARD_TIME 3000
