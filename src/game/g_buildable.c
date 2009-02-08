@@ -3020,6 +3020,7 @@ int G_StructureBuilt( gentity_t *ent )
                     G_Free(si->medis);
                     si->medis = G_Alloc( ( level.totalMedistations + 1 ) * sizeof( gentity_t * ) );
                     memcpy(si->medis, tmp, level.totalMedistations * sizeof( gentity_t * ));
+                    G_Free(tmp);
                 }
                 else
                 {
@@ -3036,6 +3037,7 @@ int G_StructureBuilt( gentity_t *ent )
                 G_Free(level.clients[i].pers.medis);
                 level.clients[i].pers.medis = G_Alloc( ( level.totalMedistations + 1 ) * sizeof( gentity_t * ) );
                 memcpy(level.clients[i].pers.medis, tmp, level.totalMedistations * sizeof( gentity_t * ));
+                G_Free(tmp);
             }
             else if(g_entities[i].client && level.clients[i].pers.connected)
             {
@@ -3049,6 +3051,7 @@ int G_StructureBuilt( gentity_t *ent )
                 G_Free(level.clients[i].pers.medisLastCheckpoint);
                 level.clients[i].pers.medisLastCheckpoint = G_Alloc( ( level.totalMedistations + 1 ) * sizeof( gentity_t * ) );
                 memcpy(level.clients[i].pers.medisLastCheckpoint, tmp, level.totalMedistations * sizeof( gentity_t * ));
+                G_Free(tmp);
             }
             else if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED)
             {
@@ -3072,6 +3075,7 @@ int G_StructureBuilt( gentity_t *ent )
                     G_Free(si->arms);
                     si->arms = G_Alloc( ( level.totalArmouries + 1 ) * sizeof( gentity_t * ) );
                     memcpy(si->arms, tmp, level.totalArmouries * sizeof( gentity_t * ));
+                    G_Free(tmp);
                 }
                 else
                 {
@@ -3088,6 +3092,7 @@ int G_StructureBuilt( gentity_t *ent )
                 G_Free(level.clients[i].pers.arms);
                 level.clients[i].pers.arms = G_Alloc( ( level.totalArmouries + 1 ) * sizeof( gentity_t * ) );
                 memcpy(level.clients[i].pers.arms, tmp, level.totalArmouries * sizeof( gentity_t * ));
+                G_Free(tmp);
             }
             else if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED)
             {
@@ -3101,6 +3106,7 @@ int G_StructureBuilt( gentity_t *ent )
                 G_Free(level.clients[i].pers.armsLastCheckpoint);
                 level.clients[i].pers.armsLastCheckpoint = G_Alloc( ( level.totalArmouries + 1 ) * sizeof( gentity_t * ) );
                 memcpy(level.clients[i].pers.armsLastCheckpoint, tmp, level.totalArmouries * sizeof( gentity_t * ));
+                G_Free(tmp);
             }
             else if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED)
             {
@@ -3141,6 +3147,7 @@ int G_StructureDecon( gentity_t *ent )
                     G_Free(si->medis);
                     si->medis = G_Alloc( ( level.totalMedistations + 1 ) * sizeof( gentity_t * ) );
                     memcpy(si->medis, tmp, level.totalMedistations * sizeof( gentity_t * ));
+                    G_Free(tmp);
                 }
             }
             for( i = 0; i < MAX_CLIENTS; i++ )
@@ -3153,6 +3160,7 @@ int G_StructureDecon( gentity_t *ent )
                     G_Free(level.clients[i].pers.medis);
                     level.clients[i].pers.medis = G_Alloc( ( level.totalMedistations + 1 ) * sizeof( gentity_t * ) );
                     memcpy(level.clients[i].pers.medis, tmp, level.totalMedistations * sizeof( gentity_t * ));
+                    G_Free(tmp);
 
                     tmp = G_Alloc( ( level.totalMedistations + 2 ) * sizeof( gentity_t * ) );
                     memcpy(tmp, level.clients[i].pers.medisLastCheckpoint, ( level.totalMedistations ) * sizeof( gentity_t * ));
@@ -3160,6 +3168,7 @@ int G_StructureDecon( gentity_t *ent )
                     G_Free(level.clients[i].pers.medisLastCheckpoint);
                     level.clients[i].pers.medisLastCheckpoint = G_Alloc( ( level.totalMedistations + 1 ) * sizeof( gentity_t * ) );
                     memcpy(level.clients[i].pers.medisLastCheckpoint, tmp, level.totalMedistations * sizeof( gentity_t * ));
+                    G_Free(tmp);
                 }
             }
         }
@@ -3204,6 +3213,7 @@ int G_StructureDecon( gentity_t *ent )
                     G_Free(si->arms);
                     si->arms = G_Alloc( ( level.totalArmouries + 1 ) * sizeof( gentity_t * ) );
                     memcpy(si->arms, tmp, level.totalArmouries * sizeof( gentity_t * ));
+                    G_Free(tmp);
                 }
             }
             for( i = 0; i < MAX_CLIENTS; i++ )
@@ -3216,6 +3226,7 @@ int G_StructureDecon( gentity_t *ent )
                     G_Free(level.clients[i].pers.arms);
                     level.clients[i].pers.arms = G_Alloc( ( level.totalArmouries + 1 ) * sizeof( gentity_t * ) );
                     memcpy(level.clients[i].pers.arms, tmp, level.totalArmouries * sizeof( gentity_t * ));
+                    G_Free(tmp);
 
                     tmp = G_Alloc( ( level.totalArmouries + 2 ) * sizeof( gentity_t * ) );
                     memcpy(tmp, level.clients[i].pers.armsLastCheckpoint, ( level.totalArmouries ) * sizeof( gentity_t * ));
@@ -3223,6 +3234,7 @@ int G_StructureDecon( gentity_t *ent )
                     G_Free(level.clients[i].pers.armsLastCheckpoint);
                     level.clients[i].pers.armsLastCheckpoint = G_Alloc( ( level.totalArmouries + 1 ) * sizeof( gentity_t * ) );
                     memcpy(level.clients[i].pers.armsLastCheckpoint, tmp, level.totalArmouries * sizeof( gentity_t * ));
+                    G_Free(tmp);
                 }
             }
         }
