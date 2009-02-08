@@ -6876,7 +6876,7 @@ void G_LoadLayoutRatings( void )
             if(!ratings_table)
             {
                 // allocate room for the table
-                ratings_table = G_Alloc(MAX_LAYOUT_RATINGS);
+                ratings_table = G_Alloc(MAX_LAYOUT_RATINGS * sizeof(ratings_table_t));
             }
 
             for(r = ratings_table; r < ratings_table + MAX_LAYOUT_RATINGS; r++)
