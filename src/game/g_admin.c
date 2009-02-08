@@ -6003,20 +6003,26 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
     }
     else if( *input == '$' )
     {
+      qboolean brackets = qfalse;
       doneAnything = qtrue;
       input++;
       if( *input == '{' )
+      {
+        brackets = qtrue;
         input++;
-      for( i = 0; *input && ( isalnum( *input ) || *input == '_' ) &&
+      }
+      for( i = 0; *input && ( isalnum( *input ) || *input == '_' || brackets ) &&
           i < 63; i++ )
         cvarName[ i ] = *input++;
       cvarName[ i ] = '\0';
       if( *input == '}' )
+      {
         input++;
+      }
 
-      tmp = cvarName[strlen("oc-rating")];
-      cvarName[strlen("oc-rating")] = 0;
-      if(strcmp(cvarName, "oc-rating") == 0)
+      tmp = cvarName[strlen("oc_rating")];
+      cvarName[strlen("oc_rating")] = 0;
+      if(strcmp(cvarName, "oc_rating") == 0)
       {
         // ${oc-rating atcs oc}
         char *s;
@@ -6024,10 +6030,11 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
         char layout[ MAX_STRING_CHARS ] = {""};
 
         cvarValue[0] = 0;
-        cvarName[strlen("oc-rating")] = tmp;
-        s = cvarName + strlen("oc-rating");
+        cvarName[strlen("oc_rating")] = tmp;
+        s = cvarName + strlen("oc_rating");
+        while(*s == ',') s++;
         i = 0;
-        while(*s != ' ' && *s != '\t' && *s != '-')
+        while(*s != ',')
         {
             if(!*s)
             {
@@ -6039,8 +6046,9 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
 
             s++;
         }
-        while(*s == ' ' && *s == '\t') s++;
-        while(*s != ' ' && *s != '\t' && *s != '-')
+        i = 0;
+        while(*s == ',') s++;
+        while(*s != ',')
         {
             if(!*s)
             {
@@ -6052,14 +6060,14 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
 
             s++;
         }
-        if(s && *s && map[0] && layout[0] && (s = G_LayoutRating(map, layout)) && s[0])
+        if(s && map[0] && layout[0] && (s = G_LayoutRating(map, layout)) && s[0])
         {
             Q_strncpyz(cvarValue, s, sizeof(cvarValue));
         }
       }
       else
       {
-        cvarName[strlen("oc-rating")] = tmp;
+        cvarName[strlen("oc_rating")] = tmp;
         trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
       }
 

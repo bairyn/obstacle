@@ -6812,7 +6812,7 @@ void G_LoadLayoutRatings( void )
             //set l2 to the first non-whitespace character and l the first
             //first whitespace character
             l2 = l;
-            while(*l2 == ' ' && *l != '\t' && *l2 == '\n')
+            while(*l2 == ' ' || *l == '\t' || *l2 == '\n')
             {
                 if(!*l2)
                 {
@@ -6844,7 +6844,7 @@ void G_LoadLayoutRatings( void )
             //set l2 to the first non-whitespace character and l the first
             //first whitespace character
             l2 = l;
-            while(*l2 == ' ' && *l != '\t' && *l2 == '\n')
+            while(*l2 == ' ' || *l == '\t' || *l2 == '\n')
             {
                 if(!*l2)
                 {
@@ -6884,8 +6884,8 @@ void G_LoadLayoutRatings( void )
                 if(!*((const char *)r))
                 {
                     Q_strncpyz(r->mapname, mapname, sizeof(r->mapname));
-                    Q_strncpyz(r->layoutname, mapname, sizeof(r->layoutname));
-                    Q_strncpyz(r->rating, mapname, sizeof(r->rating));
+                    Q_strncpyz(r->layoutname, layoutname, sizeof(r->layoutname));
+                    Q_strncpyz(r->rating, rating, sizeof(r->rating));
                     break;
                 }
             }
