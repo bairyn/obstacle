@@ -6011,7 +6011,7 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
         brackets = qtrue;
         input++;
       }
-      for( i = 0; *input && ( isalnum( *input ) || *input == '_' || brackets ) &&
+      for( i = 0; *input && ( isalnum( *input ) || *input == '_' || ( brackets && *input != '}' ) ) &&
           i < 63; i++ )
         cvarName[ i ] = *input++;
       cvarName[ i ] = '\0';
@@ -6020,18 +6020,18 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
         input++;
       }
 
-      tmp = cvarName[strlen("oc_rating")];
-      cvarName[strlen("oc_rating")] = 0;
-      if(strcmp(cvarName, "oc_rating") == 0)
+      tmp = cvarName[strlen("oc-rating")];
+      cvarName[strlen("oc-rating")] = 0;
+      if(strcmp(cvarName, "oc-rating") == 0)
       {
-        // ${oc-rating atcs oc}
+        // ${oc-rating,atcs,oc}
         char *s;
         char map[ MAX_STRING_CHARS ] = {""};
         char layout[ MAX_STRING_CHARS ] = {""};
 
         cvarValue[0] = 0;
-        cvarName[strlen("oc_rating")] = tmp;
-        s = cvarName + strlen("oc_rating");
+        cvarName[strlen("oc-rating")] = tmp;
+        s = cvarName + strlen("oc-rating");
         while(*s == ',') s++;
         i = 0;
         while(*s != ',')
@@ -6067,7 +6067,7 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
       }
       else
       {
-        cvarName[strlen("oc_rating")] = tmp;
+        cvarName[strlen("oc-rating")] = tmp;
         trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
       }
 
