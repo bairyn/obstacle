@@ -1960,6 +1960,8 @@ void ClientDisconnect( int clientNum )
   ent->client->ps.persistant[ PERS_TEAM ] = TEAM_FREE;
   ent->client->sess.sessionTeam = TEAM_FREE;
 
+  G_Free(ent->client->pers.clientCP);
+
   trap_SetConfigstring( CS_PLAYERS + clientNum, "");
 
   CalculateRanks( );

@@ -422,12 +422,12 @@ typedef struct connectionRecord_s
 } connectionRecord_t;
 
 //#define MAX_CP 1024
-#define MAX_CP 60
+#define MAX_CP 20
 typedef struct
 {
     qboolean    active;
     int         start;
-    char        message[ MAX_STRING_CHARS ];
+    char        message[ 128 ];
 } mix_cp_t;
 //#define CP_FRAME_TIME     400
 
