@@ -1246,12 +1246,40 @@ void ClientUserinfoChanged( int clientNum )
     client->ps.persistant[ PERS_STATE ] &= ~PS_WALLCLIMBINGTOGGLE;
 
   // fly speed
-//  s = Info_ValueForKey( userinfo, "cg_flySpeed" );
-  s = Info_ValueForKey( userinfo, "cl_anonymous" );
+  s = Info_ValueForKey( userinfo, "cg_flySpeed" );
   if( *s && atoi( s ) )
+  {
     client->pers.flySpeed = atoi( s );
+  }
   else
-    client->pers.flySpeed = BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
+  {
+    // not all clients support cg_flySpeed so test for several other useless cvars
+    s = Info_ValueForKey( userinfo, "cl_anonymous" );
+    if( *s && atoi( s ) )
+    {
+        client->pers.flySpeed = atoi( s );
+    }
+    else
+    {
+        s = Info_ValueForKey( userinfo, "handicap" );
+        if( *s && atoi( s ) && atoi( s ) != 100 )  // handicap defaults to 100
+        {
+            client->pers.flySpeed = atoi( s );
+        }
+        else
+        {
+            s = Info_ValueForKey( userinfo, "color1" );
+            if( *s && atoi( s ) && atoi( s ) != 4 )  // color1 defaults to 4
+            {
+                client->pers.flySpeed = atoi( s );
+            }
+            else
+            {
+                client->pers.flySpeed = BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
+            }
+        }
+    }
+  }
 
   // teamInfo
   s = Info_ValueForKey( userinfo, "teamoverlay" );
