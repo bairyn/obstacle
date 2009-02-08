@@ -11087,7 +11087,7 @@ Index: src/game/g_main.c
 +#define MCONCAT(x, y) x # y
 +#define MTOSTRING(x) MCONCAT("", x)
 +
-+#define VERSION "1.4.0"
++#define VERSION "1.4.1"
 +#define BUILDID MTOSTRING(GAMESUM)
 +
  level_locals_t  level;
@@ -18643,22 +18643,50 @@ Index: src/game/g_client.c
    {
      Com_sprintf( buffer, MAX_QPATH, "%s/%s",  BG_FindModelNameForClass( PCL_HUMAN_BSUIT ),
                                                BG_FindSkinNameForClass( PCL_HUMAN_BSUIT ) );
-@@ -1107,6 +1245,14 @@
+@@ -1107,6 +1245,42 @@
    else
      client->ps.persistant[ PERS_STATE ] &= ~PS_WALLCLIMBINGTOGGLE;
  
 +  // fly speed
-+//  s = Info_ValueForKey( userinfo, "cg_flySpeed" );
-+  s = Info_ValueForKey( userinfo, "cl_anonymous" );
++  s = Info_ValueForKey( userinfo, "cg_flySpeed" );
 +  if( *s && atoi( s ) )
++  {
 +    client->pers.flySpeed = atoi( s );
++  }
 +  else
-+    client->pers.flySpeed = BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
++  {
++    // not all clients support cg_flySpeed so test for several other useless cvars
++    s = Info_ValueForKey( userinfo, "cl_anonymous" );
++    if( *s && atoi( s ) )
++    {
++        client->pers.flySpeed = atoi( s );
++    }
++    else
++    {
++        s = Info_ValueForKey( userinfo, "handicap" );
++        if( *s && atoi( s ) && atoi( s ) != 100 )  // handicap defaults to 100
++        {
++            client->pers.flySpeed = atoi( s );
++        }
++        else
++        {
++            s = Info_ValueForKey( userinfo, "color1" );
++            if( *s && atoi( s ) && atoi( s ) != 4 )  // color1 defaults to 4
++            {
++                client->pers.flySpeed = atoi( s );
++            }
++            else
++            {
++                client->pers.flySpeed = BG_FindSpeedForClass( client->ps.stats[ STAT_PCLASS ] );
++            }
++        }
++    }
++  }
 +
    // teamInfo
    s = Info_ValueForKey( userinfo, "teamoverlay" );
  
-@@ -1119,10 +1265,7 @@
+@@ -1119,10 +1293,7 @@
    strcpy( c1, Info_ValueForKey( userinfo, "color1" ) );
    strcpy( c2, Info_ValueForKey( userinfo, "color2" ) );
  
@@ -18670,7 +18698,7 @@ Index: src/game/g_client.c
  
    // send over a subset of the userinfo keys so other clients can
    // print scoreboards, display models, and play custom sounds
-@@ -1163,8 +1306,8 @@
+@@ -1163,8 +1334,8 @@
  {
    char      *value;
    gclient_t *client;
@@ -18680,7 +18708,7 @@ Index: src/game/g_client.c
    char      guid[ 33 ];
    char      ip[ 16 ] = {""};
    char      reason[ MAX_STRING_CHARS ] = {""};
-@@ -1183,6 +1326,13 @@
+@@ -1183,6 +1354,13 @@
      return va( "%s", reason );
    }
  
@@ -18694,7 +18722,7 @@ Index: src/game/g_client.c
  
    // IP filtering
    // https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=500
-@@ -1214,6 +1364,8 @@
+@@ -1214,6 +1392,8 @@
  
    memset( client, 0, sizeof(*client) );
  
@@ -18703,7 +18731,7 @@ Index: src/game/g_client.c
    // add guid to session so we don't have to keep parsing userinfo everywhere
    if( !guid[0] )
    {
-@@ -1235,6 +1387,11 @@
+@@ -1235,6 +1415,11 @@
  
    G_ReadSessionData( client );
  
@@ -18715,7 +18743,7 @@ Index: src/game/g_client.c
    // get and distribute relevent paramters
    ClientUserinfoChanged( clientNum );
    G_LogPrintf( "ClientConnect: %i [%s] (%s) \"%s\"\n", clientNum,
-@@ -1247,6 +1404,19 @@
+@@ -1247,6 +1432,19 @@
    // count current clients and rank for scoreboard
    CalculateRanks( );
    G_admin_namelog_update( client, qfalse );
@@ -18735,7 +18763,7 @@ Index: src/game/g_client.c
    return NULL;
  }
  
-@@ -1263,6 +1433,9 @@
+@@ -1263,6 +1461,9 @@
  {
    gentity_t *ent;
    gclient_t *client;
@@ -18745,7 +18773,7 @@ Index: src/game/g_client.c
    int       flags;
  
    ent = g_entities + clientNum;
-@@ -1280,6 +1453,7 @@
+@@ -1280,6 +1481,7 @@
    client->pers.connected = CON_CONNECTED;
    client->pers.enterTime = level.time;
    client->pers.teamState.state = TEAM_BEGIN;
@@ -18753,7 +18781,7 @@ Index: src/game/g_client.c
  
    // save eflags around this, because changing teams will
    // cause this to happen with a valid entity, and we
-@@ -1295,6 +1469,61 @@
+@@ -1295,6 +1497,61 @@
  
    ClientSpawn( ent, NULL, NULL, NULL );
  
@@ -18815,7 +18843,7 @@ Index: src/game/g_client.c
    trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname ) );
  
    // name can change between ClientConnect() and ClientBegin()
-@@ -1310,6 +1539,31 @@
+@@ -1310,6 +1567,31 @@
  }
  
  /*
@@ -18847,7 +18875,7 @@ Index: src/game/g_client.c
  ===========
  ClientSpawn
  
-@@ -1355,6 +1609,13 @@
+@@ -1355,6 +1637,13 @@
      client->sess.spectatorState = SPECTATOR_LOCKED;
    }
  
@@ -18861,7 +18889,7 @@ Index: src/game/g_client.c
    if( origin != NULL )
      VectorCopy( origin, spawn_origin );
  
-@@ -1367,11 +1628,11 @@
+@@ -1367,11 +1656,11 @@
    if( client->sess.sessionTeam == TEAM_SPECTATOR )
    {
      if( teamLocal == PTE_NONE )
@@ -18876,7 +18904,7 @@ Index: src/game/g_client.c
    }
    else
    {
-@@ -1427,6 +1688,10 @@
+@@ -1427,6 +1716,10 @@
    client->ps.persistant[ PERS_SPAWN_COUNT ]++;
    client->ps.persistant[ PERS_TEAM ] = client->sess.sessionTeam;
  
@@ -18887,7 +18915,7 @@ Index: src/game/g_client.c
    client->airOutTime = level.time + 12000;
  
    trap_GetUserinfo( index, userinfo, sizeof( userinfo ) );
-@@ -1445,6 +1710,12 @@
+@@ -1445,6 +1738,12 @@
    ent->waterlevel = 0;
    ent->watertype = 0;
    ent->flags = 0;
@@ -18900,7 +18928,7 @@ Index: src/game/g_client.c
  
    // calculate each client's acceleration
    ent->evaluateAcceleration = qtrue;
-@@ -1478,8 +1749,7 @@
+@@ -1478,8 +1777,7 @@
  
    BG_FindAmmoForWeapon( weapon, &maxAmmo, &maxClips );
    BG_AddWeaponToInventory( weapon, client->ps.stats );
@@ -18910,7 +18938,7 @@ Index: src/game/g_client.c
  
    ent->client->ps.stats[ STAT_PCLASS ] = ent->client->pers.classSelection;
    ent->client->ps.stats[ STAT_PTEAM ] = ent->client->pers.teamSelection;
-@@ -1524,7 +1794,7 @@
+@@ -1524,7 +1822,7 @@
        spawn_angles[ YAW ] += 180.0f;
        AngleNormalize360( spawn_angles[ YAW ] );
  
@@ -18919,7 +18947,7 @@ Index: src/game/g_client.c
        {
          vec3_t  forward, dir;
  
-@@ -1550,7 +1820,7 @@
+@@ -1550,7 +1848,7 @@
    client->ps.pm_flags |= PMF_RESPAWNED;
  
    trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );
@@ -18928,7 +18956,7 @@ Index: src/game/g_client.c
  
    if( !( client->sess.sessionTeam == TEAM_SPECTATOR ) )
    {
-@@ -1640,12 +1910,26 @@
+@@ -1640,12 +1938,26 @@
    gentity_t *ent;
    gentity_t *tent;
    int       i;
@@ -18955,7 +18983,7 @@ Index: src/game/g_client.c
    G_admin_namelog_update( ent->client, qtrue );
    G_LeaveTeam( ent );
    G_Vote( ent, qfalse );
-@@ -1676,6 +1960,8 @@
+@@ -1676,6 +1988,8 @@
    ent->client->ps.persistant[ PERS_TEAM ] = TEAM_FREE;
    ent->client->sess.sessionTeam = TEAM_FREE;
  
