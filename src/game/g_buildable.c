@@ -41,9 +41,9 @@ typedef struct
 
 typedef struct
 {
-    char mapname[ MAX_STRING_CHARS ];
-    char layoutname[ MAX_STRING_CHARS ];
-    char rating[ MAX_STRING_CHARS ];
+    char mapname[ 64 ];
+    char layoutname[ 64 ];
+    char rating[ 32 ];
 } ratings_table_t;
 
 static layout_table_t *layout_table = NULL;
