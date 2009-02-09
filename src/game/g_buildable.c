@@ -2360,18 +2360,18 @@ int G_UseMedi( gentity_t *ent, gentity_t *medi )
                     G_ClientPrint(ent, va("New medi! (%d/%d) (%s^7)", G_NumberOfMedis(tmp), level.totalMedistations, ent->client->pers.netname), CLIENT_SPECTATORS | CLIENT_OCTEAM);
                     if(level.ocOrder == 1)
                     {
-                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
+                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
                     }
                     else
                     {
-                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
+                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
                     }
 
                     if(!t->notSingleTeam)
                     {
-                        char *record = G_MediStats( ent, level.totalMedistations, t->time - level.ocStartTime - g_ocWarmup.integer * 1000 );
+                        char *record = G_MediStats( ent, level.totalMedistations, SCRIMTIME );
                         if(record && *record)
                         {
                             G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, BG_FindHumanNameForWeapon(t->weapon), record), 0);
@@ -2717,18 +2717,18 @@ int G_UseArm( gentity_t *ent, gentity_t *arm )
                     G_ClientPrint(ent, va("New Armoury! (%d/%d) (%s^7)", G_NumberOfArms(tmp), level.totalArmouries, ent->client->pers.netname), CLIENT_SPECTATORS | CLIENT_OCTEAM);
                     if(level.ocOrder == 1)
                     {
-                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
+                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
                     }
                     else
                     {
-                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
+                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
                     }
 
                     if(!t->notSingleTeam)
                     {
-                        char *record = G_WinStats( ent, level.totalArmouries, t->time - level.ocStartTime - g_ocWarmup.integer * 1000 );
+                        char *record = G_WinStats( ent, level.totalArmouries, SCRIMTIME );
                         if(record && *record)
                         {
                             G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, BG_FindHumanNameForWeapon(t->weapon), record), 0);

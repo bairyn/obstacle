@@ -40,6 +40,8 @@ typedef struct gclient_s gclient_t;
 
 #define SUFN(x) ( ( ( x ) < 11 && ( x ) > 13 ) ? ( ( ( x ) % 10 == 1 ) ? ( "st" ) : ( ( ( x ) % 10 == 2 ) ? ( "nd" ) : ( ( ( x ) % 10 == 3 ) ? ( "rd" ) : ( "th" ) ) ) ) : ( "th" ) )
 
+#define SCRIMTIME (t->time - level.ocStartTime - (G_OCSingleScrim() ? 0 : g_ocWarmup.integer) * 1000)
+
 #define EXCOLOR(s) \
 { \
     int i; \
