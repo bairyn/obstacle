@@ -2456,7 +2456,8 @@ int G_UseMedi( gentity_t *ent, gentity_t *medi )
             record = G_MediStats(ent, G_NumberOfMedis(ent->client->pers.medis), ent->client->pers.aliveTime);
             if(record && *record)
             {
-                AP(va("print \"^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\"", ent->client->pers.netname, G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record));
+                AP(va("print \"^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n\"", ent->client->pers.netname, G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record));
+                AP(va("^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n", ent->client->pers.netname, G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record));
 
                 if(G_StrFind(record, "^s^f^r^e^e"))
                     G_Free(record);
