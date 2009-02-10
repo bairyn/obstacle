@@ -1231,10 +1231,16 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
     if( other->client->pers.teamSelection != PTE_NONE && !ocTeam )
       return;
 
-    if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) || ( !ocTeam && ( ent->client->pers.ocTeam || other->client->pers.ocTeam ) ) )
+    if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) )
       return;
 
     // specs with ADMF_SPEC_ALLCHAT flag can see team chat
+  }
+
+  if( ( mode == SAY_TEAM || mode == SAY_ACTION_T ) && !ocTeam && ent->client->pers.ocTeam )
+  {
+    // if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) )
+    return;
   }
 
   if( mode == SAY_ADMINS && !G_admin_permission( other, ADMF_ADMINCHAT) )

@@ -2331,7 +2331,7 @@ int G_UseMedi( gentity_t *ent, gentity_t *medi )
             {
                 client = g_entities + i;
 
-                if(client->client && client->client->pers.ocTeam == ent->client->pers.ocTeam)
+                if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam == ent->client->pers.ocTeam)
                     G_MergeMedis(tmp, client->client->pers.medis);
             }
 
@@ -2686,7 +2686,7 @@ int G_UseArm( gentity_t *ent, gentity_t *arm )
             {
                 client = g_entities + i;
 
-                if(client->client && client->client->pers.ocTeam == ent->client->pers.ocTeam)
+                if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam == ent->client->pers.ocTeam)
                     G_MergeArms(tmp, client->client->pers.arms);
             }
 
@@ -3606,25 +3606,38 @@ int G_OCScrimEnd( void )
         {
             if(!si->time)
             {
-                // hack: stimulate each player in the team hitting checkpoint
-                // to mimic merging medis
-                for(i = 0; i < level.maxclients; i++)
-                {
-                    ent = &g_entities[ i ];
-
-                    if(ent->client->pers.connected == CON_CONNECTED)
-                    {
-                        if(ent->client->pers.ocTeam == si - level.scrimTeam)
-                        {
-                            G_OCPlayerCheckpoint(ent, ent);
-                        }
-                    }
-                }
-
                 if(level.ocScrimMode == OC_MODE_MEDI)
-                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d medical stations)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfMedis(si->medis), level.totalMedistations), 0);
+                {
+                    gentity_t **tmp = G_Alloc(level.totalMedistations * sizeof(gentity_t *));
+//                    memset(tmp, 0, level.totalMedistations * sizeof(gentity_t *));
+                    for(i = 0; i < MAX_CLIENTS; i++)
+                    {
+                        ent = g_entities + i;
+
+                        if(ent->client && ent->client->pers.connected == CON_CONNECTED && ent->client->pers.ocTeam == si - level.scrimTeam)
+                            G_MergeMedis(tmp, ent->client->pers.medis);
+                    }
+
+                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d medical stations)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfMedis(tmp), level.totalMedistations), 0);
+
+                    G_Free(tmp);
+                }
                 if(level.ocScrimMode == OC_MODE_ARM)
-                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d armouries)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfArms(si->arms), level.totalArmouries), 0);
+                {
+                    gentity_t **tmp = G_Alloc(level.totalArmouries * sizeof(gentity_t *));
+//                    memset(tmp, 0, level.totalMedistations * sizeof(gentity_t *));
+                    for(i = 0; i < MAX_CLIENTS; i++)
+                    {
+                        ent = g_entities + i;
+
+                        if(ent->client && ent->client->pers.connected == CON_CONNECTED && ent->client->pers.ocTeam == si - level.scrimTeam)
+                            G_MergeArmss(tmp, ent->client->pers.arms);
+                    }
+
+                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d armouries)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfArms(tmp), level.totalArmouries), 0);
+
+                    G_Free(tmp);
+                }
             }
 
 //            tmp = si->next;
