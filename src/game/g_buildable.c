@@ -3631,7 +3631,7 @@ int G_OCScrimEnd( void )
                         ent = g_entities + i;
 
                         if(ent->client && ent->client->pers.connected == CON_CONNECTED && ent->client->pers.ocTeam == si - level.scrimTeam)
-                            G_MergeArmss(tmp, ent->client->pers.arms);
+                            G_MergeArms(tmp, ent->client->pers.arms);
                     }
 
                     G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d armouries)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfArms(tmp), level.totalArmouries), 0);
