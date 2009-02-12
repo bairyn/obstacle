@@ -623,7 +623,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
       {
         if(ent->client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
         {
-            G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( level.time - (level.ocStartTime + g_ocWarmup.integer) ), SECS( level.time - (level.ocStartTime + g_ocWarmup.integer) ), MSEC( level.time - (level.ocStartTime + g_ocWarmup.integer) ) ), "^t^i^m^e", CLIENT_SPECTATORS );
+            G_ClientCP(ent, va("^t^i^m^e^2%dm:%ds:%dms", MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME) ), "^t^i^m^e", CLIENT_SPECTATORS);
         }
         else
         {
