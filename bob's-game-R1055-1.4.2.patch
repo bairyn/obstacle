@@ -4820,7 +4820,7 @@ Index: src/game/g_local.h
 ===================================================================
 --- src/game/g_local.h	(revision 1055)
 +++ src/game/g_local.h	(working copy)
-@@ -34,8 +34,53 @@
+@@ -34,8 +34,55 @@
  
  //==================================================================
  
@@ -4829,6 +4829,8 @@ Index: src/game/g_local.h
 +#define MINS(t) ( ( t ) / 60000 )
 +
 +#define SUFN(x) ( ( ( x ) < 11 && ( x ) > 13 ) ? ( ( ( x ) % 10 == 1 ) ? ( "st" ) : ( ( ( x ) % 10 == 2 ) ? ( "nd" ) : ( ( ( x ) % 10 == 3 ) ? ( "rd" ) : ( "th" ) ) ) ) : ( "th" ) )
++
++#define SCRIMTIME (t->time - level.ocStartTime - (G_OCSingleScrim() ? 0 : g_ocWarmup.integer) * 1000)
 +
 +#define EXCOLOR(s) \
 +{ \
@@ -4874,7 +4876,7 @@ Index: src/game/g_local.h
  #define FRAMETIME     100         // msec
  #define CARNAGE_REWARD_TIME 3000
  #define REWARD_SPRITE_TIME  2000
-@@ -44,15 +89,59 @@
+@@ -44,15 +91,59 @@
  #define SP_INTERMISSION_DELAY_TIME 5000
  
  // gentity->flags
@@ -4942,7 +4944,7 @@ Index: src/game/g_local.h
  // movers are things like doors, plats, buttons, etc
  typedef enum
  {
-@@ -198,6 +287,7 @@
+@@ -198,6 +289,7 @@
    gentity_t         *parentNode;        // for creep and defence/spawn dependencies
    qboolean          active;             // for power repeater, but could be useful elsewhere
    qboolean          powered;            // for human buildables
@@ -4950,7 +4952,7 @@ Index: src/game/g_local.h
    int               builtBy;            // clientNum of person that built this
    gentity_t         *dccNode;           // controlling dcc
    gentity_t         *overmindNode;      // controlling overmind
-@@ -215,6 +305,7 @@
+@@ -215,6 +307,7 @@
    int               clientSpawnTime;    // the time until this spawn can spawn a client
    qboolean          lev1Grabbed;        // for turrets interacting with lev1s
    int               lev1GrabTime;       // for turrets interacting with lev1s
@@ -4958,7 +4960,7 @@ Index: src/game/g_local.h
  
    int               credits[ MAX_CLIENTS ];     // human credits for each client
    qboolean          creditsHash[ MAX_CLIENTS ]; // track who has claimed credit
-@@ -239,6 +330,13 @@
+@@ -239,6 +332,13 @@
    int               suicideTime;                    // when the client will suicide
  
    int               lastDamageTime;
@@ -4972,7 +4974,7 @@ Index: src/game/g_local.h
  };
  
  typedef enum
-@@ -294,6 +392,7 @@
+@@ -294,6 +394,7 @@
  typedef struct
  {
    team_t            sessionTeam;
@@ -4980,7 +4982,7 @@ Index: src/game/g_local.h
    int               spectatorTime;    // for determining next-in-line to play
    spectatorState_t  spectatorState;
    int               spectatorClient;  // for chasecam and follow mode
-@@ -307,13 +406,46 @@
+@@ -307,13 +408,46 @@
  // data to store details of clients that have abnormally disconnected
  typedef struct connectionRecord_s
  {
@@ -5030,7 +5032,7 @@ Index: src/game/g_local.h
  // client data that stays across multiple respawns, but is cleared
  // on each level change or team change at ClientBegin()
  typedef struct
-@@ -328,6 +460,8 @@
+@@ -328,6 +462,8 @@
    int                 enterTime;          // level.time the client entered the game
    playerTeamState_t   teamState;          // status in teamplay games
    int                 voteCount;          // to prevent people from constantly calling votes
@@ -5039,7 +5041,7 @@ Index: src/game/g_local.h
    qboolean            teamInfo;           // send team overlay updates?
  
    pClass_t            classSelection;     // player class (copied to ent->client->ps.stats[ STAT_PCLASS ] once spawned)
-@@ -342,20 +476,72 @@
+@@ -342,20 +478,72 @@
    int                 nameChangeTime;
    int                 nameChanges;
  
@@ -5115,7 +5117,7 @@ Index: src/game/g_local.h
  } clientPersistant_t;
  
  #define MAX_UNLAGGED_MARKERS 10
-@@ -455,11 +641,16 @@
+@@ -455,11 +643,16 @@
  
    int                 lastFlameBall;        // s.number of the last flame ball fired
  
@@ -5132,7 +5134,7 @@ Index: src/game/g_local.h
  };
  
  
-@@ -477,7 +668,8 @@
+@@ -477,7 +670,8 @@
  int       G_GetSpawnQueueLength( spawnQueue_t *sq );
  int       G_PopSpawnQueue( spawnQueue_t *sq );
  int       G_PeekSpawnQueue( spawnQueue_t *sq );
@@ -5142,7 +5144,7 @@ Index: src/game/g_local.h
  qboolean  G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum );
  int       G_GetPosInSpawnQueue( spawnQueue_t *sq, int clientNum );
  
-@@ -518,6 +710,32 @@
+@@ -518,6 +712,32 @@
    TW_PASSED
  } timeWarning_t;
  
@@ -5175,7 +5177,7 @@ Index: src/game/g_local.h
  //
  // this structure is cleared as each map is entered
  //
-@@ -526,14 +744,43 @@
+@@ -526,14 +746,43 @@
  
  typedef struct
  {
@@ -5221,7 +5223,7 @@ Index: src/game/g_local.h
    fileHandle_t      logFile;
  
    // store latched cvars here that we want to get at often
-@@ -542,6 +789,7 @@
+@@ -542,6 +791,7 @@
    int               framenum;
    int               time;                         // in msec
    int               previousTime;                 // so movers can back up when blocked
@@ -5229,7 +5231,7 @@ Index: src/game/g_local.h
  
    int               startTime;                    // level.time the map was started
  
-@@ -558,13 +806,14 @@
+@@ -558,13 +808,14 @@
    int               numPlayingClients;            // connected, non-spectators
    int               sortedClients[MAX_CLIENTS];   // sorted by score
  
@@ -5246,7 +5248,7 @@ Index: src/game/g_local.h
    int               voteTime;                     // level.time vote was called
    int               voteExecuteTime;              // time the vote is executed
    int               voteYes;
-@@ -634,6 +883,9 @@
+@@ -634,6 +885,9 @@
  
    pTeam_t           lastWin;
  
@@ -5256,7 +5258,7 @@ Index: src/game/g_local.h
    timeWarning_t     suddenDeathWarning;
    timeWarning_t     timelimitWarning;
  
-@@ -649,6 +901,8 @@
+@@ -649,6 +903,8 @@
    qboolean          uncondHumanWin;
    qboolean          alienTeamLocked;
    qboolean          humanTeamLocked;
@@ -5265,7 +5267,7 @@ Index: src/game/g_local.h
  
    int unlaggedIndex;
    int unlaggedTimes[ MAX_UNLAGGED_MARKERS ];
-@@ -656,17 +910,49 @@
+@@ -656,17 +912,49 @@
    char              layout[ MAX_QPATH ];
  
    pTeam_t           surrenderTeam;
@@ -5323,7 +5325,7 @@ Index: src/game/g_local.h
  typedef struct
  {
    char *cmdName;
-@@ -689,11 +975,13 @@
+@@ -689,11 +977,13 @@
  // g_cmds.c
  //
  void      Cmd_Score_f( gentity_t *ent );
@@ -5337,7 +5339,7 @@ Index: src/game/g_local.h
  int       G_SayArgc( void );
  qboolean  G_SayArgv( int n, char *buffer, int bufferLength );
  char      *G_SayConcatArgs( int start );
-@@ -702,6 +990,18 @@
+@@ -702,6 +992,18 @@
  void      G_ChangeTeam( gentity_t *ent, pTeam_t newTeam );
  void      G_SanitiseName( char *in, char *out );
  void      G_PrivateMessage( gentity_t *ent );
@@ -5356,7 +5358,7 @@ Index: src/game/g_local.h
  
  //
  // g_physics.c
-@@ -741,27 +1041,74 @@
+@@ -741,27 +1043,74 @@
    IBE_MAXERRORS
  } itemBuildError_t;
  
@@ -5435,7 +5437,7 @@ Index: src/game/g_local.h
  
  //
  // g_utils.c
-@@ -905,15 +1252,20 @@
+@@ -905,15 +1254,20 @@
  //
  void      G_AddCreditToClient( gclient_t *client, short credit, qboolean cap );
  team_t    TeamCount( int ignoreClientNum, int team );
@@ -5459,7 +5461,7 @@ Index: src/game/g_local.h
  
  //
  // g_svcmds.c
-@@ -939,12 +1291,17 @@
+@@ -939,12 +1293,17 @@
  void ScoreboardMessage( gentity_t *client );
  void MoveClientToIntermission( gentity_t *client );
  void G_MapConfigs( const char *mapname );
@@ -5477,7 +5479,7 @@ Index: src/game/g_local.h
  void QDECL G_Error( const char *fmt, ... );
  void G_Vote( gentity_t *ent, qboolean voting );
  void G_TeamVote( gentity_t *ent, qboolean voting );
-@@ -952,6 +1309,10 @@
+@@ -952,6 +1311,10 @@
  void CheckTeamVote( int teamnum );
  void LogExit( const char *string );
  int  G_TimeTilSuddenDeath( void );
@@ -5488,7 +5490,7 @@ Index: src/game/g_local.h
  
  //
  // g_client.c
-@@ -961,6 +1322,7 @@
+@@ -961,6 +1324,7 @@
  void ClientDisconnect( int clientNum );
  void ClientBegin( int clientNum );
  void ClientCommand( int clientNum );
@@ -5496,7 +5498,7 @@ Index: src/game/g_local.h
  
  //
  // g_active.c
-@@ -1102,15 +1464,26 @@
+@@ -1102,15 +1466,26 @@
  extern  vmCvar_t  g_maxclients;     // allow this many total, including spectators
  extern  vmCvar_t  g_maxGameClients;   // allow this many active
  extern  vmCvar_t  g_restarted;
@@ -5523,7 +5525,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_friendlyBuildableFire;
  extern  vmCvar_t  g_password;
  extern  vmCvar_t  g_needpass;
-@@ -1131,6 +1504,14 @@
+@@ -1131,6 +1506,14 @@
  extern  vmCvar_t  g_blood;
  extern  vmCvar_t  g_allowVote;
  extern  vmCvar_t  g_voteLimit;
@@ -5538,7 +5540,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_teamAutoJoin;
  extern  vmCvar_t  g_teamForceBalance;
  extern  vmCvar_t  g_banIPs;
-@@ -1139,6 +1520,8 @@
+@@ -1139,6 +1522,8 @@
  extern  vmCvar_t  pmove_fixed;
  extern  vmCvar_t  pmove_msec;
  extern  vmCvar_t  g_rankings;
@@ -5547,7 +5549,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_enableDust;
  extern  vmCvar_t  g_enableBreath;
  extern  vmCvar_t  g_singlePlayer;
-@@ -1155,7 +1538,10 @@
+@@ -1155,7 +1540,10 @@
  extern  vmCvar_t  g_alienMaxStage;
  extern  vmCvar_t  g_alienStage2Threshold;
  extern  vmCvar_t  g_alienStage3Threshold;
@@ -5558,7 +5560,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_unlagged;
  
  extern  vmCvar_t  g_disabledEquipment;
-@@ -1163,12 +1549,15 @@
+@@ -1163,12 +1551,15 @@
  extern  vmCvar_t  g_disabledBuildables;
  
  extern  vmCvar_t  g_markDeconstruct;
@@ -5574,7 +5576,7 @@ Index: src/game/g_local.h
  
  extern  vmCvar_t  g_shove;
  
-@@ -1180,11 +1569,46 @@
+@@ -1180,11 +1571,46 @@
  extern  vmCvar_t  g_admin;
  extern  vmCvar_t  g_adminLog;
  extern  vmCvar_t  g_adminParseSay;
@@ -6144,7 +6146,7 @@ Index: src/game/g_active.c
  
    ucmd = &ent->client->pers.cmd;
  
-@@ -581,6 +616,22 @@
+@@ -581,6 +616,26 @@
          client->ps.stats[ STAT_STAMINA ] = MAX_STAMINA;
      }
  
@@ -6155,7 +6157,11 @@ Index: src/game/g_active.c
 +      {
 +        if(ent->client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
 +        {
-+            G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( level.time - (level.ocStartTime + g_ocWarmup.integer) ), SECS( level.time - (level.ocStartTime + g_ocWarmup.integer) ), MSEC( level.time - (level.ocStartTime + g_ocWarmup.integer) ) ), "^t^i^m^e", CLIENT_SPECTATORS );
++            // hack for SCRIMTIME
++            oc_scrimTeam_t tmp;
++            oc_scrimTeam_t *t = &tmp;
++            t->time = level.time;
++            G_ClientCP(ent, va("^t^i^m^e^2%dm:%ds:%dms", MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME) ), "^t^i^m^e", CLIENT_SPECTATORS);
 +        }
 +        else
 +        {
@@ -6167,7 +6173,7 @@ Index: src/game/g_active.c
      //client is charging up for a pounce
      if( client->ps.weapon == WP_ALEVEL3 || client->ps.weapon == WP_ALEVEL3_UPG )
      {
-@@ -665,14 +716,23 @@
+@@ -665,14 +720,23 @@
      //client is charging up an lcannon
      if( client->ps.weapon == WP_LUCIFER_CANNON )
      {
@@ -6193,7 +6199,7 @@ Index: src/game/g_active.c
      }
  
      switch( client->ps.weapon )
-@@ -692,22 +752,9 @@
+@@ -692,22 +756,9 @@
              client->ps.stats[ STAT_BUILDABLE ] |= SB_VALID_TOGGLEBIT;
            else
              client->ps.stats[ STAT_BUILDABLE ] &= ~SB_VALID_TOGGLEBIT;
@@ -6217,7 +6223,7 @@ Index: src/game/g_active.c
          //update build timer
          if( client->ps.stats[ STAT_MISC ] > 0 )
            client->ps.stats[ STAT_MISC ] -= 100;
-@@ -770,22 +817,17 @@
+@@ -770,22 +821,17 @@
      //client is poisoned
      if( client->ps.stats[ STAT_STATE ] & SS_POISONED )
      {
@@ -6249,7 +6255,7 @@ Index: src/game/g_active.c
      }
  
      //replenish alien health
-@@ -830,6 +872,10 @@
+@@ -830,6 +876,10 @@
          ent->health = client->ps.stats[ STAT_MAX_HEALTH ];
      }
  
@@ -6260,7 +6266,7 @@ Index: src/game/g_active.c
      // turn off life support when a team admits defeat
      if( client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS &&
        level.surrenderTeam == PTE_ALIENS )
-@@ -851,12 +897,16 @@
+@@ -851,12 +901,16 @@
  
      if( client->ps.weapon == WP_ALEVEL3_UPG )
      {
@@ -6280,7 +6286,7 @@ Index: src/game/g_active.c
      }
    }
  }
-@@ -1001,8 +1051,8 @@
+@@ -1001,8 +1055,8 @@
  ==============
   G_UnlaggedStore
  
@@ -6291,7 +6297,7 @@ Index: src/game/g_active.c
   This data is used by G_UnlaggedCalc()
  ==============
  */
-@@ -1011,24 +1061,24 @@
+@@ -1011,24 +1065,24 @@
    int i = 0;
    gentity_t *ent;
    unlagged_t *save;
@@ -6322,7 +6328,7 @@ Index: src/game/g_active.c
      VectorCopy( ent->r.mins, save->mins );
      VectorCopy( ent->r.maxs, save->maxs );
      VectorCopy( ent->s.pos.trBase, save->origin );
-@@ -1039,7 +1089,7 @@
+@@ -1039,7 +1093,7 @@
  /*
  ==============
   G_UnlaggedClear
@@ -6331,7 +6337,7 @@ Index: src/game/g_active.c
   Mark all unlaggedHist[] markers for this client invalid.  Useful for
   preventing teleporting and death.
  ==============
-@@ -1071,7 +1121,7 @@
+@@ -1071,7 +1125,7 @@
  
    if( !g_unlagged.integer )
      return;
@@ -6340,7 +6346,7 @@ Index: src/game/g_active.c
    // clear any calculated values from a previous run
    for( i = 0; i < level.maxclients; i++ )
    {
-@@ -1104,15 +1154,15 @@
+@@ -1104,15 +1158,15 @@
    if( frameMsec > 0 )
    {
      lerp = ( float )( time - level.unlaggedTimes[ startIndex ] )
@@ -6359,7 +6365,7 @@ Index: src/game/g_active.c
        continue;
      if( ent->client->pers.connected != CON_CONNECTED )
        continue;
-@@ -1147,10 +1197,10 @@
+@@ -1147,10 +1201,10 @@
  {
    int i = 0;
    gentity_t *ent;
@@ -6372,7 +6378,7 @@ Index: src/game/g_active.c
    for( i = 0; i < level.maxclients; i++ )
    {
      ent = &g_entities[ i ];
-@@ -1183,10 +1233,10 @@
+@@ -1183,10 +1237,10 @@
    int i = 0;
    gentity_t *ent;
    unlagged_t *calc;
@@ -6385,7 +6391,7 @@ Index: src/game/g_active.c
    for( i = 0; i < level.maxclients; i++ )
    {
      ent = &g_entities[ i ];
-@@ -1196,7 +1246,7 @@
+@@ -1196,7 +1250,7 @@
        continue;
      if( ent->client->unlaggedBackup.used )
        continue;
@@ -6394,7 +6400,7 @@ Index: src/game/g_active.c
        continue;
      if( VectorCompare( ent->r.currentOrigin, calc->origin ) )
        continue;
-@@ -1207,7 +1257,7 @@
+@@ -1207,7 +1261,7 @@
        float maxRadius = ( r1 > r2 ) ? r1 : r2;
  
        if( Distance( muzzle, calc->origin ) > range + maxRadius )
@@ -6403,7 +6409,7 @@ Index: src/game/g_active.c
      }
  
      // create a backup of the real positions
-@@ -1272,7 +1322,7 @@
+@@ -1272,7 +1326,7 @@
    G_UnlaggedOn( ent->client->oldOrigin, range );
  
    trap_Trace(&tr, ent->client->oldOrigin, ent->r.mins, ent->r.maxs,
@@ -6412,7 +6418,7 @@ Index: src/game/g_active.c
    if( tr.entityNum >= 0 && tr.entityNum < MAX_CLIENTS )
      g_entities[ tr.entityNum ].client->unlaggedCalc.used = qfalse;
  
-@@ -1293,10 +1343,15 @@
+@@ -1293,10 +1347,15 @@
  void ClientThink_real( gentity_t *ent )
  {
    gclient_t *client;
@@ -6428,7 +6434,7 @@ Index: src/game/g_active.c
  
    client = ent->client;
  
-@@ -1320,6 +1375,32 @@
+@@ -1320,6 +1379,32 @@
  //    G_Printf("serverTime >>>>>\n" );
    }
  
@@ -6461,7 +6467,7 @@ Index: src/game/g_active.c
    msec = ucmd->serverTime - client->ps.commandTime;
    // following others may result in bad times, but we still want
    // to check for follow toggles
-@@ -1343,6 +1424,15 @@
+@@ -1343,6 +1428,15 @@
      //  return;
    }
  
@@ -6477,7 +6483,7 @@ Index: src/game/g_active.c
    //
    // check for exiting intermission
    //
-@@ -1458,7 +1548,10 @@
+@@ -1458,7 +1552,10 @@
    }
  
    // set speed
@@ -6489,7 +6495,7 @@ Index: src/game/g_active.c
  
    if( client->lastCreepSlowTime + CREEP_TIMEOUT < level.time )
      client->ps.stats[ STAT_STATE ] &= ~SS_CREEPSLOWED;
-@@ -1474,7 +1567,7 @@
+@@ -1474,7 +1571,7 @@
      }
  
      //switch jetpack off if no reactor
@@ -6498,7 +6504,7 @@ Index: src/game/g_active.c
        BG_DeactivateUpgrade( UP_JETPACK, client->ps.stats );
    }
  
-@@ -1508,6 +1601,32 @@
+@@ -1508,6 +1605,32 @@
      }
    }
  
@@ -6531,7 +6537,7 @@ Index: src/game/g_active.c
    if( ent->flags & FL_FORCE_GESTURE )
    {
      ent->flags &= ~FL_FORCE_GESTURE;
-@@ -1527,6 +1646,19 @@
+@@ -1527,6 +1650,19 @@
    else
      pm.tracemask = MASK_PLAYERSOLID;
  
@@ -6551,7 +6557,7 @@ Index: src/game/g_active.c
    pm.trace = trap_Trace;
    pm.pointcontents = trap_PointContents;
    pm.debugLevel = g_debugMove.integer;
-@@ -1645,9 +1777,9 @@
+@@ -1645,9 +1781,9 @@
  
        traceEnt = &g_entities[ trace.entityNum ];
  
@@ -6563,7 +6569,7 @@ Index: src/game/g_active.c
        {
          //no entity in front of player - do a small area search
  
-@@ -1684,20 +1816,191 @@
+@@ -1684,20 +1820,197 @@
    }
  
    // Give clients some credit periodically
@@ -6706,23 +6712,29 @@ Index: src/game/g_active.c
 +            G_ForceWeaponChange( ent, t->weapon );
 +        }
 +    }
-+    else if(client->pers.teamSelection == PTE_HUMANS && !(ent->client->pers.arms || G_AllArms(ent->client->pers.medis)))
++    else
 +    {
 +        G_WeaponRemoveReserved( ent );
-+        if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats))
++        if(client->pers.teamSelection == PTE_HUMANS)
 +        {
-+            BG_AddWeaponToInventory(WP_BLASTER, client->ps.stats);
-+            G_ForceWeaponChange(ent, WP_NONE);
-+        }
-+        if(!BG_InventoryContainsWeapon(WP_NONE, client->ps.stats))
-+        {
-+            BG_AddWeaponToInventory(WP_NONE, client->ps.stats);
-+            G_ForceWeaponChange(ent, WP_NONE);
-+        }
-+        if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, client->ps.stats))
-+        {
-+            BG_AddWeaponToInventory(WP_MACHINEGUN, client->ps.stats);
-+            G_ForceWeaponChange(ent, WP_MACHINEGUN);
++            if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats))
++            {
++                BG_AddWeaponToInventory(WP_BLASTER, client->ps.stats);
++                G_ForceWeaponChange(ent, WP_NONE);
++            }
++            if(!BG_InventoryContainsWeapon(WP_NONE, client->ps.stats))
++            {
++                BG_AddWeaponToInventory(WP_NONE, client->ps.stats);
++                G_ForceWeaponChange(ent, WP_NONE);
++            }
++            if(ent->client->pers.arms && !G_AllArms(ent->client->pers.arms))
++            {
++                if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, client->ps.stats))
++                {
++                    BG_AddWeaponToInventory(WP_MACHINEGUN, client->ps.stats);
++                    G_ForceWeaponChange(ent, WP_MACHINEGUN);
++                }
++            }
 +        }
 +    }
 +
@@ -6763,7 +6775,7 @@ Index: src/game/g_active.c
    // perform once-a-second actions
    ClientTimerActions( ent, msec );
  
-@@ -1764,13 +2067,14 @@
+@@ -1764,13 +2077,14 @@
      {
        cl = &level.clients[ clientNum ];
  
@@ -6780,7 +6792,7 @@ Index: src/game/g_active.c
        }
      }
    }
-@@ -1789,6 +2093,13 @@
+@@ -1789,6 +2103,13 @@
  {
    clientPersistant_t  *pers;
  
@@ -6794,7 +6806,7 @@ Index: src/game/g_active.c
    if( ent->client->sess.sessionTeam == TEAM_SPECTATOR )
    {
      SpectatorClientEndFrame( ent );
-@@ -1797,6 +2108,14 @@
+@@ -1797,6 +2118,14 @@
  
    pers = &ent->client->pers;
  
@@ -7840,7 +7852,7 @@ Index: src/game/g_buildable.c
  /*
  ================
  HDCC_Think
-@@ -1772,14 +2244,1690 @@
+@@ -1772,14 +2244,1715 @@
  void HDCC_Think( gentity_t *self )
  {
    //make sure we have power
@@ -7933,7 +7945,7 @@ Index: src/game/g_buildable.c
 +            {
 +                client = g_entities + i;
 +
-+                if(client->client && client->client->pers.ocTeam == ent->client->pers.ocTeam)
++                if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam == ent->client->pers.ocTeam)
 +                    G_MergeMedis(tmp, client->client->pers.medis);
 +            }
 +
@@ -7962,18 +7974,18 @@ Index: src/game/g_buildable.c
 +                    G_ClientPrint(ent, va("New medi! (%d/%d) (%s^7)", G_NumberOfMedis(tmp), level.totalMedistations, ent->client->pers.netname), CLIENT_SPECTATORS | CLIENT_OCTEAM);
 +                    if(level.ocOrder == 1)
 +                    {
-+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-+                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
++                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
++                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
 +                    }
 +                    else
 +                    {
-+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-+                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
++                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
++                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfMedis(tmp), level.totalMedistations, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
 +                    }
 +
 +                    if(!t->notSingleTeam)
 +                    {
-+                        char *record = G_MediStats( ent, level.totalMedistations, t->time - level.ocStartTime - g_ocWarmup.integer * 1000 );
++                        char *record = G_MediStats( ent, level.totalMedistations, SCRIMTIME );
 +                        if(record && *record)
 +                        {
 +                            G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, BG_FindHumanNameForWeapon(t->weapon), record), 0);
@@ -8036,12 +8048,12 @@ Index: src/game/g_buildable.c
 +        }
 +        else
 +        {
++            char *record;
 +            // new medi
 +            G_AppendMedi(ent->client->pers.medis, medi);
 +            if(G_AllMedis(ent->client->pers.medis))
 +            {
 +                // player has won
-+                char *record;
 +                G_AppendMedi(ent->client->pers.medis, medi);
 +                ent->client->pers.mediTime = ent->client->pers.aliveTime;
 +                record = G_MediStats( ent, level.totalMedistations, ent->client->pers.mediTime );
@@ -8055,6 +8067,15 @@ Index: src/game/g_buildable.c
 +            G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
 +            G_ClientCP(ent, va("Medical Stations: %d/%d", G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations), "Medical Stations", CLIENT_SPECTATORS);
 +            G_ClientPrint(ent, va("New Medi! (%d/%d)", G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations), CLIENT_SPECTATORS);
++            record = G_MediStats(ent, G_NumberOfMedis(ent->client->pers.medis), ent->client->pers.aliveTime);
++            if(record && *record)
++            {
++                AP(va("print \"^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n\"", ent->client->pers.netname, G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record));
++                G_LogPrintf("^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n", ent->client->pers.netname, G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record);
++
++                if(G_StrFind(record, "^s^f^r^e^e"))
++                    G_Free(record);
++            }
 +        }
 +    }
 +
@@ -8279,7 +8300,7 @@ Index: src/game/g_buildable.c
 +            {
 +                client = g_entities + i;
 +
-+                if(client->client && client->client->pers.ocTeam == ent->client->pers.ocTeam)
++                if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam == ent->client->pers.ocTeam)
 +                    G_MergeArms(tmp, client->client->pers.arms);
 +            }
 +
@@ -8310,18 +8331,18 @@ Index: src/game/g_buildable.c
 +                    G_ClientPrint(ent, va("New Armoury! (%d/%d) (%s^7)", G_NumberOfArms(tmp), level.totalArmouries, ent->client->pers.netname), CLIENT_SPECTATORS | CLIENT_OCTEAM);
 +                    if(level.ocOrder == 1)
 +                    {
-+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-+                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
++                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
++                        G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
 +                    }
 +                    else
 +                    {
-+                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000)), 0);
-+                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), SECS(t->time - level.ocStartTime - g_ocWarmup.integer * 1000), MSEC(t->time - level.ocStartTime - g_ocWarmup.integer * 1000));
++                        G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME)), 0);
++                        G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms\n", t->name, BG_FindHumanNameForWeapon(t->weapon), level.ocOrder, SUFN(level.ocOrder), G_NumberOfArms(tmp), level.totalArmouries, MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME));
 +                    }
 +
 +                    if(!t->notSingleTeam)
 +                    {
-+                        char *record = G_WinStats( ent, level.totalArmouries, t->time - level.ocStartTime - g_ocWarmup.integer * 1000 );
++                        char *record = G_WinStats( ent, level.totalArmouries, SCRIMTIME );
 +                        if(record && *record)
 +                        {
 +                            G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, BG_FindHumanNameForWeapon(t->weapon), record), 0);
@@ -9113,6 +9134,9 @@ Index: src/game/g_buildable.c
 +    if(!level.oc)
 +        return 0;
 +
++    if(!ent)
++        return 0;
++
 +    if(!ent->client)
 +        return 0;
 +
@@ -9199,25 +9223,38 @@ Index: src/game/g_buildable.c
 +        {
 +            if(!si->time)
 +            {
-+                // hack: stimulate each player in the team hitting checkpoint
-+                // to mimic merging medis
-+                for(i = 0; i < level.maxclients; i++)
-+                {
-+                    ent = &g_entities[ i ];
-+
-+                    if(ent->client->pers.connected == CON_CONNECTED)
-+                    {
-+                        if(ent->client->pers.ocTeam == si - level.scrimTeam)
-+                        {
-+                            G_OCPlayerCheckpoint(ent, ent);
-+                        }
-+                    }
-+                }
-+
 +                if(level.ocScrimMode == OC_MODE_MEDI)
-+                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d medical stations)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfMedis(si->medis), level.totalMedistations), 0);
++                {
++                    gentity_t **tmp = G_Alloc(level.totalMedistations * sizeof(gentity_t *));
++                    memcpy(tmp, si->medis, level.totalMedistations * sizeof(gentity_t *));
++                    for(i = 0; i < MAX_CLIENTS; i++)
++                    {
++                        ent = g_entities + i;
++
++                        if(ent->client && ent->client->pers.connected == CON_CONNECTED && ent->client->pers.ocTeam == si - level.scrimTeam)
++                            G_MergeMedis(tmp, ent->client->pers.medis);
++                    }
++
++                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d medical stations)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfMedis(tmp), level.totalMedistations), 0);
++
++                    G_Free(tmp);
++                }
 +                if(level.ocScrimMode == OC_MODE_ARM)
-+                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d armouries)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfArms(si->arms), level.totalArmouries), 0);
++                {
++                    gentity_t **tmp = G_Alloc(level.totalArmouries * sizeof(gentity_t *));
++                    memcpy(tmp, si->arms, level.totalArmouries * sizeof(gentity_t *));
++                    for(i = 0; i < MAX_CLIENTS; i++)
++                    {
++                        ent = g_entities + i;
++
++                        if(ent->client && ent->client->pers.connected == CON_CONNECTED && ent->client->pers.ocTeam == si - level.scrimTeam)
++                            G_MergeArms(tmp, ent->client->pers.arms);
++                    }
++
++                    G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d armouries)", si->name, BG_FindHumanNameForWeapon(si->weapon), G_NumberOfArms(tmp), level.totalArmouries), 0);
++
++                    G_Free(tmp);
++                }
 +            }
 +
 +//            tmp = si->next;
@@ -9533,7 +9570,7 @@ Index: src/game/g_buildable.c
  //==================================================================================
  
  /*
-@@ -1794,13 +3942,54 @@
+@@ -1794,13 +3967,54 @@
    int       entityList[ MAX_GENTITIES ];
    vec3_t    mins, maxs;
    int       i, num;
@@ -9591,7 +9628,7 @@ Index: src/game/g_buildable.c
    {
      if( self->active )
      {
-@@ -1832,6 +4021,8 @@
+@@ -1832,6 +4046,8 @@
      {
        player = &g_entities[ entityList[ i ] ];
  
@@ -9600,7 +9637,7 @@ Index: src/game/g_buildable.c
        if( player->client && player->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
        {
          if( player->health < player->client->ps.stats[ STAT_MAX_HEALTH ] &&
-@@ -1850,7 +4041,10 @@
+@@ -1850,7 +4066,10 @@
        {
          player = &g_entities[ entityList[ i ] ];
  
@@ -9612,7 +9649,7 @@ Index: src/game/g_buildable.c
          {
            if( player->health < player->client->ps.stats[ STAT_MAX_HEALTH ] &&
                player->client->ps.pm_type != PM_DEAD )
-@@ -1864,7 +4058,7 @@
+@@ -1864,7 +4083,7 @@
                self->active = qtrue;
              }
            }
@@ -9621,7 +9658,7 @@ Index: src/game/g_buildable.c
              BG_AddUpgradeToInventory( UP_MEDKIT, player->client->ps.stats );
          }
        }
-@@ -1883,11 +4077,12 @@
+@@ -1883,11 +4102,12 @@
        if( self->enemy->client && self->enemy->client->ps.stats[ STAT_STATE ] & SS_POISONED )
          self->enemy->client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
  
@@ -9636,7 +9673,7 @@ Index: src/game/g_buildable.c
          BG_AddUpgradeToInventory( UP_MEDKIT, self->enemy->client->ps.stats );
      }
    }
-@@ -1995,9 +4190,15 @@
+@@ -1995,9 +4215,15 @@
    trace_t   trace;
    gentity_t *traceEnt;
  
@@ -9652,7 +9689,7 @@ Index: src/game/g_buildable.c
    if( !target->client )
      return qfalse;
  
-@@ -2101,13 +4302,40 @@
+@@ -2101,13 +4327,40 @@
  {
    int firespeed = BG_FindFireSpeedForBuildable( self->s.modelindex );
  
@@ -9695,7 +9732,7 @@ Index: src/game/g_buildable.c
    {
      self->nextthink = level.time + POWER_REFRESH_TIME;
      return;
-@@ -2172,10 +4400,37 @@
+@@ -2172,10 +4425,37 @@
    int       i, num;
    gentity_t *enemy;
  
@@ -9735,7 +9772,7 @@ Index: src/game/g_buildable.c
    {
      self->s.eFlags &= ~EF_FIRING;
      self->nextthink = level.time + POWER_REFRESH_TIME;
-@@ -2197,9 +4452,12 @@
+@@ -2197,9 +4477,12 @@
      {
        enemy = &g_entities[ entityList[ i ] ];
  
@@ -9749,7 +9786,7 @@ Index: src/game/g_buildable.c
        {
          VectorSubtract( enemy->s.pos.trBase, self->s.pos.trBase, dir );
          VectorNormalize( dir );
-@@ -2298,13 +4556,31 @@
+@@ -2298,13 +4581,31 @@
  */
  void HSpawn_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod )
  {
@@ -9782,7 +9819,7 @@ Index: src/game/g_buildable.c
  
    if( self->spawned )
    {
-@@ -2361,7 +4637,7 @@
+@@ -2361,7 +4662,7 @@
      if( self->s.groundEntityNum )
      {
        if( ( ent = G_CheckSpawnPoint( self->s.number, self->s.origin,
@@ -9791,7 +9828,7 @@ Index: src/game/g_buildable.c
        {
          if( ent->s.eType == ET_BUILDABLE || ent->s.number == ENTITYNUM_WORLD ||
              ent->s.eType == ET_MOVER )
-@@ -2369,10 +4645,45 @@
+@@ -2369,10 +4670,45 @@
            G_Damage( self, NULL, NULL, NULL, NULL, 10000, 0, MOD_SUICIDE );
            return;
          }
@@ -9837,7 +9874,7 @@ Index: src/game/g_buildable.c
      }
  
      //spawn under attack
-@@ -2386,12 +4697,33 @@
+@@ -2386,12 +4722,33 @@
      self->lastHealth = self->health;
    }
  
@@ -9872,7 +9909,7 @@ Index: src/game/g_buildable.c
  //==================================================================================
  
  
-@@ -2470,7 +4802,7 @@
+@@ -2470,7 +4827,7 @@
    //pack health, power and dcc
  
    //toggle spawned flag for buildables
@@ -9881,7 +9918,7 @@ Index: src/game/g_buildable.c
    {
      if( ent->buildTime + bTime < level.time )
        ent->spawned = qtrue;
-@@ -2533,7 +4865,7 @@
+@@ -2533,7 +4890,7 @@
  Check whether a point is within some range of a type of buildable
  ===============
  */
@@ -9890,7 +9927,7 @@ Index: src/game/g_buildable.c
  {
    int       entityList[ MAX_GENTITIES ];
    vec3_t    range;
-@@ -2557,10 +4889,10 @@
+@@ -2557,10 +4914,10 @@
        continue;
  
      if( ent->s.modelindex == buildable && ent->spawned )
@@ -9903,7 +9940,7 @@ Index: src/game/g_buildable.c
  }
  
  /*
-@@ -2608,7 +4940,7 @@
+@@ -2608,7 +4965,7 @@
    VectorAdd( minsB, originB, minsB );
    VectorAdd( maxsB, originB, maxsB );
  
@@ -9912,7 +9949,7 @@ Index: src/game/g_buildable.c
  }
  
  /*
-@@ -2712,14 +5044,31 @@
+@@ -2712,14 +5069,31 @@
  {
    int       i;
    gentity_t *ent;
@@ -9945,7 +9982,7 @@ Index: src/game/g_buildable.c
      G_FreeEntity( ent );
    }
  }
-@@ -2881,7 +5230,7 @@
+@@ -2881,7 +5255,7 @@
    }
  
    // We still need build points, but have no candidates for removal
@@ -9954,7 +9991,7 @@ Index: src/game/g_buildable.c
      return bpError;
  
    // Collided with something we can't remove
-@@ -2913,7 +5262,7 @@
+@@ -2913,7 +5287,7 @@
    }
  
    // Make sure we're not removing the last spawn
@@ -9963,7 +10000,7 @@ Index: src/game/g_buildable.c
      return bpError;
  
    // Not enough points yielded
-@@ -2969,14 +5318,19 @@
+@@ -2969,14 +5343,19 @@
    int               buildPoints;
  
    // Stop all buildables from interacting with traces
@@ -9986,7 +10023,7 @@ Index: src/game/g_buildable.c
    VectorCopy( entity_origin, origin );
  
    VectorCopy( tr1.plane.normal, normal );
-@@ -2984,14 +5338,14 @@
+@@ -2984,14 +5363,14 @@
    invert = BG_FindInvertNormalForBuildable( buildable );
  
    //can we build at this angle?
@@ -10004,7 +10041,7 @@ Index: src/game/g_buildable.c
      reason = IBE_NORMAL;
  
    contents = trap_PointContents( entity_origin, -1 );
-@@ -3002,7 +5356,7 @@
+@@ -3002,7 +5381,7 @@
      //alien criteria
  
      // Check there is an Overmind
@@ -10013,7 +10050,7 @@ Index: src/game/g_buildable.c
      {
          tempent = G_FindBuildable( BA_A_OVERMIND );
  
-@@ -3011,7 +5365,7 @@
+@@ -3011,7 +5390,7 @@
      }
  
      //check there is creep near by for building on
@@ -10022,7 +10059,7 @@ Index: src/game/g_buildable.c
      {
        if( !G_IsCreepHere( entity_origin ) )
          reason = IBE_NOCREEP;
-@@ -3024,12 +5378,12 @@
+@@ -3024,12 +5403,12 @@
        //this assumes the adv builder is the biggest thing that'll use the hovel
        BG_FindBBoxForClass( PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL );
  
@@ -10037,7 +10074,7 @@ Index: src/game/g_buildable.c
        reason = IBE_PERMISSION;
    }
    else if( ent->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
-@@ -3037,7 +5391,7 @@
+@@ -3037,7 +5416,7 @@
      //human criteria
  
      // Check for power
@@ -10046,7 +10083,7 @@ Index: src/game/g_buildable.c
      {
        //tell player to build a repeater to provide power
        if( buildable != BA_H_REACTOR && buildable != BA_H_REPEATER )
-@@ -3045,11 +5399,11 @@
+@@ -3045,11 +5424,11 @@
      }
  
      //this buildable requires a DCC
@@ -10060,7 +10097,7 @@ Index: src/game/g_buildable.c
      {
        tempent = G_FindBuildable( BA_H_REACTOR );
  
-@@ -3062,16 +5416,16 @@
+@@ -3062,16 +5441,16 @@
      }
  
      // Check permission to build here
@@ -10080,7 +10117,7 @@ Index: src/game/g_buildable.c
    {
      tempent = G_FindBuildable( buildable );
      if( tempent && !tempent->deconstruct )
-@@ -3097,11 +5451,11 @@
+@@ -3097,11 +5476,11 @@
      }
    }
  
@@ -10094,7 +10131,7 @@ Index: src/game/g_buildable.c
      reason = IBE_NOROOM;
  
    if( reason != IBE_NONE )
-@@ -3113,7 +5467,29 @@
+@@ -3113,7 +5492,29 @@
    return reason;
  }
  
@@ -10124,7 +10161,7 @@ Index: src/game/g_buildable.c
  /*
  ================
  G_Build
-@@ -3124,8 +5500,16 @@
+@@ -3124,8 +5525,16 @@
  static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t origin, vec3_t angles )
  {
    gentity_t *built;
@@ -10141,7 +10178,7 @@ Index: src/game/g_buildable.c
    // Free existing buildables
    G_FreeMarkedBuildables( );
  
-@@ -3179,13 +5563,51 @@
+@@ -3179,13 +5588,51 @@
    built->takedamage = qtrue;
    built->spawned = qfalse;
    built->buildTime = built->s.time = level.time;
@@ -10194,7 +10231,7 @@ Index: src/game/g_buildable.c
    }
  
    //things that vary for each buildable that aren't in the dbase
-@@ -3244,6 +5666,7 @@
+@@ -3244,6 +5691,7 @@
      case BA_H_SPAWN:
        built->die = HSpawn_Die;
        built->think = HSpawn_Think;
@@ -10202,7 +10239,7 @@ Index: src/game/g_buildable.c
        break;
  
      case BA_H_MGTURRET:
-@@ -3292,13 +5715,20 @@
+@@ -3292,13 +5740,20 @@
    }
  
    built->s.number = built - g_entities;
@@ -10226,7 +10263,7 @@ Index: src/game/g_buildable.c
    else
      built->builtBy = -1;
  
-@@ -3348,6 +5778,35 @@
+@@ -3348,6 +5803,35 @@
  
    trap_LinkEntity( built );
  
@@ -10262,7 +10299,7 @@ Index: src/game/g_buildable.c
    return built;
  }
  
-@@ -3485,12 +5944,12 @@
+@@ -3485,12 +5969,12 @@
  
    trap_Trace( &tr, built->s.origin, built->r.mins, built->r.maxs, dest, built->s.number, built->clipmask );
  
@@ -10277,7 +10314,7 @@ Index: src/game/g_buildable.c
    }
  
    //point items in the correct direction
-@@ -3514,7 +5973,7 @@
+@@ -3514,7 +5998,7 @@
  be on an entity that hasn't spawned yet.
  ============
  */
@@ -10286,7 +10323,7 @@ Index: src/game/g_buildable.c
  {
    ent->s.modelindex = buildable;
  
-@@ -3522,8 +5981,66 @@
+@@ -3522,8 +6006,66 @@
    // spawns until the third frame so they can ride trains
    ent->nextthink = level.time + FRAMETIME * 2;
    ent->think = G_FinishSpawningBuildable;
@@ -10353,7 +10390,7 @@ Index: src/game/g_buildable.c
  /*
  ============
  G_LayoutSave
-@@ -3562,7 +6079,7 @@
+@@ -3562,7 +6104,7 @@
      if( ent->s.eType != ET_BUILDABLE )
        continue;
  
@@ -10362,7 +10399,7 @@ Index: src/game/g_buildable.c
        ent->s.modelindex,
        ent->s.pos.trBase[ 0 ],
        ent->s.pos.trBase[ 1 ],
-@@ -3575,7 +6092,11 @@
+@@ -3575,7 +6117,11 @@
        ent->s.origin2[ 2 ],
        ent->s.angles2[ 0 ],
        ent->s.angles2[ 1 ],
@@ -10375,7 +10412,7 @@ Index: src/game/g_buildable.c
      trap_FS_Write( s, strlen( s ), f );
    }
    trap_FS_FCloseFile( f );
-@@ -3716,7 +6237,7 @@
+@@ -3716,7 +6262,7 @@
  ============
  */
  static void G_LayoutBuildItem( buildable_t buildable, vec3_t origin,
@@ -10384,7 +10421,7 @@ Index: src/game/g_buildable.c
  {
    gentity_t *builder;
  
-@@ -3726,46 +6247,298 @@
+@@ -3726,46 +6272,298 @@
    VectorCopy( angles, builder->s.angles );
    VectorCopy( origin2, builder->s.origin2 );
    VectorCopy( angles2, builder->s.angles2 );
@@ -10696,7 +10733,7 @@ Index: src/game/g_buildable.c
    while( *layout )
    {
      if( i >= sizeof( line ) - 1 )
-@@ -3779,21 +6552,150 @@
+@@ -3779,21 +6577,150 @@
      if( *layout == '\n' )
      {
        i = 0;
@@ -10851,7 +10888,7 @@ Index: src/game/g_buildable.c
  }
  
  /*
-@@ -3821,3 +6723,224 @@
+@@ -3821,3 +6748,224 @@
    }
  }
  
@@ -11087,7 +11124,7 @@ Index: src/game/g_main.c
 +#define MCONCAT(x, y) x # y
 +#define MTOSTRING(x) MCONCAT("", x)
 +
-+#define VERSION "1.4.1"
++#define VERSION "1.4.2"
 +#define BUILDID MTOSTRING(GAMESUM)
 +
  level_locals_t  level;
@@ -20003,7 +20040,7 @@ Index: src/game/g_cmds.c
  
    if( !other )
      return;
-@@ -786,22 +1223,28 @@
+@@ -786,9 +1223,12 @@
    if( other->client->pers.connected != CON_CONNECTED )
      return;
  
@@ -20017,13 +20054,17 @@ Index: src/game/g_cmds.c
 +    if( other->client->pers.teamSelection != PTE_NONE && !ocTeam )
        return;
  
--    if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) )
-+    if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) || ( !ocTeam && ( ent->client->pers.ocTeam || other->client->pers.ocTeam ) ) )
-       return;
- 
+     if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) )
+@@ -797,11 +1237,20 @@
      // specs with ADMF_SPEC_ALLCHAT flag can see team chat
    }
  
++  if( ( mode == SAY_TEAM || mode == SAY_ACTION_T ) && !ocTeam && ent->client->pers.ocTeam )
++  {
++    // if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) )
++    return;
++  }
++
 +  if( mode == SAY_ADMINS && !G_admin_permission( other, ADMF_ADMINCHAT) )
 +     return;
 +
@@ -20037,7 +20078,7 @@ Index: src/game/g_cmds.c
      ( ignore ) ? "[skipnotify]" : "",
      name, Q_COLOR_ESCAPE, color, message ) );
  }
-@@ -819,21 +1262,33 @@
+@@ -819,21 +1268,33 @@
    char        text[ MAX_SAY_TEXT ];
    char        location[ 64 ];
  
@@ -20074,7 +20115,7 @@ Index: src/game/g_cmds.c
      }
    }
    else
-@@ -870,34 +1325,99 @@
+@@ -870,34 +1331,99 @@
            ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
        color = COLOR_MAGENTA;
        break;
@@ -20180,7 +20221,7 @@ Index: src/game/g_cmds.c
  /*
  ==================
  Cmd_Say_f
-@@ -907,28 +1427,115 @@
+@@ -907,28 +1433,115 @@
  {
    char    *p;
    char    *args;
@@ -20298,7 +20339,7 @@ Index: src/game/g_cmds.c
    G_Say( ent, NULL, mode, p );
  }
  
-@@ -987,15 +1594,42 @@
+@@ -987,15 +1600,42 @@
    int   i;
    char  arg1[ MAX_STRING_TOKENS ];
    char  arg2[ MAX_STRING_TOKENS ];
@@ -20341,7 +20382,7 @@ Index: src/game/g_cmds.c
    if( level.voteTime )
    {
      trap_SendServerCommand( ent-g_entities, "print \"A vote is already in progress\n\"" );
-@@ -1003,7 +1637,7 @@
+@@ -1003,7 +1643,7 @@
    }
  
    if( g_voteLimit.integer > 0
@@ -20350,7 +20391,7 @@ Index: src/game/g_cmds.c
      && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
    {
      trap_SendServerCommand( ent-g_entities, va(
-@@ -1012,11 +1646,19 @@
+@@ -1012,11 +1652,19 @@
      return;
    }
  
@@ -20371,7 +20412,7 @@ Index: src/game/g_cmds.c
    {
      trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
      return;
-@@ -1029,12 +1671,19 @@
+@@ -1029,12 +1677,19 @@
      trap_SendConsoleCommand( EXEC_APPEND, va( "%s\n", level.voteString ) );
    }
  
@@ -20392,7 +20433,7 @@ Index: src/game/g_cmds.c
  
      if( !arg2[ 0 ] )
      {
-@@ -1043,17 +1692,24 @@
+@@ -1043,17 +1698,24 @@
        return;
      }
  
@@ -20421,7 +20462,7 @@ Index: src/game/g_cmds.c
      if( clientNum != -1 &&
        level.clients[ clientNum ].pers.connected == CON_DISCONNECTED )
      {
-@@ -1065,6 +1721,9 @@
+@@ -1065,6 +1727,9 @@
        Q_strncpyz( name, level.clients[ clientNum ].pers.netname,
          sizeof( name ) );
        Q_CleanStr( name );
@@ -20431,7 +20472,7 @@ Index: src/game/g_cmds.c
      }
      else
      {
-@@ -1073,23 +1732,89 @@
+@@ -1073,23 +1738,89 @@
        return;
      }
    }
@@ -20524,7 +20565,7 @@ Index: src/game/g_cmds.c
    else if( !Q_stricmp( arg1, "mute" ) )
    {
      if( level.clients[ clientNum ].pers.muted )
-@@ -1103,6 +1828,7 @@
+@@ -1103,6 +1834,7 @@
      {
        trap_SendServerCommand( ent-g_entities,
          "print \"callvote: admin is immune from vote mute\n\"" );
@@ -20532,7 +20573,7 @@ Index: src/game/g_cmds.c
        return;
      }
      Com_sprintf( level.voteString, sizeof( level.voteString ),
-@@ -1123,61 +1849,258 @@
+@@ -1123,61 +1855,258 @@
      Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
        "Un-Mute player \'%s\'", name );
    }
@@ -20808,7 +20849,7 @@ Index: src/game/g_cmds.c
  /*
  ==================
  Cmd_Vote_f
-@@ -1189,6 +2112,23 @@
+@@ -1189,6 +2118,23 @@
  
    if( !level.voteTime )
    {
@@ -20832,7 +20873,7 @@ Index: src/game/g_cmds.c
      trap_SendServerCommand( ent-g_entities, "print \"No vote in progress\n\"" );
      return;
    }
-@@ -1199,6 +2139,12 @@
+@@ -1199,6 +2145,12 @@
      return;
    }
  
@@ -20845,7 +20886,7 @@ Index: src/game/g_cmds.c
    trap_SendServerCommand( ent-g_entities, "print \"Vote cast\n\"" );
  
    trap_Argv( 1, msg, sizeof( msg ) );
-@@ -1221,7 +2167,11 @@
+@@ -1221,7 +2173,11 @@
    char  arg2[ MAX_STRING_TOKENS ];
    int   clientNum = -1;
    char  name[ MAX_NETNAME ];
@@ -20858,7 +20899,7 @@ Index: src/game/g_cmds.c
    team = ent->client->pers.teamSelection;
  
    if( team == PTE_ALIENS )
-@@ -1240,7 +2190,7 @@
+@@ -1240,7 +2196,7 @@
    }
  
    if( g_voteLimit.integer > 0
@@ -20867,7 +20908,7 @@ Index: src/game/g_cmds.c
      && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
    {
      trap_SendServerCommand( ent-g_entities, va(
-@@ -1249,6 +2199,24 @@
+@@ -1249,6 +2205,24 @@
      return;
    }
  
@@ -20892,7 +20933,7 @@ Index: src/game/g_cmds.c
    // make sure it is a valid command to vote on
    trap_Argv( 1, arg1, sizeof( arg1 ) );
    trap_Argv( 2, arg2, sizeof( arg2 ) );
-@@ -1258,13 +2226,17 @@
+@@ -1258,13 +2232,17 @@
      trap_SendServerCommand( ent-g_entities, "print \"Invalid team vote string\n\"" );
      return;
    }
@@ -20912,7 +20953,7 @@ Index: src/game/g_cmds.c
  
      if( !arg2[ 0 ] )
      {
-@@ -1273,24 +2245,31 @@
+@@ -1273,24 +2251,31 @@
        return;
      }
  
@@ -20949,7 +20990,7 @@ Index: src/game/g_cmds.c
      if( clientNum != -1 &&
        level.clients[ clientNum ].pers.connected == CON_DISCONNECTED )
      {
-@@ -1302,6 +2281,11 @@
+@@ -1302,6 +2287,11 @@
        Q_strncpyz( name, level.clients[ clientNum ].pers.netname,
          sizeof( name ) );
        Q_CleanStr( name );
@@ -20961,7 +21002,7 @@ Index: src/game/g_cmds.c
      }
      else
      {
-@@ -1317,6 +2301,7 @@
+@@ -1317,6 +2307,7 @@
      {
        trap_SendServerCommand( ent-g_entities,
          "print \"callteamvote: admin is immune from vote kick\n\"" );
@@ -20969,7 +21010,7 @@ Index: src/game/g_cmds.c
        return;
      }
  
-@@ -1324,8 +2309,8 @@
+@@ -1324,8 +2315,8 @@
      // use ip in case this player disconnects before the vote ends
      Com_sprintf( level.teamVoteString[ cs_offset ],
        sizeof( level.teamVoteString[ cs_offset ] ),
@@ -20980,7 +21021,7 @@ Index: src/game/g_cmds.c
      Com_sprintf( level.teamVoteDisplayString[ cs_offset ],
          sizeof( level.teamVoteDisplayString[ cs_offset ] ),
          "Kick player '%s'", name );
-@@ -1343,6 +2328,7 @@
+@@ -1343,6 +2334,7 @@
      {
        trap_SendServerCommand( ent-g_entities,
          "print \"callteamvote: admin is immune from denybuild\n\"" );
@@ -20988,7 +21029,7 @@ Index: src/game/g_cmds.c
        return;
      }
  
-@@ -1367,31 +2353,87 @@
+@@ -1367,31 +2359,87 @@
          sizeof( level.teamVoteDisplayString[ cs_offset ] ),
          "Allow '%s' to build", name );
    }
@@ -21083,7 +21124,7 @@ Index: src/game/g_cmds.c
    ent->client->pers.teamVote = qtrue;
  
    for( i = 0 ; i < level.maxclients ; i++ )
-@@ -1400,13 +2442,12 @@
+@@ -1400,13 +2448,12 @@
        level.clients[ i ].ps.eFlags &= ~EF_TEAMVOTED;
    }
  
@@ -21098,7 +21139,7 @@ Index: src/game/g_cmds.c
    trap_SetConfigstring( CS_TEAMVOTE_NO + cs_offset, "0" );
  }
  
-@@ -1480,7 +2521,7 @@
+@@ -1480,7 +2527,7 @@
  
  #define AS_OVER_RT3         ((ALIENSENSE_RANGE*0.5f)/M_ROOT3)
  
@@ -21107,7 +21148,7 @@ Index: src/game/g_cmds.c
    vec3_t newOrigin )
  {
    vec3_t    fromMins, fromMaxs;
-@@ -1522,17 +2563,17 @@
+@@ -1522,17 +2569,17 @@
    //compute a place up in the air to start the real trace
    VectorCopy( newOrigin, temp );
    temp[ 2 ] += nudgeHeight;
@@ -21128,7 +21169,7 @@ Index: src/game/g_cmds.c
  
    //check there is room to evolve
    if( !tr.startsolid && tr.fraction == 1.0f )
-@@ -1552,41 +2593,152 @@
+@@ -1552,41 +2599,152 @@
    int       clientNum;
    int       i;
    vec3_t    infestOrigin;
@@ -21295,7 +21336,7 @@ Index: src/game/g_cmds.c
        return;
      }
  
-@@ -1596,7 +2748,8 @@
+@@ -1596,7 +2754,8 @@
        if( ( ent->client->ps.stats[ STAT_STATE ] & SS_WALLCLIMBING ) ||
            ( ent->client->ps.stats[ STAT_STATE ] & SS_WALLCLIMBINGCEILING ) )
        {
@@ -21305,7 +21346,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -1605,30 +2758,35 @@
+@@ -1605,30 +2764,35 @@
        VectorSubtract( ent->client->ps.origin, range, mins );
  
        num = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
@@ -21348,7 +21389,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -1639,10 +2797,82 @@
+@@ -1639,10 +2803,82 @@
        if( G_RoomForClassChange( ent, newClass, infestOrigin ) )
        {
          //...check we can evolve to that class
@@ -21433,7 +21474,7 @@ Index: src/game/g_cmds.c
            ent->client->pers.evolveHealthFraction = (float)ent->client->ps.stats[ STAT_HEALTH ] /
              (float)BG_FindHealthForClass( currentClass );
  
-@@ -1652,7 +2882,8 @@
+@@ -1652,7 +2888,8 @@
              ent->client->pers.evolveHealthFraction = 1.0f;
  
            //remove credit
@@ -21443,7 +21484,7 @@ Index: src/game/g_cmds.c
            ent->client->pers.classSelection = newClass;
            ClientUserinfoChanged( clientNum );
            VectorCopy( infestOrigin, ent->s.pos.trBase );
-@@ -1662,7 +2893,7 @@
+@@ -1662,7 +2899,7 @@
          else
          {
            trap_SendServerCommand( ent-g_entities,
@@ -21452,7 +21493,7 @@ Index: src/game/g_cmds.c
            return;
          }
        }
-@@ -1673,7 +2904,7 @@
+@@ -1673,7 +2910,7 @@
        }
      }
      else
@@ -21461,7 +21502,7 @@ Index: src/game/g_cmds.c
        //spawning from an egg
        for( i = 0; i < numClasses; i++ )
        {
-@@ -1681,6 +2912,15 @@
+@@ -1681,6 +2918,15 @@
              BG_FindStagesForClass( newClass, g_alienStage.integer ) &&
              BG_ClassIsAllowed( newClass ) )
          {
@@ -21477,7 +21518,7 @@ Index: src/game/g_cmds.c
            ent->client->pers.classSelection =
              ent->client->ps.stats[ STAT_PCLASS ] = newClass;
            G_PushSpawnQueue( &level.alienSpawnQueue, clientNum );
-@@ -1689,10 +2929,10 @@
+@@ -1689,10 +2935,10 @@
        }
        trap_SendServerCommand( ent-g_entities, va( "print \"You cannot spawn as this class\n\"" ) );
        return;
@@ -21490,7 +21531,7 @@ Index: src/game/g_cmds.c
      //humans cannot use this command whilst alive
      if( ent->client->pers.classSelection != PCL_NONE )
      {
-@@ -1718,11 +2958,35 @@
+@@ -1718,11 +2964,35 @@
        return;
      }
  
@@ -21527,7 +21568,7 @@ Index: src/game/g_cmds.c
  /*
  =================
  Cmd_Destroy_f
-@@ -1743,12 +3007,32 @@
+@@ -1743,12 +3013,32 @@
      return;
    }
  
@@ -21561,7 +21602,7 @@ Index: src/game/g_cmds.c
  
    if( !( ent->client->ps.stats[ STAT_STATE ] & SS_INFESTING ) )
    {
-@@ -1760,19 +3044,30 @@
+@@ -1760,19 +3050,30 @@
  
      if( tr.fraction < 1.0f &&
          ( traceEnt->s.eType == ET_BUILDABLE ) &&
@@ -21595,7 +21636,7 @@ Index: src/game/g_cmds.c
        {
          if( ent->client->pers.teamSelection == PTE_ALIENS &&
              traceEnt->s.modelindex == BA_A_SPAWN )
-@@ -1793,9 +3088,16 @@
+@@ -1793,9 +3094,16 @@
          return;
  
        // Don't allow destruction of buildables that cannot be rebuilt
@@ -21614,7 +21655,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -1805,32 +3107,55 @@
+@@ -1805,32 +3113,55 @@
          return;
        }
  
@@ -21682,7 +21723,7 @@ Index: src/game/g_cmds.c
              ent->client->ps.stats[ STAT_MISC ] +=
                BG_FindBuildDelayForWeapon( ent->s.weapon ) >> 2;
          }
-@@ -1852,12 +3177,19 @@
+@@ -1852,12 +3183,19 @@
    char  s[ MAX_TOKEN_CHARS ];
    int   upgrade, weapon;
  
@@ -21703,7 +21744,7 @@ Index: src/game/g_cmds.c
    else if( weapon != WP_NONE && BG_InventoryContainsWeapon( weapon, ent->client->ps.stats ) )
      G_ForceWeaponChange( ent, weapon );
    else
-@@ -1877,6 +3209,11 @@
+@@ -1877,6 +3215,11 @@
    char  s[ MAX_TOKEN_CHARS ];
    int   upgrade;
  
@@ -21715,7 +21756,7 @@ Index: src/game/g_cmds.c
    trap_Argv( 1, s, sizeof( s ) );
    upgrade = BG_FindUpgradeNumForName( s );
  
-@@ -1897,6 +3234,11 @@
+@@ -1897,6 +3240,11 @@
    char  s[ MAX_TOKEN_CHARS ];
    int   upgrade, weapon, i;
  
@@ -21727,7 +21768,7 @@ Index: src/game/g_cmds.c
    trap_Argv( 1, s, sizeof( s ) );
    upgrade = BG_FindUpgradeNumForName( s );
    weapon = BG_FindWeaponNumForName( s );
-@@ -1954,6 +3296,13 @@
+@@ -1954,6 +3302,13 @@
    qboolean  buyingEnergyAmmo = qfalse;
    qboolean  hasEnergyWeapon = qfalse;
  
@@ -21741,7 +21782,7 @@ Index: src/game/g_cmds.c
    for( i = UP_NONE; i < UP_NUM_UPGRADES; i++ )
    {
      if( BG_InventoryContainsUpgrade( i, ent->client->ps.stats ) )
-@@ -1981,23 +3330,26 @@
+@@ -1981,23 +3336,26 @@
      buyingEnergyAmmo = hasEnergyWeapon;
    }
  
@@ -21773,7 +21814,7 @@ Index: src/game/g_cmds.c
        return;
      }
    }
-@@ -2012,20 +3364,21 @@
+@@ -2012,20 +3370,21 @@
      }
  
      //can afford this?
@@ -21798,7 +21839,7 @@ Index: src/game/g_cmds.c
      {
        //shouldn't need a fancy dialog
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't buy alien items\n\"" ) );
-@@ -2033,62 +3386,96 @@
+@@ -2033,62 +3392,96 @@
      }
  
      //are we /allowed/ to buy this?
@@ -21916,7 +21957,7 @@ Index: src/game/g_cmds.c
      {
        //shouldn't need a fancy dialog
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't buy alien items\n\"" ) );
-@@ -2096,14 +3483,15 @@
+@@ -2096,14 +3489,15 @@
      }
  
      //are we /allowed/ to buy this?
@@ -21934,7 +21975,7 @@ Index: src/game/g_cmds.c
      {
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't buy this item\n\"" ) );
        return;
-@@ -2111,37 +3499,39 @@
+@@ -2111,37 +3505,39 @@
  
      if( upgrade == UP_AMMO )
        G_GiveClientMaxAmmo( ent, buyingEnergyAmmo );
@@ -21994,7 +22035,7 @@ Index: src/game/g_cmds.c
    //update ClientInfo
    ClientUserinfoChanged( ent->client->ps.clientNum );
  }
-@@ -2160,10 +3550,18 @@
+@@ -2160,10 +3556,18 @@
  
    trap_Argv( 1, s, sizeof( s ) );
  
@@ -22015,7 +22056,7 @@ Index: src/game/g_cmds.c
      return;
    }
  
-@@ -2173,20 +3571,33 @@
+@@ -2173,20 +3577,33 @@
    if( weapon != WP_NONE )
    {
      //are we /allowed/ to sell this?
@@ -22053,7 +22094,7 @@ Index: src/game/g_cmds.c
          return;
        }
  
-@@ -2203,7 +3614,7 @@
+@@ -2203,7 +3620,7 @@
    else if( upgrade != UP_NONE )
    {
      //are we /allowed/ to sell this?
@@ -22062,7 +22103,7 @@ Index: src/game/g_cmds.c
      {
        trap_SendServerCommand( ent-g_entities, va( "print \"You can't sell this item\n\"" ) );
        return;
-@@ -2211,21 +3622,6 @@
+@@ -2211,21 +3628,6 @@
      //remove upgrade if carried
      if( BG_InventoryContainsUpgrade( upgrade, ent->client->ps.stats ) )
      {
@@ -22084,7 +22125,7 @@ Index: src/game/g_cmds.c
        //add to inventory
        BG_RemoveUpgradeFromInventory( upgrade, ent->client->ps.stats );
  
-@@ -2242,9 +3638,10 @@
+@@ -2242,9 +3644,10 @@
      {
        //guard against selling the HBUILD weapons exploit
        if( ( i == WP_HBUILD || i == WP_HBUILD2 ) &&
@@ -22097,7 +22138,7 @@ Index: src/game/g_cmds.c
          continue;
        }
  
-@@ -2270,21 +3667,6 @@
+@@ -2270,21 +3673,6 @@
        if( BG_InventoryContainsUpgrade( i, ent->client->ps.stats ) &&
            BG_FindPurchasableForUpgrade( i ) )
        {
@@ -22119,7 +22160,7 @@ Index: src/game/g_cmds.c
          BG_RemoveUpgradeFromInventory( i, ent->client->ps.stats );
  
          if( i == UP_BATTPACK )
-@@ -2298,8 +3680,7 @@
+@@ -2298,8 +3686,7 @@
                  BG_FindUsesEnergyForWeapon( j ) &&
                  !BG_FindInfinteAmmoForWeapon( j ) )
              {
@@ -22129,7 +22170,7 @@ Index: src/game/g_cmds.c
              }
            }
          }
-@@ -2312,6 +3693,15 @@
+@@ -2312,6 +3699,15 @@
    else
      trap_SendServerCommand( ent-g_entities, va( "print \"Unknown item\n\"" ) );
  
@@ -22145,7 +22186,7 @@ Index: src/game/g_cmds.c
    //update ClientInfo
    ClientUserinfoChanged( ent->client->ps.clientNum );
  }
-@@ -2330,7 +3720,7 @@
+@@ -2330,7 +3726,7 @@
    vec3_t        origin;
    pTeam_t       team;
  
@@ -22154,7 +22195,7 @@ Index: src/game/g_cmds.c
    {
      trap_SendServerCommand( ent-g_entities,
        "print \"Your building rights have been revoked\n\"" );
-@@ -2340,15 +3730,42 @@
+@@ -2340,15 +3736,42 @@
    trap_Argv( 1, s, sizeof( s ) );
  
    buildable = BG_FindBuildNumForName( s );
@@ -22199,7 +22240,7 @@ Index: src/game/g_cmds.c
    {
      dist = BG_FindBuildDistForClass( ent->client->ps.stats[ STAT_PCLASS ] );
  
-@@ -2406,7 +3823,210 @@
+@@ -2406,7 +3829,210 @@
      trap_SendServerCommand( ent-g_entities, va( "print \"Cannot build this item\n\"" ) );
  }
  
@@ -22410,7 +22451,7 @@ Index: src/game/g_cmds.c
  /*
  =================
  Cmd_Boost_f
-@@ -2421,23 +4041,1562 @@
+@@ -2421,23 +4047,1562 @@
    if( ent->client->pers.cmd.buttons & BUTTON_WALKING )
      return;
  
@@ -23975,7 +24016,7 @@ Index: src/game/g_cmds.c
  G_StopFollowing
  
  If the client being followed leaves the game, or you just want to drop
-@@ -2448,10 +5607,27 @@
+@@ -2448,10 +5613,27 @@
  {
    ent->client->ps.persistant[ PERS_TEAM ] = TEAM_SPECTATOR;
    ent->client->sess.sessionTeam = TEAM_SPECTATOR;
@@ -24005,7 +24046,7 @@ Index: src/game/g_cmds.c
  
    ent->client->ps.stats[ STAT_STATE ] &= ~SS_WALLCLIMBING;
    ent->client->ps.stats[ STAT_STATE ] &= ~SS_WALLCLIMBINGCEILING;
-@@ -2503,6 +5679,10 @@
+@@ -2503,6 +5685,10 @@
      if( clientnum < 0 )
        clientnum = level.maxclients - 1;
  
@@ -24016,7 +24057,7 @@ Index: src/game/g_cmds.c
      // avoid selecting existing follow target
      if( clientnum == original && !selectAny )
        continue; //effectively break;
-@@ -2516,9 +5696,20 @@
+@@ -2516,9 +5702,20 @@
        continue;
  
      // can't follow another spectator
@@ -24039,7 +24080,7 @@ Index: src/game/g_cmds.c
      // this is good, we can use it
      ent->client->sess.spectatorClient = clientnum;
      ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
-@@ -2538,10 +5729,107 @@
+@@ -2538,10 +5735,107 @@
  {
    if( ent->client->sess.spectatorState == SPECTATOR_FOLLOW )
      G_StopFollowing( ent );
@@ -24148,7 +24189,7 @@ Index: src/game/g_cmds.c
  /*
  =================
  Cmd_Follow_f
-@@ -2553,12 +5841,17 @@
+@@ -2553,12 +5847,17 @@
    int   pids[ MAX_CLIENTS ];
    char  arg[ MAX_TOKEN_CHARS ];
  
@@ -24168,7 +24209,7 @@ Index: src/game/g_cmds.c
    {
      trap_Argv( 1, arg, sizeof( arg ) );
      if( G_ClientNumbersFromString( arg, pids, MAX_CLIENTS ) == 1 )
-@@ -2577,14 +5870,36 @@
+@@ -2577,14 +5876,36 @@
        }
      }
  
@@ -24206,7 +24247,7 @@ Index: src/game/g_cmds.c
      ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
      ent->client->sess.spectatorClient = i;
    }
-@@ -2605,9 +5920,10 @@
+@@ -2605,9 +5926,10 @@
      dir = -1;
  
    // won't work unless spectating
@@ -24220,7 +24261,7 @@ Index: src/game/g_cmds.c
    G_FollowNewClient( ent, dir );
  }
  
-@@ -2695,6 +6011,63 @@
+@@ -2695,6 +6017,63 @@
          // set the correct credit
          ent->client->ps.persistant[ PERS_CREDIT ] = 0;
          G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
@@ -24284,7 +24325,7 @@ Index: src/game/g_cmds.c
        }
      }
    }
-@@ -2726,7 +6099,7 @@
+@@ -2726,7 +6105,7 @@
    }
  
    Q_strncpyz( name, ConcatArgs( 1 ), sizeof( name ) );
@@ -24293,7 +24334,7 @@ Index: src/game/g_cmds.c
    if( matches < 1 )
    {
      trap_SendServerCommand( ent-g_entities, va( "print \"[skipnotify]"
-@@ -2773,6 +6146,445 @@
+@@ -2773,6 +6152,445 @@
    }
  }
  
@@ -24739,7 +24780,7 @@ Index: src/game/g_cmds.c
  commands_t cmds[ ] = {
    // normal commands
    { "team", 0, Cmd_Team_f },
-@@ -2784,21 +6596,27 @@
+@@ -2784,21 +6602,27 @@
    { "tell", CMD_MESSAGE, Cmd_Tell_f },
    { "callvote", CMD_MESSAGE, Cmd_CallVote_f },
    { "callteamvote", CMD_MESSAGE|CMD_TEAM, Cmd_CallTeamVote_f },
@@ -24769,7 +24810,7 @@ Index: src/game/g_cmds.c
    { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
  
    { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
-@@ -2807,24 +6625,79 @@
+@@ -2807,24 +6631,79 @@
    { "ptrcverify", 0, Cmd_PTRCVerify_f },
    { "ptrcrestore", 0, Cmd_PTRCRestore_f },
  
@@ -24860,7 +24901,7 @@ Index: src/game/g_cmds.c
  };
  static int numCmds = sizeof( cmds ) / sizeof( cmds[ 0 ] );
  
-@@ -2861,7 +6734,7 @@
+@@ -2861,7 +6740,7 @@
  
    // do tests here to reduce the amount of repeated code
  
@@ -24869,7 +24910,7 @@ Index: src/game/g_cmds.c
      return;
  
    if( cmds[ i ].cmdFlags & CMD_CHEAT && !g_cheats.integer )
-@@ -2872,7 +6745,11 @@
+@@ -2872,7 +6751,11 @@
    }
  
    if( cmds[ i ].cmdFlags & CMD_MESSAGE && ent->client->pers.muted )
@@ -24881,7 +24922,7 @@ Index: src/game/g_cmds.c
  
    if( cmds[ i ].cmdFlags & CMD_TEAM &&
        ent->client->pers.teamSelection == PTE_NONE )
-@@ -2881,7 +6758,8 @@
+@@ -2881,7 +6764,8 @@
      return;
    }
  
@@ -24891,7 +24932,7 @@ Index: src/game/g_cmds.c
        ent->client->pers.teamSelection != PTE_NONE )
    {
      trap_SendServerCommand( clientNum,
-@@ -2898,7 +6776,7 @@
+@@ -2898,7 +6782,7 @@
    }
  
    if( cmds[ i ].cmdFlags & CMD_HUMAN &&
@@ -24900,7 +24941,7 @@ Index: src/game/g_cmds.c
    {
      trap_SendServerCommand( clientNum,
        "print \"Must be human to use this command\n\"" );
-@@ -2907,13 +6785,19 @@
+@@ -2907,13 +6791,19 @@
  
    if( cmds[ i ].cmdFlags & CMD_LIVING &&
      ( ent->client->ps.stats[ STAT_HEALTH ] <= 0 ||
@@ -24921,7 +24962,7 @@ Index: src/game/g_cmds.c
    cmds[ i ].cmdHandler( ent );
  }
  
-@@ -2929,7 +6813,7 @@
+@@ -2929,7 +6819,7 @@
    {
      if( *s == ' ' )
      {
@@ -24930,7 +24971,7 @@ Index: src/game/g_cmds.c
        if( *s != ' ' )
        {
          c++;
-@@ -3019,7 +6903,7 @@
+@@ -3019,7 +6909,7 @@
  }
  
  void G_DecolorString( char *in, char *out )
@@ -24939,7 +24980,7 @@ Index: src/game/g_cmds.c
    while( *in ) {
      if( *in == 27 || *in == '^' ) {
        in++;
-@@ -3053,6 +6937,13 @@
+@@ -3053,6 +6943,13 @@
      return;
    }
  
@@ -24953,7 +24994,7 @@ Index: src/game/g_cmds.c
    G_SayArgv( 0, cmd, sizeof( cmd ) );
    if( !Q_stricmp( cmd, "say" ) || !Q_stricmp( cmd, "say_team" ) )
    {
-@@ -3102,6 +6993,17 @@
+@@ -3102,6 +6999,17 @@
  
    color = teamonly ? COLOR_CYAN : COLOR_YELLOW;
  
@@ -24971,7 +25012,7 @@ Index: src/game/g_cmds.c
    Q_strncpyz( str,
      va( "^%csent to %i player%s: ^7", color, matches,
        ( matches == 1 ) ? "" : "s" ),
-@@ -3123,13 +7025,7 @@
+@@ -3123,13 +7031,7 @@
        color,
        msg,
        ent ? ent-g_entities : -1 ) );
@@ -24986,7 +25027,7 @@ Index: src/game/g_cmds.c
        "cp \"^%cprivate message from ^7%s^7\"", color,
        ( ent ) ? ent->client->pers.netname : "console" ) );
    }
-@@ -3139,7 +7035,9 @@
+@@ -3139,7 +7041,9 @@
        name ) );
    else
    {
@@ -24997,7 +25038,7 @@ Index: src/game/g_cmds.c
      ADMP( va( "%s\n", str ) );
  
      G_LogPrintf( "%s: %s: %s: %s\n",
-@@ -3163,3 +7061,501 @@
+@@ -3163,3 +7067,501 @@
    }
  }
  
