@@ -623,6 +623,10 @@ void ClientTimerActions( gentity_t *ent, int msec )
       {
         if(ent->client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
         {
+            // hack for SCRIMTIME
+            oc_scrimTeam_t tmp;
+            oc_scrimTeam_t *t = &tmp;
+            t->time = level.time;
             G_ClientCP(ent, va("^t^i^m^e^2%dm:%ds:%dms", MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME) ), "^t^i^m^e", CLIENT_SPECTATORS);
         }
         else
