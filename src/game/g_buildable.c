@@ -3612,7 +3612,7 @@ int G_OCScrimEnd( void )
                 if(level.ocScrimMode == OC_MODE_MEDI)
                 {
                     gentity_t **tmp = G_Alloc(level.totalMedistations * sizeof(gentity_t *));
-//                    memset(tmp, 0, level.totalMedistations * sizeof(gentity_t *));
+                    memcpy(tmp, si->medis, level.totalMedistations * sizeof(gentity_t *));
                     for(i = 0; i < MAX_CLIENTS; i++)
                     {
                         ent = g_entities + i;
@@ -3628,7 +3628,7 @@ int G_OCScrimEnd( void )
                 if(level.ocScrimMode == OC_MODE_ARM)
                 {
                     gentity_t **tmp = G_Alloc(level.totalArmouries * sizeof(gentity_t *));
-//                    memset(tmp, 0, level.totalMedistations * sizeof(gentity_t *));
+                    memcpy(tmp, si->arms, level.totalArmouries * sizeof(gentity_t *));
                     for(i = 0; i < MAX_CLIENTS; i++)
                     {
                         ent = g_entities + i;
