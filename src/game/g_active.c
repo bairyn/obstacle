@@ -1947,23 +1947,29 @@ void ClientThink_real( gentity_t *ent )
             G_ForceWeaponChange( ent, t->weapon );
         }
     }
-    else if(client->pers.teamSelection == PTE_HUMANS && !(ent->client->pers.arms || G_AllArms(ent->client->pers.medis)))
+    else
     {
         G_WeaponRemoveReserved( ent );
-        if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats))
+        if(client->pers.teamSelection == PTE_HUMANS)
         {
-            BG_AddWeaponToInventory(WP_BLASTER, client->ps.stats);
-            G_ForceWeaponChange(ent, WP_NONE);
-        }
-        if(!BG_InventoryContainsWeapon(WP_NONE, client->ps.stats))
-        {
-            BG_AddWeaponToInventory(WP_NONE, client->ps.stats);
-            G_ForceWeaponChange(ent, WP_NONE);
-        }
-        if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, client->ps.stats))
-        {
-            BG_AddWeaponToInventory(WP_MACHINEGUN, client->ps.stats);
-            G_ForceWeaponChange(ent, WP_MACHINEGUN);
+            if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats))
+            {
+                BG_AddWeaponToInventory(WP_BLASTER, client->ps.stats);
+                G_ForceWeaponChange(ent, WP_NONE);
+            }
+            if(!BG_InventoryContainsWeapon(WP_NONE, client->ps.stats))
+            {
+                BG_AddWeaponToInventory(WP_NONE, client->ps.stats);
+                G_ForceWeaponChange(ent, WP_NONE);
+            }
+            if(ent->client->pers.arms && !G_AllArms(ent->client->pers.arms))
+            {
+                if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, client->ps.stats))
+                {
+                    BG_AddWeaponToInventory(WP_MACHINEGUN, client->ps.stats);
+                    G_ForceWeaponChange(ent, WP_MACHINEGUN);
+                }
+            }
         }
     }
 

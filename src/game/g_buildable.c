@@ -3520,6 +3520,9 @@ int G_WeaponRemoveReserved( gentity_t *ent )
     if(!level.oc)
         return 0;
 
+    if(!ent)
+        return 0;
+
     if(!ent->client)
         return 0;
 
