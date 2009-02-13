@@ -3547,7 +3547,7 @@ qboolean G_admin_setCheat( gentity_t *ent, int skiparg )
   vic = &g_entities[ pids[ 0 ] ];
   if( vic->client->pers.muted == qtrue )
   {
-    if( !Q_stricmp( cmd, "setCheat" ) )
+    if( !Q_stricmp( cmd, "cheat-set" ) )
     {
       ADMP( va( "^3!%s: ^7player has already cheated\n", cmd ) );
       return qtrue;
@@ -3560,9 +3560,9 @@ qboolean G_admin_setCheat( gentity_t *ent, int skiparg )
   }
   else
   {
-    if( !Q_stricmp( cmd, "unsetCheat" ) )
+    if( !Q_stricmp( cmd, "cheat-unset" ) )
     {
-      ADMP( "^3!unmute: ^7player is not currently muted\n" );
+      ADMP( va( "^3!%s: ^7player has not cheated\n", cmd ) );
       return qtrue;
     }
     vic->client->pers.hasCheated = 1;
