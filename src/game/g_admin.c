@@ -174,6 +174,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       ""
     },
 
+    {"cheat-unset", G_admin_setCheat, "^^c",
+      "set cheat - requires cheats",
+      "[^3name|slot#^7]"
+    },
+
     {"crash", G_admin_crash, "^^^a",
       "crash a client",
       "[^5stage^7]"
