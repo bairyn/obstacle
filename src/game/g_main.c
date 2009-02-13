@@ -748,7 +748,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   if (*(layout) == 'o' && *((layout) + 1) == 'c')
   {
     trap_Cvar_Set( "g_humanBuildPoints", va( "%d", INFINITE ) );
-    trap_Cvar_Set( "g_alienBUildPoints", va( "%d", INFINITE ) );
+    trap_Cvar_Set( "g_alienBuildPoints", va( "%d", INFINITE ) );
     level.oc = 1;
     level.ocLoadTime = level.time + OC_PREP_TIME;
   }
