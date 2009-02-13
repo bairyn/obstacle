@@ -212,8 +212,9 @@ static cvarTable_t   gameCvarTable[ ] =
   { NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "P", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "ff", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
-  { NULL, "g_version", VERSION, CVAR_ROM, 0, qfalse  },
-  { NULL, "g_build", BUILDID, CVAR_ROM, 0, qfalse  },
+  { NULL, "qvm", "BobsOC " VERSION, CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+  { NULL, "g_version", VERSION, CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+  { NULL, "g_build", BUILDID, CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
 
   // latched vars
 

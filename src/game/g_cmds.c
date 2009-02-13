@@ -1620,8 +1620,13 @@ void Cmd_CallVote_f( gentity_t *ent )
 
   if( level.oc && g_timelimit.integer && level.time - level.startTime >= g_timelimit.integer * 60000 )
   {
-    percentModifier -= g_ocTimeMapDropPercent.value * (level.time - level.startTime / g_timelimit.integer * 60000);
+    percentModifier -= g_ocTimeMapDropPercent.value * ((level.time - level.startTime) * 6000 / g_timelimit.integer);
   }
+
+  if( percentModifier < -100 )
+    percentModifier = -100;
+  if( percentModifier > 100 )
+    percentModifier = 100;
 
   if( g_voteMinTime.integer
     && ent->client->pers.firstConnect
