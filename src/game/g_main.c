@@ -91,8 +91,9 @@ vmCvar_t  g_suddenDeathVotePercent;
 vmCvar_t  g_startScrimVotePercent;
 vmCvar_t  g_endScrimVotePercent;
 vmCvar_t  g_mapVotesPercent;
-vmCvar_t  g_ocVotesPercent;
-vmCvar_t  g_ocTimeMapDropPercent;
+vmCvar_t  g_ocMapVotesPercent;
+vmCvar_t  g_minOCVotesPercent;
+vmCvar_t  g_timelimitDrop;
 vmCvar_t  g_autoMajorityVotes;
 vmCvar_t  g_designateVotes;
 vmCvar_t  g_teamAutoJoin;
@@ -126,8 +127,6 @@ vmCvar_t  g_alienMaxStage;
 vmCvar_t  g_alienStage2Threshold;
 vmCvar_t  g_alienStage3Threshold;
 vmCvar_t  g_teamImbalanceWarnings;
-
-vmCvar_t  g_allowAdminCheats;
 
 vmCvar_t  g_unlagged;
 
@@ -175,18 +174,17 @@ vmCvar_t  g_tag;
 vmCvar_t  g_allowShare;
 vmCvar_t  g_allowDonate;
 
-// the following group only affect / deal with oc's
 vmCvar_t  g_ocReview;
-vmCvar_t  g_ocAutoVotes;
-vmCvar_t  g_ocEditMode;
+vmCvar_t  g_ocOnly;
 vmCvar_t  g_allowHiding;
 vmCvar_t  g_hideTimeCallvoteMinutes;
 vmCvar_t  g_hideNotTimeCallvoteMinutes;
 vmCvar_t  g_statsEnabled;
 vmCvar_t  g_statsRecords;
-vmCvar_t  g_disableCPMixes;
 vmCvar_t  g_ocWarmup;
 vmCvar_t  g_ocScrimAfterTime;
+
+vmCvar_t  g_disableCPMixes;
 
 vmCvar_t  g_allowActions;
 vmCvar_t  g_actionPrefix;
@@ -240,8 +238,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_friendlyFireMovementAttacks, "g_friendlyFireMovementAttacks", "1", CVAR_ARCHIVE, 0, qtrue  },
 
   { &g_ocReview, "g_ocReview", "1", CVAR_ARCHIVE, 0, qtrue  },
-  { &g_ocAutoVotes, "g_ocAutoVotes", "1", CVAR_ARCHIVE, 0, qtrue  },
-  { &g_ocEditMode, "g_ocEditMode", "0", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_ocOnly, "g_ocOnly", "1", CVAR_ARCHIVE, 0, qtrue  },
   { &g_allowHiding, "g_allowHiding", "1", CVAR_ARCHIVE, 0, qtrue  },
   { &g_hideTimeCallvoteMinutes, "g_hideTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  },
   { &g_hideNotTimeCallvoteMinutes, "g_hideNotTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  },
@@ -254,8 +251,6 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_maintenance, "g_maintenance", "0", CVAR_ARCHIVE, 0, qtrue  },
   { &g_maintenanceMessage, "g_maintenanceMessage", "", CVAR_ARCHIVE, 0, qfalse  },
   { &g_connectMessage, "g_connectMessage", "", CVAR_ARCHIVE, 0, qfalse  },
-
-  { &g_allowAdminCheats, "g_allowAdminCheats", DEFAULT_ALLOW_ADMIN_CHEATS, CVAR_ARCHIVE, 0, qtrue  },
 
   { &g_teamAutoJoin, "g_teamAutoJoin", "0", CVAR_ARCHIVE  },
   { &g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE  },
@@ -298,8 +293,9 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_startScrimVotePercent, "g_startScrimVotePercent", "85", CVAR_ARCHIVE, 0, qfalse },
   { &g_endScrimVotePercent, "g_endScrimVotePercent", "90", CVAR_ARCHIVE, 0, qfalse },
   { &g_mapVotesPercent, "g_mapVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
-  { &g_ocVotesPercent, "g_ocVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
-  { &g_ocTimeMapDropPercent, "g_ocTimeMapDropPercent", "17.5", CVAR_ARCHIVE, 0, qfalse },
+  { &g_ocMapVotesPercent, "g_ocMapVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
+  { &g_minOCVotesPercent, "g_minOCVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
+  { &g_timelimitDrop, "g_timelimitDrop", "17.5", CVAR_ARCHIVE, 0, qfalse },
   { &g_autoMajorityVotes, "g_autoMajorityVotes", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_designateVotes, "g_designateVotes", "0", CVAR_ARCHIVE, 0, qfalse },
 
@@ -785,8 +781,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   trap_Cvar_Set( "g_alienKills", 0 );
   trap_Cvar_Set( "g_humanKills", 0 );
   trap_Cvar_Set( "g_suddenDeath", 0 );
-  trap_Cvar_Set( "g_allowAdminCheats", 0 );
-  trap_Cvar_Set( "g_ocEditMode", 0 );
 
   if (*(layout) == 'o' && *((layout) + 1) == 'c')
   {
@@ -2371,13 +2365,13 @@ void CheckVote( void )
     if( level.voteYes > (int)((double)level.numConnectedClients * ((double)votePercentToPass/100.0)) )
     {
         // execute the command, then remove the vote
-        trap_SendServerCommand( -1, va( "print \"Vote passed ( majority ) ( %d - %d )\n\"", level.voteYes, level.voteNo ) );
+        trap_SendServerCommand( -1, va( "print \"Vote passed (majority) (%d - %d)\n\"", level.voteYes, level.voteNo ) );
         level.voteExecuteTime = level.time + g_voteExecuteTime.integer;
     }
     else if( level.voteNo > (int)((double)level.numConnectedClients * ((double)(100.0-votePercentToPass)/100.0)) )
     {
       // same behavior as a timeout
-        trap_SendServerCommand( -1, va( "print \"Vote failed ( majority ) ( %d - %d )\n\"", level.voteYes, level.voteNo ) );
+        trap_SendServerCommand( -1, va( "print \"Vote failed (majority) (%d - %d)\n\"", level.voteYes, level.voteNo ) );
     }
     else
     {

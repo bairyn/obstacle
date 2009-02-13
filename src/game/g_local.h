@@ -815,7 +815,7 @@ typedef struct
   // voting state
   char              voteString[MAX_STRING_CHARS];
   char              voteDisplayString[MAX_STRING_CHARS];
-  int               votePercentToPass;
+  float             votePercentToPass;
   int               voteTime;                     // level.time vote was called
   int               voteExecuteTime;              // time the vote is executed
   int               voteYes;
@@ -930,6 +930,7 @@ typedef struct
   int               ocOrder;
   int               ocLoadTime;
   int               oc;
+  int               ocEditMode;
 
   int               nextCPTime;
 } level_locals_t;
@@ -1510,8 +1511,9 @@ extern  vmCvar_t  g_suddenDeathVotePercent;
 extern  vmCvar_t  g_startScrimVotePercent;
 extern  vmCvar_t  g_endScrimVotePercent;
 extern  vmCvar_t  g_mapVotesPercent;
-extern  vmCvar_t  g_ocVotesPercent;
-extern  vmCvar_t  g_ocTimeMapDropPercent;
+extern  vmCvar_t  g_ocMapVotesPercent;
+extern  vmCvar_t  g_minOCVotesPercent;
+extern  vmCvar_t  g_timelimitDrop;
 extern  vmCvar_t  g_autoMajorityVotes;
 extern  vmCvar_t  g_designateVotes;
 extern  vmCvar_t  g_teamAutoJoin;
@@ -1541,8 +1543,6 @@ extern  vmCvar_t  g_alienMaxStage;
 extern  vmCvar_t  g_alienStage2Threshold;
 extern  vmCvar_t  g_alienStage3Threshold;
 extern  vmCvar_t  g_teamImbalanceWarnings;
-
-extern  vmCvar_t  g_allowAdminCheats;
 
 extern  vmCvar_t  g_unlagged;
 
@@ -1589,8 +1589,7 @@ extern  vmCvar_t  g_allowShare;
 extern  vmCvar_t  g_allowDonate;
 
 extern  vmCvar_t  g_ocReview;
-extern  vmCvar_t  g_ocAutoVotes;
-extern  vmCvar_t  g_ocEditMode;
+extern  vmCvar_t  g_ocOnly;
 extern  vmCvar_t  g_allowHiding;
 extern  vmCvar_t  g_hideTimeCallvoteMinutes;
 extern  vmCvar_t  g_hideNotTimeCallvoteMinutes;

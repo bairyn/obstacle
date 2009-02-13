@@ -193,7 +193,7 @@ ifeq ($(PLATFORM),linux)
   endif
   endif
 
-  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -DGAMESUM=${GAMESUM} \
+  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
     -pipe -DUSE_ICON $(shell sdl-config --cflags)
 
   ifeq ($(USE_OPENAL),1)
@@ -812,14 +812,14 @@ default: release
 all: debug release
 
 debug:
-	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) -DGAMESUM=${GAMESUM} $(DEPEND_CFLAGS) \
 		$(DEBUG_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) debug
 endif
 
 release:
-	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) -DGAMESUM=${GAMESUM} $(DEPEND_CFLAGS) \
 		$(RELEASE_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) release

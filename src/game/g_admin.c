@@ -3282,7 +3282,7 @@ qboolean G_admin_hbp( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( ent && !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( ent && !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-hbp: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3320,7 +3320,7 @@ qboolean G_admin_abp( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( ent && !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( ent && !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-abp: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3363,7 +3363,7 @@ qboolean G_admin_giveall( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-give-all: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3415,7 +3415,7 @@ qboolean G_admin_god( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-god: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3442,7 +3442,7 @@ qboolean G_admin_speed( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-speed: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3468,7 +3468,7 @@ qboolean G_admin_kill( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-kill: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3496,7 +3496,7 @@ qboolean G_admin_noclip( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-noclip: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3583,7 +3583,7 @@ qboolean G_admin_notarget( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-notarget: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3678,7 +3678,7 @@ qboolean G_admin_hs( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( ent && !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( ent && !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-hs: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3716,7 +3716,7 @@ qboolean G_admin_as( gentity_t *ent, int skiparg )
     return qfalse;
   }
 
-  if ( ent && !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( ent && !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( "^3!cheat-as: ^7Cheats are not enabled on this server\n" );
     return qfalse;
@@ -3948,18 +3948,16 @@ qboolean G_admin_hide( gentity_t *ent, int skiparg )
 
 qboolean G_admin_canEditOC( gentity_t *ent )
 {
-    // Run a series of checks for each edit mode.  If the user passes all, return true
-
-    if ( !ent )  // A client is needed to build
+    if ( !ent )  // console can't edit
       return qfalse;
 
-    if (!level.oc)  // Make sure there's playing an obstacle course
+    if (!level.oc)  // oc only
       return qfalse;
 
-    if (g_ocEditMode.integer == 0)  // See if the builder has permissions with the current edit mode
+    if (level.ocEditMode == 0)
         return qfalse;
 
-    if (g_ocEditMode.integer == 1 && !G_admin_permission( ent, ADMF_LAYOUTEDIT ))  // ...
+    if (level.ocEditMode == 1 && !G_admin_permission( ent, ADMF_LAYOUTEDIT ))
         return qfalse;
 
     return qtrue;
@@ -3977,8 +3975,7 @@ qboolean G_admin_editoc( gentity_t *ent, int skiparg )
     {
       AP( va( "print \"^3!editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
               ( ent ) ? ent->client->pers.netname : "console" ) );
-      trap_Cvar_Set( "g_ocEditMode", "0" );
-      trap_Cvar_Set( "g_allowadmincheats", "0" );
+      level.ocEditMode = 0;
       for( i = 0; i < level.maxclients; i++ )
       {
         client = &g_entities[ i ];
@@ -3990,8 +3987,7 @@ qboolean G_admin_editoc( gentity_t *ent, int skiparg )
     {
       AP( va( "print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
               ( ent ) ? ent->client->pers.netname : "console" ) );
-      trap_Cvar_Set( "g_ocEditMode", "1" );
-      trap_Cvar_Set( "g_allowadmincheats", "1" );
+      level.ocEditMode = 1;
       for( i = 0; i < level.maxclients; i++ )
       {
         client = &g_entities[ i ];
@@ -4003,8 +3999,7 @@ qboolean G_admin_editoc( gentity_t *ent, int skiparg )
     {
       AP( va( "print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
               ( ent ) ? ent->client->pers.netname : "console" ) );
-      trap_Cvar_Set( "g_ocEditMode", "2" );
-      trap_Cvar_Set( "g_allowadmincheats", "1" );
+      level.ocEditMode = 2;
       for( i = 0; i < level.maxclients; i++ )
       {
         client = &g_entities[ i ];
@@ -6262,7 +6257,7 @@ qboolean G_admin_override( gentity_t *ent, int skiparg )
   if( cmd && *cmd == '!' )
     cmd++;
 
-  if ( ent && !g_cheats.integer && !g_allowAdminCheats.integer )
+  if ( ent && !g_cheats.integer && !G_admin_canEditOC( ent ) )
   {
     ADMP( va( "^3!%s: ^7Cheats are not enabled on this server\n", cmd ) );
     return qfalse;

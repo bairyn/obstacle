@@ -620,8 +620,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DEFAULT_HUMAN_STAGE3_THRESH "40"
 #define DEFAULT_HUMAN_MAX_STAGE     "2"
 
-#define DEFAULT_ALLOW_ADMIN_CHEATS  "0"
-
 #define DAMAGE_FRACTION_FOR_KILL    0.5f //how much damage players (versus structures) need to
                                          //do to increment the stage kill counters
 

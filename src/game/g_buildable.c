@@ -440,7 +440,7 @@ static qboolean G_FindCreep( gentity_t *self )
   if( self->s.groundEntityNum == -1 )
     return qtrue;
 
-  if( level.oc && g_ocEditMode.integer )
+  if( level.oc )
     return qtrue;
 
   //if self does not have a parentNode or it's parentNode is invalid find a new one

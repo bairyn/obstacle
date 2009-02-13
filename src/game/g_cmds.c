@@ -1603,7 +1603,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   char  arg3[ MAX_STRING_TOKENS ];
   char  layoutt[ MAX_STRING_TOKENS ];
   int   clientNum = -1;
-  int   percentModifier = 0;
+  float percentModifier = 0.0f;
   char  name[ MAX_NETNAME ];
   char  message[ MAX_STRING_CHARS ];
   char  *arg2plus;
@@ -1618,9 +1618,10 @@ void Cmd_CallVote_f( gentity_t *ent )
     return;
   }
 
-  if( level.oc && g_timelimit.integer && level.time - level.startTime >= g_timelimit.integer * 60000 )
+  if( level.oc && g_timelimit.integer )
   {
-    percentModifier -= g_ocTimeMapDropPercent.value * ((level.time - level.startTime) * 6000 / g_timelimit.integer);
+    percentModifier = 0;
+    percentModifier -= (float)g_timelimitDrop.value * (float)((int)((int)(level.time - level.startTime) / (int)60000) / (int)g_timelimit.integer);
   }
 
   if( percentModifier < -100 )
@@ -1682,7 +1683,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     trap_SendConsoleCommand( EXEC_APPEND, va( "%s\n", level.voteString ) );
   }
 
-  level.votePercentToPass=51;
+  level.votePercentToPass=50.1f;
 
   // detect clientNum for partial name match votes
   if( !Q_stricmp( arg1, "kick" ) ||
@@ -1805,7 +1806,7 @@ void Cmd_CallVote_f( gentity_t *ent )
       "!startscrim %c", arg2[ 0 ] );
     Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
       "Start \'%s\' scrim", arg2[ 0 ] == 'm' ? "medi" : "armoury" );
-    level.votePercentToPass = g_startScrimVotePercent.integer;
+    level.votePercentToPass = g_startScrimVotePercent.value;
   }
   else if( !Q_stricmp( arg1, "endscrim" ) )
   {
@@ -1824,7 +1825,7 @@ void Cmd_CallVote_f( gentity_t *ent )
       "!endscrim" );
     Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
       "End the scrim" );
-    level.votePercentToPass = g_endScrimVotePercent.integer;
+    level.votePercentToPass = g_endScrimVotePercent.value;
   }
   else if( !Q_stricmp( arg1, "mute" ) )
   {
@@ -1934,7 +1935,7 @@ void Cmd_CallVote_f( gentity_t *ent )
           g_mapvoteMaxTime.integer ) );
           return;
         }
-        if( !g_ocAutoVotes.integer )
+        if( !g_ocOnly.integer )
         {
           Com_sprintf( level.voteString, sizeof( level.voteString ), "!restart" );
 
@@ -1947,9 +1948,9 @@ void Cmd_CallVote_f( gentity_t *ent )
 
         Com_sprintf( level.voteDisplayString,
             sizeof( level.voteDisplayString ), va( "Restart current map (layout '%s^7')", level.layout ) );
-        level.votePercentToPass = g_ocVotesPercent.integer + percentModifier;
+        level.votePercentToPass = ((g_ocMapVotesPercent.value + percentModifier) < (g_minOCVotesPercent.value)) ? (g_minOCVotesPercent.value) : (g_ocMapVotesPercent.value + percentModifier);
         }
-        level.votePercentToPass = g_mapVotesPercent.integer + percentModifier;
+        level.votePercentToPass = ((g_mapVotesPercent.value + percentModifier) < (g_minOCVotesPercent.value)) ? (g_minOCVotesPercent.value) : (g_mapVotesPercent.value + percentModifier);
   }
   else if( !Q_stricmp( arg1, "map" ) )
   {
@@ -1992,7 +1993,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         Com_sprintf( level.voteDisplayString,
             sizeof( level.voteDisplayString ), "Change to map '%s' using layout '%s'%s", arg2, arg3, layoutAddition );
         EXCOLOR( level.voteDisplayString );
-        level.votePercentToPass = g_ocVotesPercent.integer + percentModifier;
+        level.votePercentToPass = ((g_ocMapVotesPercent.value + percentModifier) < (g_minOCVotesPercent.value)) ? (g_minOCVotesPercent.value) : (g_ocMapVotesPercent.value + percentModifier);
     }
 
     else
@@ -2007,9 +2008,12 @@ void Cmd_CallVote_f( gentity_t *ent )
         Com_sprintf( level.voteString, sizeof( level.voteString ), "!map %s", arg2 );
         Com_sprintf( level.voteDisplayString,
             sizeof( level.voteDisplayString ), "Change to map '%s'", arg2 );
-        level.votePercentToPass = g_mapVotesPercent.integer + percentModifier;
+        if( level.oc )
+          level.votePercentToPass = ((g_mapVotesPercent.value + percentModifier) < (g_minOCVotesPercent.value)) ? (g_minOCVotesPercent.value) : (g_mapVotesPercent.value + percentModifier);
+        else
+          level.votePercentToPass = g_mapVotesPercent.value;
     }
-        if( g_ocAutoVotes.integer && !(arg3[ 0 ] && arg3[ 0 ] == 'o' && arg3[ 1 ] == 'c') )
+        if( g_ocOnly.integer && !(arg3[ 0 ] && arg3[ 0 ] == 'o' && arg3[ 1 ] == 'c') )
         {
         Q_strncpyz( layoutt, (arg3[ 0 ] && arg3[ 0 ] == 'o' && arg3[ 1 ] == 'c') ? (arg3) : ("oc"), MAX_STRING_TOKENS);
         if( !trap_FS_FOpenFile( va( "maps/%s.bsp", arg2 ), NULL, FS_READ ) )
@@ -2024,7 +2028,7 @@ void Cmd_CallVote_f( gentity_t *ent )
             "'layouts/%s/%s.dat' could not be found on the server\n\"", arg2, layoutt ) );
           return;
         }
-        level.votePercentToPass = g_ocVotesPercent.integer + percentModifier;
+        level.votePercentToPass = ((g_ocMapVotesPercent.value + percentModifier) < (g_minOCVotesPercent.value)) ? (g_minOCVotesPercent.value) : (g_ocMapVotesPercent.value + percentModifier);
           Com_sprintf( level.voteString, sizeof( level.voteString ), va("!map %s %s", arg2, layoutt) );
         Com_sprintf( level.voteDisplayString,
             sizeof( level.voteDisplayString ), "Change to map '%s' using layout '%s'", arg2, layoutt );
@@ -2041,10 +2045,13 @@ void Cmd_CallVote_f( gentity_t *ent )
     Com_sprintf( level.voteString, sizeof( level.voteString ), "evacuation" );
     Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
         "End match in a draw" );
-    level.votePercentToPass = g_mapVotesPercent.integer + percentModifier;
+    if( level.oc )
+      level.votePercentToPass = ((g_mapVotesPercent.value + percentModifier) < (g_minOCVotesPercent.value)) ? (g_minOCVotesPercent.value) : (g_mapVotesPercent.value + percentModifier);
+    else
+      level.votePercentToPass = g_mapVotesPercent.value + percentModifier;
   }
 
-    else if( !Q_stricmp( arg1, "poll" ) )
+    else if( !Q_stricmp( arg1, "poll" ) && !level.oc )
      {
      Com_sprintf( level.voteString, sizeof( level.voteString ), nullstring);
      Com_sprintf( level.voteDisplayString,
@@ -2065,7 +2072,7 @@ void Cmd_CallVote_f( gentity_t *ent )
       }
      else
       {
-      level.votePercentToPass = g_suddenDeathVotePercent.integer;
+      level.votePercentToPass = g_suddenDeathVotePercent.value;
       Com_sprintf( level.voteString, sizeof( level.voteString ), "g_suddenDeath 1" );
       Com_sprintf( level.voteDisplayString,
           sizeof( level.voteDisplayString ), "Begin sudden death" );
@@ -2083,7 +2090,7 @@ void Cmd_CallVote_f( gentity_t *ent )
 
    if (Q_stricmp( arg1, "poll" ))
    {
-     Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ), va( " (Needs %d percent)", level.votePercentToPass ) );
+     Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ), va( " (Needs %f percent)", level.votePercentToPass ) );
    }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE
