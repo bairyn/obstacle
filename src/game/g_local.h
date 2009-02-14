@@ -1517,7 +1517,7 @@ extern  vmCvar_t  g_mapVotesPercent;
 extern  vmCvar_t  g_ocMapVotesPercent;
 extern  vmCvar_t  g_minOCVotesPercent;
 extern  vmCvar_t  g_timelimitDrop;
-extern  vmCvar_t  g_autoMajorityVotes;
+extern  vmCvar_t  g_majority;
 extern  vmCvar_t  g_designateVotes;
 extern  vmCvar_t  g_teamAutoJoin;
 extern  vmCvar_t  g_teamForceBalance;

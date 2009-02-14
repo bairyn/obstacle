@@ -94,7 +94,7 @@ vmCvar_t  g_mapVotesPercent;
 vmCvar_t  g_ocMapVotesPercent;
 vmCvar_t  g_minOCVotesPercent;
 vmCvar_t  g_timelimitDrop;
-vmCvar_t  g_autoMajorityVotes;
+vmCvar_t  g_majority;
 vmCvar_t  g_designateVotes;
 vmCvar_t  g_teamAutoJoin;
 vmCvar_t  g_teamForceBalance;
@@ -300,7 +300,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_ocMapVotesPercent, "g_ocMapVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
   { &g_minOCVotesPercent, "g_minOCVotesPercent", "51", CVAR_ARCHIVE, 0, qfalse },
   { &g_timelimitDrop, "g_timelimitDrop", "17.5", CVAR_ARCHIVE, 0, qfalse },
-  { &g_autoMajorityVotes, "g_autoMajorityVotes", "1", CVAR_ARCHIVE, 0, qfalse },
+  { &g_majority, "g_majority", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_designateVotes, "g_designateVotes", "0", CVAR_ARCHIVE, 0, qfalse },
 
   { &g_listEntity, "g_listEntity", "0", 0, 0, qfalse },
@@ -2369,7 +2369,7 @@ void CheckVote( void )
         }
     }
 
-    if( level.time - voteTime >= VOTE_TIME || ( voteYes + voteNo == scrimClients ) )
+    if( level.time - level.voteTime >= VOTE_TIME || ( voteYes + voteNo == scrimClients ) )
     {
         if( voteYesPercent >= votePercentToPass || voteNo == 0 )
         {
@@ -2385,7 +2385,7 @@ void CheckVote( void )
           G_LogPrintf("Vote failed\n");
         }
     }
-    else if( g_autoMajorityVotes.integer )
+    else if( g_majority.integer )
     {
         if( voteYes > (int)((double)level.numConnectedClients * ((double)votePercentToPass/100.0)) )
         {
@@ -2407,7 +2407,7 @@ void CheckVote( void )
   }
   else
   {
-    if( level.time - voteTime >= VOTE_TIME || ( voteYes + voteNo == level.numConnectedClients ) )
+    if( level.time - level.voteTime >= VOTE_TIME || ( voteYes + voteNo == level.numConnectedClients ) )
     {
         if( voteYesPercent >= votePercentToPass || voteNo == 0 )
         {
@@ -2423,7 +2423,7 @@ void CheckVote( void )
           G_LogPrintf("Vote failed\n");
         }
     }
-    else if( g_autoMajorityVotes.integer )
+    else if( g_majority.integer )
     {
         if( voteYes > (int)((double)level.numConnectedClients * ((double)votePercentToPass/100.0)) )
         {
