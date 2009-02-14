@@ -411,7 +411,7 @@ typedef struct connectionRecord_s
   int        clientNum;
   pTeam_t    clientTeam;
   int        clientCredit;
-  gentity_t  *lastOCCheckpoint;
+  gentity_t  *checkpoint;
   gentity_t  **medisLastCheckpoint;
   gentity_t  **armsLastCheckpoint;
   int        totalMedistations;
@@ -514,7 +514,7 @@ typedef struct
   int                 cheated;
   int                 ocTeam;
   int                 restartocOKtime;
-  gentity_t           *lastOCCheckpoint;
+  gentity_t           *checkpoint;
   gentity_t           **medis;  // array of medistations by id
   gentity_t           **medisLastCheckpoint; // array of medistations by id since last checkpoint
   gentity_t           **arms;
@@ -752,7 +752,7 @@ typedef struct
     int       time;
     gentity_t **arms;
     gentity_t **medis;
-    gentity_t *lastOCCheckpoint;
+    gentity_t *checkpoint;
     weapon_t  weapon;
 //    struct oc_scrimTeam_t *next;
 } oc_scrimTeam_t;

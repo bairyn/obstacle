@@ -96,7 +96,7 @@ void G_UpdatePTRConnection( gclient_t *client )
 
         client->pers.connection->totalMedistations = level.totalMedistations;
         client->pers.connection->totalArmouries = level.totalArmouries;
-        client->pers.connection->lastOCCheckpoint = client->pers.lastOCCheckpoint;
+        client->pers.connection->checkpoint = client->pers.checkpoint;
         client->pers.connection->aliveTime = client->pers.aliveTime;
         client->pers.connection->lastAliveTime = client->pers.lastAliveTime;
         client->pers.connection->hasCheated = client->pers.hasCheated;
@@ -108,7 +108,7 @@ void G_UpdatePTRConnection( gclient_t *client )
             client->pers.connection->lastAliveTime = INFINITE;
             while(client->pers.connection->aliveTime < 1) client->pers.connection->aliveTime--;
             while(client->pers.connection->lastAliveTime < 1) client->pers.connection->lastAliveTime--;
-            client->pers.connection->lastOCCheckpoint = NULL;
+            client->pers.connection->checkpoint = NULL;
         }
     }
   }

@@ -3315,8 +3315,8 @@ int G_OCPlayerCheckpoint(gentity_t *checkpoint, gentity_t *ent)
     // print "Checkpoint!" if the player shot a new checkpoint
     // note that a checkpoint being processed is regardless of
     // it being printed or CP'd
-    if(ent->client->pers.lastOCCheckpoint != checkpoint)  // &&
-    if(!ent->client->pers.ocTeam || level.scrimTeam[ent->client->pers.ocTeam].lastOCCheckpoint != checkpoint)
+    if(ent->client->pers.checkpoint != checkpoint)  // &&
+    if(!ent->client->pers.ocTeam || level.scrimTeam[ent->client->pers.ocTeam].checkpoint != checkpoint)
     {
         G_ClientPrint(ent, "Checkpoint!", CLIENT_SPECTATORS);
         if(ent->client->pers.ocTeam)
@@ -3335,11 +3335,11 @@ int G_OCPlayerCheckpoint(gentity_t *checkpoint, gentity_t *ent)
         G_MergeMedis(t->arms, ent->client->pers.arms);
         G_ClearMedis(ent->client->pers.medis);
         G_ClearArms(ent->client->pers.arms);
-        t->lastOCCheckpoint = checkpoint;
+        t->checkpoint = checkpoint;
     }
     else
     {
-        ent->client->pers.lastOCCheckpoint = checkpoint;
+        ent->client->pers.checkpoint = checkpoint;
         if(level.totalMedistations && ent->client->pers.medisLastCheckpoint && ent->client->pers.medis)
             memcpy( ent->client->pers.medisLastCheckpoint, ent->client->pers.medis, ( level.totalMedistations + 1 ) * sizeof( int ) );
         else if(level.totalMedistations)
@@ -3704,6 +3704,14 @@ oc_scrimTeam_t *G_OCNewScrimTeam( char *name, weapon_t weapon, char *err, int er
         {
             Q_strncpyz(si->name, buf, sizeof(si->name));
             si->weapon = weapon;
+
+            // clean up some possibly leftover stuff
+            if(si->medis)
+                G_Free(si->medis);
+            if(si->arms)
+                G_Free(si->arms);
+            si->checkpoint = NULL;
+
             if(level.totalMedistations)
                 si->medis = G_Alloc( ( level.totalMedistations + 1 ) * sizeof( gentity_t * ) );
             if(level.totalArmouries)

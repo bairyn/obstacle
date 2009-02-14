@@ -6038,7 +6038,7 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         // set oc data
         if(level.oc && !connection->hasCheated && !ent->client->pers.hasCheated)
         {
-            ent->client->pers.lastOCCheckpoint = connection->lastOCCheckpoint;
+            ent->client->pers.checkpoint = connection->checkpoint;
             if( level.totalMedistations && connection->totalMedistations && ent->client->pers.medisLastCheckpoint && ent->client->pers.medis )
             {
                 gentity_t **tmp;
@@ -6301,6 +6301,10 @@ static void Cmd_JoinScrim_f( gentity_t *ent )
   }
 }
 
+static void Cmd_ListScrim_f( gentity_t *ent)
+{
+}
+
 static void Cmd_Hide_f( gentity_t *ent )
 {
     if( level.oc )
@@ -6462,7 +6466,7 @@ static void Cmd_QuickRestartOC_f( gentity_t *ent )
 
 static void Cmd_TeleportToCheckpoint_f( gentity_t *ent )
 {
-  gentity_t *dest, *checkpoint = ent->client->pers.lastOCCheckpoint;
+  gentity_t *dest, *checkpoint = ent->client->pers.checkpoint;
   vec3_t spawn_origin, spawn_angles;
 
   // TODO: this belongs in g_buildable.c
@@ -6479,9 +6483,9 @@ static void Cmd_TeleportToCheckpoint_f( gentity_t *ent )
     return;
   }
 
-  if( ent->client->pers.ocTeam && level.scrimTeam[ent->client->pers.ocTeam].lastOCCheckpoint )
+  if( ent->client->pers.ocTeam && level.scrimTeam[ent->client->pers.ocTeam].checkpoint )
   {
-    checkpoint = level.scrimTeam[ent->client->pers.ocTeam].lastOCCheckpoint;
+    checkpoint = level.scrimTeam[ent->client->pers.ocTeam].checkpoint;
   }
 
   if( !checkpoint )
@@ -6688,7 +6692,15 @@ commands_t cmds[ ] = {
   // oc
   { "restartOC", CMD_TEAM, Cmd_RestartOC_f },
   { "leaveScrim", CMD_MESSAGE, Cmd_LeaveScrim_f },
+    { "leaveScrimTeam", CMD_MESSAGE, Cmd_LeaveScrim_f },
+    { "scrimTeamLeave", CMD_MESSAGE, Cmd_LeaveScrim_f },
   { "joinScrim", CMD_MESSAGE, Cmd_JoinScrim_f },
+    { "joinScrimTeam", CMD_MESSAGE, Cmd_JoinScrim_f },
+    { "scrimTeamJoin", CMD_MESSAGE, Cmd_JoinScrim_f },
+  { "listScrim", CMD_MESSAGE, Cmd_ListScrim_f },
+    { "listScrims", CMD_MESSAGE, Cmd_ListScrim_f },
+    { "scrimList", CMD_MESSAGE, Cmd_ListScrim_f },
+    { "scrimsList", CMD_MESSAGE, Cmd_ListScrim_f },
   { "hide", CMD_TEAM|CMD_LIVING, Cmd_Hide_f },
 //  { "unhide", CMD_TEAM|CMD_LIVING, Cmd_Unhide_f },
   { "testHidden", 0, Cmd_TestHidden_f },
@@ -7213,7 +7225,7 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
 //        memset(ent->client->pers.arms, 0, sizeof(gentity_t *) * (level.totalArmouries+1));
 //        memset(ent->client->pers.armsLastCheckpoint, 0, sizeof(gentity_t *) * (level.totalArmouries+1));
 
-        ent->client->pers.lastOCCheckpoint = NULL;
+        ent->client->pers.checkpoint = NULL;
         if( ent->client->pers.teamSelection == PTE_HUMANS )
         {
             if( ( dest = G_SelectHumanSpawnPoint( ent->s.origin, ent, 0, NULL ) ) )
@@ -7318,7 +7330,7 @@ void G_RestartClient( gentity_t *ent, int quick, int restartScrimTeam )
         ent->client->pers.restartocOKtime = level.time + RESTARTOC_CHECKPOINT_OK;
         ent->client->pers.aliveTime = 0;
         ent->client->pers.lastAliveTime = 0;
-        ent->client->pers.lastOCCheckpoint = NULL;
+        ent->client->pers.checkpoint = NULL;
         G_AddCreditToClient( ent->client, HUMAN_MAX_CREDITS, qtrue );
         G_ClearMedis(ent->client->pers.medis);
         G_ClearMedis(ent->client->pers.medisLastCheckpoint);

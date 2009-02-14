@@ -348,7 +348,7 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
         {
             if(level.ocScrimState >= OC_STATE_PLAY)
             {
-                spot = level.scrimTeam[ent->client->pers.ocTeam].lastOCCheckpoint;
+                spot = level.scrimTeam[ent->client->pers.ocTeam].checkpoint;
 
                 if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, 0) == NULL)
                     return spot;
@@ -362,9 +362,9 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
     //                return NULL;
             }
         }
-        else if(ent->client->pers.lastOCCheckpoint)
+        else if(ent->client->pers.checkpoint)
         {
-            spot = level.scrimTeam[ent->client->pers.ocTeam].lastOCCheckpoint;
+            spot = level.scrimTeam[ent->client->pers.ocTeam].checkpoint;
 
             if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, 0) == NULL)
                 return spot;
@@ -443,7 +443,7 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
         {
             if(level.ocScrimState >= OC_STATE_PLAY)
             {
-                spot = level.scrimTeam[ent->client->pers.ocTeam].lastOCCheckpoint;
+                spot = level.scrimTeam[ent->client->pers.ocTeam].checkpoint;
 
                 if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, 0) == NULL)
                     return spot;
@@ -451,9 +451,9 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
 //                    return NULL;
             }
         }
-        else if(ent->client->pers.lastOCCheckpoint)
+        else if(ent->client->pers.checkpoint)
         {
-            spot = ent->client->pers.lastOCCheckpoint;
+            spot = ent->client->pers.checkpoint;
 
             if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, 0) == NULL)
                 return spot;
@@ -1822,7 +1822,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
       spawn_angles[ YAW ] += 180.0f;
       AngleNormalize360( spawn_angles[ YAW ] );
 
-      if( spawnPoint->s.origin2[ 2 ] > 0.0f && !( level.oc && ent->client->pers.lastOCCheckpoint ) )
+      if( spawnPoint->s.origin2[ 2 ] > 0.0f && !( level.oc && ent->client->pers.checkpoint ) )
       {
         vec3_t  forward, dir;
 
