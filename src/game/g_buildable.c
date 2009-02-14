@@ -1165,9 +1165,10 @@ void ABarricade_Think( gentity_t *self )
 
   G_CreepSlow( self );
 
-//  if(level.oc)
-//    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
-//  else
+  if(level.oc && G_TestLayoutFlag( level.layout, OCFL_ALIENONLY ) && !G_TestLayoutFlag( level.layout, OCFL_BOTHTEAMS ))
+    // alien only
+    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
+  else
     self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex );
 }
 
@@ -1295,9 +1296,10 @@ void AAcidTube_Think( gentity_t *self )
 
   G_CreepSlow( self );
 
-//  if(level.oc)
-//    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
-//  else
+  if(level.oc && G_TestLayoutFlag( level.layout, OCFL_ALIENONLY ) && !G_TestLayoutFlag( level.layout, OCFL_BOTHTEAMS ))
+    // alien only
+    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
+  else
     self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex );
 }
 
@@ -1349,9 +1351,10 @@ void AHive_Think( gentity_t *self )
   else
     self->powered = G_IsOvermindBuilt( );
 
-//  if(level.oc)
-//    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
-//  else
+  if(level.oc && G_TestLayoutFlag( level.layout, OCFL_ALIENONLY ) && !G_TestLayoutFlag( level.layout, OCFL_BOTHTEAMS ))
+    // alien only
+    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
+  else
     self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex );
 
   VectorAdd( self->s.origin, range, maxs );
@@ -1898,9 +1901,10 @@ void ATrapper_Think( gentity_t *self )
 
   G_CreepSlow( self );
 
-//  if(level.oc)
-//    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
-//  else
+  if(level.oc && G_TestLayoutFlag( level.layout, OCFL_ALIENONLY ) && !G_TestLayoutFlag( level.layout, OCFL_BOTHTEAMS ))
+    // alien only
+    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
+  else
     self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex );
 
   //if there is no creep nearby die
@@ -4335,9 +4339,10 @@ void HMGTurret_Think( gentity_t *self )
 {
   int firespeed = BG_FindFireSpeedForBuildable( self->s.modelindex );
 
-//  if(level.oc)
-//    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
-//  else
+  if(level.oc && !G_TestLayoutFlag( level.layout, OCFL_ALIENONLY ) && !G_TestLayoutFlag( level.layout, OCFL_BOTHTEAMS ))
+    // human only
+    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
+  else
     self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex );
 
   //used for client side muzzle flashes
@@ -4433,9 +4438,10 @@ void HTeslaGen_Think( gentity_t *self )
   int       i, num;
   gentity_t *enemy;
 
-//  if(level.oc)
-//    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
-//  else
+  if(level.oc && !G_TestLayoutFlag( level.layout, OCFL_ALIENONLY ) && !G_TestLayoutFlag( level.layout, OCFL_BOTHTEAMS ))
+    // human only
+    self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex ) + OC_BUILDABLE_THINK_OFFSET;
+  else
     self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex );
 
   if( level.oc )

@@ -2164,7 +2164,7 @@ void Cmd_Vote_f( gentity_t *ent )
 
   if( !ent->client->pers.ocTeam && G_StrFind( level.voteString, "!startscrim" ) )
   {
-    G_ClientPrint( ent, "Cannot do this when not on a scrim team", 0 );
+    G_ClientPrint( ent, "Cannot do this while not on a scrim team", 0 );
     return;
   }
 
@@ -5591,10 +5591,6 @@ void Cmd_Reload_f( gentity_t *ent )
     ent->client->ps.pm_flags |= PMF_WEAPON_RELOAD;
 }
 
-
-
-
-
 /*
 =================
 G_StopFromFollowing
@@ -5613,6 +5609,29 @@ void G_StopFromFollowing( gentity_t *ent )
         level.clients[ i ].sess.spectatorClient == ent-g_entities && !G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) )
     {
       if( !G_FollowNewClient( &g_entities[ i ], 1 ) && !(level.oc && G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) ))
+        G_StopFollowing( &g_entities[ i ] );
+    }
+  }
+}
+
+/*
+=================
+G_StopFromFollowingForce
+
+forces any other clients from following this one
+called when a player disconnects
+=================
+*/
+void G_StopFromFollowingForce( gentity_t *ent )
+{
+  int i;
+
+  for( i = 0; i < level.maxclients; i++ )
+  {
+    if( level.clients[ i ].sess.spectatorState == SPECTATOR_FOLLOW &&
+        level.clients[ i ].sess.spectatorClient == ent-g_entities && !G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) )
+    {
+      if( !G_FollowNewClient( &g_entities[ i ], 1 ) )
         G_StopFollowing( &g_entities[ i ] );
     }
   }

@@ -1963,6 +1963,8 @@ void ClientDisconnect( int clientNum )
   G_Vote( ent, qfalse );
 
   // stop any following clients
+  G_StopFromFollowingForce( ent );
+
   for( i = 0; i < level.maxclients; i++ )
   {
     // remove any /ignore settings for this clientNum

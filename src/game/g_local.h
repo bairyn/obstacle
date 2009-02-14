@@ -980,6 +980,7 @@ char      *G_NewString( const char *string );
 //
 void      Cmd_Score_f( gentity_t *ent );
 void      G_StopFromFollowing( gentity_t *ent );
+void      G_StopFromFollowingForce( gentity_t *ent );
 void      G_StopFollowing( gentity_t *ent );
 qboolean  G_FollowNewClient( gentity_t *ent, int dir );
 void      G_ToggleFollow( gentity_t *ent );
