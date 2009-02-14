@@ -176,7 +176,8 @@ vmCvar_t  g_allowDonate;
 
 vmCvar_t  g_ocReview;
 vmCvar_t  g_ocOnly;
-vmCvar_t  g_allowHiding;
+vmCvar_t  g_allowHideVote;
+vmCvar_t  g_allowUnhideVote;
 vmCvar_t  g_hideTimeCallvoteMinutes;
 vmCvar_t  g_hideNotTimeCallvoteMinutes;
 vmCvar_t  g_statsEnabled;
@@ -239,7 +240,8 @@ static cvarTable_t   gameCvarTable[ ] =
 
   { &g_ocReview, "g_ocReview", "1", CVAR_ARCHIVE, 0, qtrue  },
   { &g_ocOnly, "g_ocOnly", "1", CVAR_ARCHIVE, 0, qtrue  },
-  { &g_allowHiding, "g_allowHiding", "1", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_allowHideVote, "g_allowHidevote", "1", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_allowUnhideVote, "g_allowUnhideVote", "1", CVAR_ARCHIVE, 0, qtrue  },
   { &g_hideTimeCallvoteMinutes, "g_hideTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  },
   { &g_hideNotTimeCallvoteMinutes, "g_hideNotTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  },
   { &g_statsEnabled, "g_statsEnabled", "0", CVAR_ARCHIVE, 0, qtrue  },

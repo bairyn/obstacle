@@ -1868,7 +1868,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         trap_SendServerCommand( ent-g_entities, "print \"callvote: can only be used during an obstacle course\"");
         return;
     }
-    if( !g_allowHiding.integer )
+    if( !g_allowHideVote.integer )
     {
         trap_SendServerCommand( ent-g_entities, "print \"callvote: server disabled non-admin hiding\n\"" );
         return;
@@ -1896,7 +1896,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         trap_SendServerCommand( ent-g_entities, "print \"callvote: can only be used during an obstacle course\"");
         return;
     }
-    if( !g_allowHiding.integer )
+    if( !g_allowUnhideVote.integer )
     {
         trap_SendServerCommand( ent-g_entities, "print \"callvote: server disabled non-admin hiding\n\"" );
         return;
@@ -2051,7 +2051,7 @@ void Cmd_CallVote_f( gentity_t *ent )
       level.votePercentToPass = g_mapVotesPercent.value + percentModifier;
   }
 
-    else if( !Q_stricmp( arg1, "poll" ) && !level.oc )
+    else if( !Q_stricmp( arg1, "poll" ) )
      {
      Com_sprintf( level.voteString, sizeof( level.voteString ), nullstring);
      Com_sprintf( level.voteDisplayString,
