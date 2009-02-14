@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MCONCAT(x, y) x # y
 #define MTOSTRING(x) MCONCAT("", x)
 
-#define VERSION "1.4.3"
+#define VERSION "1.4.4"
 #define BUILDID MTOSTRING(GAMESUM)
 
 level_locals_t  level;
