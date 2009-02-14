@@ -1591,6 +1591,7 @@ extern  vmCvar_t  g_allowDonate;
 
 extern  vmCvar_t  g_ocReview;
 extern  vmCvar_t  g_ocOnly;
+extern  vmCvar_t  g_allowHiding;
 extern  vmCvar_t  g_allowHideVote;
 extern  vmCvar_t  g_allowUnhideVote;
 extern  vmCvar_t  g_hideTimeCallvoteMinutes;
