@@ -2090,7 +2090,10 @@ void Cmd_CallVote_f( gentity_t *ent )
 
    if (Q_stricmp( arg1, "poll" ))
    {
-     Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ), va( " (Needs %f percent)", level.votePercentToPass ) );
+        char buf[MAX_STRING_CHARS];
+        Q_strncpyz(buf, va("%f", level.votePercentToPass), sizeof(buf));
+        G_StripZeros(buf);
+        Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ), va( " (Needs %s percent)", buf ) );
    }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE
@@ -7575,5 +7578,43 @@ void G_ToLowerCase(char *str)
         }
 
         str++;
+    }
+}
+
+void G_StripZeros(char *str)
+{
+    qboolean dot = qfalse;
+
+    while(*str)
+    {
+        if(*str == '.')
+        {
+            if(dot)
+                return;
+            dot++;
+        }
+        else if(*str > '9')
+        {
+            return;
+        }
+        else if(*str < '0')
+        {
+            return;
+        }
+
+        str++;
+    }
+
+    str--;
+    if(dot)
+    {
+        while(*str == '0')
+        {
+            *str-- = 0;
+        }
+        if(*str == '.')
+        {
+            *str-- = 0;
+        }
     }
 }

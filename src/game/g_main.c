@@ -2349,14 +2349,14 @@ void CheckVote( void )
       if( voteYesPercent >= votePercentToPass || level.voteNo == 0 )
       {
         // execute the command, then remove the vote
-        trap_SendServerCommand( -1, va( "print \"Vote passed ( %d - %d )\n\"", level.voteYes, level.voteNo ) );
+        trap_SendServerCommand( -1, va( "print \"Vote passed (%d - %d)\n\"", level.voteYes, level.voteNo ) );
         G_LogPrintf("Vote passed\n");
         level.voteExecuteTime = level.time + g_voteExecuteTime.integer;
       }
     else
     {
       // same behavior as a timeout
-      trap_SendServerCommand( -1, va( "print \"Vote failed ( %d - %d )\n\"", level.voteYes, level.voteNo ) );
+      trap_SendServerCommand( -1, va( "print \"Vote failed (%d - %d)\n\"", level.voteYes, level.voteNo ) );
       G_LogPrintf("Vote failed\n");
     }
   }
