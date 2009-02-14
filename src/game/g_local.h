@@ -942,6 +942,7 @@ typedef struct
 #define OC_STATE_WARM 2
 #define OC_STATE_PLAY 3
 
+#define OC_MODE_NONE 0
 #define OC_MODE_MEDI 1
 #define OC_MODE_ARM  2
 

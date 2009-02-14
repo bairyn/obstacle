@@ -6301,8 +6301,139 @@ static void Cmd_JoinScrim_f( gentity_t *ent )
   }
 }
 
-static void Cmd_ListScrim_f( gentity_t *ent)
+static void Cmd_ListScrim_f( gentity_t *ent )
 {
+    int i;
+    int id;
+    gentity_t *client;
+    char buf[ MAX_STRING_CHARS ] = {""}, *tmp = "";
+    oc_scrimTeam_t *si;
+
+    if( g_floodMinTime.integer )
+    {
+        if ( G_Flood_Limited( ent ) )
+        {
+            trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
+            return;
+        }
+    }
+
+    if( !level.oc )
+    {
+        ADMP( va( "Can only be used during an obstacle course\n" ) );
+        return;
+    }
+
+    switch(level.ocScrimState)
+    {
+        case OC_STATE_NONE:
+            tmp = "None";
+        case OC_STATE_PREP:
+            tmp = "Initializing";
+        case OC_STATE_WARM:
+            tmp = "Warmup";
+        case OC_STATE_PLAY:
+            tmp = "Active - players are playing";
+        default:
+            tmp = "Unknown";
+    }
+
+    Q_strcat(buf, sizeof(buf), va("Scrim state: %s\n", tmp));
+
+    switch(level.ocScrimMode)
+    {
+        case OC_MODE_MEDI:
+            tmp = "Medi scrim";
+        case OC_MODE_ARM:
+            tmp = "Arm scrim";
+        default:
+            tmp = "None";
+    }
+
+    Q_strcat(buf, sizeof(buf), va("Scrim mode: %s\n", tmp));
+
+    Q_strcat(buf, sizeof(buf), "\n");
+
+    for(si = level.scrimTeam + 1; si < level.scrimTeam + MAX_SCRIM_TEAMS; si++)
+    {
+        if( si->active )
+        {
+            qboolean comma = qfalse, first = qtrue;
+
+            id = si - level.scrimTeam;
+
+            Q_strcat(buf, sizeof(buf), "^1-^2-^6-^4-^2-^4-^1-^2-^6-^4-^2-^4-^2\\_\n^7");
+            Q_strcat(buf, sizeof(buf), "^1-^2-^6-^4-^2-^4-^1-^2-^6-^4-^2-^4-^2\\__\n\n^7");
+
+            Q_strcat(buf, sizeof(buf), va("^2Team name: %s\n", si->name));
+            Q_strcat(buf, sizeof(buf), va("^2Weapon: %s\n", BG_FindHumanNameForWeapon(si->weapon)));
+            Q_strcat(buf, sizeof(buf), "^2Players: ");
+            // if were to list number of medis and arms, doing it here would be a good idea, but listing them in a global list command like this is not a good idea
+            for(i = 0; i < MAX_CLIENTS; i++)
+            {
+                client = g_entities + i;
+
+                if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam)
+                {
+//                    if(client->client->pers.ocTeam == id)  // commenting this out causes the format to be consistent, so if one player has a comma the entire format is changed.  This is good for consitency.
+                    {
+                        if(strchr(client->client->pers.netname, ','))
+                        {
+                            comma = qtrue;
+                        }
+                    }
+                }
+            }
+
+            // iterate again now that we know which format to use
+            if(comma)
+            {
+                for(i = 0; i < MAX_CLIENTS; i++)
+                {
+                    client = g_entities + i;
+
+                    if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam)
+                    {
+                        if(client->client->pers.ocTeam == id)
+                        {
+                            if(!first)
+                            {
+                                Q_strcat(buf, sizeof(buf), ", ");
+                            }
+                            first = qfalse;
+
+                            Q_strcat(buf, sizeof(buf), va("^7%s^7", ent->client->pers.netname));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for(i = 0; i < MAX_CLIENTS; i++)
+                {
+                    client = g_entities + i;
+
+                    if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam)
+                    {
+                        if(client->client->pers.ocTeam == id)
+                        {
+                            if(!first)
+                            {
+                                Q_strcat(buf, sizeof(buf), "\n");
+                            }
+                            first = qfalse;
+
+                            Q_strcat(buf, sizeof(buf), va("  - ^7%s^7\n^7", ent->client->pers.netname));
+                        }
+                    }
+                }
+            }
+
+            Q_strcat(buf, sizeof(buf), "\n\n");
+        }
+    }
+
+    G_ClientPrint(ent, buf, 0);
 }
 
 static void Cmd_Hide_f( gentity_t *ent )
