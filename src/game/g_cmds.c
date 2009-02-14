@@ -940,8 +940,10 @@ void G_ChangeTeam( gentity_t *ent, pTeam_t newTeam )
     return;
 
   // stop any following clients
-  if( !level.oc )
-      G_StopFromFollowing( ent );
+  if(newTeam != PTE_HUMANS && newTeam != PTE_ALIENS)
+  {
+    G_StopFromFollowing( ent );
+  }
   G_LeaveTeam( ent );
   ent->client->pers.teamSelection = newTeam;
 
