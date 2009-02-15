@@ -6591,6 +6591,27 @@ static void Cmd_TimeDisplay_f( gentity_t *ent )
 //  }
 }
 
+static void Cmd_Speedometer_f( gentity_t *ent )
+{
+  char cmd[ MAX_STRING_CHARS ];
+
+  trap_Argv( 0, cmd, sizeof( cmd ) );
+  if( !level.oc )
+  {
+    ADMP( va( "%s: can only be used during an obstacle course\n", cmd ) );
+    return;
+  }
+  ent->client->pers.speedometer = !ent->client->pers.speedometer;
+  if( ent->client->pers.speedometer )
+  {
+    ADMP( "Speedometer has been toggled to on\n" );
+  }
+  else
+  {
+    ADMP( "Speedometer has been toggled to off\n" );
+  }
+}
+
 static void Cmd_QuickRestartOC_f( gentity_t *ent )
 {
   if( !ent )
@@ -6856,6 +6877,7 @@ commands_t cmds[ ] = {
   { "testHidden", 0, Cmd_TestHidden_f },
 //  { "normalTime", 0, Cmd_TimeDisplay_f },
   { "OCTime", 0, Cmd_TimeDisplay_f },
+  { "speedometer", 0, Cmd_Speedometer_f },
   { "teleboost", CMD_TEAM|CMD_LIVING, Cmd_TeleportToCheckpoint_f },
   { "quickRestartOC", CMD_TEAM|CMD_LIVING, Cmd_QuickRestartOC_f },
   { "EnableAutoAngle", CMD_TEAM|CMD_LIVING, Cmd_AutoAngle_f },

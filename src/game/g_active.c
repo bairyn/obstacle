@@ -618,22 +618,30 @@ void ClientTimerActions( gentity_t *ent, int msec )
 
     if( level.oc )
     {
-      client->ps.stats[ STAT_STAMINA ] = MAX_STAMINA;
-      if( ent->client->pers.ocTimeDisplay )
-      {
-        if(ent->client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
+        client->ps.stats[ STAT_STAMINA ] = MAX_STAMINA;
+        if( client->pers.ocTimeDisplay )
         {
-            // hack for SCRIMTIME
-            oc_scrimTeam_t tmp;
-            oc_scrimTeam_t *t = &tmp;
-            t->time = level.time;
-            G_ClientCP(ent, va("^t^i^m^e^2%dm:%ds:%dms", MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME) ), "^t^i^m^e", CLIENT_SPECTATORS);
+            if(client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
+            {
+                // hack for SCRIMTIME
+                oc_scrimTeam_t tmp;
+                oc_scrimTeam_t *t = &tmp;
+                t->time = level.time;
+                G_ClientCP(ent, va("^t^i^m^e^2%dm:%ds:%dms", MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME) ), "^t^i^m^e", CLIENT_SPECTATORS);
+            }
+            else
+            {
+                G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( client->pers.aliveTime ), SECS( client->pers.aliveTime ), MSEC( client->pers.aliveTime ) ), "^t^i^m^e", CLIENT_SPECTATORS );
+            }
         }
-        else
+        if(client->pers.speedometer)
         {
-            G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( ent->client->pers.aliveTime ), SECS( ent->client->pers.aliveTime ), MSEC( ent->client->pers.aliveTime ) ), "^t^i^m^e", CLIENT_SPECTATORS );
+            float tmp = ent->client->ps.velocity[2];
+            G_ClientCP(ent, va("^s^p^e^e^d^z^2XYZ: %d^7ups", (int)VectorLength(ent->client->ps.velocity)), "^s^p^e^e^d^z", CLIENT_SPECTATORS);
+            ent->client->ps.velocity[2] = 0;
+            G_ClientCP(ent, va("^s^p^e^e^d^n^2XY: %d^7ups", (int)VectorLength(ent->client->ps.velocity)), "^s^p^e^e^d^n", CLIENT_SPECTATORS);
+            ent->client->ps.velocity[2] = tmp;
         }
-      }
     }
 
     //client is charging up for a pounce

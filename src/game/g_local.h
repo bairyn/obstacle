@@ -525,6 +525,7 @@ typedef struct
   int                 ocNeedSpawn;
   int                 ocNeedSpawnTime;
   int                 ocTimeDisplay;
+  int                 speedometer;
   mix_cp_t            *clientCP;
   int                 autoAngleDisabled;
   int                 nextWeaponTime;
