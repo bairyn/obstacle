@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -216,6 +216,8 @@ Add continuous entity effects, like local entity emission and lighting
 */
 static void CG_EntityEffects( centity_t *cent )
 {
+  int i;
+
   // update sound origins
   CG_SetEntitySoundPosition( cent );
 
@@ -266,6 +268,33 @@ static void CG_EntityEffects( centity_t *cent )
     if( cg.time > cent->muzzleTSDeathTime && CG_IsTrailSystemValid( &cent->muzzleTS ) )
       CG_DestroyTrailSystem( &cent->muzzleTS );
   }
+
+
+  if( cent->currentState.eType == ET_PLAYER )
+  {
+    centity_t *pcent = cent;
+
+    // predicted entity doesn't have local cgame vars
+    if( cent == &cg.predictedPlayerEntity )
+      pcent = &cg_entities[ cg.clientNum ];
+
+    for( i = 0; i <= 2; i++ )
+    {
+      if( CG_IsTrailSystemValid( &pcent->level2ZapTS[ i ] ) )
+      {
+        vec3_t  front, back;
+  
+        CG_AttachmentPoint( &pcent->level2ZapTS[ i ]->frontAttachment, front );
+        CG_AttachmentPoint( &pcent->level2ZapTS[ i ]->backAttachment, back );
+  
+        if( cg.time - pcent->level2ZapTime > 100 ||
+           Distance( front, back ) > LEVEL2_AREAZAP_CUTOFF )
+        {
+          CG_DestroyTrailSystem( &pcent->level2ZapTS[ i ] );
+}
+      }
+    }
+  }    
 }
 
 
@@ -367,6 +396,7 @@ static void CG_LaunchMissile( centity_t *cent )
     {
       CG_SetAttachmentCent( &ps->attachment, cent );
       CG_AttachToCent( &ps->attachment );
+      ps->charge = es->torsoAnim;
     }
   }
 
@@ -437,7 +467,8 @@ static void CG_Missile( centity_t *cent )
   if( wim->usesSpriteMissle )
   {
     ent.reType = RT_SPRITE;
-    ent.radius = wim->missileSpriteSize;
+    ent.radius = wim->missileSpriteSize +
+                 wim->missileSpriteCharge * es->torsoAnim;
     ent.rotation = 0;
     ent.customShader = wim->missileSprite;
     ent.shaderRGBA[ 0 ] = 0xFF;
@@ -780,61 +811,6 @@ static void CG_LightFlare( centity_t *cent )
 
 /*
 =========================
-CG_Lev2ZapChain
-=========================
-*/
-static void CG_Lev2ZapChain( centity_t *cent )
-{
-  int           i;
-  entityState_t *es;
-  centity_t     *source = NULL, *target = NULL;
-
-  es = &cent->currentState;
-
-  for( i = 0; i <= 2; i++ )
-  {
-    switch( i )
-    {
-      case 0:
-        if( es->time <= 0 )
-          continue;
-
-        source = &cg_entities[ es->misc ];
-        target = &cg_entities[ es->time ];
-        break;
-
-      case 1:
-        if( es->time2 <= 0 )
-          continue;
-
-        source = &cg_entities[ es->time ];
-        target = &cg_entities[ es->time2 ];
-        break;
-
-      case 2:
-        if( es->constantLight <= 0 )
-          continue;
-
-        source = &cg_entities[ es->time2 ];
-        target = &cg_entities[ es->constantLight ];
-        break;
-    }
-
-    if( !CG_IsTrailSystemValid( &cent->level2ZapTS[ i ] ) )
-      cent->level2ZapTS[ i ] = CG_SpawnNewTrailSystem( cgs.media.level2ZapTS );
-
-    if( CG_IsTrailSystemValid( &cent->level2ZapTS[ i ] ) )
-    {
-      CG_SetAttachmentCent( &cent->level2ZapTS[ i ]->frontAttachment, source );
-      CG_SetAttachmentCent( &cent->level2ZapTS[ i ]->backAttachment, target );
-      CG_AttachToCent( &cent->level2ZapTS[ i ]->frontAttachment );
-      CG_AttachToCent( &cent->level2ZapTS[ i ]->backAttachment );
-    }
-  }
-}
-
-/*
-=========================
 CG_AdjustPositionForMover
 
 Also called by client movement prediction code
@@ -1029,22 +1005,8 @@ CG_CEntityPVSLeave
 */
 static void CG_CEntityPVSLeave( centity_t *cent )
 {
-  int           i;
-  entityState_t *es = &cent->currentState;
-
   if( cg_debugPVS.integer )
     CG_Printf( "Entity %d left PVS\n", cent->currentState.number );
-
-  switch( es->eType )
-  {
-    case ET_LEV2_ZAP_CHAIN:
-      for( i = 0; i <= 2; i++ )
-      {
-        if( CG_IsTrailSystemValid( &cent->level2ZapTS[ i ] ) )
-          CG_DestroyTrailSystem( &cent->level2ZapTS[ i ] );
-      }
-      break;
-  }
 }
 
 
@@ -1128,9 +1090,8 @@ static void CG_AddCEntity( centity_t *cent )
     case ET_LIGHTFLARE:
       CG_LightFlare( cent );
       break;
-
-    case ET_LEV2_ZAP_CHAIN:
-      CG_Lev2ZapChain( cent );
+    case ET_LOCATION:
+      CG_LinkLocation( cent );
       break;
   }
 }
@@ -1254,3 +1215,17 @@ void CG_AddPacketEntities( void )
   }
 }
 
+void CG_LinkLocation( centity_t *cent )
+{
+  centity_t *tempent;
+  for( tempent = cg.locationHead; tempent; tempent = tempent->nextLocation )
+  {
+    if( tempent == cent )
+    {
+      return;
+    }
+  }
+  cent->nextLocation = cg.locationHead;
+  cg.locationHead = cent;
+
+}

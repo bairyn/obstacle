@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -59,6 +59,7 @@ typedef struct sfx_s {
 	int 			soundLength;
 	char 			soundName[MAX_QPATH];
 	int				lastTimeUsed;
+	int			duration;
 	struct sfx_s	*next;
 } sfx_t;
 
@@ -126,7 +127,7 @@ typedef struct
 	void (*StartLocalSound)( sfxHandle_t sfx, int channelNum );
 	void (*StartBackgroundTrack)( const char *intro, const char *loop );
 	void (*StopBackgroundTrack)( void );
-	void (*RawSamples)(int samples, int rate, int width, int channels, const byte *data, float volume);
+	void (*RawSamples)(int stream, int samples, int rate, int width, int channels, const byte *data, float volume);
 	void (*StopAllSounds)( void );
 	void (*ClearLoopingSounds)( qboolean killall );
 	void (*AddLoopingSound)( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
@@ -138,9 +139,17 @@ typedef struct
 	void (*DisableSounds)( void );
 	void (*BeginRegistration)( void );
 	sfxHandle_t (*RegisterSound)( const char *sample, qboolean compressed );
+	int  (*SoundDuration)( sfxHandle_t handle );
 	void (*ClearSoundBuffer)( void );
 	void (*SoundInfo)( void );
 	void (*SoundList)( void );
+#ifdef USE_VOIP
+	void (*StartCapture)( void );
+	int (*AvailableCaptureSamples)( void );
+	void (*Capture)( int samples, byte *data );
+	void (*StopCapture)( void );
+	void (*MasterGain)( float gain );
+#endif
 } soundInterface_t;
 
 
@@ -174,14 +183,15 @@ extern	channel_t   loop_channels[MAX_CHANNELS];
 extern	int		numLoopChannels;
 
 extern	int		s_paintedtime;
-extern	int		s_rawend;
 extern	vec3_t	listener_forward;
 extern	vec3_t	listener_right;
 extern	vec3_t	listener_up;
 extern	dma_t	dma;
 
 #define	MAX_RAW_SAMPLES	16384
-extern	portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
+#define MAX_RAW_STREAMS 128
+extern	portable_samplepair_t s_rawsamples[MAX_RAW_STREAMS][MAX_RAW_SAMPLES];
+extern	int		s_rawend[MAX_RAW_STREAMS];
 
 extern cvar_t *s_volume;
 extern cvar_t *s_musicVolume;
@@ -198,7 +208,6 @@ void		SND_setup( void );
 void S_PaintChannels(int endtime);
 
 void S_memoryLoad(sfx_t *sfx);
-portable_samplepair_t *S_GetRawSamplePointer( void );
 
 // spatializes a channel
 void S_Spatialize(channel_t *ch);

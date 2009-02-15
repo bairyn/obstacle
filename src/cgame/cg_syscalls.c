@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -38,9 +38,9 @@ void dllEntry( intptr_t (QDECL  *syscallptr)( intptr_t arg,... ) )
 
 int PASSFLOAT( float x )
 {
-  float floatTemp;
-  floatTemp = x;
-  return *(int *)&floatTemp;
+  floatint_t fi;
+  fi.f = x;
+  return fi.i;
 }
 
 void trap_Print( const char *fmt )
@@ -290,6 +290,11 @@ sfxHandle_t trap_S_RegisterSound( const char *sample, qboolean compressed )
   return syscall( CG_S_REGISTERSOUND, sample, compressed );
 }
 
+int trap_S_SoundDuration( sfxHandle_t handle )
+{
+  return syscall( CG_S_SOUNDDURATION, handle );
+}
+
 void  trap_S_StartBackgroundTrack( const char *intro, const char *loop )
 {
   syscall( CG_S_STARTBACKGROUNDTRACK, intro, loop );
@@ -338,6 +343,11 @@ void  trap_R_AddRefEntityToScene( const refEntity_t *re )
 void trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts )
 {
   syscall( CG_R_ADDPOLYTOSCENE, hShader, numVerts, verts );
+}
+
+qboolean trap_R_inPVS( const vec3_t p1, const vec3_t p2 )
+{
+  return syscall( CG_R_INPVS, p1, p2 );
 }
 
 void trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num )
@@ -567,11 +577,11 @@ void trap_Key_GetBindingBuf( int keynum, char *buf, int buflen ) {
 void trap_Key_SetBinding( int keynum, const char *binding ) {
   syscall( CG_KEY_SETBINDING, keynum, binding );
 }
-
+/*
 void trap_Key_SetOverstrikeMode( qboolean state ) {
   syscall( CG_KEY_SETOVERSTRIKEMODE, state );
 }
 
 qboolean trap_Key_GetOverstrikeMode( void ) {
   return syscall( CG_KEY_GETOVERSTRIKEMODE );
-}
+}*/

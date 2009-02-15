@@ -1,6 +1,7 @@
 #define COMMON_HUD_R 1.0
 #define COMMON_HUD_G 0.0
 #define COMMON_HUD_B 0.0
+#include "ui/tremulous_common_hud.h"
 
 //////////////////
 //STATIC OBJECTS//
@@ -83,7 +84,8 @@ itemDef
   aspectBias ALIGN_LEFT
   visible MENU_TRUE
   decoration
-  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.5
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.8
+  backcolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.2
   background "ui/assets/alien/bolt.tga"
   ownerdraw CG_PLAYER_BOOST_BOLT
 }
@@ -92,13 +94,12 @@ itemDef
 itemDef
 {
   name "cross"
-  rect 155 422.5 15 15
+  rect 150 417.5 25 25
   aspectBias ALIGN_LEFT
   visible MENU_TRUE
   decoration
   forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.5
-  style WINDOW_STYLE_SHADER
-  background "ui/assets/neutral/cross.tga"
+  ownerdraw CG_PLAYER_HEALTH_CROSS
 }
 
 //LEFT RING
@@ -109,7 +110,8 @@ itemDef
   aspectBias ALIGN_LEFT
   visible MENU_TRUE
   decoration
-  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.5
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.8
+  backcolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.2
   background "ui/assets/alien/left-ring.tga"
   ownerdraw CG_PLAYER_BOOSTED
 }
@@ -123,6 +125,7 @@ itemDef
   visible MENU_TRUE
   decoration
   forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 1.0
+  backcolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.2
   background "ui/assets/alien/left-spikes.tga"
   ownerdraw CG_PLAYER_WALLCLIMBING
 }
@@ -135,7 +138,8 @@ itemDef
   aspectBias ALIGN_RIGHT
   visible MENU_TRUE
   decoration
-  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.5
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.8
+  backcolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.2
   background "ui/assets/alien/right-ring.tga"
   ownerdraw CG_PLAYER_BOOSTED
 }
@@ -149,6 +153,7 @@ itemDef
   visible MENU_TRUE
   decoration
   forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 1.0
+  backcolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.2
   background "ui/assets/alien/right-spikes.tga"
   ownerdraw CG_PLAYER_WALLCLIMBING
 }
@@ -177,11 +182,23 @@ itemDef
   ownerdraw CG_PLAYER_WEAPONICON
 }
 
+//ALIEN ATTACK FEEDBACK
+itemDef
+{
+  name "attack-feedback"
+  rect 40.0 40.0 560 400
+  visible 1
+  decoration
+  //forecolor makes no difference - it's handled programmatically in cg_draw.c:CG_DrawAttackFeedback
+  forecolor 1.0 0.0 0.0 .5
+  ownerdraw CG_PLAYER_ATTACK_FEEDBACK
+}
+
 //ORGANS
 itemDef
 {
   name "organs"
-  rect 570.5 415.95 15 15
+  rect 570 416 15 15
   aspectBias ALIGN_RIGHT
   visible MENU_TRUE
   decoration
@@ -198,3 +215,30 @@ itemDef
   decoration
   ownerdraw CG_PLAYER_ALIEN_SENSE
 }
+
+//CHARGE BAR
+itemDef
+{
+  name "charge"
+  rect 292 426 56 8
+  aspectBias ALIGN_CENTER
+  visible MENU_TRUE
+  decoration
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.5
+  ownerdraw CG_PLAYER_CHARGE_BAR
+  background "ui/assets/neutral/charge_cap_h.tga"
+}
+
+//CHARGE BAR BG
+itemDef
+{
+  name "chargebg"
+  rect 288 422 64 16
+  aspectBias ALIGN_CENTER
+  visible MENU_TRUE
+  decoration
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.25
+  ownerdraw CG_PLAYER_CHARGE_BAR_BG
+  background "ui/assets/neutral/charge_bg_h.tga"
+}
+

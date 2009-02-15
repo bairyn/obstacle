@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -98,7 +98,7 @@ typedef enum
   F_LSTRING,      // string on disk, pointer in memory, TAG_LEVEL
   F_GSTRING,      // string on disk, pointer in memory, TAG_GAME
   F_VECTOR,
-  F_VECTOR4,    //TA
+  F_VECTOR4,
   F_ANGLEHACK,
   F_ENTITY,     // index on disk, pointer in memory
   F_ITEM,       // index on disk, pointer in memory
@@ -243,8 +243,8 @@ spawn_t spawns[ ] =
   { "func_plat",                SP_func_plat },
   { "func_button",              SP_func_button },
   { "func_door",                SP_func_door },
-  { "func_door_rotating",       SP_func_door_rotating }, //TA
-  { "func_door_model",          SP_func_door_model }, //TA
+  { "func_door_rotating",       SP_func_door_rotating },
+  { "func_door_model",          SP_func_door_model },
   { "func_static",              SP_func_static },
   { "func_rotating",            SP_func_rotating },
   { "func_bobbing",             SP_func_bobbing },
@@ -324,7 +324,8 @@ qboolean G_CallSpawn( gentity_t *ent )
   }
 
   //check buildable spawn functions
-  if( ( buildable = BG_FindBuildNumForEntityName( ent->classname ) ) != BA_NONE )
+  buildable = BG_BuildableByEntityName( ent->classname )->number;
+  if( buildable != BA_NONE )
   {
     // don't spawn built-in buildings if we are using a custom layout
     if( level.layout[ 0 ] && Q_stricmp( level.layout, "*BUILTIN*" ) )
@@ -336,7 +337,7 @@ qboolean G_CallSpawn( gentity_t *ent )
       AngleNormalize360( ent->s.angles[ YAW ] );
     }
 
-    G_SpawnBuildable( ent, buildable, 0, 0, 0.0f );
+    G_SpawnBuildable( ent, buildable );
     return qtrue;
   }
 
@@ -370,7 +371,7 @@ char *G_NewString( const char *string )
 
   l = strlen( string ) + 1;
 
-  newb = G_Alloc( l );
+  newb = BG_Alloc( l );
 
   new_p = newb;
 
@@ -625,23 +626,28 @@ void SP_worldspawn( void )
   G_SpawnString( "humanMaxStage", DEFAULT_HUMAN_MAX_STAGE, &s );
   trap_Cvar_Set( "g_humanMaxStage", s );
 
-  G_SpawnString( "humanStage2Threshold", DEFAULT_HUMAN_STAGE2_THRESH, &s );
-  trap_Cvar_Set( "g_humanStage2Threshold", s );
-
-  G_SpawnString( "humanStage3Threshold", DEFAULT_HUMAN_STAGE3_THRESH, &s );
-  trap_Cvar_Set( "g_humanStage3Threshold", s );
-
+  //for compatibility with 1.1 maps
+  if( G_SpawnString( "humanStage2Threshold", DEFAULT_HUMAN_STAGE_THRESH, &s ) )
+    trap_Cvar_Set( "g_humanStageThreshold", s );
+  else
+  {
+    //proper way
+    G_SpawnString( "humanStageThreshold", DEFAULT_HUMAN_STAGE_THRESH, &s );
+    trap_Cvar_Set( "g_humanStageThreshold", s );
+  }
   G_SpawnString( "alienBuildPoints", DEFAULT_ALIEN_BUILDPOINTS, &s );
   trap_Cvar_Set( "g_alienBuildPoints", s );
 
   G_SpawnString( "alienMaxStage", DEFAULT_ALIEN_MAX_STAGE, &s );
   trap_Cvar_Set( "g_alienMaxStage", s );
 
-  G_SpawnString( "alienStage2Threshold", DEFAULT_ALIEN_STAGE2_THRESH, &s );
-  trap_Cvar_Set( "g_alienStage2Threshold", s );
-
-  G_SpawnString( "alienStage3Threshold", DEFAULT_ALIEN_STAGE3_THRESH, &s );
-  trap_Cvar_Set( "g_alienStage3Threshold", s );
+  if( G_SpawnString( "alienStage2Threshold", DEFAULT_ALIEN_STAGE_THRESH, &s ) )
+    trap_Cvar_Set( "g_alienStageThreshold", s );
+  else
+  {
+    G_SpawnString( "alienStage2Threshold", DEFAULT_ALIEN_STAGE_THRESH, &s );
+    trap_Cvar_Set( "g_alienStageThreshold", s );
+  }
 
   G_SpawnString( "enableDust", "0", &s );
   trap_Cvar_Set( "g_enableDust", s );
@@ -661,8 +667,20 @@ void SP_worldspawn( void )
   g_entities[ ENTITYNUM_WORLD ].s.number = ENTITYNUM_WORLD;
   g_entities[ ENTITYNUM_WORLD ].classname = "worldspawn";
 
+  // see if we want a warmup time
+  trap_SetConfigstring( CS_WARMUP, "" );
   if( g_restarted.integer )
+  {
     trap_Cvar_Set( "g_restarted", "0" );
+    level.warmupTime = 0;
+  }
+  else if( g_doWarmup.integer )
+  {
+    // Turn it on
+    level.warmupTime = -1;
+    trap_SetConfigstring( CS_WARMUP, va( "%i", level.warmupTime ) );
+    G_LogPrintf( "Warmup:\n" );
+  }
 
 }
 

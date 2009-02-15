@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -52,6 +52,10 @@ kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed;
 kbutton_t	in_up, in_down;
+
+#ifdef USE_VOIP
+kbutton_t	in_voiprecord;
+#endif
 
 kbutton_t	in_buttons[16];
 
@@ -216,6 +220,20 @@ void IN_SpeedDown(void) {IN_KeyDown(&in_speed);}
 void IN_SpeedUp(void) {IN_KeyUp(&in_speed);}
 void IN_StrafeDown(void) {IN_KeyDown(&in_strafe);}
 void IN_StrafeUp(void) {IN_KeyUp(&in_strafe);}
+
+#ifdef USE_VOIP
+void IN_VoipRecordDown(void)
+{
+	IN_KeyDown(&in_voiprecord);
+	Cvar_Set("cl_voipSend", "1");
+}
+
+void IN_VoipRecordUp(void)
+{
+	IN_KeyUp(&in_voiprecord);
+	Cvar_Set("cl_voipSend", "0");
+}
+#endif
 
 void IN_Button0Down(void) {IN_KeyDown(&in_buttons[0]);}
 void IN_Button0Up(void) {IN_KeyUp(&in_buttons[0]);}
@@ -436,8 +454,7 @@ void CL_MouseMove( usercmd_t *cmd ) {
 	cl.mouseDy[cl.mouseIndex] = 0;
 
 	rate = sqrt( mx * mx + my * my ) / (float)frame_msec;
-	accelSensitivity = ( cl_sensitivity->value *
-			cl_platformSensitivity->value ) + rate * cl_mouseAccel->value;
+	accelSensitivity = cl_sensitivity->value + rate * cl_mouseAccel->value;
 
 	// scale by FOV
 	accelSensitivity *= cl.cgameSensitivity;
@@ -741,6 +758,52 @@ void CL_WritePacket( void ) {
 		count = MAX_PACKET_USERCMDS;
 		Com_Printf("MAX_PACKET_USERCMDS\n");
 	}
+
+#ifdef USE_VOIP
+	if (clc.voipOutgoingDataSize > 0) {  // only send if data.
+
+		MSG_WriteByte (&buf, clc_EOF);  // placate legacy servers.
+		MSG_WriteByte (&buf, clc_extension);
+		MSG_WriteByte (&buf, clc_voip);
+		MSG_WriteByte (&buf, clc.voipOutgoingGeneration);
+		MSG_WriteLong (&buf, clc.voipOutgoingSequence);
+		MSG_WriteByte (&buf, clc.voipOutgoingDataFrames);
+		MSG_WriteLong (&buf, clc.voipTarget1);
+		MSG_WriteLong (&buf, clc.voipTarget2);
+		MSG_WriteLong (&buf, clc.voipTarget3);
+		MSG_WriteShort (&buf, clc.voipOutgoingDataSize);
+		MSG_WriteData (&buf, clc.voipOutgoingData, clc.voipOutgoingDataSize);
+
+		// If we're recording a demo, we have to fake a server packet with
+		//  this VoIP data so it gets to disk; the server doesn't send it
+		//  back to us, and we might as well eliminate concerns about dropped
+		//  and misordered packets here.
+		if ( clc.demorecording && !clc.demowaiting ) {
+			const int voipSize = clc.voipOutgoingDataSize;
+			msg_t fakemsg;
+			byte fakedata[MAX_MSGLEN];
+			MSG_Init (&fakemsg, fakedata, sizeof (fakedata));
+			MSG_Bitstream (&fakemsg);
+			MSG_WriteLong (&fakemsg, clc.reliableAcknowledge);
+			MSG_WriteByte (&fakemsg, svc_EOF);
+			MSG_WriteByte (&fakemsg, svc_extension);
+			MSG_WriteByte (&fakemsg, svc_voip);
+			MSG_WriteShort (&fakemsg, clc.clientNum);
+			MSG_WriteByte (&fakemsg, clc.voipOutgoingGeneration);
+			MSG_WriteLong (&fakemsg, clc.voipOutgoingSequence);
+			MSG_WriteByte (&fakemsg, clc.voipOutgoingDataFrames);
+			MSG_WriteShort (&fakemsg, clc.voipOutgoingDataSize );
+			MSG_WriteData (&fakemsg, clc.voipOutgoingData, voipSize);
+			MSG_WriteByte (&fakemsg, svc_EOF);
+			CL_WriteDemoMessage (&fakemsg, 0);
+		}
+
+		clc.voipOutgoingSequence += clc.voipOutgoingDataFrames;
+		clc.voipOutgoingDataSize = 0;
+		clc.voipOutgoingDataFrames = 0;
+	} else
+#endif
+
 	if ( count >= 1 ) {
 		if ( cl_showSend->integer ) {
 			Com_Printf( "(%i)", count );
@@ -897,6 +960,11 @@ void CL_InitInput( void ) {
 	Cmd_AddCommand ("-button14", IN_Button14Up);
 	Cmd_AddCommand ("+mlook", IN_MLookDown);
 	Cmd_AddCommand ("-mlook", IN_MLookUp);
+
+#ifdef USE_VOIP
+	Cmd_AddCommand ("+voiprecord", IN_VoipRecordDown);
+	Cmd_AddCommand ("-voiprecord", IN_VoipRecordUp);
+#endif
 
 	cl_nodelta = Cvar_Get ("cl_nodelta", "0", 0);
 	cl_debugMove = Cvar_Get ("cl_debugMove", "0", 0);

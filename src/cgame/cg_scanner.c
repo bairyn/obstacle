@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -39,7 +39,7 @@ void CG_UpdateEntityPositions( void )
   centity_t *cent = NULL;
   int       i;
 
-  if( cg.predictedPlayerState.stats[ STAT_PTEAM ] == PTE_HUMANS )
+  if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_HUMANS )
   {
     if( entityPositions.lastUpdateTime + HUMAN_SCANNER_UPDATE_PERIOD > cg.time )
       return;
@@ -61,7 +61,7 @@ void CG_UpdateEntityPositions( void )
     if( cent->currentState.eType == ET_BUILDABLE )
     {
       // add to list of item positions (for creep)
-      if( cent->currentState.modelindex2 == BIT_ALIENS )
+      if( cent->currentState.modelindex2 == TEAM_ALIENS )
       {
         VectorCopy( cent->lerpOrigin, entityPositions.alienBuildablePos[
             entityPositions.numAlienBuildables ] );
@@ -71,7 +71,7 @@ void CG_UpdateEntityPositions( void )
         if( entityPositions.numAlienBuildables < MAX_GENTITIES )
           entityPositions.numAlienBuildables++;
       }
-      else if( cent->currentState.modelindex2 == BIT_HUMANS )
+      else if( cent->currentState.modelindex2 == TEAM_HUMANS )
       {
         VectorCopy( cent->lerpOrigin, entityPositions.humanBuildablePos[
             entityPositions.numHumanBuildables ] );
@@ -84,7 +84,7 @@ void CG_UpdateEntityPositions( void )
     {
       int team = cent->currentState.misc & 0x00FF;
 
-      if( team == PTE_ALIENS )
+      if( team == TEAM_ALIENS )
       {
         VectorCopy( cent->lerpOrigin, entityPositions.alienClientPos[
             entityPositions.numAlienClients ] );
@@ -92,7 +92,7 @@ void CG_UpdateEntityPositions( void )
         if( entityPositions.numAlienClients < MAX_CLIENTS )
           entityPositions.numAlienClients++;
       }
-      else if( team == PTE_HUMANS )
+      else if( team == TEAM_HUMANS )
       {
         VectorCopy( cent->lerpOrigin, entityPositions.humanClientPos[
             entityPositions.numHumanClients ] );

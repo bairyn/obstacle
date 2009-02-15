@@ -1,6 +1,6 @@
 code
 
-equ trap_Printf                     -1
+equ trap_Print                      -1
 equ trap_Error                      -2
 equ trap_Milliseconds               -3
 equ trap_Cvar_Register              -4
@@ -50,6 +50,7 @@ equ trap_Parse_ReadToken            -46
 equ trap_Parse_SourceFileAndLine    -47
 
 equ trap_SendGameStat               -48
+equ trap_DemoCommand                -49
 
 
 equ memset                          -101

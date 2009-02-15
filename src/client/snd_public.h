@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -34,7 +34,7 @@ void S_StopBackgroundTrack( void );
 
 // cinematics and voice-over-network will send raw samples
 // 1.0 volume will be direct output of source samples
-void S_RawSamples (int samples, int rate, int width, int channels, 
+void S_RawSamples (int stream, int samples, int rate, int width, int channels,
 				   const byte *data, float volume);
 
 // stop all sounds and the background track
@@ -64,6 +64,8 @@ void S_BeginRegistration( void );
 // checks for missing files
 sfxHandle_t	S_RegisterSound( const char *sample, qboolean compressed );
 
+int S_SoundDuration( sfxHandle_t handle );
+
 void S_DisplayFreeMemory(void);
 
 void S_ClearSoundBuffer( void );
@@ -71,3 +73,13 @@ void S_ClearSoundBuffer( void );
 void SNDDMA_Activate( void );
 
 void S_UpdateBackgroundTrack( void );
+
+
+#ifdef USE_VOIP
+void S_StartCapture( void );
+int S_AvailableCaptureSamples( void );
+void S_Capture( int samples, byte *data );
+void S_StopCapture( void );
+void S_MasterGain( float gain );
+#endif
+

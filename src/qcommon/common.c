@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -32,8 +32,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <winsock.h>
 #endif
 
+#if id386_sse
+#include "../qcommon/qsse.h"
+#endif
+
 int demo_protocols[] =
-{ 66, 67, 68, 69, 0 };
+{ PROTOCOL_VERSION, 0 };
 
 #define MAX_NUM_ARGVS	50
 
@@ -66,13 +70,13 @@ cvar_t	*com_dropsim;		// 0.0 to 1.0, simulated packet drops
 cvar_t	*com_journal;
 cvar_t	*com_maxfps;
 cvar_t	*com_altivec;
+cvar_t	*com_sse;
 cvar_t	*com_timedemo;
 cvar_t	*com_sv_running;
 cvar_t	*com_cl_running;
 cvar_t	*com_logfile;		// 1 = buffer log, 2 = flush after each print
 cvar_t	*com_showtrace;
 cvar_t	*com_version;
-cvar_t	*com_blood;
 cvar_t	*com_buildScript;	// for automated data building scripts
 cvar_t	*cl_paused;
 cvar_t	*sv_paused;
@@ -81,7 +85,9 @@ cvar_t  *sv_packetdelay;
 cvar_t	*com_cameraMode;
 cvar_t	*com_ansiColor;
 cvar_t	*com_unfocused;
+cvar_t	*com_maxfpsUnfocused;
 cvar_t	*com_minimized;
+cvar_t	*com_maxfpsMinimized;
 
 // com_speeds times
 int		time_game;
@@ -269,38 +275,31 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 	com_errorEntered = qtrue;
 
 	va_start (argptr,fmt);
-	vsprintf (com_errorMessage,fmt,argptr);
+	Q_vsnprintf (com_errorMessage, sizeof(com_errorMessage),fmt,argptr);
 	va_end (argptr);
 
-	if (code != ERR_DISCONNECT && code != ERR_NEED_CD)
+	if (code != ERR_DISCONNECT)
 		Cvar_Set("com_errorMessage", com_errorMessage);
 
 	if (code == ERR_DISCONNECT || code == ERR_SERVERDISCONNECT) {
-		CL_Disconnect( qtrue );
-		CL_FlushMemory( );
+		SV_Shutdown( "Server disconnected" );
 		// make sure we can get at our local stuff
 		FS_PureServerSetLoadedPaks("", "");
+		CL_Disconnect( qtrue );
+		VM_Forced_Unload_Start();
+		CL_FlushMemory( qtrue );
+		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
 		longjmp (abortframe, -1);
 	} else if (code == ERR_DROP) {
 		Com_Printf ("********************\nERROR: %s\n********************\n", com_errorMessage);
 		SV_Shutdown (va("Server crashed: %s",  com_errorMessage));
+		FS_PureServerSetLoadedPaks("", "");
 		CL_Disconnect( qtrue );
-		CL_FlushMemory( );
-		FS_PureServerSetLoadedPaks("", "");
+		VM_Forced_Unload_Start();
+		CL_FlushMemory( qtrue );
+		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
-		longjmp (abortframe, -1);
-	} else if ( code == ERR_NEED_CD ) {
-		SV_Shutdown( "Server didn't have CD" );
-		if ( com_cl_running && com_cl_running->integer ) {
-			CL_Disconnect( qtrue );
-			CL_FlushMemory( );
-			com_errorEntered = qfalse;
-			CL_CDDialog();
-		} else {
-			Com_Printf("Server didn't have CD\n" );
-		}
-		FS_PureServerSetLoadedPaks("", "");
 		longjmp (abortframe, -1);
 	} else {
 		CL_Shutdown ();
@@ -323,8 +322,9 @@ do the apropriate things.
 */
 void Com_Quit_f( void ) {
 	// don't try to shutdown if we are in a recursive error
+	char *p = Cmd_Args( );
 	if ( !com_errorEntered ) {
-		SV_Shutdown ("Server quit");
+		SV_Shutdown (p[0] ? p : "Server quit");
 		CL_Shutdown ();
 		Com_Shutdown ();
 		FS_Shutdown(qtrue);
@@ -344,9 +344,9 @@ command lines.
 
 All of these are valid:
 
-tremulous +set test blah +map test
-tremulous set test blah+map test
-tremulous set test blah + map test
+tremfusion +set test blah +map test
+tremfusion set test blah+map test
+tremfusion set test blah + map test
 
 ============================================================================
 */
@@ -464,10 +464,12 @@ qboolean Com_AddStartupCommands( void ) {
 			continue;
 		}
 
-		// set commands won't override menu startup
-		if ( Q_stricmpn( com_consoleLines[i], "set", 3 ) ) {
-			added = qtrue;
+		// set commands already added with Com_StartupVariable
+		if ( !Q_stricmpn( com_consoleLines[i], "set", 3 ) ) {
+			continue;
 		}
+
+		added = qtrue;
 		Cbuf_AddText( com_consoleLines[i] );
 		Cbuf_AddText( "\n" );
 	}
@@ -1362,7 +1364,7 @@ void Com_TouchMemory( void ) {
 
 	end = Sys_Milliseconds();
 
-	Com_Printf( "Com_TouchMemory: %i msec\n", end - start );
+	Com_DPrintf( "Com_TouchMemory: %i msec\n", end - start );
 }
 
 
@@ -1625,7 +1627,7 @@ void Hunk_Clear( void ) {
 	hunk_permanent = &hunk_low;
 	hunk_temp = &hunk_high;
 
-	Com_Printf( "Hunk_Clear: reset the hunk ok\n" );
+	Com_DPrintf( "Hunk_Clear: reset the hunk ok\n" );
 	VM_Clear();
 #ifdef HUNK_DEBUG
 	hunkblocks = NULL;
@@ -1984,9 +1986,8 @@ Com_GetSystemEvent
 
 ================
 */
-sysEvent_t Com_GetSystemEvent( void )
+void Com_GetSystemEvent( sysEvent_t *ev )
 {
-	sysEvent_t  ev;
 	char        *s;
 	msg_t       netmsg;
 	netadr_t    adr;
@@ -1995,7 +1996,8 @@ sysEvent_t Com_GetSystemEvent( void )
 	if ( eventHead > eventTail )
 	{
 		eventTail++;
-		return eventQueue[ ( eventTail - 1 ) & MASK_QUEUED_EVENTS ];
+		*ev = eventQueue[ ( eventTail - 1 ) & MASK_QUEUED_EVENTS ];
+		return;
 	}
 
 	// check for console commands
@@ -2030,14 +2032,13 @@ sysEvent_t Com_GetSystemEvent( void )
 	if ( eventHead > eventTail )
 	{
 		eventTail++;
-		return eventQueue[ ( eventTail - 1 ) & MASK_QUEUED_EVENTS ];
+		*ev = eventQueue[ ( eventTail - 1 ) & MASK_QUEUED_EVENTS ];
+		return;
 	}
 
 	// create an empty event to return
-	memset( &ev, 0, sizeof( ev ) );
-	ev.evTime = Sys_Milliseconds();
-
-	return ev;
+	memset( ev, 0, sizeof( *ev ) );
+	ev->evTime = Sys_Milliseconds();
 }
 
 /*
@@ -2045,42 +2046,39 @@ sysEvent_t Com_GetSystemEvent( void )
 Com_GetRealEvent
 =================
 */
-sysEvent_t	Com_GetRealEvent( void ) {
+void	Com_GetRealEvent( sysEvent_t *ev ) {
 	int			r;
-	sysEvent_t	ev;
 
 	// either get an event from the system or the journal file
 	if ( com_journal->integer == 2 ) {
-		r = FS_Read( &ev, sizeof(ev), com_journalFile );
-		if ( r != sizeof(ev) ) {
+		r = FS_Read( ev, sizeof(*ev), com_journalFile );
+		if ( r != sizeof(*ev) ) {
 			Com_Error( ERR_FATAL, "Error reading from journal file" );
 		}
-		if ( ev.evPtrLength ) {
-			ev.evPtr = Z_Malloc( ev.evPtrLength );
-			r = FS_Read( ev.evPtr, ev.evPtrLength, com_journalFile );
-			if ( r != ev.evPtrLength ) {
+		if ( ev->evPtrLength ) {
+			ev->evPtr = Z_Malloc( ev->evPtrLength );
+			r = FS_Read( ev->evPtr, ev->evPtrLength, com_journalFile );
+			if ( r != ev->evPtrLength ) {
 				Com_Error( ERR_FATAL, "Error reading from journal file" );
 			}
 		}
 	} else {
-		ev = Com_GetSystemEvent();
+		Com_GetSystemEvent( ev );
 
 		// write the journal value out if needed
 		if ( com_journal->integer == 1 ) {
-			r = FS_Write( &ev, sizeof(ev), com_journalFile );
-			if ( r != sizeof(ev) ) {
+			r = FS_Write( ev, sizeof(*ev), com_journalFile );
+			if ( r != sizeof(*ev) ) {
 				Com_Error( ERR_FATAL, "Error writing to journal file" );
 			}
-			if ( ev.evPtrLength ) {
-				r = FS_Write( ev.evPtr, ev.evPtrLength, com_journalFile );
-				if ( r != ev.evPtrLength ) {
+			if ( ev->evPtrLength ) {
+				r = FS_Write( ev->evPtr, ev->evPtrLength, com_journalFile );
+				if ( r != ev->evPtrLength ) {
 					Com_Error( ERR_FATAL, "Error writing to journal file" );
 				}
 			}
 		}
 	}
-
-	return ev;
 }
 
 
@@ -2136,12 +2134,13 @@ void Com_PushEvent( sysEvent_t *event ) {
 Com_GetEvent
 =================
 */
-sysEvent_t	Com_GetEvent( void ) {
+void	Com_GetEvent( sysEvent_t *ev ) {
 	if ( com_pushedEventsHead > com_pushedEventsTail ) {
 		com_pushedEventsTail++;
-		return com_pushedEvents[ (com_pushedEventsTail-1) & (MAX_PUSHED_EVENTS-1) ];
+		*ev = com_pushedEvents[ (com_pushedEventsTail-1) & (MAX_PUSHED_EVENTS-1) ];
+		return;
 	}
-	return Com_GetRealEvent();
+	Com_GetRealEvent( ev );
 }
 
 /*
@@ -2186,7 +2185,7 @@ int Com_EventLoop( void ) {
 
 	while ( 1 ) {
 		NET_FlushPacketQueue();
-		ev = Com_GetEvent();
+		Com_GetEvent( &ev );
 
 		// if no more events are available
 		if ( ev.evType == SE_NONE ) {
@@ -2225,9 +2224,19 @@ int Com_EventLoop( void ) {
 			CL_JoystickEvent( ev.evValue, ev.evValue2, ev.evTime );
 			break;
 		case SE_CONSOLE:
-			Cbuf_AddText( (char *)ev.evPtr );
+		{
+			char *cmd = (char *)ev.evPtr;
+#ifndef DEDICATED
+			if ( cmd[ 0 ] == '\\' || cmd[ 0 ] == '/' )
+				Cbuf_AddText( cmd + 1 );
+			else
+				Cbuf_AddText( va( "cmd say \"%s\"", cmd ) );
+#else
+			Cbuf_AddText( cmd );
+#endif
 			Cbuf_AddText( "\n" );
 			break;
+		}
 		case SE_PACKET:
 			// this cvar allows simulation of connections that
 			// drop a lot of packets.  Note that loopback connections
@@ -2282,7 +2291,7 @@ int Com_Milliseconds (void) {
 	// get events and push them until we get a null event with the current time
 	do {
 
-		ev = Com_GetRealEvent();
+		Com_GetRealEvent( &ev );
 		if ( ev.evType != SE_NONE ) {
 			Com_PushEvent( &ev );
 		}
@@ -2366,6 +2375,27 @@ static void Com_DetectAltivec(void)
 	}
 }
 
+static void Com_DetectSSE(void)
+{
+	// Only detect if user hasn't forcibly disabled it.
+#if id386_sse >= 1
+	if (com_sse->integer > 0) {
+		if ( com_sse->integer >= 2 && id386_sse >= 2 ) {
+			Cvar_Set( "com_sse", "2" ); // SSE2 supported
+			InitSSEMode();
+		}
+		else if ( com_sse->integer >= 1 ) {
+			Cvar_Set(" com_sse", "1" ); // SSE1 supported
+			InitSSEMode();
+		} else {
+			Cvar_Set( "com_sse", "0" );  // we don't have it! Disable support!
+		}
+	}
+#else
+	Cvar_Set( "com_sse", "0" );  // not compiled in
+#endif
+}
+
 
 /*
 =================
@@ -2418,7 +2448,7 @@ void Com_Init( char *commandLine ) {
 
 	// skip the autogen.cfg if "safe" is on the command line
 	if ( !Com_SafeMode() ) {
-		Cbuf_AddText ("exec autogen.cfg\n");
+		Cbuf_AddText (va("exec %s\n", fs_autogen->string));
 	}
 
 	Cbuf_AddText ("exec autoexec.cfg\n");
@@ -2430,9 +2460,11 @@ void Com_Init( char *commandLine ) {
 
   // get dedicated here for proper hunk megs initialization
 #ifdef DEDICATED
-	com_dedicated = Cvar_Get ("dedicated", "1", CVAR_ROM);
+	com_dedicated = Cvar_Get ("dedicated", "1", CVAR_INIT);
+	Cvar_CheckRange( com_dedicated, 1, 2, qtrue );
 #else
 	com_dedicated = Cvar_Get ("dedicated", "0", CVAR_LATCH);
+	Cvar_CheckRange( com_dedicated, 0, 2, qtrue );
 #endif
 	// allocate the stack based hunk allocator
 	Com_InitHunkMemory();
@@ -2445,8 +2477,8 @@ void Com_Init( char *commandLine ) {
 	// init commands and vars
 	//
 	com_altivec = Cvar_Get ("com_altivec", "1", CVAR_ARCHIVE);
-	com_maxfps = Cvar_Get ("com_maxfps", "85", CVAR_ARCHIVE);
-	com_blood = Cvar_Get ("com_blood", "1", CVAR_ARCHIVE);
+	com_sse = Cvar_Get ("com_sse", "2", CVAR_ARCHIVE);
+	com_maxfps = Cvar_Get ("com_maxfps", "77", CVAR_ARCHIVE);
 
 	com_developer = Cvar_Get ("developer", "0", CVAR_TEMP );
 	com_logfile = Cvar_Get ("logfile", "0", CVAR_TEMP );
@@ -2466,27 +2498,34 @@ void Com_Init( char *commandLine ) {
 	com_sv_running = Cvar_Get ("sv_running", "0", CVAR_ROM);
 	com_cl_running = Cvar_Get ("cl_running", "0", CVAR_ROM);
 	com_buildScript = Cvar_Get( "com_buildScript", "0", 0 );
-	com_ansiColor = Cvar_Get( "com_ansiColor", "0", CVAR_ARCHIVE );
+	com_ansiColor = Cvar_Get( "com_ansiColor", "1", CVAR_ARCHIVE );
 
 	com_unfocused = Cvar_Get( "com_unfocused", "0", CVAR_ROM );
+	com_maxfpsUnfocused = Cvar_Get( "com_maxfpsUnfocused", "25", CVAR_ARCHIVE );
 	com_minimized = Cvar_Get( "com_minimized", "0", CVAR_ROM );
+	com_maxfpsMinimized = Cvar_Get( "com_maxfpsMinimized", "10", CVAR_ARCHIVE );
 
 	if ( com_developer && com_developer->integer ) {
 		Cmd_AddCommand ("error", Com_Error_f);
 		Cmd_AddCommand ("crash", Com_Crash_f );
 		Cmd_AddCommand ("freeze", Com_Freeze_f);
 	}
+#ifdef DEDICATED
+	Cmd_AddCommand ("clear", CON_Clear_f);
+#endif
 	Cmd_AddCommand ("quit", Com_Quit_f);
 	Cmd_AddCommand ("changeVectors", MSG_ReportChangeVectors_f );
 	Cmd_AddCommand ("writeconfig", Com_WriteConfig_f );
+	Cmd_SetCommandCompletionFunc( "writeconfig", Cmd_CompleteCfgName );
 
 	s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
-	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO );
+	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO | CVAR_USERINFO );
 
 	Sys_Init();
 	Netchan_Init( Com_Milliseconds() & 0xffff );	// pick a port value that should be nice and random
 	VM_Init();
 	SV_Init();
+	Hist_Load();
 
 	com_dedicated->modified = qfalse;
 #ifndef DEDICATED
@@ -2521,7 +2560,11 @@ void Com_Init( char *commandLine ) {
 #if idppc
 	Com_Printf ("Altivec support is %s\n", com_altivec->integer ? "enabled" : "disabled");
 #endif
-
+	Com_DetectSSE();
+#if id386
+	Com_Printf ("SSE support is version %d\n", com_sse->integer);
+#endif
+	
 	Com_Printf ("--- Common Initialization Complete ---\n");
 }
 
@@ -2536,9 +2579,20 @@ void Com_WriteConfigToFile( const char *filename ) {
 		return;
 	}
 
-	FS_Printf (f, "// generated by tremulous, do not modify\n");
+	FS_Printf (f, "// generated by tremfusion, do not modify\n");
 	Key_WriteBindings (f);
-	Cvar_WriteVariables (f);
+	Cvar_WriteVariables (f, qtrue);
+	Cmd_WriteAliases (f);
+	FS_FCloseFile( f );
+
+	f = FS_SV_FOpenFileWrite( filename );
+	if ( !f ) {
+		Com_Printf ("Couldn't write %s.\n", filename );
+		return;
+	}
+
+	FS_Printf (f, "// generated by tremfusion, do not modify\n");
+	Cvar_WriteVariables (f, qfalse);
 	FS_FCloseFile( f );
 }
 
@@ -2562,7 +2616,7 @@ void Com_WriteConfiguration( void ) {
 	}
 	cvar_modifiedFlags &= ~CVAR_ARCHIVE;
 
-	Com_WriteConfigToFile( "autogen.cfg" );
+	Com_WriteConfigToFile( fs_autogen->string );
 }
 
 
@@ -2673,9 +2727,6 @@ void Com_Frame( void ) {
 	// old net chan encryption key
 	key = 0x87243987;
 
-	// write config file if anything changed
-	Com_WriteConfiguration(); 
-
 	//
 	// main event loop
 	//
@@ -2684,12 +2735,30 @@ void Com_Frame( void ) {
 	}
 
 	// we may want to spin here if things are going too fast
-	if ( !com_dedicated->integer && com_maxfps->integer > 0 && !com_timedemo->integer ) {
-		minMsec = 1000 / com_maxfps->integer;
+	if ( !com_dedicated->integer && !com_timedemo->integer ) {
+		if( com_minimized->integer && com_maxfpsMinimized->integer > 0 ) {
+			minMsec = 1000 / com_maxfpsMinimized->integer;
+		} else if( com_unfocused->integer && com_maxfpsUnfocused->integer > 0 ) {
+			minMsec = 1000 / com_maxfpsUnfocused->integer;
+		} else if( com_maxfps->integer > 0 ) {
+			minMsec = 1000 / com_maxfps->integer;
+		} else {
+			minMsec = 1;
+		}
 	} else {
 		minMsec = 1;
 	}
+
+	msec = minMsec;
 	do {
+		int timeRemaining = minMsec - msec;
+
+		// The existing Sys_Sleep implementations aren't really
+		// precise enough to be of use beyond 100fps
+		// FIXME: implement a more precise sleep (RDTSC or something)
+		if( timeRemaining >= 10 )
+			Sys_Sleep( timeRemaining );
+
 		com_frameTime = Com_EventLoop();
 		if ( lastTime > com_frameTime ) {
 			lastTime = com_frameTime;		// possible on first frame
@@ -2697,11 +2766,20 @@ void Com_Frame( void ) {
 		msec = com_frameTime - lastTime;
 	} while ( msec < minMsec );
 	Cbuf_Execute ();
+	Cdelay_Frame ();
+
+	// write config file if anything changed
+	Com_WriteConfiguration(); 
 
 	if (com_altivec->modified)
 	{
 		Com_DetectAltivec();
 		com_altivec->modified = qfalse;
+	}
+	if (com_sse->modified)
+	{
+		Com_DetectSSE();
+		com_sse->modified = qfalse;
 	}
 
 	lastTime = com_frameTime;
@@ -2729,7 +2807,7 @@ void Com_Frame( void ) {
 		com_dedicated->modified = qfalse;
 		if ( !com_dedicated->integer ) {
 			SV_Shutdown( "dedicated set to 0" );
-			CL_FlushMemory();
+			CL_FlushMemory(qtrue);
 		}
 	}
 
@@ -2872,6 +2950,7 @@ static char shortestMatch[MAX_TOKEN_CHARS];
 static int	matchCount;
 // field we are working on, passed to Field_AutoComplete(&g_consoleCommand for instance)
 static field_t *completionField;
+static const char *completionPrompt;
 
 /*
 ===============
@@ -2949,37 +3028,52 @@ static char *Field_FindFirstSeparator( char *s )
 	return NULL;
 }
 
-#ifndef DEDICATED
 /*
 ===============
-Field_CompleteKeyname
+Field_Complete
 ===============
 */
-static void Field_CompleteKeyname( void )
+static qboolean Field_Complete( void )
 {
-	matchCount = 0;
-	shortestMatch[ 0 ] = 0;
-
-	Key_KeynameCompletion( FindMatches );
+	int completionOffset;
 
 	if( matchCount == 0 )
-		return;
+		return qtrue;
 
-	Q_strncpyz( &completionField->buffer[ strlen( completionField->buffer ) -
-		strlen( completionString ) ], shortestMatch,
-		sizeof( completionField->buffer ) );
+	completionOffset = strlen( completionField->buffer ) - strlen( completionString );
+
+	Q_strncpyz( &completionField->buffer[ completionOffset ], shortestMatch,
+		sizeof( completionField->buffer ) - completionOffset );
+
 	completionField->cursor = strlen( completionField->buffer );
 
 	if( matchCount == 1 )
 	{
 		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
 		completionField->cursor++;
-		return;
+		return qtrue;
 	}
 
-	Com_Printf( "]%s\n", completionField->buffer );
-	
-	Key_KeynameCompletion( PrintMatches );
+	Com_Printf( "%s^7%s\n", completionPrompt, completionField->buffer );
+
+	return qfalse;
+}
+
+#ifndef DEDICATED
+/*
+===============
+Field_CompleteKeyname
+===============
+*/
+void Field_CompleteKeyname( void )
+{
+	matchCount = 0;
+	shortestMatch[ 0 ] = 0;
+
+	Key_KeynameCompletion( FindMatches );
+
+	if( !Field_Complete( ) )
+		Key_KeynameCompletion( PrintMatches );
 }
 #endif
 
@@ -2988,7 +3082,7 @@ static void Field_CompleteKeyname( void )
 Field_CompleteFilename
 ===============
 */
-static void Field_CompleteFilename( const char *dir,
+void Field_CompleteFilename( const char *dir,
 		const char *ext, qboolean stripExt )
 {
 	matchCount = 0;
@@ -2996,24 +3090,40 @@ static void Field_CompleteFilename( const char *dir,
 
 	FS_FilenameCompletion( dir, ext, stripExt, FindMatches );
 
-	if( matchCount == 0 )
-		return;
+	if( !Field_Complete( ) )
+		FS_FilenameCompletion( dir, ext, stripExt, PrintMatches );
+}
 
-	Q_strncpyz( &completionField->buffer[ strlen( completionField->buffer ) -
-		strlen( completionString ) ], shortestMatch,
-		sizeof( completionField->buffer ) );
-	completionField->cursor = strlen( completionField->buffer );
+/*
+===============
+Field_CompleteAlias
+===============
+*/
+void Field_CompleteAlias( void )
+{
+	matchCount = 0;
+	shortestMatch[ 0 ] = 0;
 
-	if( matchCount == 1 )
-	{
-		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
-		completionField->cursor++;
-		return;
-	}
+	Cmd_AliasCompletion( FindMatches );
 
-	Com_Printf( "]%s\n", completionField->buffer );
-	
-	FS_FilenameCompletion( dir, ext, stripExt, PrintMatches );
+	if( !Field_Complete( ) )
+		Cmd_AliasCompletion( PrintMatches );
+}
+
+/*
+===============
+Field_CompleteDelay
+===============
+*/
+void Field_CompleteDelay( void )
+{
+	matchCount = 0;
+	shortestMatch[ 0 ] = 0;
+
+	Cmd_AliasCompletion( FindMatches );
+
+	if( !Field_Complete( ) )
+		Cmd_AliasCompletion( PrintMatches );
 }
 
 /*
@@ -3021,11 +3131,10 @@ static void Field_CompleteFilename( const char *dir,
 Field_CompleteCommand
 ===============
 */
-static void Field_CompleteCommand( char *cmd,
+void Field_CompleteCommand( char *cmd,
 		qboolean doCommands, qboolean doCvars )
 {
 	int		completionArgument = 0;
-	char	*p;
 
 	// Skip leading whitespace and quotes
 	cmd = Com_SkipCharset( cmd, " \"" );
@@ -3067,6 +3176,7 @@ static void Field_CompleteCommand( char *cmd,
 	if( completionArgument > 1 )
 	{
 		const char *baseCmd = Cmd_Argv( 0 );
+		char *p;
 
 #ifndef DEDICATED
 		// This should always be true
@@ -3075,89 +3185,12 @@ static void Field_CompleteCommand( char *cmd,
 #endif
 
 		if( ( p = Field_FindFirstSeparator( cmd ) ) )
-		{
-			// Compound command
-			Field_CompleteCommand( p + 1, qtrue, qtrue );
-		}
+			Field_CompleteCommand( p + 1, qtrue, qtrue ); // Compound command
 		else
-		{
-			// FIXME: all this junk should really be associated with the respective
-			// commands, instead of being hard coded here
-			if( ( !Q_stricmp( baseCmd, "map" ) ||
-						!Q_stricmp( baseCmd, "devmap" ) ||
-						!Q_stricmp( baseCmd, "spmap" ) ||
-						!Q_stricmp( baseCmd, "spdevmap" ) ) &&
-					completionArgument == 2 )
-			{
-				Field_CompleteFilename( "maps", "bsp", qtrue );
-			}
-			else if( ( !Q_stricmp( baseCmd, "exec" ) ||
-						!Q_stricmp( baseCmd, "writeconfig" ) ) &&
-					completionArgument == 2 )
-			{
-				Field_CompleteFilename( "", "cfg", qfalse );
-			}
-			else if( !Q_stricmp( baseCmd, "condump" ) &&
-					completionArgument == 2 )
-			{
-				Field_CompleteFilename( "", "txt", qfalse );
-			}
-			else if( ( !Q_stricmp( baseCmd, "toggle" ) ||
-						!Q_stricmp( baseCmd, "vstr" ) ||
-						!Q_stricmp( baseCmd, "set" ) ||
-						!Q_stricmp( baseCmd, "seta" ) ||
-						!Q_stricmp( baseCmd, "setu" ) ||
-						!Q_stricmp( baseCmd, "sets" ) ) &&
-					completionArgument == 2 )
-			{
-				// Skip "<cmd> "
-				p = Com_SkipTokens( cmd, 1, " " );
-
-				if( p > cmd )
-					Field_CompleteCommand( p, qfalse, qtrue );
-			}
-#ifndef DEDICATED
-			else if( !Q_stricmp( baseCmd, "demo" ) && completionArgument == 2 )
-			{
-				char demoExt[ 16 ];
-
-				Com_sprintf( demoExt, sizeof( demoExt ), ".dm_%d", PROTOCOL_VERSION );
-				Field_CompleteFilename( "demos", demoExt, qtrue );
-			}
-			else if( !Q_stricmp( baseCmd, "rcon" ) && completionArgument == 2 )
-			{
-				// Skip "rcon "
-				p = Com_SkipTokens( cmd, 1, " " );
-
-				if( p > cmd )
-					Field_CompleteCommand( p, qtrue, qtrue );
-			}
-			else if( !Q_stricmp( baseCmd, "bind" ) )
-			{
-				if( completionArgument == 2 )
-				{
-					// Skip "bind "
-					p = Com_SkipTokens( cmd, 1, " " );
-
-					if( p > cmd )
-						Field_CompleteKeyname( );
-				}
-				else if( completionArgument >= 3 )
-				{
-					// Skip "bind <key> "
-					p = Com_SkipTokens( cmd, 2, " " );
-
-					if( p > cmd )
-						Field_CompleteCommand( p, qtrue, qtrue );
-				}
-			}
-#endif
-		}
+			Cmd_CompleteArgument( baseCmd, cmd, completionArgument );
 	}
 	else
 	{
-		int completionOffset;
-
 		if( completionString[0] == '\\' || completionString[0] == '/' )
 			completionString++;
 
@@ -3173,31 +3206,15 @@ static void Field_CompleteCommand( char *cmd,
 		if( doCvars )
 			Cvar_CommandCompletion( FindMatches );
 
-		if( matchCount == 0 )
-			return; // no matches
-
-		completionOffset = strlen( completionField->buffer ) - strlen( completionString );
-
-		Q_strncpyz( &completionField->buffer[ completionOffset ], shortestMatch,
-			sizeof( completionField->buffer ) - completionOffset );
-
-		completionField->cursor = strlen( completionField->buffer );
-
-		if( matchCount == 1 )
+		if( !Field_Complete( ) )
 		{
-			Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
-			completionField->cursor++;
-			return;
+			// run through again, printing matches
+			if( doCommands )
+				Cmd_CommandCompletion( PrintMatches );
+
+			if( doCvars )
+				Cvar_CommandCompletion( PrintCvarMatches );
 		}
-
-		Com_Printf( "]%s\n", completionField->buffer );
-
-		// run through again, printing matches
-		if( doCommands )
-			Cmd_CommandCompletion( PrintMatches );
-
-		if( doCvars )
-			Cvar_CommandCompletion( PrintCvarMatches );
 	}
 }
 
@@ -3208,9 +3225,10 @@ Field_AutoComplete
 Perform Tab expansion
 ===============
 */
-void Field_AutoComplete( field_t *field )
+void Field_AutoComplete( field_t *field, const char *prompt )
 {
 	completionField = field;
+	completionPrompt = prompt;
 
 	Field_CompleteCommand( completionField->buffer, qtrue, qtrue );
 }
@@ -3235,3 +3253,130 @@ void Com_RandomBytes( byte *string, int len )
 		string[i] = (unsigned char)( rand() % 255 );
 }
 
+#define CON_HISTORY 64
+#ifdef DEDICATED
+#define CON_HISTORY_FILE "conhistory_server"
+#else
+#define CON_HISTORY_FILE "conhistory"
+#endif
+static char history[CON_HISTORY][MAX_EDIT_LINE];
+static int hist_current, hist_next;
+
+/*
+==================
+Hist_Load
+==================
+*/
+void Hist_Load(void)
+{
+	int i;
+	fileHandle_t f;
+	char *buf, *end;
+	char buffer[sizeof(history)];
+
+	FS_SV_FOpenFileRead(CON_HISTORY_FILE, &f);
+	if(!f) {
+		Com_Printf("Couldn't read %s.\n", CON_HISTORY_FILE);
+		return;
+	}
+	FS_Read(buffer, sizeof(buffer), f);
+	FS_FCloseFile(f);
+
+	buf = buffer;
+	for (i = 0; i < CON_HISTORY; i++) {
+		end = strchr(buf, '\n');
+		if (!end) {
+			end = buf + strlen(buf);
+			Q_strncpyz(history[i], buf, sizeof(history[0]));
+			break;
+		} else
+			*end = '\0';
+		Q_strncpyz(history[i], buf, sizeof(history[0]));
+		buf = end + 1;
+		if (!*buf)
+			break;
+	}
+
+	if (i > CON_HISTORY)
+		i = CON_HISTORY;
+	hist_current = hist_next = i + 1;
+}
+
+/*
+==================
+Hist_Save
+==================
+*/
+static void Hist_Save(void)
+{
+	int i;
+	fileHandle_t f;
+
+	f = FS_SV_FOpenFileWrite(CON_HISTORY_FILE);
+	if(!f) {
+		Com_Printf("Couldn't write %s.\n", CON_HISTORY_FILE);
+		return;
+	}
+
+	i = hist_next % CON_HISTORY;
+	do {
+		char *buf;
+		if (!history[i][0]) {
+			i = (i + 1) % CON_HISTORY;
+			continue;
+		}
+		buf = va("%s\n", history[i]);
+		FS_Write(buf, strlen(buf), f);
+		i = (i + 1) % CON_HISTORY;
+	} while (i != (hist_next - 1) % CON_HISTORY);
+
+	FS_FCloseFile(f);
+}
+
+/*
+==================
+Hist_Add
+==================
+*/
+void Hist_Add(const char *field)
+{
+	if (!strcmp(field, history[(hist_next - 1) % CON_HISTORY])) {
+		hist_current = hist_next;
+		return;
+	}
+
+	Q_strncpyz(history[hist_next % CON_HISTORY], field, sizeof(history[0]));
+	hist_next++;
+	hist_current = hist_next;
+	Hist_Save();
+}
+
+/*
+==================
+Hist_Prev
+==================
+*/
+const char *Hist_Prev( void )
+{
+	if ((hist_current - 1) % CON_HISTORY != hist_next % CON_HISTORY &&
+	    history[(hist_current - 1) % CON_HISTORY][0])
+		hist_current--;
+	return history[hist_current % CON_HISTORY];
+}
+
+/*
+==================
+Hist_Next
+==================
+*/
+const char *Hist_Next( const char *field )
+{
+	if (hist_current % CON_HISTORY != hist_next % CON_HISTORY)
+		hist_current++;
+	if (hist_current % CON_HISTORY == hist_next % CON_HISTORY) {
+		if (*field && strcmp(field, history[(hist_current - 1) % CON_HISTORY]))
+			Hist_Add(field);
+		return "";
+	}
+	return history[hist_current % CON_HISTORY];
+}

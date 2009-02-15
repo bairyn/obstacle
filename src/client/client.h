@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -35,8 +35,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cl_curl.h"
 #endif /* USE_CURL */
 
+#ifdef USE_VOIP
+#include "speex/speex.h"
+#include "speex/speex_preprocess.h"
+#endif
+
 // file full of random crap that gets used to create cl_guid
 #define QKEY_FILE "qkey"
+#define QKEY_FILE_FALLBACK "base/qkey"
 #define QKEY_SIZE 2048
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
@@ -226,6 +232,36 @@ typedef struct {
 	int			timeDemoMaxDuration;	// maximum frame duration
 	unsigned char	timeDemoDurations[ MAX_TIMEDEMO_DURATIONS ];	// log of frame durations
 
+#ifdef USE_VOIP
+	qboolean speexInitialized;
+	int speexFrameSize;
+	int speexSampleRate;
+
+	// incoming data...
+	// !!! FIXME: convert from parallel arrays to array of a struct.
+	SpeexBits speexDecoderBits[MAX_CLIENTS];
+	void *speexDecoder[MAX_CLIENTS];
+	byte voipIncomingGeneration[MAX_CLIENTS];
+	int voipIncomingSequence[MAX_CLIENTS];
+	float voipGain[MAX_CLIENTS];
+	qboolean voipIgnore[MAX_CLIENTS];
+	qboolean voipMuteAll;
+
+	// outgoing data...
+	int voipTarget1;  // these three ints make up a bit mask of 92 bits.
+	int voipTarget2;  //  the bits say who a VoIP pack is addressed to:
+	int voipTarget3;  //  (1 << clientnum). See cl_voipSendTarget cvar.
+	SpeexPreprocessState *speexPreprocessor;
+	SpeexBits speexEncoderBits;
+	void *speexEncoder;
+	int voipOutgoingDataSize;
+	int voipOutgoingDataFrames;
+	int voipOutgoingSequence;
+	byte voipOutgoingGeneration;
+	byte voipOutgoingData[1024];
+	float voipPower;
+#endif
+
 	// big stuff at end of structure so most offsets are 15 bits or less
 	netchan_t	netchan;
 } clientConnection_t;
@@ -264,14 +300,7 @@ typedef struct {
 } serverInfo_t;
 
 typedef struct {
-	byte	ip[4];
-	unsigned short	port;
-} serverAddress_t;
-
-typedef struct {
 	connstate_t	state;				// connection status
-
-	qboolean	cddialog;			// bring up the cd needed dialog next frame
 
 	char		servername[MAX_OSPATH];		// name of server from original connect (used by reconnect)
 
@@ -287,6 +316,8 @@ typedef struct {
 
 	int			realtime;			// ignores pause
 	int			realFrametime;		// ignoring pause, so console always works
+	int			voipTime;
+	int			voipSender;
 
 	int			numlocalservers;
 	serverInfo_t	localServers[MAX_OTHER_SERVERS];
@@ -295,17 +326,12 @@ typedef struct {
 	serverInfo_t  globalServers[MAX_GLOBAL_SERVERS];
 	// additional global servers
 	int			numGlobalServerAddresses;
-	serverAddress_t		globalServerAddresses[MAX_GLOBAL_SERVERS];
+	netadr_t		globalServerAddresses[MAX_GLOBAL_SERVERS];
 
 	int			numfavoriteservers;
 	serverInfo_t	favoriteServers[MAX_OTHER_SERVERS];
 
-	int			nummplayerservers;
-	serverInfo_t	mplayerServers[MAX_OTHER_SERVERS];
-
 	int pingUpdateSource;		// source currently pinging or updating
-
-	int masterNum;
 
 	// update server info
 	netadr_t	updateServer;
@@ -319,6 +345,9 @@ typedef struct {
 	qhandle_t	charSetShader;
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
+
+    qboolean useLegacyConsoleFont;
+    fontInfo_t  consoleFont; 
 } clientStatic_t;
 
 extern	clientStatic_t		cls;
@@ -345,13 +374,14 @@ extern	cvar_t	*cl_timeNudge;
 extern	cvar_t	*cl_showTimeDelta;
 extern	cvar_t	*cl_freezeDemo;
 
+extern	cvar_t	*cl_cleanHostNames;
+
 extern	cvar_t	*cl_yawspeed;
 extern	cvar_t	*cl_pitchspeed;
 extern	cvar_t	*cl_run;
 extern	cvar_t	*cl_anglespeedkey;
 
 extern	cvar_t	*cl_sensitivity;
-extern	cvar_t	*cl_platformSensitivity;
 extern	cvar_t	*cl_freelook;
 
 extern	cvar_t	*cl_mouseAccel;
@@ -376,6 +406,51 @@ extern	cvar_t	*cl_inGameVideo;
 
 extern	cvar_t	*cl_lanForcePackets;
 extern	cvar_t	*cl_autoRecordDemo;
+extern	cvar_t	*cl_altTab;
+
+extern  cvar_t  *cl_dlURLOverride;
+
+extern  cvar_t  *cl_demoConfig;
+extern  cvar_t  *cl_humanConfig;
+extern  cvar_t  *cl_alienConfig;
+extern  cvar_t  *cl_spectatorConfig;
+
+extern  cvar_t  *cl_defaultUI;
+
+extern  cvar_t  *cl_clantag;
+
+extern  cvar_t  *cl_persistantConsole;
+
+extern	cvar_t	*cl_logs;
+
+extern	cvar_t	*cl_consoleKeys;
+
+extern  cvar_t  *cl_consoleFont;
+extern  cvar_t  *cl_consoleFontSize;
+extern  cvar_t  *cl_consoleFontKerning;
+
+extern  cvar_t  *cl_consolePrompt;
+
+#ifdef USE_MUMBLE
+extern	cvar_t	*cl_useMumble;
+extern	cvar_t	*cl_mumbleScale;
+#endif
+
+#ifdef USE_VOIP
+// cl_voipSendTarget is a string: "all" to broadcast to everyone, "none" to
+//  send to no one, or a comma-separated list of client numbers:
+//  "0,7,2,23" ... an empty string is treated like "all".
+extern	cvar_t	*cl_voipUseVAD;
+extern	cvar_t	*cl_voipVADThreshold;
+extern	cvar_t	*cl_voipSend;
+extern	cvar_t	*cl_voipSendTarget;
+extern	cvar_t	*cl_voipGainDuringCapture;
+extern	cvar_t	*cl_voipCaptureMult;
+extern	cvar_t	*cl_voipShowMeter;
+extern	cvar_t	*cl_voipShowSender;
+extern	cvar_t	*cl_voip;
+extern	cvar_t	*cl_voipDefaultGain;
+#endif
 
 //=================================================
 
@@ -384,7 +459,7 @@ extern	cvar_t	*cl_autoRecordDemo;
 //
 
 void CL_Init (void);
-void CL_FlushMemory(void);
+void CL_FlushMemory(qboolean defaultUI);
 void CL_ShutdownAll(void);
 void CL_AddReliableCommand( const char *cmd );
 
@@ -416,6 +491,8 @@ int CL_ServerStatus( char *serverAddress, char *serverStatusString, int maxLen )
 
 qboolean CL_CheckPaused(void);
 
+void CL_CheckTeamChange( void );
+
 //
 // cl_input
 //
@@ -431,6 +508,10 @@ extern	kbutton_t	in_mlook, in_klook;
 extern 	kbutton_t 	in_strafe;
 extern 	kbutton_t 	in_speed;
 
+#ifdef USE_VOIP
+extern 	kbutton_t 	in_voiprecord;
+#endif
+
 void CL_InitInput (void);
 void CL_SendCmd (void);
 void CL_ClearState (void);
@@ -442,15 +523,19 @@ void IN_CenterView (void);
 void CL_VerifyCode( void );
 
 float CL_KeyState (kbutton_t *key);
+int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
-int Key_GetCatcher( void );
-void Key_SetCatcher( int catcher );
 
 //
 // cl_parse.c
 //
 extern int cl_connectedToPureServer;
 extern int cl_connectedToCheatServer;
+
+#ifdef USE_VOIP
+extern int cl_connectedToVoipServer;
+void CL_Voip_f( void );
+#endif
 
 void CL_SystemInfoChanged( void );
 void CL_ParseServerMessage( msg_t *msg );
@@ -507,6 +592,10 @@ void	SCR_DrawBigString( int x, int y, const char *s, float alpha, qboolean noCol
 void	SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color, qboolean noColorEscape );	// ignores embedded color control characters
 void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor, qboolean noColorEscape );
 void	SCR_DrawSmallChar( int x, int y, int ch );
+void    SCR_DrawConsoleFontChar( float x, float y, int ch );
+float   SCR_ConsoleFontCharWidth( int ch );
+float   SCR_ConsoleFontCharHeight ( void );
+float   SCR_ConsoleFontStringWidth( const char *s, int len );
 
 
 //
@@ -565,3 +654,16 @@ void CL_WriteAVIVideoFrame( const byte *imageBuffer, int size );
 void CL_WriteAVIAudioFrame( const byte *pcmBuffer, int size );
 qboolean CL_CloseAVI( void );
 qboolean CL_VideoRecording( void );
+
+//
+// cl_main.c
+//
+void CL_WriteDemoMessage ( msg_t *msg, int headerBytes );
+
+//
+// cl_logs.c
+//
+void CL_OpenClientLog(void);
+void CL_CloseClientLog(void);
+void CL_WriteClientLog( char *text );
+void CL_WriteClientChatLog( char *text );

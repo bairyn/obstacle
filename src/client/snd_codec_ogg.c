@@ -4,20 +4,20 @@ Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2005 Stuart Dalton (badcdev@gmail.com)
 Copyright (C) 2005-2006 Joerg Dietrich <dietrich_joerg@gmx.de>
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -45,6 +45,7 @@ snd_codec_t ogg_codec =
 	S_OGG_CodecOpenStream,
 	S_OGG_CodecReadStream,
 	S_OGG_CodecCloseStream,
+	S_OGG_CodecLoopStream,
 	NULL
 };
 
@@ -128,7 +129,7 @@ int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
 			retVal = FS_Seek(stream->file, (long) offset, FS_SEEK_SET);
 
 			// something has gone wrong, so we return here
-			if(!(retVal == 0))
+			if(retVal < 0)
 			{
 			 return retVal;
 			}
@@ -144,7 +145,7 @@ int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
 			retVal = FS_Seek(stream->file, (long) offset, FS_SEEK_CUR);
 
 			// something has gone wrong, so we return here
-			if(!(retVal == 0))
+			if(retVal < 0)
 			{
 			 return retVal;
 			}
@@ -163,7 +164,7 @@ int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
 			retVal = FS_Seek(stream->file, (long) stream->length + (long) offset, FS_SEEK_SET);
 
 			// something has gone wrong, so we return here
-			if(!(retVal == 0))
+			if(retVal < 0)
 			{
 			 return retVal;
 			}
@@ -198,15 +199,19 @@ int S_OGG_Callback_close(void *datasource)
 // ftell() replacement
 long S_OGG_Callback_tell(void *datasource)
 {
+	snd_stream_t   *stream;
+
 	// check if input is valid
 	if(!datasource)
 	{
-		errno = EBADF; 
+		errno = EBADF;
 		return -1;
 	}
 
-	// we keep track of the file position in stream->pos
-	return (long) (((snd_stream_t *) datasource) -> pos);
+	// snd_stream_t in the generic pointer
+	stream = (snd_stream_t *) datasource;
+
+	return (long) FS_FTell(stream->file);
 }
 
 // the callback structure
@@ -344,6 +349,23 @@ void S_OGG_CodecCloseStream(snd_stream_t *stream)
 
 	// close the stream
 	S_CodecUtilClose(&stream);
+}
+
+/*
+=================
+S_OGG_CodecLoopStream
+=================
+*/
+void S_OGG_CodecLoopStream(snd_stream_t *stream)
+{
+	// check if input is valid
+	if(!stream)
+	{
+		return;
+	}
+	
+	// go back to the start of the stream
+	ov_raw_seek((OggVorbis_File *) stream->ptr, 0);
 }
 
 /*

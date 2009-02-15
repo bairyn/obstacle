@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_shared.h"
 #include "qcommon.h"
 
-#define	MAX_CMD_BUFFER	16384
+#define	MAX_CMD_BUFFER	65536
 #define	MAX_CMD_LINE	1024
 
 typedef struct {
@@ -38,6 +38,28 @@ int			cmd_wait;
 cmd_t		cmd_text;
 byte		cmd_text_buf[MAX_CMD_BUFFER];
 
+
+// Delay stuff 
+
+#define MAX_DELAYED_COMMANDS    64 
+#define CMD_DELAY_FRAME_FIRE 1
+#define CMD_DELAY_UNUSED 0
+
+typedef enum
+{
+  CMD_DELAY_MSEC,
+  CMD_DELAY_FRAME
+} cmdDelayType_t;
+
+typedef struct
+{
+        char    name[MAX_CMD_LINE];
+        char    text[MAX_CMD_LINE];
+        int     delay;
+        cmdDelayType_t 	type;
+} delayed_cmd_s; 
+ 
+delayed_cmd_s delayed_cmd[MAX_DELAYED_COMMANDS]; 
 
 //=============================================================================
 
@@ -145,9 +167,11 @@ void Cbuf_ExecuteText (int exec_when, const char *text)
 	{
 	case EXEC_NOW:
 		if (text && strlen(text) > 0) {
+			Com_DPrintf(S_COLOR_YELLOW "EXEC_NOW %s\n", text);
 			Cmd_ExecuteString (text);
 		} else {
 			Cbuf_Execute();
+			Com_DPrintf(S_COLOR_YELLOW "EXEC_NOW %s\n", cmd_text.data);
 		}
 		break;
 	case EXEC_INSERT:
@@ -188,7 +212,7 @@ void Cbuf_Execute (void)
 		quotes = 0;
 		for (i=0 ; i< cmd_text.cursize ; i++)
 		{
-			if (text[i] == '"')
+			if (text[i] == '"' && (!i || text[i-1] != '\\') )
 				quotes++;
 			if ( !(quotes&1) &&  text[i] == ';')
 				break;	// don't break if inside a quoted string
@@ -222,6 +246,51 @@ void Cbuf_Execute (void)
 	}
 }
 
+/*
+==============================================================================
+
+						COMMANDS DELAYING
+
+==============================================================================
+*/
+
+/*
+===============
+Cdelay_Frame
+===============
+*/
+
+void Cdelay_Frame( void ) {
+	int i;
+	int sys_time = Sys_Milliseconds();
+	qboolean run_it;
+	
+	for(i=0; (i<MAX_DELAYED_COMMANDS); i++)
+	{
+		run_it = qfalse;
+		
+		if(delayed_cmd[i].delay == CMD_DELAY_UNUSED)
+			continue;
+		
+		//check if we should run the command (both type)
+		if(delayed_cmd[i].type == CMD_DELAY_MSEC && delayed_cmd[i].delay < sys_time)
+		{			
+			run_it = qtrue;
+		} else if(delayed_cmd[i].type == CMD_DELAY_FRAME)
+		{
+			delayed_cmd[i].delay --;
+			if(delayed_cmd[i].delay == CMD_DELAY_FRAME_FIRE)
+				run_it = qtrue;
+		}
+		
+		if(run_it)
+		{
+			delayed_cmd[i].delay = CMD_DELAY_UNUSED;
+			Cbuf_ExecuteText(EXEC_NOW, delayed_cmd[i].text);
+		}
+	}
+}
+
 
 /*
 ==============================================================================
@@ -237,28 +306,66 @@ void Cbuf_Execute (void)
 Cmd_Exec_f
 ===============
 */
+static void Cmd_ExecFile( char *f )
+{
+	int i;
+
+	COM_Compress (f);
+	
+	Cvar_Get( "arg_all", Cmd_ArgsFrom(2), CVAR_TEMP | CVAR_ROM | CVAR_USER_CREATED );
+	Cvar_Set( "arg_all", Cmd_ArgsFrom(2) );
+	Cvar_Get( "arg_count", va( "%i", Cmd_Argc() - 2 ), CVAR_TEMP | CVAR_ROM | CVAR_USER_CREATED );
+	Cvar_Set( "arg_count", va( "%i", Cmd_Argc() - 2 ) );
+
+	for (i = Cmd_Argc() - 2; i; i--)
+	{
+		Cvar_Get( va("arg_%i", i), Cmd_Argv( i + 1 ), CVAR_TEMP | CVAR_ROM | CVAR_USER_CREATED );
+		Cvar_Set( va("arg_%i", i), Cmd_Argv( i + 1 ) );
+	}
+
+	Cbuf_InsertText (f);
+}
 void Cmd_Exec_f( void ) {
-	char	*f;
+	union {
+		char	*c;
+		void	*v;
+	} f;
 	int		len;
 	char	filename[MAX_QPATH];
+	fileHandle_t h;
+	qboolean success = qfalse;
 
-	if (Cmd_Argc () != 2) {
-		Com_Printf ("exec <filename> : execute a script file\n");
+	if (Cmd_Argc () < 2) {
+		Com_Printf ("exec <filename> (args) : execute a script file\n");
 		return;
 	}
+
+	Com_Printf ("execing %s\n", Cmd_Argv(1));
 
 	Q_strncpyz( filename, Cmd_Argv(1), sizeof( filename ) );
-	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" ); 
-	len = FS_ReadFile( filename, (void **)&f);
-	if (!f) {
-		Com_Printf ("couldn't exec %s\n",Cmd_Argv(1));
-		return;
-	}
-	Com_Printf ("execing %s\n",Cmd_Argv(1));
-	
-	Cbuf_InsertText (f);
+	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" );
 
-	FS_FreeFile (f);
+	len = FS_SV_FOpenFileRead(filename, &h);
+	if (h)
+	{
+		success = qtrue;
+		f.v = Hunk_AllocateTempMemory(len + 1);
+		FS_Read(f.v, len, h);
+		f.c[len] = 0;
+		FS_FCloseFile(h);
+		Cmd_ExecFile(f.c);
+		Hunk_FreeTempMemory(f.v);
+	}
+
+	FS_ReadFile( filename, &f.v);
+	if (f.c) {
+		success = qtrue;
+		Cmd_ExecFile(f.c);
+		FS_FreeFile (f.v);
+	}
+
+	if (!success)
+		Com_Printf ("couldn't exec %s\n",Cmd_Argv(1));
 }
 
 
@@ -281,7 +388,298 @@ void Cmd_Vstr_f( void ) {
 	Cbuf_InsertText( va("%s\n", v ) );
 }
 
+/*
+===============
+Cmd_If_f
 
+Compares two values, if true executes the third argument, if false executes the forth
+===============
+*/
+void Cmd_If_f( void ) {
+  char	*v;
+  int 	v1;
+  int 	v2;
+  char	*vt;
+  char	*vf;
+  char  *op;
+
+  if ( (Cmd_Argc () == 6 ) || (Cmd_Argc () == 5) ) {
+    v1 = atoi( Cmd_Argv( 1 ) );
+    op = Cmd_Argv( 2 );
+    v2 = atoi( Cmd_Argv( 3 ) );
+    vt = Cmd_Argv( 4 );
+    if ( ( !strcmp( op, "="  ) && v1 == v2 ) ||
+         ( !strcmp( op, "!=" ) && v1 != v2 ) ||
+         ( !strcmp( op, "<"  ) && v1 <  v2 ) ||
+         ( !strcmp( op, "<=" ) && v1 <= v2 ) ||
+         ( !strcmp( op, ">"  ) && v1 >  v2 ) ||
+         ( !strcmp( op, ">=" ) && v1 >= v2 ) )
+    {
+      v = vt;
+    }
+    else if ( ( !strcmp( op, "="  ) && v1 != v2 ) ||
+              ( !strcmp( op, "!=" ) && v1 == v2 ) ||
+              ( !strcmp( op, "<"  ) && v1 >= v2 ) ||
+              ( !strcmp( op, "<=" ) && v1 >  v2 ) ||
+              ( !strcmp( op, ">"  ) && v1 <= v2 ) ||
+              ( !strcmp( op, ">=" ) && v1 <  v2 ) )
+    {
+      if ( Cmd_Argc () == 6 ) 
+      {
+        vf = Cmd_Argv( 5 );
+        v = vf;
+      }
+      else
+      {
+        return;
+      }
+    }
+    else
+    {
+      Com_Printf ("invalid operator in if command. valid operators are = != < > >= <=\n");
+      return;
+    }
+  }
+  else {
+    Com_Printf ("if <value1> <operator> <value2> <cmdthen> (<cmdelse>) : compares the first two values and executes <cmdthen> if true, <cmdelse> if false\n");
+    return;
+  }
+  Cbuf_InsertText( va("vstr %s\n", v ) );
+}
+
+/*
+===============
+Cmd_Math_f
+
+Does math and saves the result to a cvar
+===============
+*/
+void Cmd_Math_f( void ) {
+  char	*v;
+  char 	*v1;
+  char 	*v2;
+  char  *op;
+  if (Cmd_Argc () == 3)
+  {
+    v = Cmd_Argv( 1 );
+    op = Cmd_Argv( 2 );
+    if ( !strcmp( op, "++" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v ) + 1 ) );
+    }
+    else if ( !strcmp( op, "--" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v ) - 1 ) );
+    }
+    else
+    {
+      Com_Printf ("math <variableToSet> = <value1> <operator> <value2>\nmath <variableToSet> <operator> <value1>\nmath <variableToSet> ++\nmath <variableToSet> --\nvalid operators are + - * / \n");
+      return;
+    }
+  }
+  else if (Cmd_Argc () == 4)
+  {
+    v = Cmd_Argv( 1 );
+    op = Cmd_Argv( 2 );
+    v1 = Cmd_Argv( 3 );
+    if ( !strcmp( op, "+" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v ) + atof( v1 ) ) );
+    }
+    else if ( !strcmp( op, "-" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v ) - atof( v1 ) ) );
+    }
+    else if ( !strcmp( op, "*" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v ) * atof( v1 ) ) );
+    }
+    else if ( !strcmp( op, "/" ) )
+    {
+      if ( atof( v1 ) == 0.f )
+      {
+      	Com_Printf ("Cannot divide by 0!\n");
+      	return;
+	  }
+      Cvar_SetValueLatched( v, ( atof( v ) / atof( v1 ) ) );
+    }
+    else
+    {
+      Com_Printf ("math <variableToSet> = <value1> <operator> <value2>\nmath <variableToSet> <operator> <value1>\nmath <variableToSet> ++\nmath <variableToSet> --\nvalid operators are + - * / \n");
+      return;
+    }
+  }
+  else if (Cmd_Argc () == 6)
+  {
+    v = Cmd_Argv( 1 );
+    v1 = Cmd_Argv( 3 );
+    op = Cmd_Argv( 4 );
+    v2 = Cmd_Argv( 5 );
+    if ( !strcmp( op, "+" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v1 ) + atof( v2 ) ) );
+    }
+    else if ( !strcmp( op, "-" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v1 ) - atof( v2 ) ) );
+    }
+    else if ( !strcmp( op, "*" ) )
+    {
+      Cvar_SetValueLatched( v, ( atof( v1 ) * atof( v2 ) ) );
+    }
+    else if ( !strcmp( op, "/" ) )
+    {
+      if ( atof( v2 ) == 0.f )
+      {
+      	Com_Printf ("Cannot divide by 0!\n");
+      	return;
+	  }
+      Cvar_SetValueLatched( v, ( atof( v1 ) / atof( v2 ) ) );
+    }
+    else
+    {
+      Com_Printf ("math <variableToSet> = <value1> <operator> <value2>\nmath <variableToSet> <operator> <value1>\nmath <variableToSet> ++\nmath <variableToSet> --\nvalid operators are + - * / \n");
+      return;
+    }
+  }
+  else {
+    Com_Printf ("math <variableToSet> = <value1> <operator> <value2>\nmath <variableToSet> <operator> <value1>\nmath <variableToSet> ++\nmath <variableToSet> --\nvalid operators are + - * / \n");
+    return;
+  }
+}
+
+/*
+===============
+Cmd_Strcmp_f
+
+Compares two strings, if true executes the third argument, if false executes the forth
+===============
+*/
+void Cmd_Strcmp_f( void ) {
+  char	*v;
+  char 	*v1;
+  char 	*v2;
+  char	*vt;
+  char	*vf;
+  char  *op;
+
+  if ( (Cmd_Argc () == 6 ) || (Cmd_Argc () == 5) ) {
+    v1 = Cmd_Argv( 1 );
+    op = Cmd_Argv( 2 );
+    v2 = Cmd_Argv( 3 );
+    vt = Cmd_Argv( 4 );
+    if ( ( !strcmp( op, "="  ) && !strcmp( v1, v2 ) ) ||
+         ( !strcmp( op, "!=" ) && strcmp( v1, v2 ) ) )
+    {
+      v = vt;
+    }
+    else if ( ( !strcmp( op, "="  ) && strcmp( v1, v2 ) ) ||
+              ( !strcmp( op, "!=" ) && !strcmp( v1, v2 ) ) )
+    {
+      if ( Cmd_Argc () == 6 ) 
+      {
+        vf = Cmd_Argv( 5 );
+        v = vf;
+      }
+      else
+      {
+        return;
+      }
+    }
+    else
+    {
+      Com_Printf ("invalid operator in strcmp command. valid operators are = != \n");
+      return;
+    }
+  }
+  else {
+    Com_Printf ("strcmp <string1> <operator> <string2> <cmdthen> (<cmdelse>) : compares the first two strings and executes <cmdthen> if true, <cmdelse> if false\n");
+    return;
+  }
+  Cbuf_InsertText( va("%s\n", v ) );
+}
+
+/*
+===============
+Cmd_Concat_f
+
+concatenates cvars together
+===============
+*/
+void Cmd_Concat_f( void ) {
+  int   i;
+  char  vc[MAX_CVAR_VALUE_STRING] = "";
+  if (Cmd_Argc () < 3) {
+    Com_Printf ("concat <variableToSet> <variable1> ... <variableN> : concatenates variable1 to variableN and sets the result to variableToSet\n");
+    return;
+  }
+
+  for (i = 2; i < Cmd_Argc(); i++)
+  	Q_strcat( vc, sizeof(vc), Cvar_VariableString( Cmd_Argv(i) ) );
+
+  Cvar_Set( Cmd_Argv( 1 ), vc );
+}
+
+/*
+===============
+Cmd_Calc_f
+
+Does math and displays the value into the chat/console, this is used for basic math functions
+===============
+*/
+void Cmd_Calc_f( void ) {
+  char	*arg1;
+  char	*arg2;
+  char	*func;
+  
+  if (Cmd_Argc () < 3)
+  {
+      Com_Printf ("calc <number> <function> <number>, accepted functions: +, -, /, */x\n");
+      return;
+  }
+  
+  arg1 = Cmd_Argv( 1 );
+  func = Cmd_Argv( 2 );
+  arg2 = Cmd_Argv( 3 );
+  
+  // Add
+  if( !strcmp( func, "+"  ) )
+  {
+  	Com_Printf ("%s %s %s = %f\n", arg1, func, arg2, (atof(arg1) + atof(arg2)) );
+ 	return;
+  }
+  
+  // Subtract
+  else if( !strcmp( func, "-"  ) )
+  {
+  	Com_Printf ("%s %s %s = %f\n", arg1, func, arg2, (atof(arg1) - atof(arg2)) );
+ 	return;
+  }
+  
+  // Divide
+  else if( !strcmp( func, "/"  ) )
+  {
+     if( atof(arg2) == 0.f )
+     {
+      Com_Printf ("Cannot divide by zero!\n" );
+      return;
+     }
+  	Com_Printf ("%s %s %s = %f\n", arg1, func, arg2, (atof(arg1) / atof(arg2)) );
+ 	return;
+  }
+  
+  // Multiply
+  else if( !strcmp( func, "*"  ) || !strcmp( func, "x"  ) )
+  {
+ 	Com_Printf ("%s %s %s = %f\n", arg1, func, arg2, (atof(arg1) * atof(arg2)) );
+	return;
+  }
+  
+  // Invalid function, help the poor guy out
+  Com_Printf ("calc <number> <function> <number>, accepted functions: +, -, /, */x\n");
+}
+
+// 
 /*
 ===============
 Cmd_Echo_f
@@ -291,11 +689,399 @@ Just prints the rest of the line to the console
 */
 void Cmd_Echo_f (void)
 {
-	int		i;
+	Com_Printf ("%s\n", Cmd_Args());
+}
+
+
+/*
+===============
+Cmd_Undelay_f
+
+Removes a pending delay with a given name
+===============
+*/
+void Cmd_Undelay_f (void)
+{
+	int i;
+	char *find, *limit;
+
+	// Check if the call is valid
+	if(Cmd_Argc () < 1)
+	{
+		Com_Printf ("undelay <name> (command)\nremoves all commands with <name> in them.\nif (command) is specified, the removal will be limited only to delays whose commands contain (command).\n");
+		return;
+	}
+
+	find = Cmd_Argv(1);
+	limit = Cmd_Argv(2);
+
+	for(i=0; (i<MAX_DELAYED_COMMANDS); i++)
+	{
+		if(delayed_cmd[i].delay != CMD_DELAY_UNUSED && strstr(delayed_cmd[i].name, find) && strstr(delayed_cmd[i].text, limit))  // the limit test will always pass if limit is a null string
+		{
+			delayed_cmd[i].delay = CMD_DELAY_UNUSED;
+		}
+	}
+}
+
+
+/*
+===============
+Cmd_UndelayAll_f
+
+Removes all pending delays
+===============
+*/
+void Cmd_UndelayAll_f (void)
+{
+	int i;
+
+	for(i=0; (i<MAX_DELAYED_COMMANDS); i++)
+	{
+		delayed_cmd[i].delay = CMD_DELAY_UNUSED;
+	}
+}
+
+/*
+===============
+Cmd_Delay_f
+
+Delays a comand
+===============
+*/
+void Cmd_Delay_f (void)
+{
+	int i, delay, type, lastchar;
+	char *raw_delay, *name, *cmd;
+	qboolean availiable_cmd = qfalse;
 	
-	for (i=1 ; i<Cmd_Argc() ; i++)
-		Com_Printf ("%s ",Cmd_Argv(i));
-	Com_Printf ("\n");
+	// Check if the call is valid
+	if(Cmd_Argc () < 2)
+	{
+		Com_Printf ("delay (name) <delay in milliseconds> <command>\ndelay <delay in frames>f <command>\nexecutes <command> after the delay\n");
+		return;
+	}
+	
+	raw_delay = Cmd_Argv(1);
+	if(!isdigit(raw_delay[0]))
+	{
+		name = raw_delay;
+		raw_delay = Cmd_Argv(2);
+		cmd = Cmd_ArgsFrom(3);
+	}
+	else
+	{
+		name = "";
+		cmd = Cmd_ArgsFrom(2);
+	}
+	delay = atoi(raw_delay);
+	
+	if(delay < 1)
+	{
+		Com_Printf ("delay: the delay must be a positive integer");
+		return;
+	}
+	
+	//search for an unused slot
+	for(i=0; (i<MAX_DELAYED_COMMANDS); i++)
+	{
+		if(delayed_cmd[i].delay == CMD_DELAY_UNUSED)
+		{
+			availiable_cmd = qtrue;
+			break;
+		}
+	}
+	
+	if(!availiable_cmd)
+	{
+		Com_Printf ("WARNING: Maximum amount of delayed commands reached.");
+		return;
+	}
+
+	lastchar = strlen( raw_delay ) - 1;
+	
+	if(raw_delay[ lastchar ] == 'f' )
+	{
+		delay += CMD_DELAY_FRAME_FIRE;
+		type = CMD_DELAY_FRAME;
+	}else{
+		type = CMD_DELAY_MSEC;
+		delay += Sys_Milliseconds();
+	}
+	
+	delayed_cmd[i].delay = delay;
+	delayed_cmd[i].type = type;
+	Q_strncpyz(delayed_cmd[i].text, cmd, MAX_CMD_LINE);
+	Q_strncpyz(delayed_cmd[i].name, name, MAX_CMD_LINE);
+}
+
+/*
+===============
+Cmd_Random_f
+
+Give a random integer
+===============
+*/
+void Cmd_Random_f( void ) {
+	int 	v1;
+	int 	v2;
+
+	if (Cmd_Argc() == 3) {
+		v1 = atoi(Cmd_Argv(2));
+		v2 = atoi(Cmd_Argv(3));
+		Cvar_SetValueLatched(Cmd_Argv(1), (int)(rand() / (float)RAND_MAX * (MAX(v1, v2) - MIN(v1, v2)) + MIN(v1, v2)));
+	} else {
+		Com_Printf("random <variableToSet> <value1> <value2>\n");
+	}
+}
+
+/*
+=============================================================================
+
+					ALIASES
+
+=============================================================================
+*/
+
+typedef struct cmd_alias_s
+{
+	struct cmd_alias_s	*next;
+	char				*name;
+	char				*exec;
+} cmd_alias_t;
+
+static cmd_alias_t	*cmd_aliases = NULL;
+
+/*
+============
+Cmd_RunAlias_f
+============
+*/
+void Cmd_RunAlias_f(void)
+{
+	cmd_alias_t	*alias;
+	char 		*name = Cmd_Argv(0);
+	char 		*args = Cmd_ArgsFrom(1);
+
+	// Find existing alias
+	for (alias = cmd_aliases; alias; alias=alias->next)
+	{
+		if (!strcmp( name, alias->name ))
+			break;
+	}
+
+	if (!alias)
+		Com_Error(ERR_FATAL, "Alias: Alias %s doesn't exist", name);
+
+	Cbuf_InsertText(va("%s %s", alias->exec, args));
+}
+
+/*
+============
+Cmd_WriteAliases
+============
+*/
+void Cmd_WriteAliases(fileHandle_t f)
+{
+	char buffer[1024] = "clearaliases\n";
+	cmd_alias_t *alias = cmd_aliases;
+	FS_Write(buffer, strlen(buffer), f);
+	while (alias)
+	{
+		Com_sprintf(buffer, sizeof(buffer), "alias %s %s\n", alias->name, Cmd_EscapeString(alias->exec));
+		FS_Write(buffer, strlen(buffer), f);
+		alias = alias->next;
+	}
+}
+
+/*
+============
+Cmd_AliasList_f
+============
+*/
+void Cmd_AliasList_f (void)
+{
+	cmd_alias_t	*alias;
+	int			i;
+	char		*match;
+
+	if (Cmd_Argc() > 1)
+		match = Cmd_Argv( 1 );
+	else
+		match = NULL;
+
+	i = 0;
+	for (alias = cmd_aliases; alias; alias = alias->next)
+	{
+		if (match && !Com_Filter(match, alias->name, qfalse))
+			continue;
+		Com_Printf ("%s ==> %s\n", alias->name, alias->exec);
+		i++;
+	}
+	Com_Printf ("%i aliases\n", i);
+}
+
+/*
+============
+Cmd_ClearAliases_f
+============
+*/
+void Cmd_ClearAliases_f(void)
+{
+	cmd_alias_t *alias = cmd_aliases;
+	cmd_alias_t *next;
+	while (alias)
+	{
+		next = alias->next;
+		Cmd_RemoveCommand(alias->name);
+		Z_Free(alias->name);
+		Z_Free(alias->exec);
+		Z_Free(alias);
+		alias = next;
+	}
+	cmd_aliases = NULL;
+	
+	// update autogen.cfg
+	cvar_modifiedFlags |= CVAR_ARCHIVE;
+}
+
+/*
+============
+Cmd_UnAlias_f
+============
+*/
+void Cmd_UnAlias_f(void)
+{
+	cmd_alias_t *alias, **back;
+	const char	*name;
+
+	// Get args
+	if (Cmd_Argc() < 2)
+	{
+		Com_Printf("unalias <name> : delete an alias\n");
+		return;
+	}
+	name = Cmd_Argv(1);
+
+	back = &cmd_aliases;
+	while(1)
+	{
+		alias = *back;
+		if (!alias)
+			return;
+		if (!strcmp(name, alias->name))
+		{
+			*back = alias->next;
+			Z_Free(alias->name);
+			Z_Free(alias->exec);
+			Z_Free(alias);
+			Cmd_RemoveCommand(name);
+	
+			// update autogen.cfg
+			cvar_modifiedFlags |= CVAR_ARCHIVE;
+			return;
+		}
+		back = &alias->next;
+	}
+}
+
+/*
+============
+Cmd_Alias_f
+============
+*/
+void Cmd_Alias_f(void)
+{
+	cmd_alias_t	*alias;
+	const char	*name;
+	char		exec[MAX_STRING_CHARS];
+	int			i;
+
+	// Get args
+	if (Cmd_Argc() < 2)
+	{
+		Com_Printf("alias <name> : show an alias\n");
+		Com_Printf("alias <name> <exec> : create an alias\n");
+		return;
+	}
+	name = Cmd_Argv(1);
+
+	// Find existing alias
+	for (alias = cmd_aliases; alias; alias = alias->next)
+	{
+		if (!strcmp(name, alias->name))
+			break;
+	}
+
+	// Modify/create an alias
+	if (Cmd_Argc() > 2)
+	{
+		// Get the exec string
+		exec[0] = 0;
+		for (i = 2; i < Cmd_Argc(); i++)
+			Q_strcat(exec, sizeof(exec), va("\"%s\" ", Cmd_Argv(i)));
+
+		// Crude protection from infinite loops
+		if (!strcmp(Cmd_Argv(2), name))
+		{
+			Com_Printf("Can't make an alias to itself\n");
+			return;
+		}
+
+		// Create/update an alias
+		if (!alias)
+		{
+			alias = S_Malloc(sizeof(cmd_alias_t));
+			alias->name = CopyString(name);
+			alias->exec = CopyString(exec);
+			alias->next = cmd_aliases;
+			cmd_aliases = alias;
+			Cmd_AddCommand(name, Cmd_RunAlias_f);
+		}
+		else
+		{
+			// Reallocate the exec string
+			Z_Free(alias->exec);
+			alias->exec = CopyString(exec);
+			Cmd_AddCommand(name, Cmd_RunAlias_f);
+		}
+	}
+	
+	// Show the alias
+	if (!alias)
+		Com_Printf("Alias %s does not exist\n", name);
+	else if (Cmd_Argc() == 2)
+		Com_Printf("%s ==> %s\n", alias->name, alias->exec);
+	
+	// update autogen.cfg
+	cvar_modifiedFlags |= CVAR_ARCHIVE;
+}
+
+/*
+============
+Cmd_AliasCompletion
+============
+*/
+void	Cmd_AliasCompletion( void(*callback)(const char *s) ) {
+	cmd_alias_t	*alias;
+	
+	for (alias=cmd_aliases ; alias ; alias=alias->next) {
+		callback( alias->name );
+	}
+}
+
+/*
+============
+Cmd_DelayCompletion
+============
+*/
+void	Cmd_DelayCompletion( void(*callback)(const char *s) ) {
+	int i;
+	
+	for (i = 0; i < MAX_DELAYED_COMMANDS; i++) {
+		if (delayed_cmd[i].delay != CMD_DELAY_UNUSED)
+			callback(delayed_cmd[i].name);
+	}
 }
 
 
@@ -312,6 +1098,7 @@ typedef struct cmd_function_s
 	struct cmd_function_s	*next;
 	char					*name;
 	xcommand_t				function;
+	completionFunc_t	complete;
 } cmd_function_t;
 
 
@@ -467,6 +1254,35 @@ char *Cmd_Cmd(void)
 
 /*
 ============
+Cmd_EscapeString
+
+Escape all \$ in a string into \$$
+============
+*/
+char *Cmd_EscapeString(const char *in)
+{
+	static char buffer[MAX_STRING_CHARS];
+	char *out = buffer;
+	while (*in) {
+		if (out + 3 - buffer >= sizeof(buffer)) {
+			break;
+		}
+		if (in[0] == '\\' && in[1] == '$') {
+			out[0] = '\\';
+			out[1] = '$';
+			out[2] = '$';
+			in += 2;
+			out += 3;
+		} else {
+			*out++ = *in++;
+		}
+	}
+	*out = '\0';
+	return buffer;
+}
+
+/*
+============
 Cmd_TokenizeString
 
 Parses the given string into command line tokens.
@@ -477,9 +1293,11 @@ will point into this temporary buffer.
 */
 // NOTE TTimo define that to track tokenization issues
 //#define TKN_DBG
-static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
-	const char	*text;
+static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes, qboolean parseCvar ) {
+	char	*text;
 	char	*textOut;
+	const char *cvarName;
+	char buffer[ BIG_INFO_STRING ];
 
 #ifdef TKN_DBG
   // FIXME TTimo blunt hook to try to find the tokenization of userinfo
@@ -494,9 +1312,92 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 		return;
 	}
 	
-	Q_strncpyz( cmd.cmd, text_in, sizeof(cmd.cmd) );
+	// parse for cvar substitution
+	if ( parseCvar )
+	{
+		Q_strncpyz( buffer, text_in, sizeof( buffer ) );
+		text = buffer;
+		textOut = cmd.cmd;
+		while ( *text )
+		{
+			if ( text[0] != '\\' || text[1] != '$' )
+			{
+				if ( textOut == sizeof(cmd.cmd) + cmd.cmd - 1 )
+					break;
+				*textOut++ = *text++;
+				continue;
+			}
+			text += 2;
+			cvarName = text;
+			while ( *text && *text != '\\' )
+				text++;
+			if ( *text == '\\' )
+			{
+				*text = 0;
+				if ( Cvar_Flags( cvarName ) != CVAR_NONEXISTENT )
+				{
+					char cvarValue[ MAX_CVAR_VALUE_STRING ];
+					char *badchar;
+					Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
+					do {
+						badchar = strchr( cvarValue, ';' );
+						if ( badchar )
+							*badchar = '.';
+						else
+						{
+							badchar = strchr( cvarValue, '\n' );
+							if ( badchar )
+								*badchar = '.';
+						}
+					} while ( badchar );
+					Q_strncpyz( textOut, cvarValue, sizeof(cmd.cmd) - ( textOut - cmd.cmd ) );
+					while ( *textOut )
+						textOut++;
+					if ( textOut == sizeof(cmd.cmd) + cmd.cmd - 1 )
+						break;
+				}
+				else
+				{
+					cvarName -= 2;
+					while ( *cvarName && textOut < sizeof(cmd.cmd) + cmd.cmd - 1 )
+						*textOut++ = *cvarName++;
+					if ( textOut == sizeof(cmd.cmd) + cmd.cmd - 1 )
+						break;
+					*textOut++ = '\\';
+				}
+				text++;
+			}
+			else
+			{
+				cvarName -= 2;
+				while ( *cvarName && textOut < sizeof(cmd.cmd) + cmd.cmd - 1 )
+					*textOut++ = *cvarName++;
+				if ( textOut == sizeof(cmd.cmd) + cmd.cmd - 1 )
+					break;
+			}
+		}
+		*textOut = 0;
 
-	text = text_in;
+		// "\$$" --> "\$"
+		text = textOut = cmd.cmd;
+		while (text[0])
+		{
+			if ( text[0] == '\\'  && text[1]  && text[1] == '$'&& text[2] && text[2] == '$' )
+			{
+				textOut[0] = '\\';
+				textOut[1] = '$';
+				textOut += 2;
+				text += 3;
+			}
+			else
+				*textOut++ = *text++;
+		}
+		*textOut = '\0';
+	}
+	else
+		Q_strncpyz( cmd.cmd, text_in, sizeof(cmd.cmd) );
+
+	text = cmd.cmd;
 	textOut = cmd.tokenized;
 
 	while ( 1 ) {
@@ -506,7 +1407,7 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 
 		while ( 1 ) {
 			// skip whitespace
-			while ( *text && *text <= ' ' ) {
+			while ( *text > '\0' && *text <= ' ' ) {
 				text++;
 			}
 			if ( !*text ) {
@@ -532,13 +1433,24 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 			}
 		}
 
+		// handle quote escaping
+		if ( !ignoreQuotes && text[0] == '\\' && text[1] == '"' ) {
+			*textOut++ = '"';
+			text += 2;
+			continue;
+		}
+
 		// handle quoted strings
-    // NOTE TTimo this doesn't handle \" escaping
 		if ( !ignoreQuotes && *text == '"' ) {
 			cmd.argv[cmd.argc] = textOut;
 			cmd.argc++;
 			text++;
 			while ( *text && *text != '"' ) {
+				if ( text[0] == '\\' && text[1] == '"' ) {
+					*textOut++ = '"';
+					text += 2;
+					continue;
+				}
 				*textOut++ = *text++;
 			}
 			*textOut++ = 0;
@@ -554,7 +1466,13 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 		cmd.argc++;
 
 		// skip until whitespace, quote, or command
-		while ( *text > ' ' ) {
+		while ( *text > ' ' || *text < '\0' ) {
+			if ( !ignoreQuotes && text[0] == '\\' && text[1] == '"' ) {
+				*textOut++ = '"';
+				text += 2;
+				continue;
+			}
+
 			if ( !ignoreQuotes && text[0] == '"' ) {
 				break;
 			}
@@ -586,7 +1504,7 @@ Cmd_TokenizeString
 ============
 */
 void Cmd_TokenizeString( const char *text_in ) {
-	Cmd_TokenizeString2( text_in, qfalse );
+	Cmd_TokenizeString2( text_in, qfalse, qfalse );
 }
 
 /*
@@ -595,7 +1513,30 @@ Cmd_TokenizeStringIgnoreQuotes
 ============
 */
 void Cmd_TokenizeStringIgnoreQuotes( const char *text_in ) {
-	Cmd_TokenizeString2( text_in, qtrue );
+	Cmd_TokenizeString2( text_in, qtrue, qfalse );
+}
+
+/*
+============
+Cmd_TokenizeStringParseCvar
+============
+*/
+void Cmd_TokenizeStringParseCvar( const char *text_in ) {
+	Cmd_TokenizeString2( text_in, qfalse, qtrue );
+}
+
+/*
+============
+Cmd_FindCommand
+============
+*/
+cmd_function_t *Cmd_FindCommand( const char *cmd_name )
+{
+	cmd_function_t *cmd;
+	for( cmd = cmd_functions; cmd; cmd = cmd->next )
+		if( !Q_stricmp( cmd_name, cmd->name ) )
+			return cmd;
+	return NULL;
 }
 
 /*
@@ -607,22 +1548,36 @@ void	Cmd_AddCommand( const char *cmd_name, xcommand_t function ) {
 	cmd_function_t	*cmd;
 	
 	// fail if the command already exists
-	for ( cmd = cmd_functions ; cmd ; cmd=cmd->next ) {
-		if ( !strcmp( cmd_name, cmd->name ) ) {
-			// allow completion-only commands to be silently doubled
-			if ( function != NULL ) {
-				Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
-			}
-			return;
-		}
+	if( Cmd_FindCommand( cmd_name ) )
+	{
+		// allow completion-only commands to be silently doubled
+		if( function != NULL )
+			Com_Printf( "Cmd_AddCommand: %s already defined\n", cmd_name );
+		return;
 	}
 
 	// use a small malloc to avoid zone fragmentation
 	cmd = S_Malloc (sizeof(cmd_function_t));
 	cmd->name = CopyString( cmd_name );
 	cmd->function = function;
+	cmd->complete = NULL;
 	cmd->next = cmd_functions;
 	cmd_functions = cmd;
+}
+
+/*
+============
+Cmd_SetCommandCompletionFunc
+============
+*/
+void Cmd_SetCommandCompletionFunc( const char *command, completionFunc_t complete ) {
+	cmd_function_t	*cmd;
+
+	for( cmd = cmd_functions; cmd; cmd = cmd->next ) {
+		if( !Q_stricmp( command, cmd->name ) ) {
+			cmd->complete = complete;
+		}
+	}
 }
 
 /*
@@ -652,6 +1607,28 @@ void	Cmd_RemoveCommand( const char *cmd_name ) {
 	}
 }
 
+/*
+============
+Cmd_RemoveCommandSafe
+
+Only remove commands with no associated function
+============
+*/
+void Cmd_RemoveCommandSafe( const char *cmd_name )
+{
+	cmd_function_t *cmd = Cmd_FindCommand( cmd_name );
+
+	if( !cmd )
+		return;
+	if( cmd->function )
+	{
+		Com_Error( ERR_DROP, "Untrusted source tried to remove system command "
+			"\"%s\"\n", cmd_name );
+		return;
+	}
+
+	Cmd_RemoveCommand( cmd_name );
+}
 
 /*
 ============
@@ -663,6 +1640,21 @@ void	Cmd_CommandCompletion( void(*callback)(const char *s) ) {
 	
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next) {
 		callback( cmd->name );
+	}
+}
+
+/*
+============
+Cmd_CompleteArgument
+============
+*/
+void Cmd_CompleteArgument( const char *command, char *args, int argNum ) {
+	cmd_function_t	*cmd;
+
+	for( cmd = cmd_functions; cmd; cmd = cmd->next ) {
+		if( !Q_stricmp( command, cmd->name ) && cmd->complete ) {
+			cmd->complete( args, argNum );
+		}
 	}
 }
 
@@ -678,7 +1670,7 @@ void	Cmd_ExecuteString( const char *text ) {
 	cmd_function_t	*cmdFunc, **prev;
 
 	// execute the command line
-	Cmd_TokenizeString( text );		
+	Cmd_TokenizeStringParseCvar( text );		
 	if ( !Cmd_Argc() ) {
 		return;		// no tokens
 	}
@@ -726,7 +1718,7 @@ void	Cmd_ExecuteString( const char *text ) {
 
 	// send it as a server command if we are connected
 	// this will usually result in a chat message
-	CL_ForwardCommandToServer ( text );
+	CL_ForwardCommandToServer ( cmd.cmd );
 }
 
 /*
@@ -757,6 +1749,87 @@ void Cmd_List_f (void)
 }
 
 /*
+==================
+Cmd_CompleteCfgName
+==================
+*/
+void Cmd_CompleteCfgName( char *args, int argNum ) {
+	if( argNum == 2 ) {
+		Field_CompleteFilename( "", "cfg", qfalse );
+	}
+}
+
+/*
+==================
+Cmd_CompleteAliasName
+==================
+*/
+void Cmd_CompleteAliasName( char *args, int argNum ) {
+	if( argNum == 2 ) {
+		Field_CompleteAlias( );
+	}
+}
+
+/*
+==================
+Cmd_CompleteConcat
+==================
+*/
+void Cmd_CompleteConcat( char *args, int argNum )
+{
+	// Skip
+	char *p = Com_SkipTokens( args, argNum - 1, " " );
+
+	if( p > args )
+		Field_CompleteCommand( p, qfalse, qtrue );
+}
+
+/*
+==================
+Cmd_CompleteIf
+==================
+*/
+void Cmd_CompleteIf( char *args, int argNum )
+{
+	if( argNum == 5 || argNum == 6 )
+	{
+		// Skip
+		char *p = Com_SkipTokens( args, argNum - 1, " " );
+
+		if( p > args )
+			Field_CompleteCommand( p, qfalse, qtrue );
+	}
+}
+
+/*
+==================
+Cmd_CompleteDelay
+==================
+*/
+void Cmd_CompleteDelay( char *args, int argNum )
+{
+	if( argNum == 3 || argNum == 4 )
+	{
+		// Skip "delay "
+		char *p = Com_SkipTokens( args, 1, " " );
+
+		if( p > args )
+			Field_CompleteCommand( p, qtrue, qtrue );
+	}
+}
+
+/*
+==================
+Cmd_CompleteUnDelay
+==================
+*/
+void Cmd_CompleteUnDelay( char *args, int argNum ) {
+	if( argNum == 2 ) {
+		Field_CompleteDelay( );
+	}
+}
+
+/*
 ============
 Cmd_Init
 ============
@@ -764,8 +1837,31 @@ Cmd_Init
 void Cmd_Init (void) {
 	Cmd_AddCommand ("cmdlist",Cmd_List_f);
 	Cmd_AddCommand ("exec",Cmd_Exec_f);
+	Cmd_SetCommandCompletionFunc( "exec", Cmd_CompleteCfgName );
 	Cmd_AddCommand ("vstr",Cmd_Vstr_f);
+	Cmd_SetCommandCompletionFunc( "vstr", Cvar_CompleteCvarName );
+	Cmd_AddCommand ("if",Cmd_If_f);
+	Cmd_SetCommandCompletionFunc( "if", Cmd_CompleteIf );
+	Cmd_AddCommand ("calc",Cmd_Calc_f);
+	Cmd_AddCommand ("math",Cmd_Math_f);
+	Cmd_SetCommandCompletionFunc( "math", Cvar_CompleteCvarName );
+	Cmd_AddCommand ("concat",Cmd_Concat_f);
+	Cmd_SetCommandCompletionFunc( "concat", Cmd_CompleteConcat );
+	Cmd_AddCommand ("strcmp",Cmd_Strcmp_f);
+	Cmd_SetCommandCompletionFunc( "strcmp", Cmd_CompleteIf );
 	Cmd_AddCommand ("echo",Cmd_Echo_f);
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
+	Cmd_AddCommand ("alias", Cmd_Alias_f);
+	Cmd_SetCommandCompletionFunc( "alias", Cmd_CompleteAliasName );
+	Cmd_AddCommand ("unalias", Cmd_UnAlias_f);
+	Cmd_SetCommandCompletionFunc( "unalias", Cmd_CompleteAliasName );
+	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
+	Cmd_AddCommand ("clearaliases", Cmd_ClearAliases_f);
+	Cmd_AddCommand ("delay", Cmd_Delay_f);
+	Cmd_SetCommandCompletionFunc( "delay", Cmd_CompleteDelay );
+	Cmd_AddCommand ("undelay", Cmd_Undelay_f);
+	Cmd_SetCommandCompletionFunc( "undelay", Cmd_CompleteUnDelay );
+	Cmd_AddCommand ("undelayAll", Cmd_UndelayAll_f);
+	Cmd_AddCommand ("random", Cmd_Random_f);
 }
 

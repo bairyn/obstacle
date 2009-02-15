@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
  
-This file is part of Tremulous.
+This file is part of Tremfusion.
  
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
  
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -35,11 +35,11 @@ void QDECL Com_Error( int level, const char *error, ... )
   va_list    argptr;
   char    text[1024];
 
-  va_start ( argptr, error );
-  vsprintf ( text, error, argptr );
-  va_end ( argptr );
+  va_start( argptr, error );
+  Q_vsnprintf( text, sizeof( text ), error, argptr );
+  va_end( argptr );
 
-  trap_Error( va( "%s", text ) );
+  trap_Error( text );
 }
 
 void QDECL Com_Printf( const char *msg, ... )
@@ -47,11 +47,11 @@ void QDECL Com_Printf( const char *msg, ... )
   va_list    argptr;
   char    text[1024];
 
-  va_start ( argptr, msg );
-  vsprintf ( text, msg, argptr );
-  va_end ( argptr );
+  va_start( argptr, msg );
+  Q_vsnprintf( text, sizeof( text ), msg, argptr );
+  va_end( argptr );
 
-  trap_Print( va( "%s", text ) );
+  trap_Print( text );
 }
 
 
@@ -103,108 +103,150 @@ static void  UI_Cache_f( void )
   Display_CacheAll();
 }
 
+static void UI_Menu_f( void )
+{
+    if( Menu_Count( ) > 0 )
+    {
+      trap_Key_SetCatcher( KEYCATCH_UI );
+      Menus_ActivateByName( UI_Argv( 1 ) );
+    }
+}
+
+static void UI_CloseMenus_f( void )
+{
+    if( Menu_Count( ) )
+    {
+      Menus_CloseAll( qfalse );
+      if( !Menu_Count( ) )
+      {
+        trap_Key_SetCatcher( trap_Key_GetCatcher( ) & ~KEYCATCH_UI );
+        trap_Key_ClearStates( );
+        trap_Cvar_Set( "cl_paused", "0" );
+      }
+    }
+}
+
+static void UI_MessageMode_f( void )
+{
+  char *arg = UI_Argv( 0 );
+  char buffer[ MAX_SAY_TEXT ] = "";
+  int i;
+  for ( i = 1; i < trap_Argc( ); i++ )
+      Q_strcat( buffer, sizeof( buffer ), UI_Argv( i ) );
+  trap_Cvar_Set( "ui_sayBuffer", buffer );
+  uiInfo.chatTargetClientNum = -1;
+  uiInfo.chatTeam = qfalse;
+  uiInfo.chatAdmins = qfalse;
+  uiInfo.chatClan = qfalse;
+  uiInfo.chatPrompt = qfalse;
+  trap_Key_SetCatcher( KEYCATCH_UI );
+  Menus_CloseByName( "say" );
+  Menus_CloseByName( "say_team" );
+  Menus_CloseByName( "say_crosshair" );
+  Menus_CloseByName( "say_attacker" );
+  Menus_CloseByName( "say_admins" );
+  Menus_CloseByName( "say_prompt" );
+  Menus_CloseByName( "say_clan" );
+  switch( arg[ 11 ] )
+  {
+    default:
+    case '\0':
+      Menus_ActivateByName( "say" );
+      break;
+    case '2':
+      uiInfo.chatTeam = qtrue;
+      Menus_ActivateByName( "say_team" );
+      break;
+    case '3':
+      uiInfo.chatTargetClientNum = trap_CrosshairPlayer();
+      Menus_ActivateByName( "say_crosshair" );
+      break;
+    case '4':
+      uiInfo.chatTargetClientNum = trap_LastAttacker();
+      Menus_ActivateByName( "say_attacker" );
+      break;
+    case '5':
+      uiInfo.chatAdmins = qtrue;
+      Menus_ActivateByName( "say_admins" );
+      break;
+    case '6':
+      uiInfo.chatClan = qtrue;
+      Menus_ActivateByName( "say_clan" );
+      break;
+  }
+}
+
+static void UI_Prompt_f( void )
+{
+  static char buffer[ MAX_SAY_TEXT ];
+  itemDef_t *item;
+  if ( trap_Argc( ) < 3 )
+  {
+    Com_Printf( "prompt <callback> [prompt]: Opens the chatbox, store the text in ui_sayBuffer and then vstr callback\n" );
+    return;
+  }
+  trap_Argv( 1, uiInfo.chatPromptCallback, sizeof( uiInfo.chatPromptCallback ) );
+  trap_Argv( 2, buffer, sizeof( buffer ) );
+  trap_Cvar_Set( "ui_sayBuffer", "" );
+  uiInfo.chatTargetClientNum = -1;
+  uiInfo.chatTeam = qfalse;
+  uiInfo.chatAdmins = qfalse;
+  uiInfo.chatClan = qfalse;
+  uiInfo.chatPrompt = qtrue;
+  trap_Key_SetCatcher( KEYCATCH_UI );
+  Menus_CloseByName( "say" );
+  Menus_CloseByName( "say_team" );
+  Menus_CloseByName( "say_crosshair" );
+  Menus_CloseByName( "say_attacker" );
+  Menus_CloseByName( "say_admins" );
+  Menus_CloseByName( "say_prompt" );
+  Menus_CloseByName( "say_clan" );
+  item = Menu_FindItemByName( Menus_ActivateByName( "say_prompt" ), "say_field" );
+  if ( item )
+  {
+    trap_Argv( 2, buffer, sizeof( buffer ) );
+    item->text = buffer;
+  }
+}
+
+struct
+{
+  char *cmd;
+  void ( *function )( void );
+} commands[ ] = {
+  { "ui_load", UI_Load },
+  { "ui_report", UI_Report },
+  { "ui_cache", UI_Cache_f },
+  { "messagemode", UI_MessageMode_f },
+  { "messagemode2", UI_MessageMode_f },
+  { "messagemode3", UI_MessageMode_f },
+  { "messagemode4", UI_MessageMode_f },
+  { "messagemode5", UI_MessageMode_f },
+  { "messagemode6", UI_MessageMode_f },
+  { "prompt", UI_Prompt_f },
+  { "menu", UI_Menu_f },
+  { "closemenus", UI_CloseMenus_f }
+};
+
 /*
 =================
 UI_ConsoleCommand
- 
-FIXME: lookup table
 =================
 */
 qboolean UI_ConsoleCommand( int realTime )
 {
-  char  * cmd;
-  char  *arg1;
+  char  *cmd;
+  int   i;
 
   uiInfo.uiDC.frameTime = realTime - uiInfo.uiDC.realTime;
   uiInfo.uiDC.realTime = realTime;
 
   cmd = UI_Argv( 0 );
-
-  // ensure minimum menu data is available
-  //Menu_Cache();
-
-  if( Q_stricmp ( cmd, "ui_report" ) == 0 )
+  for( i = 0; i < sizeof( commands ) / sizeof( commands[ 0 ] ); i++ )
   {
-    UI_Report();
-    return qtrue;
-  }
-
-  if( Q_stricmp ( cmd, "ui_load" ) == 0 )
-  {
-    UI_Load();
-    return qtrue;
-  }
-
-  if( Q_stricmp ( cmd, "remapShader" ) == 0 )
-  {
-    if( trap_Argc() == 4 )
+    if( Q_stricmp( commands[ i ].cmd, cmd ) == 0 )
     {
-      char shader1[MAX_QPATH];
-      char shader2[MAX_QPATH];
-      Q_strncpyz( shader1, UI_Argv( 1 ), sizeof( shader1 ) );
-      Q_strncpyz( shader2, UI_Argv( 2 ), sizeof( shader2 ) );
-      trap_R_RemapShader( shader1, shader2, UI_Argv( 3 ) );
-      return qtrue;
-    }
-  }
-
-  if( Q_stricmp ( cmd, "ui_cache" ) == 0 )
-  {
-    UI_Cache_f();
-    return qtrue;
-  }
-
-  if( Q_stricmp ( cmd, "ui_teamOrders" ) == 0 )
-  {
-    //UI_TeamOrdersMenu_f();
-    return qtrue;
-  }
-
-  if( Q_strncmp( cmd, "messagemode", 11 ) == 0 )
-  {
-    trap_Cvar_Set( "ui_sayBuffer", "" );
-
-    switch( cmd[ 11 ] )
-    {
-      default:
-      case '\0':
-        // Global
-        uiInfo.chatTeam             = qfalse;
-        uiInfo.chatTargetClientNum  = -1;
-        break;
-
-      case '2':
-        // Team
-        uiInfo.chatTeam             = qtrue;
-        uiInfo.chatTargetClientNum  = -1;
-        break;
-    }
-
-    trap_Key_SetCatcher( KEYCATCH_UI );
-    Menus_ActivateByName( "say" );
-    return qtrue;
-  }
-
-  if( Q_stricmp ( cmd, "menu" ) == 0 )
-  {
-    arg1 = UI_Argv( 1 );
-
-    if( Menu_Count( ) > 0 )
-    {
-      trap_Key_SetCatcher( KEYCATCH_UI );
-      Menus_ActivateByName( arg1 );
-      return qtrue;
-    }
-  }
-
-  if( Q_stricmp ( cmd, "closemenus" ) == 0 )
-  {
-    if( Menu_Count( ) > 0 )
-    {
-      trap_Key_SetCatcher( trap_Key_GetCatcher( ) & ~KEYCATCH_UI );
-      trap_Key_ClearStates( );
-      trap_Cvar_Set( "cl_paused", "0" );
-      Menus_CloseAll( );
+      commands[ i ].function( );
       return qtrue;
     }
   }
@@ -254,23 +296,6 @@ void UI_DrawHandlePic( float x, float y, float w, float h, qhandle_t hShader )
 
   UI_AdjustFrom640( &x, &y, &w, &h );
   trap_R_DrawStretchPic( x, y, w, h, s0, t0, s1, t1, hShader );
-}
-
-/*
-================
-UI_FillRect
- 
-Coordinates are 640*480 virtual values
-=================
-*/
-void UI_FillRect( float x, float y, float width, float height, const float *color )
-{
-  trap_R_SetColor( color );
-
-  UI_AdjustFrom640( &x, &y, &width, &height );
-  trap_R_DrawStretchPic( x, y, width, height, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
-
-  trap_R_SetColor( NULL );
 }
 
 void UI_SetColor( const float *rgba )

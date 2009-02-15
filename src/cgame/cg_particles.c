@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -157,6 +157,8 @@ static particle_t *CG_SpawnNewParticle( baseParticle_t *bp, particleEjector_t *p
       p->radius.delay = (int)CG_RandomiseValue( (float)bp->radius.delay, bp->radius.delayRandFrac );
       p->radius.initial = CG_RandomiseValue( bp->radius.initial, bp->radius.initialRandFrac );
       p->radius.final = CG_RandomiseValue( bp->radius.final, bp->radius.finalRandFrac );
+
+      p->radius.initial += bp->scaleWithCharge * pe->parent->charge;
 
       p->alpha.delay = (int)CG_RandomiseValue( (float)bp->alpha.delay, bp->alpha.delayRandFrac );
       p->alpha.initial = CG_RandomiseValue( bp->alpha.initial, bp->alpha.initialRandFrac );
@@ -1165,6 +1167,14 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
 
       continue;
     }
+    else if( !Q_stricmp( token, "physicsRadius" ) )
+    {
+      token = COM_Parse( text_p );
+      if( !token )
+        break;
+      
+      bp->physicsRadius = atoi( token );      
+    }
     else if( !Q_stricmp( token, "alpha" ) )
     {
       token = COM_Parse( text_p );
@@ -1346,6 +1356,16 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
         break;
 
       Q_strncpyz( bp->childTrailSystemName, token, MAX_QPATH );
+
+      continue;
+    }
+    else if( !Q_stricmp( token, "scaleWithCharge" ) )
+    {
+      token = COM_Parse( text_p );
+      if( !token )
+        break;
+
+      bp->scaleWithCharge = atof( token );
 
       continue;
     }
@@ -1602,12 +1622,14 @@ static qboolean CG_ParseParticleFile( const char *fileName )
 
   // load the file
   len = trap_FS_FOpenFile( fileName, &f, FS_READ );
-  if( len <= 0 )
+  if( len < 0 )
     return qfalse;
 
-  if( len >= sizeof( text ) - 1 )
+  if( len == 0 || len >= sizeof( text ) - 1 )
   {
-    CG_Printf( S_COLOR_RED "ERROR: particle file %s too long\n", fileName );
+    trap_FS_FCloseFile( f );
+    CG_Printf( S_COLOR_RED "ERROR: particle file %s is %s\n", fileName,
+      len == 0 ? "empty" : "too long" );
     return qfalse;
   }
 
@@ -1733,7 +1755,7 @@ void CG_LoadParticleSystems( void )
     fileLen = strlen( filePtr );
     strcpy( fileName, "scripts/" );
     strcat( fileName, filePtr );
-    CG_Printf( "...loading '%s'\n", fileName );
+    //CG_Printf( "...loading '%s'\n", fileName );
     CG_ParseParticleFile( fileName );
   }
 
@@ -2086,10 +2108,12 @@ static void CG_EvaluateParticlePhysics( particle_t *p )
                  acceleration );
   }
 
-  radius = CG_LerpValues( p->radius.initial,
-                 p->radius.final,
-                 CG_CalculateTimeFrac( p->birthTime,
-                                       p->lifeTime,
+  // Some particles have a visual radius that differs from their collision radius
+  if( bp->physicsRadius )
+    radius = bp->physicsRadius;
+  else
+    radius = CG_LerpValues( p->radius.initial, p->radius.final,
+                            CG_CalculateTimeFrac( p->birthTime, p->lifeTime,
                                        p->radius.delay ) );
 
   VectorSet( mins, -radius, -radius, -radius );
@@ -2394,7 +2418,7 @@ static void CG_RenderParticle( particle_t *p )
     p->lf.animation = &bp->modelAnimation;
 
     //run animation
-    CG_RunLerpFrame( &p->lf );
+    CG_RunLerpFrame( &p->lf, 1.0f );
 
     re.oldframe = p->lf.oldFrame;
     re.frame    = p->lf.frame;

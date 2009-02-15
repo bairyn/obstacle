@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -107,12 +107,12 @@ static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
 
   // load the file
   len = trap_FS_FOpenFile( filename, &f, FS_READ );
-  if( len <= 0 )
+  if( len < 0 )
     return qfalse;
 
-  if( len >= sizeof( text ) - 1 )
+  if( len == 0 || len >= sizeof( text ) - 1 )
   {
-    CG_Printf( "File %s too long\n", filename );
+    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
     trap_FS_FCloseFile( f );
     return qfalse;
   }
@@ -628,15 +628,15 @@ static void CG_CopyClientInfoModel( clientInfo_t *from, clientInfo_t *to )
 CG_GetCorpseNum
 ======================
 */
-static int CG_GetCorpseNum( pClass_t class )
+static int CG_GetCorpseNum( class_t class )
 {
   int           i;
   clientInfo_t  *match;
   char          *modelName;
   char          *skinName;
 
-  modelName = BG_FindModelNameForClass( class );
-  skinName = BG_FindSkinNameForClass( class );
+  modelName = BG_ClassConfig( class )->modelName;
+  skinName = BG_ClassConfig( class )->skinName;
 
   for( i = PCL_NONE + 1; i < PCL_NUM_CLASSES; i++ )
   {
@@ -695,7 +695,7 @@ static qboolean CG_ScanForExistingClientInfo( clientInfo_t *ci )
 CG_PrecacheClientInfo
 ======================
 */
-void CG_PrecacheClientInfo( pClass_t class, char *model, char *skin )
+void CG_PrecacheClientInfo( class_t class, char *model, char *skin )
 {
   clientInfo_t  *ci;
   clientInfo_t  newInfo;
@@ -746,6 +746,13 @@ void CG_NewClientInfo( int clientNum )
 
   // the old value
   memset( &newInfo, 0, sizeof( newInfo ) );
+ 
+  // grab our own ignoreList
+  if( clientNum == cg.predictedPlayerState.clientNum )
+  {
+    v = Info_ValueForKey( configstring, "ig" );
+    BG_ClientListParse( &cgs.ignoreList, v );
+  }
 
   // isolate the player's name
   v = Info_ValueForKey( configstring, "n" );
@@ -765,6 +772,7 @@ void CG_NewClientInfo( int clientNum )
   // team
   v = Info_ValueForKey( configstring, "t" );
   newInfo.team = atoi( v );
+  CG_TeamJoinMessage( &newInfo, ci );
 
   // model
   v = Info_ValueForKey( configstring, "model" );
@@ -783,6 +791,10 @@ void CG_NewClientInfo( int clientNum )
     // truncate modelName
     *slash = 0;
   }
+
+  // voice
+  v = Info_ValueForKey( configstring, "v" );
+  Q_strncpyz( newInfo.voice, v, sizeof( newInfo.voice ) );
 
   // replace whatever was there with the new one
   newInfo.infoValid = qtrue;
@@ -1667,13 +1679,6 @@ static void CG_PlayerSprites( centity_t *cent )
     CG_PlayerFloatSprite( cent, cgs.media.connectionShader );
     return;
   }
-
-  if( cent->currentState.eFlags & EF_TALK )
-  {
-    // the masses have decreed this to be wrong
-/*    CG_PlayerFloatSprite( cent, cgs.media.balloonShader );
-    return;*/
-  }
 }
 
 /*
@@ -1686,7 +1691,7 @@ Returns the Z component of the surface being shadowed
 ===============
 */
 #define SHADOW_DISTANCE   128
-static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane, pClass_t class )
+static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane, class_t class )
 {
   vec3_t        end, mins, maxs;
   trace_t       trace;
@@ -1694,7 +1699,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane, pClass_t c
   entityState_t *es = &cent->currentState;
   vec3_t        surfNormal = { 0.0f, 0.0f, 1.0f };
 
-  BG_FindBBoxForClass( class, mins, maxs, NULL, NULL, NULL );
+  BG_ClassBoundingBox( class, mins, maxs, NULL, NULL, NULL );
   mins[ 2 ] = 0.0f;
   maxs[ 2 ] = 2.0f;
 
@@ -1740,7 +1745,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane, pClass_t c
   // without taking a spot in the cg_marks array
   CG_ImpactMark( cgs.media.shadowMarkShader, trace.endpos, trace.plane.normal,
                  cent->pe.legs.yawAngle, 0.0f, 0.0f, 0.0f, alpha, qfalse,
-                 24.0f * BG_FindShadowScaleForClass( class ), qtrue );
+                 24.0f * BG_ClassConfig( class )->shadowScale, qtrue );
 
   return qtrue;
 }
@@ -1753,7 +1758,7 @@ CG_PlayerSplash
 Draw a mark at the water surface
 ===============
 */
-static void CG_PlayerSplash( centity_t *cent, pClass_t class )
+static void CG_PlayerSplash( centity_t *cent, class_t class )
 {
   vec3_t      start, end;
   vec3_t      mins, maxs;
@@ -1763,7 +1768,7 @@ static void CG_PlayerSplash( centity_t *cent, pClass_t class )
   if( !cg_shadows.integer )
     return;
 
-  BG_FindBBoxForClass( class, mins, maxs, NULL, NULL, NULL );
+  BG_ClassBoundingBox( class, mins, maxs, NULL, NULL, NULL );
 
   VectorCopy( cent->lerpOrigin, end );
   end[ 2 ] += mins[ 2 ];
@@ -1793,7 +1798,7 @@ static void CG_PlayerSplash( centity_t *cent, pClass_t class )
 
   CG_ImpactMark( cgs.media.wakeMarkShader, trace.endpos, trace.plane.normal,
                  cent->pe.legs.yawAngle, 1.0f, 1.0f, 1.0f, 1.0f, qfalse,
-                 32.0f * BG_FindShadowScaleForClass( class ), qtrue );
+                 32.0f * BG_ClassConfig( class )->shadowScale, qtrue );
 }
 
 
@@ -1942,9 +1947,9 @@ void CG_Player( centity_t *cent )
   int           clientNum;
   int           renderfx;
   qboolean      shadow = qfalse;
-  float         shadowPlane;
+  float         shadowPlane = 0.0f;
   entityState_t *es = &cent->currentState;
-  pClass_t      class = ( es->misc >> 8 ) & 0xFF;
+  class_t       class = ( es->misc >> 8 ) & 0xFF;
   float         scale;
   vec3_t        tempAxis[ 3 ], tempAxis2[ 3 ];
   vec3_t        angles;
@@ -1983,7 +1988,7 @@ void CG_Player( centity_t *cent )
   {
     vec3_t  mins, maxs;
 
-    BG_FindBBoxForClass( class, mins, maxs, NULL, NULL, NULL );
+    BG_ClassBoundingBox( class, mins, maxs, NULL, NULL, NULL );
     CG_DrawBoundingBox( cent->lerpOrigin, mins, maxs );
   }
 
@@ -2082,7 +2087,7 @@ void CG_Player( centity_t *cent )
     else
       VectorCopy( es->angles2, surfNormal );
 
-    BG_FindBBoxForClass( class, mins, maxs, NULL, NULL, NULL );
+    BG_ClassBoundingBox( class, mins, maxs, NULL, NULL, NULL );
 
     VectorMA( legs.origin, -TRACE_DEPTH, surfNormal, end );
     VectorMA( legs.origin, 1.0f, surfNormal, start );
@@ -2098,7 +2103,7 @@ void CG_Player( centity_t *cent )
   }
 
   //rescale the model
-  scale = BG_FindModelScaleForClass( class );
+  scale = BG_ClassConfig( class )->modelScale;
 
   if( scale != 1.0f )
   {
@@ -2110,7 +2115,7 @@ void CG_Player( centity_t *cent )
   }
 
   //offset on the Z axis if required
-  VectorMA( legs.origin, BG_FindZOffsetForClass( class ), surfNormal, legs.origin );
+  VectorMA( legs.origin, BG_ClassConfig( class )->zOffset, surfNormal, legs.origin );
   VectorCopy( legs.origin, legs.lightingOrigin );
   VectorCopy( legs.origin, legs.oldorigin ); // don't positionally lerp at all
 
@@ -2165,6 +2170,20 @@ void CG_Player( centity_t *cent )
     head.renderfx = renderfx;
 
     trap_R_AddRefEntityToScene( &head );
+
+    // if this player has been hit with poison cloud, add an effect PS
+    if( ( es->eFlags & EF_POISONCLOUDED ) &&
+        ( es->number != cg.snap->ps.clientNum || cg.renderingThirdPerson ) )
+    {
+      if( !CG_IsParticleSystemValid( &cent->poisonCloudedPS ) )
+        cent->poisonCloudedPS = CG_SpawnNewParticleSystem( cgs.media.poisonCloudedPS );
+      CG_SetAttachmentTag( &cent->poisonCloudedPS->attachment,
+                           head, head.hModel, "tag_head" );
+      CG_SetAttachmentCent( &cent->poisonCloudedPS->attachment, cent );
+      CG_AttachToTag( &cent->poisonCloudedPS->attachment );
+    }
+    else if( CG_IsParticleSystemValid( &cent->poisonCloudedPS ) )
+      CG_DestroyParticleSystem( &cent->poisonCloudedPS );
   }
 
   //
@@ -2229,7 +2248,7 @@ void CG_Corpse( centity_t *cent )
   memset( &head, 0, sizeof( head ) );
 
   VectorCopy( cent->lerpOrigin, origin );
-  BG_FindBBoxForClass( es->clientNum, liveZ, NULL, NULL, deadZ, NULL );
+  BG_ClassBoundingBox( es->clientNum, liveZ, NULL, NULL, deadZ, NULL );
   origin[ 2 ] -= ( liveZ[ 2 ] - deadZ[ 2 ] );
 
   VectorCopy( es->angles, cent->lerpAngles );
@@ -2296,11 +2315,11 @@ void CG_Corpse( centity_t *cent )
   VectorCopy( origin, legs.lightingOrigin );
   legs.shadowPlane = shadowPlane;
   legs.renderfx = renderfx;
-  legs.origin[ 2 ] += BG_FindZOffsetForClass( es->clientNum );
+  legs.origin[ 2 ] += BG_ClassConfig( es->clientNum )->zOffset;
   VectorCopy( legs.origin, legs.oldorigin ); // don't positionally lerp at all
 
   //rescale the model
-  scale = BG_FindModelScaleForClass( es->clientNum );
+  scale = BG_ClassConfig( es->clientNum )->modelScale;
 
   if( scale != 1.0f )
   {
@@ -2438,16 +2457,16 @@ This is the spurt of blood when a character gets hit
 */
 void CG_Bleed( vec3_t origin, vec3_t normal, int entityNum )
 {
-  pTeam_t           team = cgs.clientinfo[ entityNum ].team;
+  team_t            team = cgs.clientinfo[ entityNum ].team;
   qhandle_t         bleedPS;
   particleSystem_t  *ps;
 
   if( !cg_blood.integer )
     return;
 
-  if( team == PTE_ALIENS )
+  if( team == TEAM_ALIENS )
     bleedPS = cgs.media.alienBleedPS;
-  else if( team == PTE_HUMANS )
+  else if( team == TEAM_HUMANS )
     bleedPS = cgs.media.humanBleedPS;
   else
     return;
@@ -2464,31 +2483,344 @@ void CG_Bleed( vec3_t origin, vec3_t normal, int entityNum )
   }
 }
 
+#define STATUS_FADE_TIME      200
+#define STATUS_MAX_VIEW_DIST  900.0f
+#define STATUS_PEEK_DIST      20
 /*
-===============
-CG_AtHighestClass
-
-Is the local client at the highest class possible?
-===============
+==================
+CG_TeamStatusDisplay
+==================
 */
-qboolean CG_AtHighestClass( void )
+static void CG_TeamStatusDisplay( centity_t *cent )
 {
-  int       i;
-  qboolean  superiorClasses = qfalse;
+  entityState_t   *es = &cent->currentState;
+  vec3_t          origin;
+  class_t         pclass = ( es->misc >> 8 ) & 0xFF;
+  int             health = cgs.clientinfo[ es->clientNum ].health;
+  //int             credits = cgs.clientinfo[ es->clientNum ].armor;	currently unused
+  float           healthScale = BG_Class( pclass )->health;
+  float           x, y;
+  vec4_t          color;
+  trace_t         tr;
+  float           d;
+  buildStat_t     *bs;
+  int             i, j;
+  int             entNum;
+  vec3_t          trOrigin;
+  vec3_t          right;
+  qboolean        visible = qfalse;
+  vec3_t          mins, maxs;
+  entityState_t   *hit;
+  float           transparency=0.5f;
+  if( (cent->currentState.misc & 0x00FF) == TEAM_ALIENS )
+    bs = &cgs.alienBuildStat;
+  else
+    bs = &cgs.humanBuildStat;
 
-  for( i = PCL_NONE + 1; i < PCL_NUM_CLASSES; i++ )
+  if( !bs->loaded )
+    return;
+  
+  d = Distance( cent->lerpOrigin, cg.refdef.vieworg );
+  if( d > STATUS_MAX_VIEW_DIST )
+    return;
+ 
+  Vector4Copy( bs->foreColor, color );
+
+  // trace for top
+  if( ( es->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_WALKCR ||
+      ( es->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_IDLECR )
+    BG_ClassBoundingBox( pclass,  mins, NULL, maxs, NULL, NULL );
+  else
+    BG_ClassBoundingBox( pclass,  mins, maxs, NULL, NULL, NULL );
+
+  VectorCopy( cent->lerpOrigin, origin );
+
+  // top point
+  origin[ 2 ] += mins[ 2 ];
+  origin[ 2 ] += ( abs( mins[ 2 ] ) + abs( maxs[ 2 ] ) );
+  //origin[ 2 ] *= 1.1f;
+
+  entNum = cg.predictedPlayerState.clientNum;
+
+  // if first try fails, step left, step right
+  for( j = 0; j < 3; j++ )
   {
-    if( BG_ClassCanEvolveFromTo(
-          cg.predictedPlayerState.stats[ STAT_PCLASS ], i,
-          ALIEN_MAX_KILLS, 0 ) >= 0 &&
-        BG_FindStagesForClass( i, cgs.alienStage ) &&
-        BG_ClassIsAllowed( i ) )
+    VectorCopy( cg.refdef.vieworg, trOrigin );
+    switch( j )
     {
-      superiorClasses = qtrue;
-      break;
+      case 1:
+        // step right
+        AngleVectors( cg.refdefViewAngles, NULL, right, NULL );
+        VectorMA( trOrigin, STATUS_PEEK_DIST, right, trOrigin );
+        break;
+      case 2:
+        // step left
+        AngleVectors( cg.refdefViewAngles, NULL, right, NULL );
+        VectorMA( trOrigin, -STATUS_PEEK_DIST, right, trOrigin );
+        break;
+      default:
+        break;
+    }
+    // look through up to 3 players and/or transparent buildables
+    for( i = 0; i < 3; i++ )
+    {
+      CG_Trace( &tr, trOrigin, NULL, NULL, origin, entNum, MASK_SHOT );
+      if( tr.entityNum == cent->currentState.number )
+      {
+        visible = qtrue;
+        break;
+      }
+
+      if( tr.entityNum == ENTITYNUM_WORLD )
+        break;
+
+      hit  = &cg_entities[ tr.entityNum ].currentState;
+
+      if( tr.entityNum < MAX_CLIENTS || ( hit->eType == ET_BUILDABLE &&
+          ( !( es->eFlags & EF_B_SPAWNED ) ||
+            BG_Buildable( hit->modelindex )->transparentTest ) ) )
+            
+      {
+        entNum = tr.entityNum;
+        VectorCopy( tr.endpos, trOrigin );
+      }
+      else
+        break;
     }
   }
+  // hack to make the kit obscure view
+  if( cg_drawGun.integer && visible &&
+      cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_HUMANS &&
+      CG_WorldToScreen( origin, &x, &y ) )
+  {
+    if( x > 450 && y > 260 )
+      visible = qfalse;
+  }
 
-  return !superiorClasses;
+  healthScale = (float)health / healthScale;
+
+  if( health > 0 && healthScale < 0.01f )
+    healthScale = 0.01f;
+  else if( healthScale < 0.0f )
+    healthScale = 0.0f;
+  else if( healthScale > 1.0f )
+    healthScale = 1.0f;
+
+  if( cg_hideHealthyTeamStatus.integer && 
+      healthScale == 1.0f )
+  {
+    visible = qfalse;
+  }
+  if( !visible && cent->buildableStatus.visible )
+  {
+    cent->buildableStatus.visible   = qfalse;
+    cent->buildableStatus.lastTime  = cg.time;
+  }
+  else if( visible && !cent->buildableStatus.visible )
+  {
+    cent->buildableStatus.visible   = qtrue;
+    cent->buildableStatus.lastTime  = cg.time;
+  }
+  color[ 3 ] = transparency;
+  // Fade up
+  if( cent->buildableStatus.visible )
+  {
+    if( cent->buildableStatus.lastTime + STATUS_FADE_TIME > cg.time )
+      color[ 3 ] = transparency*((float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME);
+  }
+
+  // Fade down
+  if( !cent->buildableStatus.visible )
+  {
+    if( cent->buildableStatus.lastTime + STATUS_FADE_TIME > cg.time )
+      color[ 3 ] = transparency*(1.0f - (float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME);
+    else
+      return;
+  }
+
+
+
+  if( CG_WorldToScreen( origin, &x, &y ) )
+  {
+    float  picH = bs->frameHeight * 0.85;
+    float  picW = bs->frameWidth * 0.3;
+    float  picX = x;
+    float  picY = y;
+    float  scale;
+    float  subH, subY;
+    vec4_t frameColor;
+
+    // this is fudged to get the width/height in the cfg to be more realistic
+    scale = ( picH / d ) * 3;
+
+
+    picH *= scale;
+    picW *= scale;
+    picX -= ( picW * 0.5f );
+    picY -= ( picH * 0.5f );
+
+    // sub-elements such as icons and number
+    subH = picH - ( picH * bs->verticalMargin );
+    subY = picY + ( picH * 0.5f ) - ( subH * 0.5f );
+
+    /*if( bs->frameShader )
+    {
+      Vector4Copy( bs->backColor, frameColor );
+      frameColor[ 3 ] = color[ 3 ];
+      trap_R_SetColor( frameColor );
+      CG_DrawPic( picX, picY, picW, picH, bs->frameShader );
+      trap_R_SetColor( NULL );
+    }*/
+
+    if( health > 0 )
+    {
+      float hX, hY, hW, hH;
+      vec4_t healthColor;
+
+      hX = picX + ( bs->healthPadding * scale );
+      hY = picY + ( bs->healthPadding * scale );
+      hH = picH - ( bs->healthPadding * 2.0f * scale );
+      hW = picW * healthScale - ( bs->healthPadding * 2.0f * scale );
+
+      if( healthScale == 1.0f )
+        Vector4Copy( bs->healthLowColor, healthColor );
+      else if( healthScale >= 0.75f )
+        Vector4Copy( bs->healthGuardedColor, healthColor );
+      else if( healthScale >= 0.50f )
+        Vector4Copy( bs->healthElevatedColor, healthColor );
+      else if( healthScale >= 0.25f )
+        Vector4Copy( bs->healthHighColor, healthColor );
+      else
+        Vector4Copy( bs->healthSevereColor, healthColor );
+
+      healthColor[ 3 ] = color[ 3 ];
+      trap_R_SetColor( healthColor );
+     
+      CG_DrawPic( hX, hY, hW, hH, cgs.media.whiteShader );
+      trap_R_SetColor( NULL );
+    }
+
+    if( bs->overlayShader )
+    {
+      float oW = bs->overlayWidth * 0.3f;
+      float oH = bs->overlayHeight * 0.85f;
+      float oX = x;
+      float oY = y;
+
+      oH *= scale;
+      oW *= scale;
+      oX -= ( oW * 0.5f );
+      oY -= ( oH * 0.5f );
+ 
+      trap_R_SetColor( frameColor );
+      CG_DrawPic( oX, oY, oW, oH, bs->overlayShader );
+      trap_R_SetColor( NULL );
+    }
+
+    trap_R_SetColor( color );
+
+    {
+      float nX;
+      int healthMax;
+      int healthPoints;
+
+      healthMax = BG_Class( pclass )->health;
+      healthPoints = (int)( healthScale * healthMax );
+      if( health > 0 && healthPoints < 1 )
+        healthPoints = 1;
+      nX = picX + ( picW * 0.5f ) - 2.0f - ( ( subH * 4 ) * 0.5f ); 
+       
+      if( healthPoints > 999 )
+        nX -= 0.0f;
+      else if( healthPoints > 99 )
+        nX -= subH * 0.5f;
+      else if( healthPoints > 9 )
+        nX -= subH * 1.0f;
+      else
+        nX -= subH * 1.5f;
+     
+      CG_DrawField( nX, subY, 4, subH, subH, healthPoints );
+    }
+    trap_R_SetColor( NULL );
+  }
 }
 
+/*
+==================
+CG_SortDistance
+==================
+*/
+static int CG_SortDistance2( const void *a, const void *b )
+{
+  centity_t    *aent, *bent;
+  float        adist, bdist;
+
+  aent = &cg_entities[ *(int *)a ];
+  bent = &cg_entities[ *(int *)b ];
+  adist = Distance( cg.refdef.vieworg, aent->lerpOrigin );
+  bdist = Distance( cg.refdef.vieworg, bent->lerpOrigin );
+  if( adist > bdist )
+    return -1;
+  else if( adist < bdist )
+    return 1;
+  else
+    return 0;
+}
+
+/*
+==================
+CG_DrawTeamStatus
+==================
+*/
+void CG_DrawTeamStatus( void )
+{
+  int             i;
+  centity_t       *cent;
+  entityState_t   *es;
+  int             buildableList[ MAX_ENTITIES_IN_SNAPSHOT ];
+  int             buildables = 0;
+
+  if( cg_drawTeamStatus.integer )
+  {
+    for( i = 0; i < cg.snap->numEntities; i++ )
+    {
+      cent  = &cg_entities[ cg.snap->entities[ i ].number ];
+      es    = &cent->currentState;
+
+      if( es->eType == ET_PLAYER &&
+          ( cent->currentState.misc & 0x00FF ) == cg.predictedPlayerState.stats[ STAT_TEAM ]  )
+        buildableList[ buildables++ ] = cg.snap->entities[ i ].number;
+    }
+    qsort( buildableList, buildables, sizeof( int ), CG_SortDistance2 );
+    for( i = 0; i < buildables; i++ )
+        CG_TeamStatusDisplay( &cg_entities[ buildableList[ i ] ] );
+  }
+}
+
+centity_t *CG_GetPlayerLocation( void )
+{
+  centity_t   *eloc, *best;
+  float       bestlen, len;
+  vec3_t      origin;
+
+  best = NULL;
+  bestlen = 3.0f * 8192.0f * 8192.0f;
+
+  VectorCopy( cg.predictedPlayerState.origin, origin );
+
+  for( eloc = cg.locationHead; eloc; eloc = eloc->nextLocation )
+  {
+    len = DistanceSquared(origin, eloc->lerpOrigin);
+
+    if( len > bestlen )
+      continue;
+    
+    if( !trap_R_inPVS( origin, eloc->lerpOrigin ) )
+      continue;
+
+    bestlen = len;
+    best = eloc;
+  }
+
+  return best;
+}

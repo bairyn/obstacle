@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -658,7 +658,7 @@ static qboolean ParseStage( shaderStage_t *stage, char **text )
 				return qfalse;
 			}
 
-			stage->bundle[0].image[0] = R_FindImageFile( token, !shader.noMipMaps, !shader.noPicMip, GL_CLAMP );
+			stage->bundle[0].image[0] = R_FindImageFile( token, !shader.noMipMaps, !shader.noPicMip, GL_CLAMP_TO_EDGE );
 			if ( !stage->bundle[0].image[0] )
 			{
 				ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1231,11 +1231,8 @@ static void ParseSkyParms( char **text ) {
 		for (i=0 ; i<6 ; i++) {
 			Com_sprintf( pathname, sizeof(pathname), "%s_%s.tga"
 				, token, suf[i] );
-#ifdef GL_CLAMP_TO_EDGE
 			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, GL_CLAMP_TO_EDGE );
-#else
-			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, GL_CLAMP );
-#endif
+
 			if ( !shader.sky.outerbox[i] ) {
 				shader.sky.outerbox[i] = tr.defaultImage;
 			}
@@ -1433,7 +1430,6 @@ static qboolean ParseShader( char **text )
 		// stage definition
 		else if ( token[0] == '{' )
 		{
-			// 20051019 misantropia -- fix buffer overrun.
 			if ( s >= MAX_SHADER_STAGES ) {
 				ri.Printf( PRINT_WARNING, "WARNING: too many stages in shader %s\n", shader.name );
 				return qfalse;
@@ -2153,7 +2149,7 @@ static shader_t *FinishShader( void ) {
 	//
 	// set appropriate stage information
 	//
-	for ( stage = 0; stage < MAX_SHADER_STAGES; stage++ ) {
+	for ( stage = 0; stage < MAX_SHADER_STAGES; ) {
 		shaderStage_t *pStage = &stages[stage];
 
 		if ( !pStage->active ) {
@@ -2164,17 +2160,33 @@ static shader_t *FinishShader( void ) {
 		if ( !pStage->bundle[0].image[0] ) {
 			ri.Printf( PRINT_WARNING, "Shader %s has a stage with no image\n", shader.name );
 			pStage->active = qfalse;
+			stage++;
 			continue;
 		}
 
 		//
 		// ditch this stage if it's detail and detail textures are disabled
 		//
-		if ( pStage->isDetail && !r_detailTextures->integer ) {
-			if ( stage < ( MAX_SHADER_STAGES - 1 ) ) {
-				memmove( pStage, pStage + 1, sizeof( *pStage ) * ( MAX_SHADER_STAGES - stage - 1 ) );
-				Com_Memset(  pStage + 1, 0, sizeof( *pStage ) );
+		if ( pStage->isDetail && !r_detailTextures->integer )
+		{
+			int index;
+			
+			for(index = stage + 1; index < MAX_SHADER_STAGES; index++)
+			{
+				if(!stages[index].active)
+					break;
 			}
+			
+			if(index < MAX_SHADER_STAGES)
+				memmove(pStage, pStage + 1, sizeof(*pStage) * (index - stage));
+			else
+			{
+				if(stage + 1 < MAX_SHADER_STAGES)
+					memmove(pStage, pStage + 1, sizeof(*pStage) * (index - stage - 1));
+				
+				Com_Memset(&stages[index - 1], 0, sizeof(*stages));
+			}
+			
 			continue;
 		}
 
@@ -2243,6 +2255,8 @@ static shader_t *FinishShader( void ) {
 				}
 			}
 		}
+		
+		stage++;
 	}
 
 	// there are times when you will need to manually apply a sort to
@@ -2430,6 +2444,10 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 	// lightmaps
 	if ( lightmapIndex >= 0 && lightmapIndex >= tr.numLightmaps ) {
 		lightmapIndex = LIGHTMAP_BY_VERTEX;
+	} else if ( lightmapIndex < LIGHTMAP_2D ) {
+		// negative lightmap indexes cause stray pointers (think tr.lightmaps[lightmapIndex])
+		ri.Printf( PRINT_WARNING, "WARNING: shader '%s' has invalid lightmap index of %d\n", name, lightmapIndex  );
+		lightmapIndex = LIGHTMAP_BY_VERTEX;
 	}
 
 	COM_StripExtension(name, strippedName, sizeof(strippedName));
@@ -2496,7 +2514,7 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 	// if not defined in the in-memory shader descriptions,
 	// look for a single supported image file
 	//
-	image = R_FindImageFile( name, mipRawImage, mipRawImage, mipRawImage ? GL_REPEAT : GL_CLAMP );
+	image = R_FindImageFile( name, mipRawImage, mipRawImage, mipRawImage ? GL_REPEAT : GL_CLAMP_TO_EDGE );
 	if ( !image ) {
 		ri.Printf( PRINT_DEVELOPER, "Couldn't find image file for shader %s\n", name );
 		shader.defaultShader = qtrue;
@@ -2507,11 +2525,24 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 	// create the default shading commands
 	//
 	if ( shader.lightmapIndex == LIGHTMAP_NONE ) {
-		// dynamic colors at vertexes
-		stages[0].bundle[0].image[0] = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-		stages[0].stateBits = GLS_DEFAULT;
+		if ( r_specularLighting->integer >= 1 ) { // extra pass for specular lighting
+			// dynamic colors at vertexes
+			stages[0].bundle[0].image[0] = image;
+			stages[0].active = qtrue;
+			stages[0].stateBits = GLS_DEFAULT;
+
+			stages[1].bundle[0].image[0] = tr.whiteImage;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_LIGHTING_DIFFUSE;
+			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_SRC_ALPHA;
+		} else {
+			// dynamic colors at vertexes
+			stages[0].bundle[0].image[0] = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+			stages[0].stateBits = GLS_DEFAULT;
+		}
 	} else if ( shader.lightmapIndex == LIGHTMAP_BY_VERTEX ) {
 		// explicit colors at vertexes
 		stages[0].bundle[0].image[0] = image;
@@ -2540,18 +2571,40 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 		stages[1].rgbGen = CGEN_IDENTITY;
 		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	} else {
-		// two pass lightmap
-		stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
-		stages[0].bundle[0].isLightmap = qtrue;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-													// for identitylight
-		stages[0].stateBits = GLS_DEFAULT;
+		if ( r_specularLighting->integer >= 1 ) {
+			// three pass lightmap with specular
+			stages[0].bundle[0].image[0] = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY;													// for identitylight
+			stages[0].stateBits = GLS_DEFAULT;
 
-		stages[1].bundle[0].image[0] = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+			stages[1].bundle[0].image[0] = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_CONST;
+			stages[1].constantColor[0] = r_specularLightingExponent->value * 255;
+			stages[1].constantColor[1] = r_specularLightingExponent->value * 255;
+			stages[1].constantColor[2] = r_specularLightingExponent->value * 255;
+			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
+			stages[1].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE;
+
+			stages[2].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
+			stages[2].bundle[0].isLightmap = qtrue;
+			stages[2].active = qtrue;
+			stages[2].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
+			stages[2].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		} else {
+			// two pass lightmap
+			stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
+			stages[0].bundle[0].isLightmap = qtrue;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation													// for identitylight
+			stages[0].stateBits = GLS_DEFAULT;
+
+			stages[1].bundle[0].image[0] = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_IDENTITY;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		}
 	}
 
 	return FinishShader();
@@ -2564,7 +2617,7 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 
 	hash = generateHashValue(name, FILE_HASH_SIZE);
 
-	// 20051020 misantropia -- probably not necessary since this function
+	// probably not necessary since this function
 	// only gets called from tr_font.c with lightmapIndex == LIGHTMAP_2D
 	// but better safe than sorry.
 	if ( lightmapIndex >= tr.numLightmaps ) {
@@ -2612,11 +2665,24 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 	// create the default shading commands
 	//
 	if ( shader.lightmapIndex == LIGHTMAP_NONE ) {
-		// dynamic colors at vertexes
-		stages[0].bundle[0].image[0] = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-		stages[0].stateBits = GLS_DEFAULT;
+		if ( r_specularLighting->integer >= 1 ) { // extra pass for specular lighting
+			// dynamic colors at vertexes
+			stages[0].bundle[0].image[0] = image;
+			stages[0].active = qtrue;
+			stages[0].stateBits = GLS_DEFAULT;
+
+			stages[1].bundle[0].image[0] = tr.whiteImage;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_LIGHTING_DIFFUSE;
+			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_SRC_ALPHA;
+		} else {
+			// dynamic colors at vertexes
+			stages[0].bundle[0].image[0] = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+			stages[0].stateBits = GLS_DEFAULT;
+		}
 	} else if ( shader.lightmapIndex == LIGHTMAP_BY_VERTEX ) {
 		// explicit colors at vertexes
 		stages[0].bundle[0].image[0] = image;
@@ -2645,18 +2711,40 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 		stages[1].rgbGen = CGEN_IDENTITY;
 		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	} else {
-		// two pass lightmap
-		stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
-		stages[0].bundle[0].isLightmap = qtrue;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-													// for identitylight
-		stages[0].stateBits = GLS_DEFAULT;
+		if ( r_specularLighting->integer >= 1 ) {
+			// three pass lightmap with specular
+			stages[0].bundle[0].image[0] = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY;													// for identitylight
+			stages[0].stateBits = GLS_DEFAULT;
 
-		stages[1].bundle[0].image[0] = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+			stages[1].bundle[0].image[0] = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_CONST;
+			stages[1].constantColor[0] = r_specularLightingExponent->value * 255;
+			stages[1].constantColor[1] = r_specularLightingExponent->value * 255;
+			stages[1].constantColor[2] = r_specularLightingExponent->value * 255;
+			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
+			stages[1].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE;
+
+			stages[2].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
+			stages[2].bundle[0].isLightmap = qtrue;
+			stages[2].active = qtrue;
+			stages[2].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
+			stages[2].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		} else {
+			// two pass lightmap
+			stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
+			stages[0].bundle[0].isLightmap = qtrue;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation													// for identitylight
+			stages[0].stateBits = GLS_DEFAULT;
+
+			stages[1].bundle[0].image[0] = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_IDENTITY;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		}
 	}
 
 	sh = FinishShader();
@@ -2741,6 +2829,17 @@ For menu graphics that should never be picmiped
 */
 qhandle_t RE_RegisterShaderNoMip( const char *name ) {
 	shader_t	*sh;
+	
+	// Remember previous value
+	int			old_r_celshadalgo;
+
+	/*
+	 * This will prevent sprites, like buttons, go through
+	 * cel shading filters, like kuwahara.
+	 * @author gmiranda
+	 */
+	old_r_celshadalgo = r_celshadalgo->integer;
+	r_celshadalgo->integer=0;
 
 	if ( strlen( name ) >= MAX_QPATH ) {
 		Com_Printf( "Shader name exceeds MAX_QPATH\n" );
@@ -2748,6 +2847,9 @@ qhandle_t RE_RegisterShaderNoMip( const char *name ) {
 	}
 
 	sh = R_FindShader( name, LIGHTMAP_2D, qfalse );
+	
+	// Restore value
+	r_celshadalgo->integer=old_r_celshadalgo;
 
 	// we want to return 0 if the shader failed to
 	// load for some reason, but R_FindShader should
@@ -2869,7 +2971,7 @@ static void ScanAndLoadShaderFiles( void )
 	char *oldp, *token, *hashMem;
 	int shaderTextHashTableSizes[MAX_SHADERTEXT_HASH], hash, size;
 
-	long sum = 0;
+	long sum = 0, summand;
 	// scan for shader files
 	shaderFiles = ri.FS_ListFiles( "scripts", ".shader", &numShaderFiles );
 
@@ -2890,10 +2992,38 @@ static void ScanAndLoadShaderFiles( void )
 
 		Com_sprintf( filename, sizeof( filename ), "scripts/%s", shaderFiles[i] );
 		ri.Printf( PRINT_DEVELOPER, "...loading '%s'\n", filename );
-		sum += ri.FS_ReadFile( filename, (void **)&buffers[i] );
-		if ( !buffers[i] ) {
+		summand = ri.FS_ReadFile( filename, (void **)&buffers[i] );
+		
+		if ( !buffers[i] )
 			ri.Error( ERR_DROP, "Couldn't load %s", filename );
+		
+		// Do a simple check on the shader structure in that file to make sure one bad shader file cannot fuck up all other shaders.
+		p = buffers[i];
+		while(1)
+		{
+			token = COM_ParseExt(&p, qtrue);
+			
+			if(!*token)
+				break;
+			
+			oldp = p;
+			
+			token = COM_ParseExt(&p, qtrue);
+			if(token[0] != '{' && token[1] != '\0')
+			{
+				ri.Printf(PRINT_WARNING, "WARNING: Bad shader file %s has incorrect syntax.\n", filename);
+				ri.FS_FreeFile(buffers[i]);
+				buffers[i] = NULL;
+				break;
+			}
+
+			SkipBracedSection(&oldp);
+			p = oldp;
 		}
+			
+		
+		if (buffers[i])
+			sum += summand;		
 	}
 
 	// build single large buffer
@@ -2901,12 +3031,16 @@ static void ScanAndLoadShaderFiles( void )
 	s_shaderText[ 0 ] = '\0';
 
 	// free in reverse order, so the temp files are all dumped
-	for ( i = numShaderFiles - 1; i >= 0 ; i-- ) {
-		p = &s_shaderText[strlen(s_shaderText)];
-		strcat( s_shaderText, buffers[i] );
-		ri.FS_FreeFile( buffers[i] );
-		COM_Compress(p);
-		strcat( s_shaderText, "\n" );
+	for ( i = numShaderFiles - 1; i >= 0 ; i-- )
+	{
+		if(buffers[i])
+		{
+			p = &s_shaderText[strlen(s_shaderText)];
+			strcat( s_shaderText, buffers[i] );
+			ri.FS_FreeFile( buffers[i] );
+			COM_Compress(p);
+			strcat( s_shaderText, "\n" );
+		}
 	}
 
 	// free up memory
@@ -3012,7 +3146,7 @@ R_InitShaders
 ==================
 */
 void R_InitShaders( void ) {
-	ri.Printf( PRINT_ALL, "Initializing Shaders\n" );
+	ri.Printf( PRINT_DEVELOPER, "Initializing Shaders\n" );
 
 	Com_Memset(hashTable, 0, sizeof(hashTable));
 

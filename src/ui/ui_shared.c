@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
  
-This file is part of Tremulous.
+This file is part of Tremfusion.
  
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
  
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -85,6 +85,7 @@ itemDef_t *Menu_SetPrevCursorItem( menuDef_t *menu );
 itemDef_t *Menu_SetNextCursorItem( menuDef_t *menu );
 static qboolean Menu_OverActiveItem( menuDef_t *menu, float x, float y );
 
+void trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 /*
 ===============
 UI_InstallCaptureFunc
@@ -121,6 +122,20 @@ void UI_RemoveCaptureFunc( void )
 
 static char   UI_memoryPool[MEM_POOL_SIZE];
 static int    allocPoint, outOfMemory;
+// Hacked new memory pool for hud
+static char   UI_hudmemoryPool[MEM_POOL_SIZE];
+static int    hudallocPoint, hudoutOfMemory;
+
+/*
+===============
+UI_ResetHUDMemory
+===============
+*/
+void UI_ResetHUDMemory( void )
+{
+  hudallocPoint = 0;
+  hudoutOfMemory = qfalse;
+}
 
 /*
 ===============
@@ -137,7 +152,6 @@ void *UI_Alloc( int size )
 
     if( DC->Print )
       DC->Print( "UI_Alloc: Failure. Out of memory!\n" );
-
     //DC->trap_Print(S_COLOR_YELLOW"WARNING: UI Out of Memory!\n");
     return NULL;
   }
@@ -151,6 +165,29 @@ void *UI_Alloc( int size )
 
 /*
 ===============
+UI_HUDAlloc
+===============
+*/
+void *UI_HUDAlloc( int size )
+{
+  char  *p;
+
+  if( hudallocPoint + size > MEM_POOL_SIZE )
+  {
+  DC->Print( "UI_HUDAlloc: Out of memory! Reinititing hud Memory!!\n" );
+    hudoutOfMemory = qtrue;
+    UI_ResetHUDMemory();
+  }
+
+  p = &UI_hudmemoryPool[ hudallocPoint ];
+
+  hudallocPoint += ( size + 15 ) & ~15;
+
+  return p;
+}
+
+/*
+===============
 UI_InitMemory
 ===============
 */
@@ -158,6 +195,8 @@ void UI_InitMemory( void )
 {
   allocPoint = 0;
   outOfMemory = qfalse;
+  hudallocPoint = 0;
+  hudoutOfMemory = qfalse;
 }
 
 qboolean UI_OutOfMemory( )
@@ -325,7 +364,7 @@ void PC_SourceWarning( int handle, char *format, ... )
   static char string[4096];
 
   va_start( argptr, format );
-  vsprintf( string, format, argptr );
+  Q_vsnprintf( string, sizeof( string ), format, argptr );
   va_end( argptr );
 
   filename[0] = '\0';
@@ -348,7 +387,7 @@ void PC_SourceError( int handle, char *format, ... )
   static char string[4096];
 
   va_start( argptr, format );
-  vsprintf( string, format, argptr );
+  Q_vsnprintf( string, sizeof( string ), format, argptr );
   va_end( argptr );
 
   filename[0] = '\0';
@@ -1043,6 +1082,8 @@ static void Window_Paint( Window *w, float fadeAmount, float fadeClamp, float fa
       DC->drawHandlePic( fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->background );
       DC->setColor( NULL );
     }
+    else if( w->border == WINDOW_BORDER_ROUNDED )
+      DC->fillRoundedRect( fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->borderSize, w->backColor );
     else
       DC->fillRect( fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->backColor );
   }
@@ -1109,6 +1150,11 @@ static void Border_Paint( Window *w )
     GradientBar_Paint( &r, w->borderColor );
     r.y = w->rect.y + w->rect.h - 1;
     GradientBar_Paint( &r, w->borderColor );
+  }
+  else if( w->border == WINDOW_BORDER_ROUNDED )
+  {
+    // full rounded
+    DC->drawRoundedRect( w->rect.x, w->rect.y, w->rect.w, w->rect.h, w->borderSize, w->borderColor );
   }
 }
 
@@ -1543,7 +1589,8 @@ static void Menus_Close( menuDef_t *menu )
     Menu_RunCloseScript( menu );
     menu->window.flags &= ~( WINDOW_VISIBLE | WINDOW_HASFOCUS );
 
-    openMenuCount--;
+    if( openMenuCount > 0 )
+      openMenuCount--;
 
     if( openMenuCount > 0 )
       Menus_Activate( menuStack[ openMenuCount - 1 ] );
@@ -1555,14 +1602,29 @@ void Menus_CloseByName( const char *p )
   Menus_Close( Menus_FindByName( p ) );
 }
 
-void Menus_CloseAll( void )
+void Menus_CloseAll( qboolean force )
 {
   int i;
 
-  for( i = 0; i < menuCount; i++ )
-    Menus_Close( &Menus[i] );
+  // Close any menus on the stack first
+  if( openMenuCount > 0 )
+  {
+    for( i = openMenuCount; i > 0; i-- )
+      Menus_Close( menuStack[ i ] );
 
-  openMenuCount = 0;
+    openMenuCount = 0;
+  }
+
+  for( i = 0; i < menuCount; i++ )
+    if( !( Menus[i].window.flags & WINDOW_DONTCLOSEALL ) || force )
+      Menus_Close( &Menus[ i ] );
+  if( force )
+  {
+    openMenuCount = 0;
+    g_editingField = qfalse;
+    g_waitingForKey = qfalse;
+    g_editItem = NULL;
+  }
 }
 
 
@@ -1825,6 +1887,56 @@ void Script_playLooped( itemDef_t *item, char **args )
   }
 }
 
+static qboolean UI_Text_Emoticon( const char *s, qboolean *escaped,
+                                  int *length, qhandle_t *h, int *width )
+{
+  char name[ MAX_EMOTICON_NAME_LEN ] = {""};
+  const char *p = s;
+  int i = 0;
+  int j = 0;
+
+  if( *p != '[' )
+    return qfalse;
+  p++;
+
+  *escaped = qfalse;
+  if( *p == '[' )
+  {
+    *escaped = qtrue;
+    p++;
+  }
+
+  while( *p && i < ( MAX_EMOTICON_NAME_LEN - 1 ) )
+  {
+    if( *p == ']' )
+    {
+      for( j = 0; j < DC->Assets.emoticonCount; j++ )
+      {
+        if( !Q_stricmp( DC->Assets.emoticons[ j ], name ) )
+        {
+          if( *escaped )
+          {
+            *length = 1;
+            return qtrue;
+          }
+          if( h )
+            *h = DC->Assets.emoticonShaders[ j ];
+          if( width )
+            *width = DC->Assets.emoticonWidths[ j ];
+          *length = i + 2;
+          return qtrue;
+        }
+      }
+      return qfalse;
+    }
+    name[ i++ ] = *p;
+    name[ i ] = '\0';
+    p++;
+  }
+  return qfalse;
+}
+
+
 float UI_Text_Width( const char *text, float scale, int limit )
 {
   int count, len;
@@ -1833,6 +1945,10 @@ float UI_Text_Width( const char *text, float scale, int limit )
   float useScale;
   const char *s = text;
   fontInfo_t *font = &DC->Assets.textFont;
+  int emoticonLen;
+  qboolean emoticonEscaped;
+  float emoticonW;
+  int emoticons = 0;
 
   if( scale <= DC->getCVarValue( "ui_smallFont" ) )
     font = &DC->Assets.smallFont;
@@ -1840,6 +1956,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
     font = &DC->Assets.bigFont;
 
   useScale = scale * font->glyphScale;
+  emoticonW = UI_Text_Height( "[", scale, 0 ) * DC->aspectScale;
   out = 0;
 
   if( text )
@@ -1853,22 +1970,33 @@ float UI_Text_Width( const char *text, float scale, int limit )
 
     while( s && *s && count < len )
     {
+      glyph = &font->glyphs[( unsigned char )*s];
+
       if( Q_IsColorString( s ) )
       {
         s += 2;
         continue;
       }
-      else
+      else if ( UI_Text_Emoticon( s, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
       {
-        glyph = &font->glyphs[( int )*s];
-        out += ( glyph->xSkip * DC->aspectScale );
-        s++;
-        count++;
+        if( emoticonEscaped )
+        {
+          s++;
+        }
+        else
+        {
+          s += emoticonLen;
+          emoticons++;
+          continue;
+        }
       }
+      out += ( glyph->xSkip * DC->aspectScale );
+      s++;
+      count++;
     }
   }
 
-  return out * useScale;
+  return ( out * useScale ) + ( emoticons * emoticonW );
 }
 
 float UI_Text_Height( const char *text, float scale, int limit )
@@ -1906,7 +2034,7 @@ float UI_Text_Height( const char *text, float scale, int limit )
       }
       else
       {
-        glyph = &font->glyphs[( int )*s];
+        glyph = &font->glyphs[( unsigned char )*s];
 
         if( max < glyph->height )
           max = glyph->height;
@@ -1962,6 +2090,14 @@ void UI_Text_Paint_Limit( float *maxX, float x, float y, float scale,
   int         len, count;
   vec4_t      newColor;
   glyphInfo_t *glyph;
+  int emoticonLen = 0;
+  qhandle_t emoticonHandle = 0;
+  float emoticonH, emoticonW;
+  qboolean emoticonEscaped;
+  int emoticonWidth;
+
+  emoticonH = UI_Text_Height( "[", scale, 0 );
+  emoticonW = emoticonH * DC->aspectScale;
 
   if( text )
   {
@@ -1969,6 +2105,8 @@ void UI_Text_Paint_Limit( float *maxX, float x, float y, float scale,
     float max = *maxX;
     float useScale;
     fontInfo_t *font = &DC->Assets.textFont;
+
+    memcpy( &newColor[0], &color[0], sizeof( vec4_t ) );
 
     if( scale <= DC->getCVarValue( "ui_smallFont" ) )
       font = &DC->Assets.smallFont;
@@ -1988,11 +2126,13 @@ void UI_Text_Paint_Limit( float *maxX, float x, float y, float scale,
 
     while( s && *s && count < len )
     {
-      float width, height, skip;
-      glyph = &font->glyphs[ ( int )*s ];
+      float width, height, skip, yadj;
+
+      glyph = &font->glyphs[ ( unsigned char )*s ];
       width = glyph->imageWidth * DC->aspectScale;
       height = glyph->imageHeight;
       skip = glyph->xSkip * DC->aspectScale;
+      yadj = useScale * glyph->top;
 
       if( Q_IsColorString( s ) )
       {
@@ -2002,30 +2142,44 @@ void UI_Text_Paint_Limit( float *maxX, float x, float y, float scale,
         s += 2;
         continue;
       }
-      else
+      else if( UI_Text_Emoticon( s, &emoticonEscaped, &emoticonLen,
+               &emoticonHandle, &emoticonWidth ) )
       {
-        float yadj = useScale * glyph->top;
-
-        if( UI_Text_Width( s, useScale, 1 ) + x > max )
+        if( emoticonEscaped )
         {
-          *maxX = 0;
-          break;
+          s++;
         }
-
-        UI_Text_PaintChar( x, y - yadj,
-                           width,
-                           height,
-                           useScale,
-                           glyph->s,
-                           glyph->t,
-                           glyph->s2,
-                           glyph->t2,
-                           glyph->glyph );
-        x += ( skip * useScale ) + adjust;
-        *maxX = x;
-        count++;
-        s++;
+        else
+        {
+          s += emoticonLen;
+          DC->setColor( NULL );
+          DC->drawHandlePic( x, y - yadj, ( emoticonW * emoticonWidth ),
+            emoticonH, emoticonHandle );
+          DC->setColor( newColor );
+          x += ( emoticonW * emoticonWidth );
+          continue;
+        }
       }
+
+      if( UI_Text_Width( s, useScale, 1 ) + x > max )
+      {
+        *maxX = 0;
+        break;
+      }
+
+      UI_Text_PaintChar( x, y - yadj,
+                         width,
+                         height,
+                         useScale,
+                         glyph->s,
+                         glyph->t,
+                         glyph->s2,
+                         glyph->t2,
+                         glyph->glyph );
+      x += ( skip * useScale ) + adjust;
+      *maxX = x;
+      count++;
+      s++;
     }
 
     DC->setColor( NULL );
@@ -2040,12 +2194,19 @@ void UI_Text_Paint( float x, float y, float scale, vec4_t color, const char *tex
   glyphInfo_t *glyph;
   float useScale;
   fontInfo_t *font = &DC->Assets.textFont;
+  int emoticonLen = 0;
+  qhandle_t emoticonHandle = 0;
+  float emoticonH, emoticonW;
+  qboolean emoticonEscaped;
+  int emoticonWidth;
 
   if( scale <= DC->getCVarValue( "ui_smallFont" ) )
     font = &DC->Assets.smallFont;
   else if( scale >= DC->getCVarValue( "ui_bigFont" ) )
     font = &DC->Assets.bigFont;
 
+  emoticonH = UI_Text_Height( "[", scale, 0 );
+  emoticonW = emoticonH * DC->aspectScale;
   useScale = scale * font->glyphScale;
 
   if( text )
@@ -2062,11 +2223,13 @@ void UI_Text_Paint( float x, float y, float scale, vec4_t color, const char *tex
 
     while( s && *s && count < len )
     {
-      float width, height, skip;
-      glyph = &font->glyphs[( int )*s];
+      float width, height, skip, yadj;
+
+      glyph = &font->glyphs[( unsigned char )*s];
       width = glyph->imageWidth * DC->aspectScale;
       height = glyph->imageHeight;
       skip = glyph->xSkip * DC->aspectScale;
+      yadj = useScale * glyph->top;
 
       if( Q_IsColorString( s ) )
       {
@@ -2076,85 +2239,31 @@ void UI_Text_Paint( float x, float y, float scale, vec4_t color, const char *tex
         s += 2;
         continue;
       }
-      else
+      else if( UI_Text_Emoticon( s, &emoticonEscaped, &emoticonLen,
+                                 &emoticonHandle, &emoticonWidth ) )
       {
-        float yadj = useScale * glyph->top;
-
-        if( style == ITEM_TEXTSTYLE_SHADOWED || style == ITEM_TEXTSTYLE_SHADOWEDMORE )
+        if( emoticonEscaped )
         {
-          int ofs = style == ITEM_TEXTSTYLE_SHADOWED ? 1 : 2;
-          colorBlack[3] = newColor[3];
-          DC->setColor( colorBlack );
-          UI_Text_PaintChar( x + ofs, y - yadj + ofs,
-                             width,
-                             height,
-                             useScale,
-                             glyph->s,
-                             glyph->t,
-                             glyph->s2,
-                             glyph->t2,
-                             glyph->glyph );
+          s++;
+        }
+        else
+        {
+          DC->setColor( NULL );
+          DC->drawHandlePic( x, y - yadj, ( emoticonW * emoticonWidth ),
+            emoticonH, emoticonHandle );
           DC->setColor( newColor );
-          colorBlack[3] = 1.0;
+          x += ( emoticonW * emoticonWidth );
+          s += emoticonLen;
+          continue;
         }
-        else if( style == ITEM_TEXTSTYLE_NEON )
-        {
-          vec4_t glow, outer, inner, white;
+      }
 
-          glow[ 0 ] = newColor[ 0 ] * 0.5;
-          glow[ 1 ] = newColor[ 1 ] * 0.5;
-          glow[ 2 ] = newColor[ 2 ] * 0.5;
-          glow[ 3 ] = newColor[ 3 ] * 0.2;
-
-          outer[ 0 ] = newColor[ 0 ];
-          outer[ 1 ] = newColor[ 1 ];
-          outer[ 2 ] = newColor[ 2 ];
-          outer[ 3 ] = newColor[ 3 ];
-
-          inner[ 0 ] = newColor[ 0 ] * 1.5 > 1.0f ? 1.0f : newColor[ 0 ] * 1.5;
-          inner[ 1 ] = newColor[ 1 ] * 1.5 > 1.0f ? 1.0f : newColor[ 1 ] * 1.5;
-          inner[ 2 ] = newColor[ 2 ] * 1.5 > 1.0f ? 1.0f : newColor[ 2 ] * 1.5;
-          inner[ 3 ] = newColor[ 3 ];
-
-          white[ 0 ] = white[ 1 ] = white[ 2 ] = white[ 3 ] = 1.0f;
-
-          DC->setColor( glow );
-          UI_Text_PaintChar( x - 1.5, y - yadj - 1.5,
-                             width + 3,
-                             height + 3,
-                             useScale,
-                             glyph->s,
-                             glyph->t,
-                             glyph->s2,
-                             glyph->t2,
-                             glyph->glyph );
-
-          DC->setColor( outer );
-          UI_Text_PaintChar( x - 1, y - yadj - 1,
-                             width + 2,
-                             height + 2,
-                             useScale,
-                             glyph->s,
-                             glyph->t,
-                             glyph->s2,
-                             glyph->t2,
-                             glyph->glyph );
-
-          DC->setColor( inner );
-          UI_Text_PaintChar( x - 0.5, y - yadj - 0.5,
-                             width + 1,
-                             height + 1,
-                             useScale,
-                             glyph->s,
-                             glyph->t,
-                             glyph->s2,
-                             glyph->t2,
-                             glyph->glyph );
-
-          DC->setColor( white );
-        }
-
-        UI_Text_PaintChar( x, y - yadj,
+      if( style == ITEM_TEXTSTYLE_SHADOWED || style == ITEM_TEXTSTYLE_SHADOWEDMORE )
+      {
+        int ofs = style == ITEM_TEXTSTYLE_SHADOWED ? 1 : 2;
+        colorBlack[3] = newColor[3];
+        DC->setColor( colorBlack );
+        UI_Text_PaintChar( x + ofs, y - yadj + ofs,
                            width,
                            height,
                            useScale,
@@ -2163,13 +2272,80 @@ void UI_Text_Paint( float x, float y, float scale, vec4_t color, const char *tex
                            glyph->s2,
                            glyph->t2,
                            glyph->glyph );
-
-        x += ( skip * useScale ) + adjust;
-        s++;
-        count++;
+        DC->setColor( newColor );
+        colorBlack[3] = 1.0;
       }
-    }
+      else if( style == ITEM_TEXTSTYLE_NEON )
+      {
+        vec4_t glow, outer, inner, white;
 
+        glow[ 0 ] = newColor[ 0 ] * 0.5;
+        glow[ 1 ] = newColor[ 1 ] * 0.5;
+        glow[ 2 ] = newColor[ 2 ] * 0.5;
+        glow[ 3 ] = newColor[ 3 ] * 0.2;
+
+        outer[ 0 ] = newColor[ 0 ];
+        outer[ 1 ] = newColor[ 1 ];
+        outer[ 2 ] = newColor[ 2 ];
+        outer[ 3 ] = newColor[ 3 ];
+
+        inner[ 0 ] = newColor[ 0 ] * 1.5 > 1.0f ? 1.0f : newColor[ 0 ] * 1.5;
+        inner[ 1 ] = newColor[ 1 ] * 1.5 > 1.0f ? 1.0f : newColor[ 1 ] * 1.5;
+        inner[ 2 ] = newColor[ 2 ] * 1.5 > 1.0f ? 1.0f : newColor[ 2 ] * 1.5;
+        inner[ 3 ] = newColor[ 3 ];
+
+        white[ 0 ] = white[ 1 ] = white[ 2 ] = white[ 3 ] = 1.0f;
+
+        DC->setColor( glow );
+        UI_Text_PaintChar( x - 1.5, y - yadj - 1.5,
+                           width + 3,
+                           height + 3,
+                           useScale,
+                           glyph->s,
+                           glyph->t,
+                           glyph->s2,
+                           glyph->t2,
+                           glyph->glyph );
+
+        DC->setColor( outer );
+        UI_Text_PaintChar( x - 1, y - yadj - 1,
+                           width + 2,
+                           height + 2,
+                           useScale,
+                           glyph->s,
+                           glyph->t,
+                           glyph->s2,
+                           glyph->t2,
+                           glyph->glyph );
+
+        DC->setColor( inner );
+        UI_Text_PaintChar( x - 0.5, y - yadj - 0.5,
+                           width + 1,
+                           height + 1,
+                           useScale,
+                           glyph->s,
+                           glyph->t,
+                           glyph->s2,
+                           glyph->t2,
+                           glyph->glyph );
+
+        DC->setColor( white );
+      }
+
+      UI_Text_PaintChar( x, y - yadj,
+                         width,
+                         height,
+                         useScale,
+                         glyph->s,
+                         glyph->t,
+                         glyph->s2,
+                         glyph->t2,
+                         glyph->glyph );
+
+      x += ( skip * useScale ) + adjust;
+      s++;
+      count++;
+    }
     DC->setColor( NULL );
   }
 }
@@ -2204,7 +2380,7 @@ void UI_Text_PaintWithCursor( float x, float y, float scale, vec4_t color, const
       len = limit;
 
     count = 0;
-    glyph2 = &font->glyphs[ ( int ) cursor];
+    glyph2 = &font->glyphs[ ( unsigned char ) cursor];
     width2 = glyph2->imageWidth * DC->aspectScale;
     height2 = glyph2->imageHeight;
     skip2 = glyph2->xSkip * DC->aspectScale;
@@ -2212,12 +2388,19 @@ void UI_Text_PaintWithCursor( float x, float y, float scale, vec4_t color, const
     while( s && *s && count < len )
     {
       float width, height, skip;
-      glyph = &font->glyphs[( int )*s];
+      glyph = &font->glyphs[( unsigned char )*s];
       width = glyph->imageWidth * DC->aspectScale;
       height = glyph->imageHeight;
       skip = glyph->xSkip * DC->aspectScale;
 
       yadj = useScale * glyph->top;
+
+      if( Q_IsColorString( s ) )
+      {
+        memcpy( newColor, g_color_table[ColorIndex( *( s+1 ) )], sizeof( newColor ) );
+        newColor[3] = color[3];
+        DC->setColor( newColor );
+      }
 
       if( style == ITEM_TEXTSTYLE_SHADOWED || style == ITEM_TEXTSTYLE_SHADOWEDMORE )
       {
@@ -2365,7 +2548,7 @@ commandDef_t commandList[] =
     {"exec", &Script_Exec},           // group/name
     {"play", &Script_Play},           // group/name
     {"playlooped", &Script_playLooped},           // group/name
-    {"orbit", &Script_Orbit}                      // group/name
+    {"orbit", &Script_Orbit},                      // group/name
   };
 
 int scriptCommandCount = sizeof( commandList ) / sizeof( commandDef_t );
@@ -3467,7 +3650,7 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
 
         DC->setCVar( item->cvar, buff );
       }
-      else if( key < 32 || !item->cvar )
+      else if( ( key < 32 && key >= 0 ) || !item->cvar )
       {
         // Ignore any non printable chars
         releaseFocus = qfalse;
@@ -4124,8 +4307,12 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
   itemDef_t *item = NULL;
   qboolean inHandler = qfalse;
 
-  if( inHandler )
-    return;
+  // KTW: Draggable Windows
+  if (key == K_MOUSE1 && down && Rect_ContainsPoint(&menu->window.rect, DC->cursorx, DC->cursory) &&
+        menu->window.style && menu->window.border) 
+      menu->window.flags |= WINDOW_DRAG;
+  else
+      menu->window.flags &= ~WINDOW_DRAG;
 
   inHandler = qtrue;
 
@@ -4205,10 +4392,8 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
   // default handling
   switch( key )
   {
-    case K_F12:
-      if( DC->getCVarValue( "developer" ) )
-        DC->executeText( EXEC_APPEND, "screenshot\n" );
-
+    case K_F11:
+      DC->executeText( EXEC_APPEND, "screenshotJPEG\n" );
       break;
 
     case K_KP_UPARROW:
@@ -4419,14 +4604,16 @@ void Item_TextColor( itemDef_t *item, vec4_t *newColor )
 
 static const char *Item_Text_Wrap( const char *text, float scale, float width )
 {
-  static char   out[ 8192 ];
+  static char   out[ 8192 ] = "";
   char          *paint = out;
-  char          c[ 3 ];
+  char          c[ 3 ] = "^7";
   const char    *p = text;
   const char    *eol;
   const char    *q = NULL, *qMinus1 = NULL;
   unsigned int  testLength;
   unsigned int  i;
+  int           emoticonLen;
+  qboolean      emoticonEscaped;
 
   if( strlen( text ) >= sizeof( out ) )
     return NULL;
@@ -4435,8 +4622,6 @@ static const char *Item_Text_Wrap( const char *text, float scale, float width )
 
   while( *p )
   {
-    Com_Memset( c, 0, sizeof( c ) );
-
     // Skip leading whitespace
 
     while( *p )
@@ -4456,19 +4641,20 @@ static const char *Item_Text_Wrap( const char *text, float scale, float width )
     if( !*p )
       break;
 
+    Q_strcat( paint, out + sizeof( out ) - paint, c );
+
     testLength = 1;
 
     eol = p;
 
-    q = p;
+    q = p + 1;
 
     while( Q_IsColorString( q ) )
+    {
+      c[ 0 ] = q[ 0 ];
+      c[ 1 ] = q[ 1 ];
       q += 2;
-
-    q++;
-
-    while( Q_IsColorString( q ) )
-      q += 2;
+    }
 
     while( UI_Text_Width( p, scale, testLength ) < width )
     {
@@ -4484,11 +4670,18 @@ static const char *Item_Text_Wrap( const char *text, float scale, float width )
       for( i = 0; i < testLength; )
       {
         // Skip color escapes
-
         while( Q_IsColorString( q ) )
         {
+          c[ 0 ] = q[ 0 ];
+          c[ 1 ] = q[ 1 ];
           q += 2;
-          continue;
+        }
+        while( UI_Text_Emoticon( q, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
+        {
+          if( emoticonEscaped )
+            q++;
+          else
+            q += emoticonLen;
         }
 
         qMinus1 = q;
@@ -4498,7 +4691,18 @@ static const char *Item_Text_Wrap( const char *text, float scale, float width )
 
       // Some color escapes might still be present
       while( Q_IsColorString( q ) )
+      {
+        c[ 0 ] = q[ 0 ];
+        c[ 1 ] = q[ 1 ];
         q += 2;
+      }
+      while( UI_Text_Emoticon( q, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
+      {
+        if( emoticonEscaped )
+          q++;
+        else
+          q += emoticonLen;
+      }
 
       // Manual line break
       if( *q == '\n' )
@@ -4517,9 +4721,6 @@ static const char *Item_Text_Wrap( const char *text, float scale, float width )
     if( eol == p )
       eol = q;
 
-    // Add colour code (might be empty)
-    Q_strcat( out, sizeof( out ), c );
-
     paint = out + strlen( out );
 
     // Copy text
@@ -4529,7 +4730,12 @@ static const char *Item_Text_Wrap( const char *text, float scale, float width )
 
     // Add a \n if it's not there already
     if( out[ strlen( out ) - 1 ] != '\n' )
-      Q_strcat( out, sizeof( out ), "\n" );
+    {
+      Q_strcat( out, sizeof( out ), "\n " );
+      Q_strcat( out, sizeof( out ), c );
+    }
+    else
+      c[ 0 ] = '\0';
 
     paint = out + strlen( out );
 
@@ -4540,7 +4746,7 @@ static const char *Item_Text_Wrap( const char *text, float scale, float width )
 }
 
 #define MAX_WRAP_CACHE  16
-#define MAX_WRAP_LINES  32
+#define MAX_WRAP_LINES  128
 #define MAX_WRAP_TEXT   512
 
 typedef struct
@@ -4682,7 +4888,7 @@ void Item_Text_Wrapped_Paint( itemDef_t *item )
   }
   else
   {
-    char        buff[ 1024 ];
+    char        buff[ 4096 ];
     float       fontHeight    = UI_Text_EmHeight( item->textscale );
     const float lineSpacing   = fontHeight * 0.4f;
     float       lineHeight    = fontHeight + lineSpacing;
@@ -5035,7 +5241,7 @@ static bind_t g_bindings[] =
     { "+scores",      K_TAB,         -1, -1, -1 },
     { "+button2",     K_ENTER,       -1, -1, -1 },
     { "+speed",       K_SHIFT,       -1, -1, -1 },
-    { "boost",        'x',           -1, -1, -1 }, // human sprinting
+    { "+button6",     'x',           -1, -1, -1 }, // human sprinting
     { "+forward",     K_UPARROW,     -1, -1, -1 },
     { "+back",        K_DOWNARROW,   -1, -1, -1 },
     { "+moveleft",    ',',           -1, -1, -1 },
@@ -5083,7 +5289,11 @@ static bind_t g_bindings[] =
     { "messagemode",  -1,            -1, -1, -1 },
     { "messagemode2", -1,            -1, -1, -1 },
     { "messagemode3", -1,            -1, -1, -1 },
-    { "messagemode4", -1,            -1, -1, -1 }
+    { "messagemode4", -1,            -1, -1, -1 },
+    { "messagemode5", -1,            -1, -1, -1 },
+    { "messagemode6", -1,            -1, -1, -1 },
+    { "prompt",       -1,            -1, -1, -1 },
+    { "squadmark",    'k',           -1, -1, -1 },
   };
 
 
@@ -5453,8 +5663,18 @@ void Item_Model_Paint( itemDef_t *item )
   vec3_t      angles;
   modelDef_t *modelPtr = ( modelDef_t* )item->typeData;
 
+  qhandle_t hModel;
+  int backLerpWhole;
+//  vec3_t axis[3];
+
   if( modelPtr == NULL )
     return;
+
+  if(!item->asset)
+    return;
+
+  hModel = item->asset;
+
 
   // setup the refdef
   memset( &refdef, 0, sizeof( refdef ) );
@@ -5475,7 +5695,7 @@ void Item_Model_Paint( itemDef_t *item )
   refdef.width = w;
   refdef.height = h;
 
-  DC->modelBounds( item->asset, mins, maxs );
+  DC->modelBounds( hModel, mins, maxs );
 
   origin[2] = -0.5 * ( mins[2] + maxs[2] );
   origin[1] = 0.5 * ( mins[1] + maxs[1] );
@@ -5521,16 +5741,65 @@ void Item_Model_Paint( itemDef_t *item )
     }
   }
 
-  VectorSet( angles, 0, modelPtr->angle, 0 );
-  AnglesToAxis( angles, ent.axis );
+  if(VectorLengthSquared(modelPtr->axis))
+  {
+    VectorNormalize(modelPtr->axis);
+    angles[0] = AngleNormalize360(modelPtr->axis[0]*modelPtr->angle);
+    angles[1] = AngleNormalize360(modelPtr->axis[1]*modelPtr->angle);
+    angles[2] = AngleNormalize360(modelPtr->axis[2]*modelPtr->angle);
+    AnglesToAxis( angles, ent.axis );
+  }
+  else
+  {
+    VectorSet( angles, 0, modelPtr->angle, 0 );
+    AnglesToAxis( angles, ent.axis );
+  }
 
-  ent.hModel = item->asset;
+  ent.hModel = hModel;
+
+
+  if(modelPtr->frameTime)	// don't advance on the first frame
+    modelPtr->backlerp+=( ((DC->realTime - modelPtr->frameTime)/1000.0f) * (float)modelPtr->fps );
+
+  if(modelPtr->backlerp > 1)
+  {
+    backLerpWhole = floor(modelPtr->backlerp);
+
+    modelPtr->frame+=(backLerpWhole);
+    if((modelPtr->frame - modelPtr->startframe) > modelPtr->numframes)
+      modelPtr->frame = modelPtr->startframe + modelPtr->frame % modelPtr->numframes;	// todo: ignoring loopframes
+
+    modelPtr->oldframe+=(backLerpWhole);
+    if((modelPtr->oldframe - modelPtr->startframe) > modelPtr->numframes)
+      modelPtr->oldframe = modelPtr->startframe + modelPtr->oldframe % modelPtr->numframes;	// todo: ignoring loopframes
+
+    modelPtr->backlerp = modelPtr->backlerp - backLerpWhole;
+  }
+
+  modelPtr->frameTime = DC->realTime;
+
+  ent.frame		= modelPtr->frame;
+  ent.oldframe	= modelPtr->oldframe;
+  ent.backlerp	= 1.0f - modelPtr->backlerp;
+
   VectorCopy( origin, ent.origin );
   VectorCopy( origin, ent.lightingOrigin );
   ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
   VectorCopy( ent.origin, ent.oldorigin );
 
   DC->addRefEntityToScene( &ent );
+
+  // add an accent light
+  origin[0] -= 100;	// + = behind, - = in front
+  origin[1] += 100;	// + = left, - = right
+  origin[2] += 100;	// + = above, - = below
+  trap_R_AddLightToScene( origin, 500, 1.0, 1.0, 1.0 );
+
+  origin[0] -= 100;
+  origin[1] -= 100;
+  origin[2] -= 100;
+  trap_R_AddLightToScene( origin, 500, 1.0, 0.0, 0.0 );
+
   DC->renderScene( &refdef );
 
 }
@@ -5741,7 +6010,7 @@ void Item_ListBox_Paint( itemDef_t *item )
               DC->drawHandlePic( x + columnPos, y + ( ( listPtr->elementHeight - height ) / 2.0f ),
                   width, height, optionalImage );
             }
-            else if( text )
+            else if( text[ 0 ] )
             {
               int alignOffset = 0.0f, tw;
 
@@ -5793,7 +6062,7 @@ void Item_ListBox_Paint( itemDef_t *item )
 
           if( optionalImage >= 0 )
             DC->drawHandlePic( x + offset, y, listPtr->elementHeight, listPtr->elementHeight, optionalImage );
-          else if( text )
+          else if( text[ 0 ] )
           {
             UI_Text_Paint( x + offset, y + m + ( ( listPtr->elementHeight - m ) / 2.0f ),
                 item->textscale, item->window.foreColor, text, 0,
@@ -5898,7 +6167,7 @@ void Item_OwnerDraw_Paint( itemDef_t *item )
           item->textalignx, item->textaligny,
           item->window.ownerDraw, item->window.ownerDrawFlags,
           item->alignment, item->textalignment, item->textvalignment,
-          item->special, item->textscale, color,
+          item->special, item->textscale, color, item->window.backColor,
           item->window.background, item->textStyle );
     }
   }
@@ -6314,6 +6583,28 @@ void Menu_HandleMouseMove( menuDef_t *menu, float x, float y )
   if( g_waitingForKey || g_editingField )
     return;
 
+  // KTW: Draggable windows
+  if ( (menu->window.flags & WINDOW_HASFOCUS) && (menu->window.flags & WINDOW_DRAG))
+  {
+    menu->window.rect.x +=  DC->cursordx;
+    menu->window.rect.y +=  DC->cursordy;
+
+    if (menu->window.rect.x < 0)
+      menu->window.rect.x = 0;
+    if (menu->window.rect.x + menu->window.rect.w > SCREEN_WIDTH)
+      menu->window.rect.x = SCREEN_WIDTH-menu->window.rect.w;
+
+    if (menu->window.rect.y < 0)
+      menu->window.rect.y = 0;
+    if (menu->window.rect.y + menu->window.rect.h > SCREEN_HEIGHT)
+      menu->window.rect.y = SCREEN_HEIGHT-menu->window.rect.h;
+
+    Menu_UpdatePosition(menu);
+
+    for (i = 0; i < menu->itemCount; i++)
+      Item_UpdatePosition(menu->items[i]);
+  }
+
   // FIXME: this is the whole issue of focus vs. mouse over..
   // need a better overall solution as i don't like going through everything twice
   for( pass = 0; pass < 2; pass++ )
@@ -6376,7 +6667,9 @@ void Menu_HandleMouseMove( menuDef_t *menu, float x, float y )
 void Menu_Paint( menuDef_t *menu, qboolean forcePaint )
 {
   int i;
-
+  itemDef_t item;
+  char listened_text[1024];
+  
   if( menu == NULL )
     return;
 
@@ -6388,6 +6681,18 @@ void Menu_Paint( menuDef_t *menu, qboolean forcePaint )
 
   if( forcePaint )
     menu->window.flags |= WINDOW_FORCED;
+
+  //Executes the text stored in the listened cvar as an UIscript
+  if( menu->listenCvar && menu->listenCvar[0] )
+  {
+    DC->getCVarString( menu->listenCvar, listened_text, sizeof(listened_text) );
+    if( listened_text[0] )
+    {
+      item.parent = menu;
+      Item_RunScript( &item, listened_text );
+      DC->setCVar( menu->listenCvar, "" );
+    }
+  }
 
   // draw the background if necessary
   if( menu->fullScreen )
@@ -6665,6 +6970,38 @@ qboolean ItemParse_model_angle( itemDef_t *item, int handle )
   return qtrue;
 }
 
+// model_axis <number> <number> <number> //:://
+qboolean ItemParse_model_axis( itemDef_t *item, int handle ) {
+  modelDef_t *modelPtr;
+  Item_ValidateTypeData(item);
+  modelPtr = (modelDef_t*)item->typeData;
+
+  if (!PC_Float_Parse(handle, &modelPtr->axis[0])) return qfalse;
+  if (!PC_Float_Parse(handle, &modelPtr->axis[1])) return qfalse;
+  if (!PC_Float_Parse(handle, &modelPtr->axis[2])) return qfalse;
+
+  return qtrue;
+}
+
+// model_animplay <int(startframe)> <int(numframes)> <int(fps)>
+qboolean ItemParse_model_animplay(itemDef_t *item, int handle ) {
+  modelDef_t *modelPtr;
+  Item_ValidateTypeData(item);
+  modelPtr = (modelDef_t*)item->typeData;
+
+  modelPtr->animated = 1;
+
+  if (!PC_Int_Parse(handle, &modelPtr->startframe))	return qfalse;
+  if (!PC_Int_Parse(handle, &modelPtr->numframes))	return qfalse;
+  if (!PC_Int_Parse(handle, &modelPtr->fps))			return qfalse;
+
+  modelPtr->frame		= modelPtr->startframe + 1;
+  modelPtr->oldframe	= modelPtr->startframe;
+  modelPtr->backlerp	= 0.0f;
+  modelPtr->frameTime = DC->realTime;
+  return qtrue;
+}
+
 // rect <rectangle>
 qboolean ItemParse_rect( itemDef_t *item, int handle )
 {
@@ -6873,6 +7210,7 @@ qboolean ItemParse_visible( itemDef_t *item, int handle )
   if( !PC_Int_Parse( handle, &i ) )
     return qfalse;
 
+  item->window.flags &= ~WINDOW_VISIBLE;
   if( i )
     item->window.flags |= WINDOW_VISIBLE;
 
@@ -7417,6 +7755,8 @@ keywordHash_t itemParseKeywords[] = {
   {"model_fovy", ItemParse_model_fovy, NULL},
   {"model_rotation", ItemParse_model_rotation, NULL},
   {"model_angle", ItemParse_model_angle, NULL},
+  {"model_axis", ItemParse_model_axis, NULL},
+  {"model_animplay", ItemParse_model_animplay, NULL},
   {"rect", ItemParse_rect, NULL},
   {"aspectBias", ItemParse_aspectBias, NULL},
   {"style", ItemParse_style, NULL},
@@ -7597,10 +7937,15 @@ qboolean MenuParse_name( itemDef_t *item, int handle )
 qboolean MenuParse_fullscreen( itemDef_t *item, int handle )
 {
   menuDef_t *menu = ( menuDef_t* )item;
+  union
+  {
+    qboolean b;
+    int i;
+  } fullScreen;
 
-  if( !PC_Int_Parse( handle, ( int* ) & menu->fullScreen ) )
+  if( !PC_Int_Parse( handle, &fullScreen.i ) )
     return qfalse;
-
+  menu->fullScreen = fullScreen.b;
   return qtrue;
 }
 
@@ -7644,6 +7989,20 @@ qboolean MenuParse_visible( itemDef_t *item, int handle )
 
   if( i )
     menu->window.flags |= WINDOW_VISIBLE;
+
+  return qtrue;
+}
+
+qboolean MenuParse_dontCloseAll( itemDef_t *item, int handle )
+{
+  int i;
+  menuDef_t *menu = ( menuDef_t* )item;
+
+  if( !PC_Int_Parse( handle, &i ) )
+    return qfalse;
+
+  if( i )
+    menu->window.flags |= WINDOW_DONTCLOSEALL;
 
   return qtrue;
 }
@@ -7869,6 +8228,16 @@ qboolean MenuParse_soundLoop( itemDef_t *item, int handle )
   return qtrue;
 }
 
+qboolean MenuParse_listenTo( itemDef_t *item, int handle )
+{
+  menuDef_t *menu = ( menuDef_t* )item;
+
+  if( !PC_String_Parse( handle, &menu->listenCvar ) )
+    return qfalse;
+
+  return qtrue;
+}
+
 qboolean MenuParse_fadeClamp( itemDef_t *item, int handle )
 {
   menuDef_t *menu = ( menuDef_t* )item;
@@ -7907,7 +8276,10 @@ qboolean MenuParse_itemDef( itemDef_t *item, int handle )
 
   if( menu->itemCount < MAX_MENUITEMS )
   {
-    menu->items[menu->itemCount] = UI_Alloc( sizeof( itemDef_t ) );
+    if(DC->hudloading)
+      menu->items[menu->itemCount] = UI_HUDAlloc(sizeof(itemDef_t));
+    else
+      menu->items[menu->itemCount] = UI_Alloc(sizeof(itemDef_t));
     Item_Init( menu->items[menu->itemCount] );
 
     if( !Item_Parse( handle, menu->items[menu->itemCount] ) )
@@ -7928,6 +8300,7 @@ keywordHash_t menuParseKeywords[] = {
   {"aspectBias", MenuParse_aspectBias, NULL},
   {"style", MenuParse_style, NULL},
   {"visible", MenuParse_visible, NULL},
+  {"dontCloseAll", MenuParse_dontCloseAll, NULL},
   {"onOpen", MenuParse_onOpen, NULL},
   {"onClose", MenuParse_onClose, NULL},
   {"onESC", MenuParse_onESC, NULL},
@@ -7944,6 +8317,7 @@ keywordHash_t menuParseKeywords[] = {
   {"ownerdrawFlag", MenuParse_ownerdrawFlag, NULL},
   {"outOfBoundsClick", MenuParse_outOfBounds, NULL},
   {"soundLoop", MenuParse_soundLoop, NULL},
+  {"listento", MenuParse_listenTo, NULL},
   {"itemDef", MenuParse_itemDef, NULL},
   {"cinematic", MenuParse_cinematic, NULL},
   {"popup", MenuParse_popup, NULL},
@@ -8060,8 +8434,8 @@ void Menu_PaintAll( void )
       captureFunc( captureData );
   }
 
-  for( i = 0; i < Menu_Count(); i++ )
-    Menu_Paint( &Menus[i], qfalse );
+  for( i = 0; i < openMenuCount; i++ )
+    Menu_Paint( menuStack[i], qfalse );
 
   if( DC->getCVarValue( "ui_developer" ) )
   {

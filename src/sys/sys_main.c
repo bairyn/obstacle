@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -31,14 +31,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <ctype.h>
 #include <errno.h>
 
-#ifndef DEDICATED
-#ifdef USE_LOCAL_HEADERS
-#	include "SDL.h"
-#	include "SDL_cpuinfo.h"
-#else
+#if !DEDICATED && !BUILD_TTY_CLIENT
 #	include <SDL.h>
 #	include <SDL_cpuinfo.h>
-#endif
 #endif
 
 #include "sys_local.h"
@@ -49,6 +44,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static char binaryPath[ MAX_OSPATH ] = { 0 };
 static char installPath[ MAX_OSPATH ] = { 0 };
+static qboolean signalcaught = qfalse;
+#ifdef USE_CURSES
+static qboolean nocurses = qfalse;
+#endif
 
 /*
 =================
@@ -112,8 +111,7 @@ Restart the input subsystem
 */
 void Sys_In_Restart_f( void )
 {
-	IN_Shutdown();
-	IN_Init();
+	IN_Restart( );
 }
 
 /*
@@ -139,7 +137,7 @@ void Sys_Exit( int ex )
 {
 	CON_Shutdown( );
 
-#ifndef DEDICATED
+#if !DEDICATED && !BUILD_TTY_CLIENT
 	SDL_Quit( );
 #endif
 
@@ -172,7 +170,7 @@ cpuFeatures_t Sys_GetProcessorFeatures( void )
 {
 	cpuFeatures_t features = 0;
 
-#ifndef DEDICATED
+#if !DEDICATED && !BUILD_TTY_CLIENT
 	if( SDL_HasRDTSC( ) )    features |= CF_RDTSC;
 	if( SDL_HasMMX( ) )      features |= CF_MMX;
 	if( SDL_HasMMXExt( ) )   features |= CF_MMX_EXT;
@@ -296,7 +294,7 @@ void Sys_Error( const char *error, ... )
 
 	Sys_ErrorDialog( string );
 
-	Sys_Exit( 1 );
+	Sys_Exit( !signalcaught );
 }
 
 /*
@@ -362,12 +360,12 @@ static void* Sys_TryLibraryLoad(const char* base, const char* gamedir, const cha
 	*fqpath = 0;
 
 	fn = FS_BuildOSPath( base, gamedir, fname );
-	Com_Printf( "Sys_LoadDll(%s)... \n", fn );
+	Com_DPrintf( "Sys_LoadDll(%s)... \n", fn );
 
 	libHandle = Sys_LoadLibrary(fn);
 
 	if(!libHandle) {
-		Com_Printf( "Sys_LoadDll(%s) failed:\n\"%s\"\n", fn, Sys_LibraryError() );
+		Com_DPrintf( "Sys_LoadDll(%s) failed:\n\"%s\"\n", fn, Sys_LibraryError() );
 		return NULL;
 	}
 
@@ -396,6 +394,7 @@ void *Sys_LoadDll( const char *name, char *fqpath ,
 	char  fname[MAX_OSPATH];
 	char  *basepath;
 	char  *homepath;
+	char  *extrapath;
 	char  *pwdpath;
 	char  *gamedir;
 
@@ -407,14 +406,18 @@ void *Sys_LoadDll( const char *name, char *fqpath ,
 	pwdpath = Sys_Cwd();
 	basepath = Cvar_VariableString( "fs_basepath" );
 	homepath = Cvar_VariableString( "fs_homepath" );
+	extrapath = Cvar_VariableString( "fs_extrapath" );
 	gamedir = Cvar_VariableString( "fs_game" );
 
 	libHandle = Sys_TryLibraryLoad(pwdpath, gamedir, fname, fqpath);
 
-	if(!libHandle && homepath)
+	if(!libHandle && *homepath)
 		libHandle = Sys_TryLibraryLoad(homepath, gamedir, fname, fqpath);
 
-	if(!libHandle && basepath)
+	if(!libHandle && *extrapath)
+		libHandle = Sys_TryLibraryLoad(extrapath, gamedir, fname, fqpath);
+
+	if(!libHandle && *basepath)
 		libHandle = Sys_TryLibraryLoad(basepath, gamedir, fname, fqpath);
 
 	if(!libHandle) {
@@ -433,46 +436,10 @@ void *Sys_LoadDll( const char *name, char *fqpath ,
 		return NULL;
 	}
 
-	Com_Printf ( "Sys_LoadDll(%s) found vmMain function at %p\n", name, *entryPoint );
+	Com_DPrintf ( "Sys_LoadDll(%s) found vmMain function at %p\n", name, *entryPoint );
 	dllEntry( systemcalls );
 
 	return libHandle;
-}
-
-/*
-=================
-Sys_Idle
-=================
-*/
-static void Sys_Idle( void )
-{
-#ifndef DEDICATED
-	int appState = SDL_GetAppState( );
-	int sleep = 0;
-
-	// If we have no input focus at all, sleep a bit
-	if( !( appState & ( SDL_APPMOUSEFOCUS | SDL_APPINPUTFOCUS ) ) )
-	{
-		Cvar_SetValue( "com_unfocused", 1 );
-		sleep += 16;
-	}
-	else
-		Cvar_SetValue( "com_unfocused", 0 );
-
-	// If we're minimised, sleep a bit more
-	if( !( appState & SDL_APPACTIVE ) )
-	{
-		Cvar_SetValue( "com_minimized", 1 );
-		sleep += 32;
-	}
-	else
-		Cvar_SetValue( "com_minimized", 0 );
-
-	if( !com_dedicated->integer && sleep )
-		SDL_Delay( sleep );
-#else
-	// Dedicated server idles via NET_Sleep
-#endif
 }
 
 /*
@@ -482,6 +449,8 @@ Sys_ParseArgs
 */
 void Sys_ParseArgs( int argc, char **argv )
 {
+	int i;
+
 	if( argc == 2 )
 	{
 		if( !strcmp( argv[1], "--version" ) ||
@@ -496,6 +465,17 @@ void Sys_ParseArgs( int argc, char **argv )
 			Sys_Exit(0);
 		}
 	}
+
+#ifdef USE_CURSES
+	for (i = 1; i < argc; i++)
+	{
+		if( !strcmp( argv[i], "+nocurses" ) )
+		{
+			nocurses = qtrue;
+			break;
+		}
+	}
+#endif
 }
 
 #ifndef DEFAULT_BASEDIR
@@ -513,8 +493,6 @@ Sys_SigHandler
 */
 void Sys_SigHandler( int signal )
 {
-	static qboolean signalcaught = qfalse;
-
 	if( signalcaught )
 	{
 		fprintf( stderr, "DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n",
@@ -523,11 +501,7 @@ void Sys_SigHandler( int signal )
 	else
 	{
 		signalcaught = qtrue;
-		fprintf( stderr, "Received signal %d, exiting...\n", signal );
-#ifndef DEDICATED
-		CL_Shutdown();
-#endif
-		SV_Shutdown( "Signal caught" );
+		Com_Error( ERR_FATAL, "Caught signal %d", signal );
 	}
 
 	Sys_Exit( 0 ); // Exit with 0 to avoid recursive signals
@@ -543,7 +517,7 @@ int main( int argc, char **argv )
 	int   i;
 	char  commandLine[ MAX_STRING_CHARS ] = { 0 };
 
-#ifndef DEDICATED
+#if !DEDICATED && !BUILD_TTY_CLIENT
 	// SDL version check
 
 	// Compile time
@@ -569,8 +543,10 @@ int main( int argc, char **argv )
 	}
 #endif
 
+	Sys_PlatformInit( );
+
 	Sys_ParseArgs( argc, argv );
-	Sys_SetBinaryPath( Sys_Dirname( argv[ 0 ] ) );
+	Sys_SetBinaryPath( Sys_Dirname( Sys_ResolveLink( argv[ 0 ] ) ) );
 	Sys_SetDefaultInstallPath( DEFAULT_BASEDIR );
 
 	// Concatenate the command line for passing to Com_Init
@@ -580,20 +556,17 @@ int main( int argc, char **argv )
 		Q_strcat( commandLine, sizeof( commandLine ), " " );
 	}
 
+#ifdef USE_CURSES
+	void CON_Init_tty(void);
+	if (nocurses)
+		CON_Init_tty( );
+	else
+		CON_Init( );
+#else
+	CON_Init( );
+#endif
 	Com_Init( commandLine );
 	NET_Init( );
-
-	CON_Init( );
-
-#ifndef _WIN32
-	// Windows doesn't have these signals
-	// see CON_CtrlHandler() in con_win32.c
-	signal( SIGHUP, Sys_SigHandler );
-	signal( SIGQUIT, Sys_SigHandler );
-	signal( SIGTRAP, Sys_SigHandler );
-	signal( SIGIOT, Sys_SigHandler );
-	signal( SIGBUS, Sys_SigHandler );
-#endif
 
 	signal( SIGILL, Sys_SigHandler );
 	signal( SIGFPE, Sys_SigHandler );
@@ -602,7 +575,17 @@ int main( int argc, char **argv )
 
 	while( 1 )
 	{
-		Sys_Idle( );
+#if !DEDICATED && !BUILD_TTY_CLIENT
+		int appState = SDL_GetAppState( );
+
+		Cvar_SetValue( "com_unfocused", !( appState & SDL_APPINPUTFOCUS ) );
+		Cvar_SetValue( "com_minimized", !( appState & SDL_APPACTIVE ) );
+#else
+		// For minimal cpu usage in tty client
+		Cvar_Set( "com_unfocused", "1" );
+		Cvar_Set( "com_minimized", "1" );
+#endif
+
 		IN_Frame( );
 		Com_Frame( );
 	}

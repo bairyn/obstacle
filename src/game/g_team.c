@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -32,7 +32,7 @@ void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... )
 
   va_start( argptr,fmt );
 
-  if( vsprintf( msg, fmt, argptr ) > sizeof( msg ) )
+  if( Q_vsnprintf( msg, sizeof( msg ), fmt, argptr ) > sizeof( msg ) )
     G_Error ( "PrintMsg overrun" );
 
   va_end( argptr );
@@ -44,6 +44,23 @@ void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... )
   trap_SendServerCommand( ( ( ent == NULL ) ? -1 : ent-g_entities ), va( "print \"%s\"", msg ) );
 }
 
+/*
+================
+G_TeamFromString
+
+Return the team referenced by a string
+================
+*/
+team_t G_TeamFromString( char *str )
+{
+  switch( tolower( *str ) )
+  {
+    case '0': case 's': return TEAM_NONE;
+    case '1': case 'a': return TEAM_ALIENS;
+    case '2': case 'h': return TEAM_HUMANS;
+    default: return NUM_TEAMS;
+  }
+}
 
 /*
 ==============
@@ -59,6 +76,129 @@ qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 )
     return qtrue;
 
   return qfalse;
+}
+
+/*
+==================
+G_LeaveTeam
+==================
+*/
+void G_LeaveTeam( gentity_t *self )
+{
+  team_t    team = self->client->pers.teamSelection;
+  gentity_t *ent;
+  int       i;
+
+  if( team == TEAM_ALIENS )
+    G_RemoveFromSpawnQueue( &level.alienSpawnQueue, self->client->ps.clientNum );
+  else if( team == TEAM_HUMANS )
+    G_RemoveFromSpawnQueue( &level.humanSpawnQueue, self->client->ps.clientNum );
+  else
+  {
+    if( self->client->sess.spectatorState == SPECTATOR_FOLLOW )
+      G_StopFollowing( self );
+    return;
+  }
+
+  // stop any following clients
+  G_StopFromFollowing( self );
+
+  G_TeamVote( self, qfalse );
+  self->suicideTime = 0;
+
+  for( i = 0; i < level.num_entities; i++ )
+  {
+    ent = &g_entities[ i ];
+    if( !ent->inuse )
+      continue;
+
+    if( ent->client && ent->client->pers.connected == CON_CONNECTED )
+    {
+      // cure poison
+      if( ent->client->ps.stats[ STAT_STATE ] & SS_POISONED &&
+          ent->client->lastPoisonClient == self )
+        ent->client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
+    }
+    else if( ent->s.eType == ET_MISSILE && ent->r.ownerNum == self->s.number )
+      G_FreeEntity( ent );
+  }
+}
+
+/*
+=================
+G_ChangeTeam
+=================
+*/
+void G_ChangeTeam( gentity_t *ent, team_t newTeam )
+{
+  team_t  oldTeam = ent->client->pers.teamSelection;
+
+  if( oldTeam == newTeam )
+    return;
+
+  G_LeaveTeam( ent );
+  ent->client->pers.teamSelection = newTeam;
+
+  // under certain circumstances, clients can keep their kills and credits
+  // when switching teams
+  if( G_admin_permission( ent, ADMF_TEAMCHANGEFREE ) ||
+    ( ( oldTeam == TEAM_HUMANS || oldTeam == TEAM_ALIENS ) &&
+      ( level.time - ent->client->pers.teamChangeTime ) > 60000 ) )
+  {
+    if( oldTeam == TEAM_NONE )
+    {
+      // ps.persistant[] from a spectator cannot be trusted
+      ent->client->ps.persistant[ PERS_CREDIT ] = ent->client->pers.savedCredit;
+    }
+    else if( oldTeam == TEAM_HUMANS )
+    {
+      // always save in alien credits
+      ent->client->ps.persistant[ PERS_CREDIT ] *=
+        ( ALIEN_MAX_CREDITS / (float)HUMAN_MAX_CREDITS );
+    }
+
+    if( newTeam == TEAM_NONE )
+    {
+      // save values before the client enters the spectator team and their
+      // ps.persistant[] values become trashed
+      ent->client->pers.savedCredit = ent->client->ps.persistant[ PERS_CREDIT ];
+    }
+    else if( newTeam == TEAM_HUMANS )
+    {
+      // convert to alien currency
+      ent->client->ps.persistant[ PERS_CREDIT ] *=
+        ( HUMAN_MAX_CREDITS / (float)ALIEN_MAX_CREDITS );
+    }
+  }
+  else
+  {
+    ent->client->ps.persistant[ PERS_CREDIT ] = 0;
+    ent->client->ps.persistant[ PERS_SCORE ] = 0;
+    ent->client->pers.savedCredit = 0;
+  }
+
+  ent->client->pers.classSelection = PCL_NONE;
+  ClientSpawn( ent, NULL, NULL, NULL );
+
+  ent->client->pers.joinedATeam = qtrue;
+  ent->client->pers.teamChangeTime = level.time;
+
+  //update ClientInfo
+  ClientUserinfoChanged( ent->client->ps.clientNum );
+
+  if( oldTeam != TEAM_NONE && newTeam != TEAM_NONE )
+    G_LogPrintf(
+      "team: %i %i %i: %s" S_COLOR_WHITE " left the %ss and joined the %ss\n",
+       ent->s.number, newTeam, oldTeam, ent->client->pers.netname,
+       BG_TeamName( oldTeam ), BG_TeamName( newTeam ) );
+  else if( newTeam == TEAM_NONE )
+    G_LogPrintf( "team: %i %i %i: %s" S_COLOR_WHITE " left the %ss\n",
+      ent->s.number, newTeam, oldTeam, ent->client->pers.netname,
+      BG_TeamName( oldTeam ) );
+  else
+    G_LogPrintf( "team: %i %i %i: %s" S_COLOR_WHITE " joined the %ss\n",
+      ent->s.number, newTeam, oldTeam, ent->client->pers.netname,
+      BG_TeamName( newTeam ) );
 }
 
 /*
@@ -170,8 +310,8 @@ void TeamplayInfoMessage( gentity_t *ent )
   {
     player = g_entities + level.sortedClients[ i ];
 
-    if( player->inuse && player->client->sess.sessionTeam ==
-        ent->client->sess.sessionTeam )
+    if( player->inuse && player->client->ps.stats[ STAT_TEAM ] ==
+        ent->client->ps.stats[ STAT_TEAM ] )
       clients[ cnt++ ] = level.sortedClients[ i ];
   }
 
@@ -186,8 +326,8 @@ void TeamplayInfoMessage( gentity_t *ent )
   {
     player = g_entities + i;
 
-    if( player->inuse && player->client->sess.sessionTeam ==
-        ent->client->sess.sessionTeam )
+    if( player->inuse && player->client->ps.stats[ STAT_TEAM ] ==
+        ent->client->ps.stats[ STAT_TEAM ] )
     {
       h = player->client->ps.stats[ STAT_HEALTH ];
 
@@ -196,7 +336,7 @@ void TeamplayInfoMessage( gentity_t *ent )
 
       Com_sprintf( entry, sizeof( entry ),
         " %i %i %i %i %i",
-        i, player->client->pers.teamState.location, h, a,
+        i, player->client->pers.location, h, a,
         player->client->ps.weapon );
 
       j = strlen( entry );
@@ -228,16 +368,16 @@ void CheckTeamStatus( void )
       if( ent->client->pers.connected != CON_CONNECTED )
         continue;
 
-      if( ent->inuse && ( ent->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS ||
-                          ent->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS ) )
+      if( ent->inuse && ( ent->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS ||
+                          ent->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS ) )
       {
 
         loc = Team_GetLocation( ent );
 
         if( loc )
-          ent->client->pers.teamState.location = loc->health;
+          ent->client->pers.location = loc->health;
         else
-          ent->client->pers.teamState.location = 0;
+          ent->client->pers.location = 0;
       }
     }
 
@@ -247,29 +387,9 @@ void CheckTeamStatus( void )
       if( ent->client->pers.connected != CON_CONNECTED )
         continue;
 
-      if( ent->inuse && ( ent->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS ||
-                          ent->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS ) )
+      if( ent->inuse && ( ent->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS ||
+                          ent->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS ) )
         TeamplayInfoMessage( ent );
     }
-  }
-
-  //Warn on unbalanced teams
-  if ( g_teamImbalanceWarnings.integer && !level.intermissiontime && level.time - level.lastTeamUnbalancedTime > ( g_teamImbalanceWarnings.integer * 1000 ) && level.numTeamWarnings<3 && !level.oc )
-  {
-      level.lastTeamUnbalancedTime = level.time;
-      if (level.numAlienSpawns > 0 && level.numHumanClients - level.numAlienClients > 2)
-      {
-          trap_SendServerCommand (-1, "print \"Teams are unbalanced. Humans have more players.\n Humans will keep their points when switching teams.\n\"");
-          level.numTeamWarnings++;
-      }
-      else if (level.numHumanSpawns > 0 && level.numAlienClients - level.numHumanClients > 2)
-      {
-          trap_SendServerCommand (-1, "print \"Teams are unbalanced. Aliens have more players.\n Aliens will keep their points when switching teams.\n\"");
-          level.numTeamWarnings++;
-      }
-      else
-      {
-          level.numTeamWarnings = 0;
-      }
   }
 }

@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -29,8 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../ui/ui_shared.h"
 // display context for new ui stuff
 displayContextDef_t cgDC;
-
-int forceModelModificationCount = -1;
 
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum );
 void CG_Shutdown( void );
@@ -68,13 +66,17 @@ intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
       CG_DrawActiveFrame( arg0, arg1, arg2 );
       return 0;
 
+    case CG_CROSSHAIR_PLAYER:
+      return CG_CrosshairPlayer( );
+
+    case CG_LAST_ATTACKER:
+      return CG_LastAttacker( );
+
     case CG_KEY_EVENT:
       CG_KeyEvent( arg0, arg1 );
       return 0;
 
     case CG_MOUSE_EVENT:
-      cgDC.cursorx = cgs.cursorX;
-      cgDC.cursory = cgs.cursorY;
       CG_MouseEvent( arg0, arg1 );
       return 0;
 
@@ -100,30 +102,24 @@ upgradeInfo_t   cg_upgrades[ 32 ];
 
 buildableInfo_t cg_buildables[ BA_NUM_BUILDABLES ];
 
+vmCvar_t  cg_version;
 vmCvar_t  cg_teslaTrailTime;
-vmCvar_t  cg_railTrailTime;
 vmCvar_t  cg_centertime;
 vmCvar_t  cg_runpitch;
 vmCvar_t  cg_runroll;
-vmCvar_t  cg_bobup;
-vmCvar_t  cg_bobpitch;
-vmCvar_t  cg_bobroll;
 vmCvar_t  cg_swingSpeed;
 vmCvar_t  cg_shadows;
-vmCvar_t  cg_gibs;
 vmCvar_t  cg_drawTimer;
 vmCvar_t  cg_drawClock;
 vmCvar_t  cg_drawFPS;
+vmCvar_t  cg_drawSpeed;
 vmCvar_t  cg_drawDemoState;
 vmCvar_t  cg_drawSnapshot;
-vmCvar_t  cg_draw3dIcons;
-vmCvar_t  cg_drawIcons;
-vmCvar_t  cg_drawAmmoWarning;
+vmCvar_t  cg_drawChargeBar;
 vmCvar_t  cg_drawCrosshair;
 vmCvar_t  cg_drawCrosshairNames;
-vmCvar_t  cg_drawRewards;
-vmCvar_t  cg_crosshairX;
-vmCvar_t  cg_crosshairY;
+vmCvar_t  cg_crosshairSize;
+vmCvar_t  cg_drawAmmoStack;
 vmCvar_t  cg_draw2D;
 vmCvar_t  cg_drawStatus;
 vmCvar_t  cg_animSpeed;
@@ -148,55 +144,39 @@ vmCvar_t  cg_tracerChance;
 vmCvar_t  cg_tracerWidth;
 vmCvar_t  cg_tracerLength;
 vmCvar_t  cg_autoswitch;
-vmCvar_t  cg_ignore;
-vmCvar_t  cg_simpleItems;
-vmCvar_t  cg_fov;
-vmCvar_t  cg_zoomFov;
 vmCvar_t  cg_thirdPerson;
+vmCvar_t  cg_thirdPersonShoulderViewMode;
+vmCvar_t  cg_thirdPersonPitchFollow;
 vmCvar_t  cg_thirdPersonRange;
-vmCvar_t  cg_thirdPersonAngle;
+vmCvar_t  cg_shoulderViewOverride;
+vmCvar_t  cg_shoulderViewUp;
+vmCvar_t  cg_shoulderViewRight;
+vmCvar_t  cg_shoulderViewForward;
 vmCvar_t  cg_stereoSeparation;
 vmCvar_t  cg_lagometer;
-vmCvar_t  cg_drawAttacker;
 vmCvar_t  cg_synchronousClients;
 vmCvar_t  cg_stats;
-vmCvar_t  cg_buildScript;
-vmCvar_t  cg_forceModel;
 vmCvar_t  cg_paused;
 vmCvar_t  cg_blood;
-vmCvar_t  cg_deferPlayers;
-vmCvar_t  cg_drawTeamOverlay;
-vmCvar_t  cg_teamOverlayUserinfo;
 vmCvar_t  cg_drawFriend;
 vmCvar_t  cg_teamChatsOnly;
+vmCvar_t  cg_noPrintDuplicate;
 vmCvar_t  cg_noVoiceChats;
 vmCvar_t  cg_noVoiceText;
 vmCvar_t  cg_hudFiles;
-vmCvar_t  cg_scorePlum;
+vmCvar_t  cg_hudFilesEnable;
 vmCvar_t  cg_smoothClients;
 vmCvar_t  pmove_fixed;
 vmCvar_t  pmove_msec;
-vmCvar_t  cg_pmove_msec;
 vmCvar_t  cg_cameraMode;
-vmCvar_t  cg_cameraOrbit;
-vmCvar_t  cg_cameraOrbitDelay;
 vmCvar_t  cg_timescaleFadeEnd;
 vmCvar_t  cg_timescaleFadeSpeed;
 vmCvar_t  cg_timescale;
-vmCvar_t  cg_smallFont;
-vmCvar_t  cg_bigFont;
 vmCvar_t  cg_noTaunt;
-vmCvar_t  cg_noProjectileTrail;
-vmCvar_t  cg_oldRail;
-vmCvar_t  cg_oldRocket;
-vmCvar_t  cg_oldPlasma;
-vmCvar_t  cg_trueLightning;
 vmCvar_t  cg_drawSurfNormal;
 vmCvar_t  cg_drawBBOX;
-vmCvar_t  cg_debugAlloc;
 vmCvar_t  cg_wwSmoothTime;
-vmCvar_t  cg_wwFollow;
-vmCvar_t  cg_wwToggle;
+vmCvar_t  cg_flySpeed;
 vmCvar_t  cg_depthSortParticles;
 vmCvar_t  cg_bounceParticles;
 vmCvar_t  cg_consoleLatency;
@@ -205,6 +185,9 @@ vmCvar_t  cg_debugParticles;
 vmCvar_t  cg_debugTrails;
 vmCvar_t  cg_debugPVS;
 vmCvar_t  cg_disableWarningDialogs;
+vmCvar_t  cg_disableUpgradeDialogs;
+vmCvar_t  cg_disableBuildDialogs;
+vmCvar_t  cg_disableCommandDialogs;
 vmCvar_t  cg_disableScannerPlane;
 vmCvar_t  cg_tutorial;
 
@@ -214,9 +197,15 @@ vmCvar_t  cg_painBlendMax;
 vmCvar_t  cg_painBlendScale;
 vmCvar_t  cg_painBlendZoom;
 
+vmCvar_t  cg_debugVoices;
+
+vmCvar_t  cg_stickySpec;
+vmCvar_t  cg_alwaysSprint;
+vmCvar_t  cg_unlagged;
+
 vmCvar_t  ui_currentClass;
 vmCvar_t  ui_carriage;
-vmCvar_t  ui_stages;
+vmCvar_t  ui_stage;
 vmCvar_t  ui_dialog;
 vmCvar_t  ui_voteActive;
 vmCvar_t  ui_alienTeamVoteActive;
@@ -226,6 +215,17 @@ vmCvar_t  cg_debugRandom;
 
 vmCvar_t  cg_optimizePrediction;
 vmCvar_t  cg_projectileNudge;
+
+vmCvar_t  cg_drawBuildableStatus;
+vmCvar_t  cg_hideHealthyBuildableStatus;
+vmCvar_t  cg_drawTeamStatus;
+vmCvar_t  cg_hideHealthyTeamStatus;
+
+vmCvar_t  cg_suppressWAnimWarnings;
+
+vmCvar_t  cg_voice;
+vmCvar_t  cg_emoticons;
+vmCvar_t  cg_drawAlienFeedback;
 
 
 typedef struct
@@ -238,46 +238,35 @@ typedef struct
 
 static cvarTable_t cvarTable[ ] =
 {
-  { &cg_ignore, "cg_ignore", "0", 0 },  // used for debugging
+  { &cg_version, "cg_version", PRODUCT_NAME, CVAR_ROM | CVAR_USERINFO },
   { &cg_autoswitch, "cg_autoswitch", "1", CVAR_ARCHIVE },
   { &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
-  { &cg_zoomFov, "cg_zoomfov", "22.5", CVAR_ARCHIVE },
-  { &cg_fov, "cg_fov", "90", CVAR_ARCHIVE },
   { &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
   { &cg_stereoSeparation, "cg_stereoSeparation", "0.4", CVAR_ARCHIVE  },
   { &cg_shadows, "cg_shadows", "1", CVAR_ARCHIVE  },
-  { &cg_gibs, "cg_gibs", "1", CVAR_ARCHIVE  },
   { &cg_draw2D, "cg_draw2D", "1", CVAR_ARCHIVE  },
   { &cg_drawStatus, "cg_drawStatus", "1", CVAR_ARCHIVE  },
   { &cg_drawTimer, "cg_drawTimer", "1", CVAR_ARCHIVE  },
-  { &cg_drawClock, "cg_drawClock", "0", CVAR_ARCHIVE  },
+  { &cg_drawClock, "cg_drawClock", "1", CVAR_ARCHIVE  },
   { &cg_drawFPS, "cg_drawFPS", "1", CVAR_ARCHIVE  },
+  { &cg_drawSpeed, "cg_drawSpeed", "0", CVAR_ARCHIVE  },
   { &cg_drawDemoState, "cg_drawDemoState", "1", CVAR_ARCHIVE  },
   { &cg_drawSnapshot, "cg_drawSnapshot", "0", CVAR_ARCHIVE  },
-  { &cg_draw3dIcons, "cg_draw3dIcons", "1", CVAR_ARCHIVE  },
-  { &cg_drawIcons, "cg_drawIcons", "1", CVAR_ARCHIVE  },
-  { &cg_drawAmmoWarning, "cg_drawAmmoWarning", "1", CVAR_ARCHIVE  },
-  { &cg_drawAttacker, "cg_drawAttacker", "1", CVAR_ARCHIVE  },
+  { &cg_drawChargeBar, "cg_drawChargeBar", "1", CVAR_ARCHIVE  },
   { &cg_drawCrosshair, "cg_drawCrosshair", "1", CVAR_ARCHIVE },
   { &cg_drawCrosshairNames, "cg_drawCrosshairNames", "1", CVAR_ARCHIVE },
-  { &cg_drawRewards, "cg_drawRewards", "1", CVAR_ARCHIVE },
-  { &cg_crosshairX, "cg_crosshairX", "0", CVAR_ARCHIVE },
-  { &cg_crosshairY, "cg_crosshairY", "0", CVAR_ARCHIVE },
+  { &cg_crosshairSize, "cg_crosshairSize", "1", CVAR_ARCHIVE },
+  { &cg_drawAmmoStack, "cg_drawAmmoStack", "1", CVAR_ARCHIVE },
   { &cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE },
-  { &cg_simpleItems, "cg_simpleItems", "0", CVAR_ARCHIVE },
   { &cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE },
-  { &cg_lagometer, "cg_lagometer", "0", CVAR_ARCHIVE },
+  { &cg_lagometer, "cg_lagometer", "1", CVAR_ARCHIVE },
   { &cg_teslaTrailTime, "cg_teslaTrailTime", "250", CVAR_ARCHIVE  },
-  { &cg_railTrailTime, "cg_railTrailTime", "400", CVAR_ARCHIVE  },
   { &cg_gun_x, "cg_gunX", "0", CVAR_CHEAT },
   { &cg_gun_y, "cg_gunY", "0", CVAR_CHEAT },
   { &cg_gun_z, "cg_gunZ", "0", CVAR_CHEAT },
   { &cg_centertime, "cg_centertime", "3", CVAR_CHEAT },
   { &cg_runpitch, "cg_runpitch", "0.002", CVAR_ARCHIVE},
   { &cg_runroll, "cg_runroll", "0.005", CVAR_ARCHIVE },
-  { &cg_bobup , "cg_bobup", "0.005", CVAR_CHEAT },
-  { &cg_bobpitch, "cg_bobpitch", "0.002", CVAR_ARCHIVE },
-  { &cg_bobroll, "cg_bobroll", "0.002", CVAR_ARCHIVE },
   { &cg_swingSpeed, "cg_swingSpeed", "0.3", CVAR_CHEAT },
   { &cg_animSpeed, "cg_animspeed", "1", CVAR_CHEAT },
   { &cg_debugAnim, "cg_debuganim", "0", CVAR_CHEAT },
@@ -292,24 +281,30 @@ static cvarTable_t cvarTable[ ] =
   { &cg_tracerChance, "cg_tracerchance", "0.4", CVAR_CHEAT },
   { &cg_tracerWidth, "cg_tracerwidth", "1", CVAR_CHEAT },
   { &cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT },
-  { &cg_thirdPersonRange, "cg_thirdPersonRange", "40", CVAR_CHEAT },
-  { &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", CVAR_CHEAT },
+  { &cg_thirdPersonRange, "cg_thirdPersonRange", "75", CVAR_ARCHIVE },
   { &cg_thirdPerson, "cg_thirdPerson", "0", CVAR_CHEAT },
-  { &cg_forceModel, "cg_forceModel", "0", CVAR_ARCHIVE  },
-  { &cg_deferPlayers, "cg_deferPlayers", "1", CVAR_ARCHIVE },
-  { &cg_drawTeamOverlay, "cg_drawTeamOverlay", "0", CVAR_ARCHIVE },
-  { &cg_teamOverlayUserinfo, "teamoverlay", "0", CVAR_ROM | CVAR_USERINFO },
+  { &cg_thirdPersonPitchFollow, "cg_thirdPersonPitchFollow", "0", 0 },
+  { &cg_thirdPersonShoulderViewMode, "cg_thirdPersonShoulderViewMode", "1", CVAR_ARCHIVE },
+  { &cg_shoulderViewOverride, "cg_shoulderViewOverride", "0", 0 },
+  { &cg_shoulderViewUp, "cg_shoulderViewUp", "0", 0 },
+  { &cg_shoulderViewRight, "cg_shoulderViewRight", "0", 0 },
+  { &cg_shoulderViewForward, "cg_shoulderViewForward", "0", 0 },
   { &cg_stats, "cg_stats", "0", 0 },
   { &cg_drawFriend, "cg_drawFriend", "1", CVAR_ARCHIVE },
   { &cg_teamChatsOnly, "cg_teamChatsOnly", "0", CVAR_ARCHIVE },
+  { &cg_noPrintDuplicate, "cg_noPrintDuplicate", "0", CVAR_ARCHIVE },
   { &cg_noVoiceChats, "cg_noVoiceChats", "0", CVAR_ARCHIVE },
   { &cg_noVoiceText, "cg_noVoiceText", "0", CVAR_ARCHIVE },
   { &cg_drawSurfNormal, "cg_drawSurfNormal", "0", CVAR_CHEAT },
   { &cg_drawBBOX, "cg_drawBBOX", "0", CVAR_CHEAT },
-  { &cg_debugAlloc, "cg_debugAlloc", "0", 0 },
   { &cg_wwSmoothTime, "cg_wwSmoothTime", "300", CVAR_ARCHIVE },
-  { &cg_wwFollow, "cg_wwFollow", "1", CVAR_ARCHIVE|CVAR_USERINFO },
-  { &cg_wwToggle, "cg_wwToggle", "1", CVAR_ARCHIVE|CVAR_USERINFO },
+  { NULL, "cg_wwFollow", "1", CVAR_ARCHIVE|CVAR_USERINFO },
+  { NULL, "cg_wwToggle", "1", CVAR_ARCHIVE|CVAR_USERINFO },
+  { NULL, "cg_flySpeed", "600", CVAR_ARCHIVE|CVAR_USERINFO },
+  { &cg_flySpeed, "cg_flySpeed", "500", CVAR_ARCHIVE|CVAR_USERINFO },
+  { &cg_stickySpec, "cg_stickySpec", "1", CVAR_ARCHIVE|CVAR_USERINFO },
+  { &cg_alwaysSprint, "cg_alwaysSprint", "0", CVAR_ARCHIVE|CVAR_USERINFO },
+  { &cg_unlagged, "cg_unlagged", "1", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_depthSortParticles, "cg_depthSortParticles", "1", CVAR_ARCHIVE },
   { &cg_bounceParticles, "cg_bounceParticles", "0", CVAR_ARCHIVE },
   { &cg_consoleLatency, "cg_consoleLatency", "3000", CVAR_ARCHIVE },
@@ -318,9 +313,13 @@ static cvarTable_t cvarTable[ ] =
   { &cg_debugTrails, "cg_debugTrails", "0", CVAR_CHEAT },
   { &cg_debugPVS, "cg_debugPVS", "0", CVAR_CHEAT },
   { &cg_disableWarningDialogs, "cg_disableWarningDialogs", "0", CVAR_ARCHIVE },
+  { &cg_disableUpgradeDialogs, "cg_disableUpgradeDialogs", "0", CVAR_ARCHIVE },
+  { &cg_disableBuildDialogs, "cg_disableBuildDialogs", "0", CVAR_ARCHIVE },
+  { &cg_disableCommandDialogs, "cg_disableCommandDialogs", "0", CVAR_ARCHIVE },
   { &cg_disableScannerPlane, "cg_disableScannerPlane", "0", CVAR_ARCHIVE },
   { &cg_tutorial, "cg_tutorial", "1", CVAR_ARCHIVE },
   { &cg_hudFiles, "cg_hudFiles", "ui/hud.txt", CVAR_ARCHIVE},
+  { &cg_hudFilesEnable, "cg_hudFilesEnable", "0", CVAR_ARCHIVE},
 
   { &cg_painBlendUpRate, "cg_painBlendUpRate", "10.0", 0 },
   { &cg_painBlendDownRate, "cg_painBlendDownRate", "0.5", 0 },
@@ -328,9 +327,11 @@ static cvarTable_t cvarTable[ ] =
   { &cg_painBlendScale, "cg_painBlendScale", "7.0", 0 },
   { &cg_painBlendZoom, "cg_painBlendZoom", "0.65", 0 },
 
+  { &cg_debugVoices, "cg_debugVoices", "0", 0 },
+  
   { &ui_currentClass, "ui_currentClass", "0", 0 },
   { &ui_carriage, "ui_carriage", "", 0 },
-  { &ui_stages, "ui_stages", "0 0", 0 },
+  { &ui_stage, "ui_stage", "0", 0 },
   { &ui_dialog, "ui_dialog", "Text not set", 0 },
   { &ui_voteActive, "ui_voteActive", "0", 0 },
   { &ui_humanTeamVoteActive, "ui_humanTeamVoteActive", "0", 0 },
@@ -341,15 +342,18 @@ static cvarTable_t cvarTable[ ] =
   { &cg_optimizePrediction, "cg_optimizePrediction", "1", CVAR_ARCHIVE },
   { &cg_projectileNudge, "cg_projectileNudge", "1", CVAR_ARCHIVE },
 
+  { &cg_drawBuildableStatus, "cg_drawBuildableStatus", "1", CVAR_ARCHIVE },
+  { &cg_hideHealthyBuildableStatus, "cg_hideHealthyBuildableStatus", "1", CVAR_ARCHIVE },
+  { &cg_drawTeamStatus, "cg_drawTeamStatus", "1", CVAR_USERINFO | CVAR_ARCHIVE },
+  { &cg_hideHealthyTeamStatus, "cg_hideHealthyTeamStatus", "1", CVAR_ARCHIVE },
+  { NULL, "teamoverlay", "1", CVAR_USERINFO | CVAR_ARCHIVE }, //if this is 0 the server will not send tinfo and teammate health will not work
+
   // the following variables are created in other parts of the system,
   // but we also reference them here
 
-  { &cg_buildScript, "com_buildScript", "0", 0 }, // force loading of all possible data amd error on failures
   { &cg_paused, "cl_paused", "0", CVAR_ROM },
   { &cg_blood, "com_blood", "1", CVAR_ARCHIVE },
   { &cg_synchronousClients, "g_synchronousClients", "0", 0 }, // communicated by systeminfo
-  { &cg_cameraOrbit, "cg_cameraOrbit", "0", CVAR_CHEAT},
-  { &cg_cameraOrbitDelay, "cg_cameraOrbitDelay", "50", CVAR_ARCHIVE},
   { &cg_timescaleFadeEnd, "cg_timescaleFadeEnd", "1", 0},
   { &cg_timescaleFadeSpeed, "cg_timescaleFadeSpeed", "0", 0},
   { &cg_timescale, "timescale", "1", 0},
@@ -359,13 +363,13 @@ static cvarTable_t cvarTable[ ] =
   { &pmove_fixed, "pmove_fixed", "0", 0},
   { &pmove_msec, "pmove_msec", "8", 0},
   { &cg_noTaunt, "cg_noTaunt", "0", CVAR_ARCHIVE},
-  { &cg_noProjectileTrail, "cg_noProjectileTrail", "0", CVAR_ARCHIVE},
-  { &cg_smallFont, "ui_smallFont", "0.2", CVAR_ARCHIVE},
-  { &cg_bigFont, "ui_bigFont", "0.5", CVAR_ARCHIVE},
-  { &cg_oldRail, "cg_oldRail", "1", CVAR_ARCHIVE},
-  { &cg_oldRocket, "cg_oldRocket", "1", CVAR_ARCHIVE},
-  { &cg_oldPlasma, "cg_oldPlasma", "1", CVAR_ARCHIVE},
-  { &cg_trueLightning, "cg_trueLightning", "0.0", CVAR_ARCHIVE}
+  
+  { &cg_suppressWAnimWarnings, "cg_suppressWAnimWarnings", "1", CVAR_ARCHIVE},
+
+  { &cg_voice, "voice", "default", CVAR_USERINFO|CVAR_ARCHIVE},
+
+  { &cg_emoticons, "cg_emoticons", "1", CVAR_LATCH|CVAR_ARCHIVE},
+  { &cg_drawAlienFeedback, "cg_drawAlienFeedback", "1", 0}
 };
 
 static int   cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -393,31 +397,11 @@ void CG_RegisterCvars( void )
   // see if we are also running the server on this machine
   trap_Cvar_VariableStringBuffer( "sv_running", var, sizeof( var ) );
   cgs.localServer = atoi( var );
-  forceModelModificationCount = cg_forceModel.modificationCount;
+  
+  // override any existing version cvar
+  trap_Cvar_Set( "cg_version", PRODUCT_NAME );
 }
 
-
-/*
-===================
-CG_ForceModelChange
-===================
-*/
-static void CG_ForceModelChange( void )
-{
-  int   i;
-
-  for( i = 0; i < MAX_CLIENTS; i++ )
-  {
-    const char    *clientInfo;
-
-    clientInfo = CG_ConfigString( CS_PLAYERS + i );
-
-    if( !clientInfo[ 0 ] )
-      continue;
-
-    CG_NewClientInfo( i );
-  }
-}
 
 /*
 ===============
@@ -428,32 +412,84 @@ Set some cvars used by the UI
 */
 static void CG_SetUIVars( void )
 {
-  int   i;
-  char  carriageCvar[ MAX_TOKEN_CHARS ];
+  int   i, upgrades = 0;
 
   if( !cg.snap )
     return;
 
-  *carriageCvar = 0;
-
   //determine what the player is carrying
-  for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
-  {
-    if( BG_InventoryContainsWeapon( i, cg.snap->ps.stats ) &&
-        BG_FindPurchasableForWeapon( i ) )
-      strcat( carriageCvar, va( "W%d ", i ) );
-  }
   for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
   {
     if( BG_InventoryContainsUpgrade( i, cg.snap->ps.stats ) &&
-        BG_FindPurchasableForUpgrade( i ) )
-      strcat( carriageCvar, va( "U%d ", i ) );
+        BG_Upgrade( i )->purchasable )
+      upgrades |= ( 1 << i );
   }
-  strcat( carriageCvar, "$" );
 
-  trap_Cvar_Set( "ui_carriage", carriageCvar );
+  trap_Cvar_Set( "ui_carriage", va( "%d %d %d", cg.snap->ps.stats[ STAT_WEAPON ],
+                 upgrades, cg.snap->ps.persistant[ PERS_CREDIT ] ) );
 
-  trap_Cvar_Set( "ui_stages", va( "%d %d", cgs.alienStage, cgs.humanStage ) );
+  switch( cg.snap->ps.stats[ STAT_TEAM ] )
+  {
+  case TEAM_NONE:
+    trap_Cvar_Set( "ui_stage", "0" );
+    break;
+  case TEAM_ALIENS:
+    trap_Cvar_Set( "ui_stage", va( "%d", cgs.alienStage ) );
+    break;
+  case TEAM_HUMANS:
+    trap_Cvar_Set( "ui_stage", va( "%d", cgs.humanStage ) );
+    break;
+  }
+}
+
+/*
+===============
+CG_SetPVars
+
+Set the p_* cvars
+===============
+*/
+static void CG_SetPVars( void )
+{
+  playerState_t *ps;
+
+  if( !cg.snap )
+    return;
+
+  ps = &cg.snap->ps;
+
+  trap_Cvar_Set( "p_hp", va( "%d", ps->stats[ STAT_HEALTH ] ) );
+  trap_Cvar_Set( "p_maxhp", va( "%d", ps->stats[ STAT_MAX_HEALTH ] ) );
+  trap_Cvar_Set( "p_team", va( "%d", ps->stats[ STAT_TEAM ] ) );
+  switch( ps->stats[ STAT_TEAM ] )
+  {
+  case TEAM_NONE:
+    trap_Cvar_Set( "p_teamname", "^3Spectator" );
+    trap_Cvar_Set( "p_stage", "0" );
+    break;
+  case TEAM_ALIENS:
+    trap_Cvar_Set( "p_teamname", "^1Alien" );
+    trap_Cvar_Set( "p_stage", va( "%d", cgs.alienStage ) );
+    break;
+  case TEAM_HUMANS:
+    trap_Cvar_Set( "p_teamname", "^4Human" );
+    trap_Cvar_Set( "p_stage", va( "%d", cgs.humanStage ) );
+    break;
+  }
+  trap_Cvar_Set( "p_class", va( "%d", ps->stats[ STAT_CLASS ] ) );
+  trap_Cvar_Set( "p_classname", BG_ClassConfig( ps->stats[ STAT_CLASS ] )->humanName );
+  trap_Cvar_Set( "p_weapon", va( "%d", ps->stats[ STAT_WEAPON ] ) );
+  trap_Cvar_Set( "p_weaponname", BG_Weapon( ps->stats[ STAT_WEAPON ] )->humanName );
+  trap_Cvar_Set( "p_ammo", va( "%d", ps->ammo ) );
+  trap_Cvar_Set( "p_clips", va( "%d", ps->clips ) );
+  trap_Cvar_Set( "p_credits", va( "%d", ps->persistant[ PERS_CREDIT ] ) );
+  trap_Cvar_Set( "p_score", va( "%d", ps->persistant[ PERS_SCORE ] ) );
+  trap_Cvar_Set( "p_attacker", va( "%d", CG_LastAttacker( ) ) );
+  if ( CG_LastAttacker( ) != -1 )
+    trap_Cvar_Set( "p_attackername", cgs.clientinfo[ CG_LastAttacker( ) ].name );
+  trap_Cvar_Set( "p_crosshair", va( "%d", CG_CrosshairPlayer( ) ) );
+  if ( CG_CrosshairPlayer( ) != -1 )
+    trap_Cvar_Set( "p_crosshairrname", cgs.clientinfo[ CG_CrosshairPlayer( ) ].name );
 }
 
 /*
@@ -467,18 +503,13 @@ void CG_UpdateCvars( void )
   cvarTable_t *cv;
 
   for( i = 0, cv = cvarTable; i < cvarTableSize; i++, cv++ )
-    trap_Cvar_Update( cv->vmCvar );
+    if( cv->vmCvar )
+      trap_Cvar_Update( cv->vmCvar );
 
   // check for modications here
 
-  // if force model changed
-  if( forceModelModificationCount != cg_forceModel.modificationCount )
-  {
-    forceModelModificationCount = cg_forceModel.modificationCount;
-    CG_ForceModelChange( );
-  }
-
   CG_SetUIVars( );
+  CG_SetPVars( );
 }
 
 
@@ -534,6 +565,7 @@ CG_AddNotifyText
 void CG_AddNotifyText( void )
 {
   char buffer[ BIG_INFO_STRING ];
+  int bufferLen, textLen;
 
   trap_LiteralArgs( buffer, BIG_INFO_STRING );
 
@@ -544,12 +576,20 @@ void CG_AddNotifyText( void )
     return;
   }
 
+  bufferLen = strlen( buffer );
+  textLen = strlen( cg.consoleText );
+  
+  // Ignore console messages that were just printed
+  if( cg_noPrintDuplicate.integer && textLen >= bufferLen &&
+      !strcmp( cg.consoleText + textLen - bufferLen, buffer ) )
+    return;
+      
   if( cg.numConsoleLines == MAX_CONSOLE_LINES )
     CG_RemoveNotifyLine( );
 
   Q_strcat( cg.consoleText, MAX_CONSOLE_TEXT, buffer );
   cg.consoleLines[ cg.numConsoleLines ].time = cg.time;
-  cg.consoleLines[ cg.numConsoleLines ].length = strlen( buffer );
+  cg.consoleLines[ cg.numConsoleLines ].length = bufferLen;
   cg.numConsoleLines++;
 }
 
@@ -559,7 +599,7 @@ void QDECL CG_Printf( const char *msg, ... )
   char    text[ 1024 ];
 
   va_start( argptr, msg );
-  vsprintf( text, msg, argptr );
+  Q_vsnprintf( text, sizeof( text ), msg, argptr );
   va_end( argptr );
 
   trap_Print( text );
@@ -571,7 +611,7 @@ void QDECL CG_Error( const char *msg, ... )
   char    text[ 1024 ];
 
   va_start( argptr, msg );
-  vsprintf( text, msg, argptr );
+  Q_vsnprintf( text, sizeof( text ), msg, argptr );
   va_end( argptr );
 
   trap_Error( text );
@@ -583,7 +623,7 @@ void QDECL Com_Error( int level, const char *error, ... )
   char    text[1024];
 
   va_start( argptr, error );
-  vsprintf( text, error, argptr );
+  Q_vsnprintf( text, sizeof( text ), error, argptr );
   va_end( argptr );
 
   CG_Error( "%s", text );
@@ -593,9 +633,9 @@ void QDECL Com_Printf( const char *msg, ... ) {
   va_list   argptr;
   char    text[1024];
 
-  va_start (argptr, msg);
-  vsprintf (text, msg, argptr);
-  va_end (argptr);
+  va_start( argptr, msg );
+  Q_vsnprintf( text, sizeof( text ), msg, argptr );
+  va_end( argptr );
 
   CG_Printf ("%s", text);
 }
@@ -628,17 +668,7 @@ Test if a specific file exists or not
 */
 qboolean CG_FileExists( char *filename )
 {
-  fileHandle_t  f;
-
-  if( trap_FS_FOpenFile( filename, &f, FS_READ ) > 0 )
-  {
-    //file exists so close it
-    trap_FS_FCloseFile( f );
-
-    return qtrue;
-  }
-  else
-    return qfalse;
+  return trap_FS_FOpenFile( filename, NULL, FS_READ );
 }
 
 /*
@@ -667,6 +697,8 @@ static void CG_RegisterSounds( void )
 
   cgs.media.tracerSound           = trap_S_RegisterSound( "sound/weapons/tracer.wav", qfalse );
   cgs.media.selectSound           = trap_S_RegisterSound( "sound/weapons/change.wav", qfalse );
+  cgs.media.turretSpinupSound     = trap_S_RegisterSound( "sound/buildables/mgturret/spinup.wav", qfalse );
+  cgs.media.weaponEmptyClick      = trap_S_RegisterSound( "sound/weapons/click.wav", qfalse );
 
   cgs.media.talkSound             = trap_S_RegisterSound( "sound/misc/talk.wav", qfalse );
   cgs.media.alienTalkSound        = trap_S_RegisterSound( "sound/misc/alien_talk.wav", qfalse );
@@ -735,6 +767,7 @@ static void CG_RegisterSounds( void )
   cgs.media.buildableRepairedSound  = trap_S_RegisterSound( "sound/buildables/human/repaired.wav", qfalse );
 
   cgs.media.lCannonWarningSound     = trap_S_RegisterSound( "models/weapons/lcannon/warning.wav", qfalse );
+  cgs.media.lCannonWarningSound2    = trap_S_RegisterSound( "models/weapons/lcannon/warning2.wav", qfalse );
 }
 
 
@@ -776,6 +809,48 @@ static void CG_RegisterGraphics( void )
     "ui/assets/neutral/10_5pie",
     "ui/assets/neutral/12_0pie",
   };
+   static char *alienAttackFeedbackShaders[ 11 ] =
+  {
+        "ui/assets/alien/feedback/scratch_00",
+        "ui/assets/alien/feedback/scratch_01",
+        "ui/assets/alien/feedback/scratch_02",
+        "ui/assets/alien/feedback/scratch_03",
+        "ui/assets/alien/feedback/scratch_04",
+        "ui/assets/alien/feedback/scratch_05",
+        "ui/assets/alien/feedback/scratch_06",
+        "ui/assets/alien/feedback/scratch_07",
+        "ui/assets/alien/feedback/scratch_08",
+        "ui/assets/alien/feedback/scratch_09",
+        "ui/assets/alien/feedback/scratch_10"
+  };
+   static char *alienAttackFeedbackShadersFlipped[ 11 ] =
+  {
+        "ui/assets/alien/feedback/scratchr_00",
+        "ui/assets/alien/feedback/scratchr_01",
+        "ui/assets/alien/feedback/scratchr_02",
+        "ui/assets/alien/feedback/scratchr_03",
+        "ui/assets/alien/feedback/scratchr_04",
+        "ui/assets/alien/feedback/scratchr_05",
+        "ui/assets/alien/feedback/scratchr_06",
+        "ui/assets/alien/feedback/scratchr_07",
+        "ui/assets/alien/feedback/scratchr_08",
+        "ui/assets/alien/feedback/scratchr_09",
+        "ui/assets/alien/feedback/scratchr_10"
+  };
+   static char *alienRangedAttackFeedbackShaders[ 11 ] =
+  {
+        "ui/assets/alien/feedback/rangefeedback_00",
+        "ui/assets/alien/feedback/rangefeedback_01",
+        "ui/assets/alien/feedback/rangefeedback_02",
+        "ui/assets/alien/feedback/rangefeedback_03",
+        "ui/assets/alien/feedback/rangefeedback_04",
+        "ui/assets/alien/feedback/rangefeedback_05",
+        "ui/assets/alien/feedback/rangefeedback_06",
+        "ui/assets/alien/feedback/rangefeedback_07",
+        "ui/assets/alien/feedback/rangefeedback_08",
+        "ui/assets/alien/feedback/rangefeedback_09",
+        "ui/assets/alien/feedback/rangefeedback_10"
+  };
 
   // clear any references to old media
   memset( &cg.refdef, 0, sizeof( cg.refdef ) );
@@ -808,6 +883,23 @@ static void CG_RegisterGraphics( void )
 
   for( i = 0; i < 8; i++ )
     cgs.media.buildWeaponTimerPie[ i ] = trap_R_RegisterShader( buildWeaponTimerPieShaders[ i ] );
+  for( i = 0; i < 11; i++ )
+    cgs.media.alienAttackFeedbackShaders[i] = trap_R_RegisterShader( alienAttackFeedbackShaders[i] );
+  for( i = 0; i < 11; i++ )
+    cgs.media.alienAttackFeedbackShadersFlipped[i] = trap_R_RegisterShader( alienAttackFeedbackShadersFlipped[i] );
+  for( i = 0; i < 11; i++ )
+    cgs.media.alienRangedAttackFeedbackShaders[i] = trap_R_RegisterShader( alienRangedAttackFeedbackShaders[i] );
+
+  // player health cross shaders
+  cgs.media.healthCross               = trap_R_RegisterShader( "ui/assets/neutral/cross.tga" );
+  cgs.media.healthCross2X             = trap_R_RegisterShader( "ui/assets/neutral/cross2.tga" );
+  cgs.media.healthCross3X             = trap_R_RegisterShader( "ui/assets/neutral/cross3.tga" );
+  cgs.media.healthCrossMedkit         = trap_R_RegisterShader( "ui/assets/neutral/cross_medkit.tga" );
+  cgs.media.healthCrossPoisoned       = trap_R_RegisterShader( "ui/assets/neutral/cross_poison.tga" );
+  
+  // squad markers
+  cgs.media.squadMarkerH              = trap_R_RegisterShader( "ui/assets/neutral/squad_h" );
+  cgs.media.squadMarkerV              = trap_R_RegisterShader( "ui/assets/neutral/squad_v" );
 
   cgs.media.upgradeClassIconShader    = trap_R_RegisterShader( "icons/icona_upgrade.tga" );
 
@@ -824,6 +916,7 @@ static void CG_RegisterGraphics( void )
   cgs.media.wakeMarkShader            = trap_R_RegisterShader( "gfx/marks/wake" );
 
   cgs.media.poisonCloudPS             = CG_RegisterParticleSystem( "firstPersonPoisonCloudPS" );
+  cgs.media.poisonCloudedPS           = CG_RegisterParticleSystem( "poisonCloudedPS" );
   cgs.media.alienEvolvePS             = CG_RegisterParticleSystem( "alienEvolvePS" );
   cgs.media.alienAcidTubePS           = CG_RegisterParticleSystem( "alienAcidTubePS" );
 
@@ -833,6 +926,10 @@ static void CG_RegisterGraphics( void )
 
   cgs.media.humanBuildableDamagedPS   = CG_RegisterParticleSystem( "humanBuildableDamagedPS" );
   cgs.media.alienBuildableDamagedPS   = CG_RegisterParticleSystem( "alienBuildableDamagedPS" );
+  cgs.media.humanBuildableHitSmallPS   = CG_RegisterParticleSystem( "humanBuildableHitSmallPS" );
+  cgs.media.alienBuildableHitSmallPS   = CG_RegisterParticleSystem( "alienBuildableHitSmallPS" );
+  cgs.media.humanBuildableHitLargePS   = CG_RegisterParticleSystem( "humanBuildableHitLargePS" );
+  cgs.media.alienBuildableHitLargePS   = CG_RegisterParticleSystem( "alienBuildableHitLargePS" );
   cgs.media.humanBuildableDestroyedPS = CG_RegisterParticleSystem( "humanBuildableDestroyedPS" );
   cgs.media.alienBuildableDestroyedPS = CG_RegisterParticleSystem( "alienBuildableDestroyedPS" );
 
@@ -919,7 +1016,7 @@ void CG_BuildSpectatorString( void )
 
   for( i = 0; i < MAX_CLIENTS; i++ )
   {
-    if( cgs.clientinfo[ i ].infoValid && cgs.clientinfo[ i ].team == PTE_NONE )
+    if( cgs.clientinfo[ i ].infoValid && cgs.clientinfo[ i ].team == TEAM_NONE )
       Q_strcat( cg.spectatorList, sizeof( cg.spectatorList ), va( "%s     " S_COLOR_WHITE, cgs.clientinfo[ i ].name ) );
   }
 
@@ -949,8 +1046,8 @@ static void CG_RegisterClients( void )
   //precache all the models/sounds/etc
   for( i = PCL_NONE + 1; i < PCL_NUM_CLASSES;  i++ )
   {
-    CG_PrecacheClientInfo( i, BG_FindModelNameForClass( i ),
-                              BG_FindSkinNameForClass( i ) );
+    CG_PrecacheClientInfo( i, BG_ClassConfig( i )->modelName,
+                              BG_ClassConfig( i )->skinName );
 
     cg.charModelFraction = (float)i / (float)PCL_NUM_CLASSES;
     trap_UpdateScreen( );
@@ -1031,8 +1128,8 @@ int CG_PlayerCount( void )
 
   for( i = 0; i < cg.numScores; i++ )
   {
-    if( cg.scores[ i ].team == PTE_ALIENS ||
-        cg.scores[ i ].team == PTE_HUMANS )
+    if( cg.scores[ i ].team == TEAM_ALIENS ||
+        cg.scores[ i ].team == TEAM_HUMANS )
       count++;
   }
 
@@ -1374,7 +1471,7 @@ void CG_LoadMenus( const char *menuFile )
     }
   }
 
-  Com_Printf( "UI menu load time = %d milli seconds\n", trap_Milliseconds( ) - start );
+  //Com_Printf( "UI menu load time = %d milli seconds\n", trap_Milliseconds( ) - start );
 }
 
 
@@ -1393,7 +1490,7 @@ static int CG_FeederCount( float feederID )
   {
     for( i = 0; i < cg.numScores; i++ )
     {
-      if( cg.scores[ i ].team == PTE_ALIENS )
+      if( cg.scores[ i ].team == TEAM_ALIENS )
         count++;
     }
   }
@@ -1401,7 +1498,7 @@ static int CG_FeederCount( float feederID )
   {
     for( i = 0; i < cg.numScores; i++ )
     {
-      if( cg.scores[ i ].team == PTE_HUMANS )
+      if( cg.scores[ i ].team == TEAM_HUMANS )
         count++;
     }
   }
@@ -1421,9 +1518,9 @@ void CG_SetScoreSelection( void *p )
 
   for( i = 0; i < cg.numScores; i++ )
   {
-    if( cg.scores[ i ].team == PTE_ALIENS )
+    if( cg.scores[ i ].team == TEAM_ALIENS )
       alien++;
-    else if( cg.scores[ i ].team == PTE_HUMANS )
+    else if( cg.scores[ i ].team == TEAM_HUMANS )
       human++;
 
     if( ps->clientNum == cg.scores[ i ].client )
@@ -1437,7 +1534,7 @@ void CG_SetScoreSelection( void *p )
   feeder = FEEDER_ALIENTEAM_LIST;
   i = alien;
 
-  if( cg.scores[ cg.selectedScore ].team == PTE_HUMANS )
+  if( cg.scores[ cg.selectedScore ].team == TEAM_HUMANS )
   {
     feeder = FEEDER_HUMANTEAM_LIST;
     i = human;
@@ -1469,6 +1566,34 @@ static clientInfo_t * CG_InfoFromScoreIndex( int index, int team, int *scoreInde
   return &cgs.clientinfo[ cg.scores[ index ].client ];
 }
 
+static qboolean CG_ClientIsReady( int clientNum )
+{
+  // CS_CLIENTS_READY is a hex string, each character of which is 4 bits
+  // the highest bit of the first char is a toggle for client 0, the second
+  // highest for client 1, etc.
+  // there are exactly four bits of information in each character
+  int val;
+  const char *s = CG_ConfigString( CS_CLIENTS_READY );
+
+  // select the appropriate character without passing the end of the string
+  for( val = clientNum / 4; *s && val > 0; s++, val-- );
+
+  // convert hex -> int
+  // FIXME: replace with sscanf when it supports width conversions (or some
+  // other appropriate library function)
+  if( isdigit( *s ) )
+    val = *s - '0';
+  else if( *s >= 'a' && *s <= 'f' )
+    val = 10 + *s - 'a';
+  else if( *s >= 'A' && *s <= 'F' )
+    val = 10 + *s - 'A';
+  else
+    return qfalse;
+
+  // select appropriate bit
+  return ( ( val & 1 << ( 3 - clientNum % 4 ) ) != 0 );
+}
+
 static const char *CG_FeederItemText( float feederID, int index, int column, qhandle_t *handle )
 {
   int           scoreIndex = 0;
@@ -1480,18 +1605,17 @@ static const char *CG_FeederItemText( float feederID, int index, int column, qha
   *handle = -1;
 
   if( feederID == FEEDER_ALIENTEAM_LIST )
-    team = PTE_ALIENS;
+    team = TEAM_ALIENS;
   else if( feederID == FEEDER_HUMANTEAM_LIST )
-    team = PTE_HUMANS;
+    team = TEAM_HUMANS;
 
   info = CG_InfoFromScoreIndex( index, team, &scoreIndex );
   sp = &cg.scores[ scoreIndex ];
 
-  if( ( atoi( CG_ConfigString( CS_CLIENTS_READY ) ) & ( 1 << sp->client ) ) &&
-      cg.intermissionStarted )
+  if( cg.intermissionStarted && CG_ClientIsReady( sp->client ) )
     showIcons = qfalse;
   else if( cg.snap->ps.pm_type == PM_SPECTATOR || cg.snap->ps.pm_flags & PMF_FOLLOW ||
-    team == cg.snap->ps.stats[ STAT_PTEAM ] || cg.intermissionStarted )
+    team == cg.snap->ps.stats[ STAT_TEAM ] || cg.intermissionStarted )
     showIcons = qtrue;
 
   if( info && info->infoValid )
@@ -1509,9 +1633,9 @@ static const char *CG_FeederItemText( float feederID, int index, int column, qha
       case 1:
         if( showIcons )
         {
-          if( sp->team == PTE_HUMANS && sp->upgrade != UP_NONE )
+          if( sp->team == TEAM_HUMANS && sp->upgrade != UP_NONE )
             *handle = cg_upgrades[ sp->upgrade ].upgradeIcon;
-          else if( sp->team == PTE_ALIENS )
+          else if( sp->team == TEAM_ALIENS )
           {
             switch( sp->weapon )
             {
@@ -1530,8 +1654,7 @@ static const char *CG_FeederItemText( float feederID, int index, int column, qha
         break;
 
       case 2:
-        if( ( atoi( CG_ConfigString( CS_CLIENTS_READY ) ) & ( 1 << sp->client ) ) &&
-            cg.intermissionStarted )
+        if( cg.intermissionStarted && CG_ClientIsReady( sp->client ) )
           return "Ready";
         break;
 
@@ -1540,7 +1663,7 @@ static const char *CG_FeederItemText( float feederID, int index, int column, qha
         break;
 
       case 4:
-        return va( "%d", info->score );
+        return va( "%d", sp->score );
         break;
 
       case 5:
@@ -1567,7 +1690,7 @@ static qhandle_t CG_FeederItemImage( float feederID, int index )
 static void CG_FeederSelection( float feederID, int index )
 {
   int i, count;
-  int team = ( feederID == FEEDER_ALIENTEAM_LIST ) ? PTE_ALIENS : PTE_HUMANS;
+  int team = ( feederID == FEEDER_ALIENTEAM_LIST ) ? TEAM_ALIENS : TEAM_HUMANS;
   count = 0;
 
   for( i = 0; i < cg.numScores; i++ )
@@ -1659,6 +1782,8 @@ void CG_LoadHudMenu( void )
   cgDC.modelBounds          = &trap_R_ModelBounds;
   cgDC.fillRect             = &CG_FillRect;
   cgDC.drawRect             = &CG_DrawRect;
+  cgDC.fillRoundedRect      = &CG_FillRoundedRect;
+  cgDC.drawRoundedRect      = &CG_DrawRoundedRect;
   cgDC.drawSides            = &CG_DrawSides;
   cgDC.drawTopBottom        = &CG_DrawTopBottom;
   cgDC.clearScene           = &trap_R_ClearScene;
@@ -1672,8 +1797,8 @@ void CG_LoadHudMenu( void )
   cgDC.setCVar              = trap_Cvar_Set;
   cgDC.getCVarString        = trap_Cvar_VariableStringBuffer;
   cgDC.getCVarValue         = CG_Cvar_Get;
-  cgDC.setOverstrikeMode    = &trap_Key_SetOverstrikeMode;
-  cgDC.getOverstrikeMode    = &trap_Key_GetOverstrikeMode;
+  //cgDC.setOverstrikeMode    = &trap_Key_SetOverstrikeMode;
+  //cgDC.getOverstrikeMode    = &trap_Key_GetOverstrikeMode;
   cgDC.startLocalSound      = &trap_S_StartLocalSound;
   cgDC.ownerDrawHandleKey   = &CG_OwnerDrawHandleKey;
   cgDC.feederCount          = &CG_FeederCount;
@@ -1696,7 +1821,8 @@ void CG_LoadHudMenu( void )
   cgDC.stopCinematic        = &CG_StopCinematic;
   cgDC.drawCinematic        = &CG_DrawCinematic;
   cgDC.runCinematicFrame    = &CG_RunCinematicFrame;
-
+  cgDC.getFileList          = &trap_FS_GetFileList;
+  cgDC.hudloading           = qtrue;
   Init_Display( &cgDC );
 
   Menu_Reset( );
@@ -1704,14 +1830,17 @@ void CG_LoadHudMenu( void )
   trap_Cvar_VariableStringBuffer( "cg_hudFiles", buff, sizeof( buff ) );
   hudSet = buff;
 
-  if( hudSet[ 0 ] == '\0' )
+  if( !cg_hudFilesEnable.integer || hudSet[ 0 ] == '\0' )
     hudSet = "ui/hud.txt";
 
   CG_LoadMenus( hudSet );
+  cgDC.hudloading = qfalse;
 }
 
 void CG_AssetCache( void )
 {
+  int i;
+
   cgDC.Assets.gradientBar         = trap_R_RegisterShaderNoMip( ASSET_GRADIENTBAR );
   cgDC.Assets.scrollBar           = trap_R_RegisterShaderNoMip( ASSET_SCROLLBAR );
   cgDC.Assets.scrollBarArrowDown  = trap_R_RegisterShaderNoMip( ASSET_SCROLLBAR_ARROWDOWN );
@@ -1721,6 +1850,23 @@ void CG_AssetCache( void )
   cgDC.Assets.scrollBarThumb      = trap_R_RegisterShaderNoMip( ASSET_SCROLL_THUMB );
   cgDC.Assets.sliderBar           = trap_R_RegisterShaderNoMip( ASSET_SLIDER_BAR );
   cgDC.Assets.sliderThumb         = trap_R_RegisterShaderNoMip( ASSET_SLIDER_THUMB );
+  cgDC.Assets.cornerIn            = trap_R_RegisterShaderNoMip( ASSET_CORNERIN );
+  cgDC.Assets.cornerOut           = trap_R_RegisterShaderNoMip( ASSET_CORNEROUT );
+
+  if( cg_emoticons.integer )
+  {
+    cgDC.Assets.emoticonCount = BG_LoadEmoticons( cgDC.Assets.emoticons,
+      cgDC.Assets.emoticonWidths );
+  }
+  else
+    cgDC.Assets.emoticonCount = 0;
+
+  for( i = 0; i < cgDC.Assets.emoticonCount; i++ )
+  {
+    cgDC.Assets.emoticonShaders[ i ] = trap_R_RegisterShaderNoMip(
+      va( "emoticons/%s_%dx1.tga", cgDC.Assets.emoticons[ i ],
+          cgDC.Assets.emoticonWidths[ i ] ) );
+  }
 }
 
 /*
@@ -1757,12 +1903,12 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   cgs.media.outlineShader   = trap_R_RegisterShader( "outline" );
 
   // load overrides
-  BG_InitClassOverrides( );
-  BG_InitBuildableOverrides( );
+  BG_InitClassConfigs( );
+  BG_InitBuildableConfigs( );
   BG_InitAllowedGameElements( );
 
   // Dynamic memory
-  CG_InitMemory( );
+  BG_InitMemory( );
 
   CG_RegisterCvars( );
 
@@ -1772,9 +1918,10 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 
   CG_AssetCache( );
   CG_LoadHudMenu( );
+  cg.feedbackAnimation = 0;
+  cg.feedbackAnimationType = 0;
 
   cg.weaponSelect = WP_NONE;
-  cg.boostedTime = -1;
 
   // old servers
 
@@ -1817,6 +1964,9 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 
   CG_InitBuildables( );
 
+  cgs.voices = BG_VoiceInit( );
+  BG_PrintVoices( cgs.voices, cg_debugVoices.integer );
+ 
   CG_RegisterClients( );   // if low on memory, some clients will be deferred
 
   cg.loading = qfalse;  // future players will be deferred
@@ -1847,4 +1997,7 @@ void CG_Shutdown( void )
 {
   // some mods may need to do cleanup work here,
   // like closing files or archiving session data
+
+  // Reset cg_version
+  trap_Cvar_Set( "cg_version", "" );
 }

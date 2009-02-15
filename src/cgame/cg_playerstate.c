@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -247,8 +247,8 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops )
 {
   int reward;
 
-  // don't play the sounds if the player just changed teams
-  if( ps->persistant[ PERS_TEAM ] != ops->persistant[ PERS_TEAM ] )
+  // don't play the sounds if the player just spawned
+  if( ps->persistant[ PERS_SPECSTATE ] != ops->persistant[ PERS_SPECSTATE ] )
     return;
 
   // health changes of more than -1 should make pain sounds
@@ -301,7 +301,7 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops )
   }
 
   if( cg.snap->ps.pm_type != PM_INTERMISSION &&
-      ps->persistant[ PERS_TEAM ] != TEAM_SPECTATOR )
+      ps->persistant[ PERS_SPECSTATE ] == SPECTATOR_NOT )
     CG_CheckLocalSounds( ps, ops );
 
   // run events
@@ -312,6 +312,13 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops )
   {
     cg.duckChange = ps->viewheight - ops->viewheight;
     cg.duckTime = cg.time;
+  }
+  
+  // changed team
+  if( ps->stats[ STAT_TEAM ] != ops->stats[ STAT_TEAM ] )
+  {
+    cg.lastHealthCross = 0;
+    cg.chargeMeterAlpha = 0.f;
   }
 }
 

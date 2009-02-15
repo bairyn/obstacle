@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -40,20 +40,27 @@ typedef char *  va_list;
 #define va_arg(ap,t)    ( *(t *)((ap += _INTSIZEOF(t)) - _INTSIZEOF(t)) )
 #define va_end(ap)      ( ap = (va_list)0 )
 
-#define CHAR_BIT      8         /* number of bits in a char */
-#define SCHAR_MIN   (-128)      /* minimum signed char value */
-#define SCHAR_MAX     127       /* maximum signed char value */
-#define UCHAR_MAX     0xff      /* maximum unsigned char value */
+#define CHAR_BIT      8             /* number of bits in a char */
+#define SCHAR_MAX     0x7f          /* maximum signed char value */
+#define SCHAR_MIN   (-SCHAR_MAX - 1)/* minimum signed char value */
+#define UCHAR_MAX     0xff          /* maximum unsigned char value */
 
-#define SHRT_MIN    (-32768)        /* minimum (signed) short value */
-#define SHRT_MAX      32767         /* maximum (signed) short value */
+#define SHRT_MAX      0x7fff        /* maximum (signed) short value */
+#define SHRT_MIN    (-SHRT_MAX - 1) /* minimum (signed) short value */
 #define USHRT_MAX     0xffff        /* maximum unsigned short value */
-#define INT_MIN     (-2147483647 - 1) /* minimum (signed) int value */
-#define INT_MAX       2147483647    /* maximum (signed) int value */
+#define INT_MAX       0x7fffffff    /* maximum (signed) int value */
+#define INT_MIN     (-INT_MAX - 1)  /* minimum (signed) int value */
 #define UINT_MAX      0xffffffff    /* maximum unsigned int value */
-#define LONG_MIN    (-2147483647L - 1) /* minimum (signed) long value */
-#define LONG_MAX      2147483647L   /* maximum (signed) long value */
+#define LONG_MAX      0x7fffffffL   /* maximum (signed) long value */
+#define LONG_MIN    (-LONG_MAX - 1) /* minimum (signed) long value */
 #define ULONG_MAX     0xffffffffUL  /* maximum unsigned long value */
+
+typedef   signed  char int8_t;
+typedef unsigned  char uint8_t;
+typedef   signed short int16_t;
+typedef unsigned short uint16_t;
+typedef   signed  long int32_t;
+typedef unsigned  long uint32_t;
 
 #define isalnum(c)  (isalpha(c) || isdigit(c))
 #define isalpha(c)  (isupper(c) || islower(c))
@@ -76,6 +83,16 @@ typedef int cmp_t( const void *, const void * );
 void        qsort( void *a, size_t n, size_t es, cmp_t *cmp );
 void        srand( unsigned seed );
 int         rand( void );
+// FIXME: NDEBUG isn't defined for compiling the QVMs
+#ifndef NDEBUG
+// these two are so that __LINE__ is expanded and *then* strung
+#define str2(x) #x
+#define str(x) str2(x)
+#define assert( x ) if( !( x ) ) Com_Error( ERR_DROP, \
+    __FILE__ ":" str(__LINE__) ": Assertion `" #x "' failed" );
+#else
+#define assert( x ) // nothing
+#endif
 
 // String functions
 size_t  strlen( const char *string );
@@ -94,8 +111,6 @@ double  _atof( const char **stringPtr );
 int     atoi( const char *string );
 int     _atoi( const char **stringPtr );
 
-
-int     vsprintf( char *buffer, const char *fmt, va_list argptr );
 int     sscanf( const char *buffer, const char *fmt, ... );
 
 // Memory functions

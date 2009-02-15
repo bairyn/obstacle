@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -206,16 +206,11 @@ qint64 Long64NoSwap (qint64 ll)
 	return ll;
 }
 
-typedef union {
-    float	f;
-    unsigned int i;
-} _FloatByteUnion;
-
 float FloatSwap (const float *f) {
-	_FloatByteUnion out;
+	floatint_t out;
 
 	out.f = *f;
-	out.i = LongSwap(out.i);
+	out.ui = LongSwap(out.ui);
 
 	return out.f;
 }
@@ -296,7 +291,7 @@ void COM_ParseError( char *format, ... )
 	static char string[4096];
 
 	va_start (argptr, format);
-	vsprintf (string, format, argptr);
+	Q_vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
 	Com_Printf("ERROR: %s, line %d: %s\n", com_parsename, com_lines, string);
@@ -308,7 +303,7 @@ void COM_ParseWarning( char *format, ... )
 	static char string[4096];
 
 	va_start (argptr, format);
-	vsprintf (string, format, argptr);
+	Q_vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
 	Com_Printf("WARNING: %s, line %d: %s\n", com_parsename, com_lines, string);
@@ -345,68 +340,132 @@ static char *SkipWhitespace( char *data, qboolean *hasNewLines ) {
 
 int COM_Compress( char *data_p ) {
 	char *in, *out;
-	int c;
-	qboolean newline = qfalse, whitespace = qfalse;
+	qboolean space = qfalse, newline = qfalse;
 
 	in = out = data_p;
-	if (in) {
-		while ((c = *in) != 0) {
-			// skip double slash comments
-			if ( c == '/' && in[1] == '/' ) {
-				while (*in && *in != '\n') {
-					in++;
+
+	start: // instead of a loop because of deep links
+	switch (*in) {
+	case ' ': // record when we hit spaces or tabs
+	case '\t':
+		++in;
+		space = qtrue;
+		goto start;
+
+	case '\r': // record when we hit newlines
+		if (*(in+1) == '\n') {
+			++in;
+		}
+		// fallthrough: merge CRLF sequence
+	case '\n':
+		if (newline) { // preserve newlines, but gather spaces around them
+			*out++ = '\n';
+			space = qfalse;
+		}
+		else {
+			newline = qtrue;
+		}
+		++in;
+		goto start;
+
+	case '/': // could be the beginning of a comment
+		switch (*(in+1)) {
+		case '/': // skip double slash comments
+			in += 2;
+			for(;;) {
+				switch (*in) {
+				case '\n':
+					if (newline) {
+						*out++ = '\n';
+						space = qfalse;
+					}
+					else {
+						newline = qtrue;
+					}
+					++in;
+					goto start;
+				case '\0':
+					goto end;
+				default:
+					++in;
 				}
-			// skip /* */ comments
-			} else if ( c == '/' && in[1] == '*' ) {
-				while ( *in && ( *in != '*' || in[1] != '/' ) ) 
+			}
+			// (execution doesn't get here)
+
+		case '*': // skip /* */ comments
+			space = qtrue; // this should separate tokens
+			in += 2;
+			for(;;) {
+				switch (*in) {
+				case '\n':
+					if (newline) {
+						*out++ = '\n';
+						space = qfalse;
+					}
+					else {
+						newline = qtrue;
+					}
+					break;
+				case '*':
+					if (*(in+1) == '/') {
+						in += 2;
+						goto start;
+					}
+					break;
+				case '\0': // warning: non-terminated comment
+					goto end;
+				}
+				++in;
+			}
+			// (execution doesn't get here)
+
+		default: // but it ain't a comment
+			goto token;
+		}
+		// (execution doesn't get here)
+	// end of comment processing
+
+	case '\0':
+		goto end;
+
+	default: // an actual token
+	token:
+		// output the accumulated whitespace,
+		// collapse into a newline if appropriate
+		if (newline) {
+			newline = qfalse;
+			space = qfalse;
+			*out++ = '\n';
+		}
+		else if (space) {
+			space = qfalse;
+			*out++ = ' ';
+		}
+
+		// copy quoted strings unmolested
+		if (*in == '"') {
+			*out++ = '"';
+			++in;
+			for(;;) {
+				switch (*in) {
+				case '"':
 					in++;
-				if ( *in ) 
-					in += 2;
-                        // record when we hit a newline
-                        } else if ( c == '\n' || c == '\r' ) {
-                            newline = qtrue;
-                            in++;
-                        // record when we hit whitespace
-                        } else if ( c == ' ' || c == '\t') {
-                            whitespace = qtrue;
-                            in++;
-                        // an actual token
-			} else {
-                            // if we have a pending newline, emit it (and it counts as whitespace)
-                            if (newline) {
-                                *out++ = '\n';
-                                newline = qfalse;
-                                whitespace = qfalse;
-                            } if (whitespace) {
-                                *out++ = ' ';
-                                whitespace = qfalse;
-                            }
-                            
-                            // copy quoted strings unmolested
-                            if (c == '"') {
-                                    *out++ = c;
-                                    in++;
-                                    while (1) {
-                                        c = *in;
-                                        if (c && c != '"') {
-                                            *out++ = c;
-                                            in++;
-                                        } else {
-                                            break;
-                                        }
-                                    }
-                                    if (c == '"') {
-                                        *out++ = c;
-                                        in++;
-                                    }
-                            } else {
-                                *out = c;
-                                out++;
-                                in++;
-                            }
+					*out++ = '"';
+					goto start;
+				case '\0': // warning: non-terminated string
+					goto end;
+				default:
+					*out++ = *in++;
+				}
 			}
 		}
+
+		// nothing special
+		*out++ = *in++;
+		goto start;
 	}
+	end: // end of main switch
+
 	*out = 0;
 	return out - data_p;
 }
@@ -513,62 +572,6 @@ char *COM_ParseExt( char **data_p, qboolean allowLineBreaks )
 	return com_token;
 }
 
-
-#if 0
-// no longer used
-/*
-===============
-COM_ParseInfos
-===============
-*/
-int COM_ParseInfos( char *buf, int max, char infos[][MAX_INFO_STRING] ) {
-	char	*token;
-	int		count;
-	char	key[MAX_TOKEN_CHARS];
-
-	count = 0;
-
-	while ( 1 ) {
-		token = COM_Parse( &buf );
-		if ( !token[0] ) {
-			break;
-		}
-		if ( strcmp( token, "{" ) ) {
-			Com_Printf( "Missing { in info file\n" );
-			break;
-		}
-
-		if ( count == max ) {
-			Com_Printf( "Max infos exceeded\n" );
-			break;
-		}
-
-		infos[count][0] = 0;
-		while ( 1 ) {
-			token = COM_ParseExt( &buf, qtrue );
-			if ( !token[0] ) {
-				Com_Printf( "Unexpected end of info file\n" );
-				break;
-			}
-			if ( !strcmp( token, "}" ) ) {
-				break;
-			}
-			Q_strncpyz( key, token, sizeof( key ) );
-
-			token = COM_ParseExt( &buf, qfalse );
-			if ( !token[0] ) {
-				strcpy( token, "<NULL>" );
-			}
-			Info_SetValueForKey( infos[count], key, token );
-		}
-		count++;
-	}
-
-	return count;
-}
-#endif
-
-
 /*
 ==================
 COM_MatchToken
@@ -670,6 +673,44 @@ void Parse3DMatrix (char **buf_p, int z, int y, int x, float *m) {
 	COM_MatchToken( buf_p, ")" );
 }
 
+/*
+===================
+Com_HexStrToInt
+===================
+*/
+int Com_HexStrToInt( const char *str )
+{
+	if ( !str || !str[ 0 ] )
+		return -1;
+
+	// check for hex code
+	if( str[ 0 ] == '0' && str[ 1 ] == 'x' )
+	{
+		int i, n = 0;
+
+		for( i = 2; i < strlen( str ); i++ )
+		{
+			char digit;
+
+			n *= 16;
+
+			digit = tolower( str[ i ] );
+
+			if( digit >= '0' && digit <= '9' )
+				digit -= '0';
+			else if( digit >= 'a' && digit <= 'f' )
+				digit = digit - 'a' + 10;
+			else
+				return -1;
+
+			n += digit;
+		}
+
+		return n;
+	}
+
+	return -1;
+}
 
 /*
 ============================================================================
@@ -727,6 +768,29 @@ char* Q_strrchr( const char* string, int c )
 	return sp;
 }
 
+qboolean Q_isanumber( const char *s )
+{
+#ifdef Q3_VM
+	//FIXME: implement
+	return qfalse;
+#else
+	char *p;
+	double d;
+
+	if( *s == '\0' )
+		return qfalse;
+
+	d = strtod( s, &p );
+
+	return *p == '\0';
+#endif
+}
+
+qboolean Q_isintegral( float f )
+{
+	return (int)f == f;
+}
+
 /*
 =============
 Q_strncpyz
@@ -748,7 +812,7 @@ void Q_strncpyz( char *dest, const char *src, int destsize ) {
 	strncpy( dest, src, destsize-1 );
   dest[destsize-1] = 0;
 }
-                 
+
 int Q_stricmpn (const char *s1, const char *s2, int n) {
 	int		c1, c2;
 
@@ -912,7 +976,7 @@ char *Q_CleanStr( char *string ) {
 		if ( Q_IsColorString( s ) ) {
 			s++;
 		}		
-		else if ( c >= 0x20 && c <= 0x7E ) {
+		else if ( ( c >= 0x20 && c <= 0x7E ) || c == '\n' ) {
 			*d++ = c;
 		}
 		s++;
@@ -922,6 +986,18 @@ char *Q_CleanStr( char *string ) {
 	return string;
 }
 
+int Q_CountChar(const char *string, char tocount)
+{
+	int count;
+	
+	for(count = 0; *string; string++)
+	{
+		if(*string == tocount)
+			count++;
+	}
+	
+	return count;
+}
 
 void QDECL Com_sprintf( char *dest, int size, const char *fmt, ...) {
 	int		len;
@@ -929,7 +1005,7 @@ void QDECL Com_sprintf( char *dest, int size, const char *fmt, ...) {
 	char	bigbuffer[32000];	// big, but small enough to fit in PPC stack
 
 	va_start (argptr,fmt);
-	len = vsprintf (bigbuffer,fmt,argptr);
+	len = Q_vsnprintf (bigbuffer, sizeof(bigbuffer), fmt,argptr);
 	va_end (argptr);
 	if ( len >= sizeof( bigbuffer ) ) {
 		Com_Error( ERR_FATAL, "Com_sprintf: overflowed bigbuffer" );
@@ -952,20 +1028,19 @@ va
 
 does a varargs printf into a temp buffer, so I don't need to have
 varargs versions of all text functions.
-FIXME: make this buffer size safe someday
 ============
 */
 char	* QDECL va( char *format, ... ) {
 	va_list		argptr;
-	static char		string[2][32000];	// in case va is called by nested functions
-	static int		index = 0;
-	char	*buf;
+	static char string[16][2048]; // in case va is called by nested functions
+	static int	index = 0;
+	char		*buf;
 
-	buf = string[index & 1];
+	buf = string[index & 7];
 	index++;
 
 	va_start (argptr, format);
-	vsprintf (buf, format,argptr);
+	Q_vsnprintf (buf, sizeof(*string), format, argptr);
 	va_end (argptr);
 
 	return buf;
@@ -1145,7 +1220,8 @@ void Info_RemoveKey( char *s, const char *key ) {
 
 		if (!strcmp (key, pkey) )
 		{
-			strcpy (start, s);	// remove this part
+			memmove(start, s, strlen(s) + 1); // remove this part
+			
 			return;
 		}
 
@@ -1380,3 +1456,10 @@ char *Com_SkipTokens( char *s, int numTokens, char *sep )
 	else
 		return s;
 }
+
+#ifdef _MSC_VER
+float rint( float v ) {
+	if( v >= 0.5f ) return ceilf( v );
+	else return floorf( v );
+}
+#endif

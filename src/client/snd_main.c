@@ -4,14 +4,14 @@ Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2005 Stuart Dalton (badcdev@gmail.com)
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -32,6 +32,7 @@ cvar_t *s_musicVolume;
 cvar_t *s_doppler;
 cvar_t *s_backend;
 cvar_t *s_muteWhenMinimized;
+cvar_t *s_muteWhenUnfocused;
 
 static soundInterface_t si;
 
@@ -59,9 +60,18 @@ static qboolean S_ValidSoundInterface( soundInterface_t *si )
 	if( !si->DisableSounds ) return qfalse;
 	if( !si->BeginRegistration ) return qfalse;
 	if( !si->RegisterSound ) return qfalse;
+	if( !si->SoundDuration ) return qfalse;
 	if( !si->ClearSoundBuffer ) return qfalse;
 	if( !si->SoundInfo ) return qfalse;
 	if( !si->SoundList ) return qfalse;
+
+#ifdef USE_VOIP
+	if( !si->StartCapture ) return qfalse;
+	if( !si->AvailableCaptureSamples ) return qfalse;
+	if( !si->Capture ) return qfalse;
+	if( !si->StopCapture ) return qfalse;
+	if( !si->MasterGain ) return qfalse;
+#endif
 
 	return qtrue;
 }
@@ -119,11 +129,11 @@ void S_StopBackgroundTrack( void )
 S_RawSamples
 =================
 */
-void S_RawSamples (int samples, int rate, int width, int channels,
+void S_RawSamples (int stream, int samples, int rate, int width, int channels,
 		   const byte *data, float volume)
 {
 	if( si.RawSamples ) {
-		si.RawSamples( samples, rate, width, channels, data, volume );
+		si.RawSamples( stream, samples, rate, width, channels, data, volume );
 	}
 }
 
@@ -221,7 +231,8 @@ S_Update
 */
 void S_Update( void )
 {
-	if( s_muteWhenMinimized->integer && com_minimized->integer ) {
+	if( ( s_muteWhenMinimized->integer && com_minimized->integer ) || 
+		( s_muteWhenUnfocused->integer && com_unfocused->integer ) ) {
 		S_StopAllSounds( );
 		return;
 	}
@@ -271,6 +282,19 @@ sfxHandle_t	S_RegisterSound( const char *sample, qboolean compressed )
 
 /*
 =================
+S_SoundDuration
+=================
+*/
+int S_SoundDuration( sfxHandle_t handle )
+{
+	if( si.SoundDuration )
+		return si.SoundDuration( handle );
+	else
+		return 0;
+}
+
+/*
+=================
 S_ClearSoundBuffer
 =================
 */
@@ -304,6 +328,70 @@ void S_SoundList( void )
 		si.SoundList( );
 	}
 }
+
+
+#ifdef USE_VOIP
+/*
+=================
+S_StartCapture
+=================
+*/
+void S_StartCapture( void )
+{
+	if( si.StartCapture ) {
+		si.StartCapture( );
+	}
+}
+
+/*
+=================
+S_AvailableCaptureSamples
+=================
+*/
+int S_AvailableCaptureSamples( void )
+{
+	if( si.AvailableCaptureSamples ) {
+		return si.AvailableCaptureSamples( );
+	}
+	return 0;
+}
+
+/*
+=================
+S_Capture
+=================
+*/
+void S_Capture( int samples, byte *data )
+{
+	if( si.Capture ) {
+		si.Capture( samples, data );
+	}
+}
+
+/*
+=================
+S_StopCapture
+=================
+*/
+void S_StopCapture( void )
+{
+	if( si.StopCapture ) {
+		si.StopCapture( );
+	}
+}
+
+/*
+=================
+S_MasterGain
+=================
+*/
+void S_MasterGain( float gain )
+{
+	if( si.MasterGain ) {
+		si.MasterGain( gain );
+	}
+}
+#endif
 
 //=============================================================================
 
@@ -380,6 +468,7 @@ void S_Init( void )
 	s_doppler = Cvar_Get( "s_doppler", "1", CVAR_ARCHIVE );
 	s_backend = Cvar_Get( "s_backend", "", CVAR_ROM );
 	s_muteWhenMinimized = Cvar_Get( "s_muteWhenMinimized", "0", CVAR_ARCHIVE );
+	s_muteWhenUnfocused = Cvar_Get( "s_muteWhenUnfocused", "0", CVAR_ARCHIVE );
 
 	cv = Cvar_Get( "s_initsound", "1", 0 );
 	if( !cv->integer ) {
@@ -411,14 +500,14 @@ void S_Init( void )
 				Com_Error( ERR_FATAL, "Sound interface invalid." );
 			}
 
-			S_SoundInfo( );
-			Com_Printf( "Sound initialization successful.\n" );
+			//S_SoundInfo( );
+			Com_DPrintf( "Sound initialization successful.\n" );
 		} else {
-			Com_Printf( "Sound initialization failed.\n" );
+			Com_DPrintf( "Sound initialization failed.\n" );
 		}
 	}
 
-	Com_Printf( "--------------------------------\n");
+	Com_DPrintf( "--------------------------------\n");
 }
 
 /*

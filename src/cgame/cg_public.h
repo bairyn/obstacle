@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -138,6 +138,11 @@ typedef enum
   CG_KEY_GETCATCHER,
   CG_KEY_SETCATCHER,
   CG_KEY_GETKEY,
+  CG_PARSE_ADD_GLOBAL_DEFINE,
+  CG_PARSE_LOAD_SOURCE,
+  CG_PARSE_FREE_SOURCE,
+  CG_PARSE_READ_TOKEN,
+  CG_PARSE_SOURCE_FILE_AND_LINE,
   CG_S_STOPBACKGROUNDTRACK,
   CG_REAL_TIME,
   CG_SNAPVECTOR,
@@ -172,14 +177,10 @@ typedef enum
   CG_KEY_GETBINDINGBUF,
   CG_KEY_SETBINDING,
 
-  CG_PARSE_ADD_GLOBAL_DEFINE,
-  CG_PARSE_LOAD_SOURCE,
-  CG_PARSE_FREE_SOURCE,
-  CG_PARSE_READ_TOKEN,
-  CG_PARSE_SOURCE_FILE_AND_LINE,
-
   CG_KEY_SETOVERSTRIKEMODE,
   CG_KEY_GETOVERSTRIKEMODE,
+
+  CG_S_SOUNDDURATION,
 
   CG_MEMSET = 200,
   CG_MEMCPY,
@@ -231,6 +232,12 @@ typedef enum
   // void (*CG_DrawActiveFrame)( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback );
   // Generates and draws a game scene and status information at the given time.
   // If demoPlayback is set, local movement prediction will not be enabled
+
+  CG_CROSSHAIR_PLAYER,
+  // int (*CG_CrosshairPlayer)( void );
+
+  CG_LAST_ATTACKER,
+  // int (*CG_LastAttacker)( void );
 
   CG_KEY_EVENT,
   // void  (*CG_KeyEvent)( int key, qboolean down );

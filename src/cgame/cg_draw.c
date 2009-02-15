@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -316,14 +316,14 @@ static void CG_DrawPlayerCreditsValue( rectDef_t *rect, vec4_t color, qboolean p
   value = ps->persistant[ PERS_CREDIT ];
   if( value > -1 )
   {
-    if( cg.predictedPlayerState.stats[ STAT_PTEAM ] == PTE_ALIENS &&
-        !CG_AtHighestClass( ) )
+    if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_ALIENS )
     {
-      if( cg.time - cg.lastEvolveAttempt <= NO_CREDITS_TIME )
-      {
-        if( ( ( cg.time - cg.lastEvolveAttempt ) / 300 ) % 2 )
-          color[ 3 ] = 0.0f;
-      }
+      if( !BG_AlienCanEvolve( cg.predictedPlayerState.stats[ STAT_CLASS ],
+                              value, cgs.alienStage ) &&
+          cg.time - cg.lastEvolveAttempt <= NO_CREDITS_TIME &&
+          ( ( cg.time - cg.lastEvolveAttempt ) / 300 ) & 1 )
+        color[ 3 ] = 0.0f;
+      value /= ALIEN_CREDITS_PER_FRAG;
     }
 
     trap_R_SetColor( color );
@@ -337,135 +337,113 @@ static void CG_DrawPlayerCreditsValue( rectDef_t *rect, vec4_t color, qboolean p
   }
 }
 
-static void CG_DrawPlayerBankValue( rectDef_t *rect, vec4_t color, qboolean padding )
+static void CG_DrawAttackFeedback( rectDef_t *rect )
 {
-  int           value;
-  playerState_t *ps;
+        static qboolean flipAttackFeedback = qfalse;
+        int frame = cg.feedbackAnimation;
+        qhandle_t shader;
+        vec4_t hit_color = { 1, 0, 0, 0.5 };
+        vec4_t miss_color = { 0.3, 0.3, 0.3, 0.5 };
+        vec4_t teamhit_color = { 0.39, 0.80, 0.00, 0.5 };
 
-  ps = &cg.snap->ps;
 
-  value = ps->persistant[ PERS_BANK ];
-  if( value > -1 )
+        if ( frame == 1 )
+        {
+          flipAttackFeedback = !flipAttackFeedback;
+        }
+
+        //when a new feedback animation event is received, the fame number is set to 1 - so
+        //if it is zero, we don't need to draw anything
+        if ( frame == 0 || !cg_drawAlienFeedback.integer) { //drop out if we aren't currently needing to draw any feedback
+                //Com_Printf(".");
+                return;
+        }
+        else {
+                switch(cg.feedbackAnimationType)
+                {
+                  case AFEEDBACK_HIT:
+                  case AFEEDBACK_MISS:
+                  case AFEEDBACK_TEAMHIT:
+                    if( flipAttackFeedback )
+                      shader = cgs.media.alienAttackFeedbackShadersFlipped[ frame - 1 ];
+                    else
+                      shader = cgs.media.alienAttackFeedbackShaders[ frame - 1 ];
+                    break;
+                  case AFEEDBACK_RANGED_HIT:
+                  case AFEEDBACK_RANGED_MISS:
+                  case AFEEDBACK_RANGED_TEAMHIT:
+                    if( flipAttackFeedback )
+                      shader = cgs.media.alienAttackFeedbackShadersFlipped[ frame - 1 ];
+                    else
+                      shader = cgs.media.alienAttackFeedbackShaders[ frame - 1 ];
+                    break;
+                  default:
+                     shader = cgs.media.alienAttackFeedbackShaders[ frame - 1 ];
+                     break;
+                  
+                }
+                cg.feedbackAnimation++;
+                if(cg.feedbackAnimation > 10)
+                        cg.feedbackAnimation = 0;
+
+                switch(cg.feedbackAnimationType) {
+                	case AFEEDBACK_HIT:
+                	case AFEEDBACK_RANGED_HIT:
+                        	trap_R_SetColor( hit_color );
+                        	break;
+                	case AFEEDBACK_MISS:
+                  case AFEEDBACK_RANGED_MISS:
+                        	trap_R_SetColor( miss_color );
+                        	break;
+                	case AFEEDBACK_TEAMHIT:
+                  case AFEEDBACK_RANGED_TEAMHIT:
+                        	trap_R_SetColor( teamhit_color );
+                        	break;
+                }
+                CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
+                trap_R_SetColor( NULL );
+        }
+}
+
+/*
+==============
+CG_DrawPlayerStamina
+==============
+*/
+static void CG_DrawPlayerStamina( int ownerDraw, rectDef_t *rect,
+                                  vec4_t backColor, vec4_t foreColor,
+                                  qhandle_t shader )
+{
+  playerState_t *ps = &cg.snap->ps;
+  float         stamina = ps->stats[ STAT_STAMINA ];
+  float         maxStaminaBy3 = (float)MAX_STAMINA / 3.0f;
+  float         progress;
+  vec4_t        color;
+
+  switch( ownerDraw )
   {
-    trap_R_SetColor( color );
-
-    if( padding )
-      CG_DrawFieldPadded( rect->x, rect->y, 4, rect->w / 4, rect->h, value );
-    else
-      CG_DrawField( rect->x, rect->y, 1, rect->w, rect->h, value );
-
-    trap_R_SetColor( NULL );
+    case CG_PLAYER_STAMINA_1:
+      progress = ( stamina - 2 * (int)maxStaminaBy3 ) / maxStaminaBy3;
+      break;
+    case CG_PLAYER_STAMINA_2:
+      progress = ( stamina - (int)maxStaminaBy3 ) / maxStaminaBy3;
+      break;
+    case CG_PLAYER_STAMINA_3:
+      progress = stamina / maxStaminaBy3;
+      break;
+    case CG_PLAYER_STAMINA_4:
+      progress = ( stamina + MAX_STAMINA ) / MAX_STAMINA;
+      break;
+    default:
+      return;
   }
-}
-
-#define HH_MIN_ALPHA  0.2f
-#define HH_MAX_ALPHA  0.8f
-#define HH_ALPHA_DIFF (HH_MAX_ALPHA-HH_MIN_ALPHA)
-
-#define AH_MIN_ALPHA  0.2f
-#define AH_MAX_ALPHA  0.8f
-#define AH_ALPHA_DIFF (AH_MAX_ALPHA-AH_MIN_ALPHA)
-
-/*
-==============
-CG_DrawPlayerStamina1
-==============
-*/
-static void CG_DrawPlayerStamina1( rectDef_t *rect, vec4_t color, qhandle_t shader )
-{
-  playerState_t *ps = &cg.snap->ps;
-  float         stamina = ps->stats[ STAT_STAMINA ];
-  float         maxStaminaBy3 = (float)MAX_STAMINA / 3.0f;
-  float         progress;
-
-  stamina -= ( 2 * (int)maxStaminaBy3 );
-  progress = stamina / maxStaminaBy3;
 
   if( progress > 1.0f )
     progress  = 1.0f;
   else if( progress < 0.0f )
     progress = 0.0f;
 
-  color[ 3 ] = HH_MIN_ALPHA + ( progress * HH_ALPHA_DIFF );
-
-  trap_R_SetColor( color );
-  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
-  trap_R_SetColor( NULL );
-}
-
-/*
-==============
-CG_DrawPlayerStamina2
-==============
-*/
-static void CG_DrawPlayerStamina2( rectDef_t *rect, vec4_t color, qhandle_t shader )
-{
-  playerState_t *ps = &cg.snap->ps;
-  float         stamina = ps->stats[ STAT_STAMINA ];
-  float         maxStaminaBy3 = (float)MAX_STAMINA / 3.0f;
-  float         progress;
-
-  stamina -= (int)maxStaminaBy3;
-  progress = stamina / maxStaminaBy3;
-
-  if( progress > 1.0f )
-    progress  = 1.0f;
-  else if( progress < 0.0f )
-    progress = 0.0f;
-
-  color[ 3 ] = HH_MIN_ALPHA + ( progress * HH_ALPHA_DIFF );
-
-  trap_R_SetColor( color );
-  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
-  trap_R_SetColor( NULL );
-}
-
-/*
-==============
-CG_DrawPlayerStamina3
-==============
-*/
-static void CG_DrawPlayerStamina3( rectDef_t *rect, vec4_t color, qhandle_t shader )
-{
-  playerState_t *ps = &cg.snap->ps;
-  float         stamina = ps->stats[ STAT_STAMINA ];
-  float         maxStaminaBy3 = (float)MAX_STAMINA / 3.0f;
-  float         progress;
-
-  progress = stamina / maxStaminaBy3;
-
-  if( progress > 1.0f )
-    progress  = 1.0f;
-  else if( progress < 0.0f )
-    progress = 0.0f;
-
-  color[ 3 ] = HH_MIN_ALPHA + ( progress * HH_ALPHA_DIFF );
-
-  trap_R_SetColor( color );
-  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
-  trap_R_SetColor( NULL );
-}
-
-/*
-==============
-CG_DrawPlayerStamina4
-==============
-*/
-static void CG_DrawPlayerStamina4( rectDef_t *rect, vec4_t color, qhandle_t shader )
-{
-  playerState_t *ps = &cg.snap->ps;
-  float         stamina = ps->stats[ STAT_STAMINA ];
-  float         progress;
-
-  stamina += (float)MAX_STAMINA;
-  progress = stamina / (float)MAX_STAMINA;
-
-  if( progress > 1.0f )
-    progress  = 1.0f;
-  else if( progress < 0.0f )
-    progress = 0.0f;
-
-  color[ 3 ] = HH_MIN_ALPHA + ( progress * HH_ALPHA_DIFF );
+  Vector4Lerp( progress, backColor, foreColor, color );
 
   trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
@@ -477,15 +455,19 @@ static void CG_DrawPlayerStamina4( rectDef_t *rect, vec4_t color, qhandle_t shad
 CG_DrawPlayerStaminaBolt
 ==============
 */
-static void CG_DrawPlayerStaminaBolt( rectDef_t *rect, vec4_t color, qhandle_t shader )
+static void CG_DrawPlayerStaminaBolt( rectDef_t *rect, vec4_t backColor,
+                                      vec4_t foreColor, qhandle_t shader )
 {
-  playerState_t *ps = &cg.snap->ps;
-  float         stamina = ps->stats[ STAT_STAMINA ];
+  float         stamina = cg.snap->ps.stats[ STAT_STAMINA ];
+  vec4_t        color;
 
   if( stamina < 0 )
-    color[ 3 ] = HH_MIN_ALPHA;
+    Vector4Copy( backColor, color );
+  else if( cg.predictedPlayerState.stats[ STAT_STATE ] & SS_SPEEDBOOST )
+    Vector4Lerp( ( sin( cg.time / 150.f ) + 1 ) / 2,
+                 backColor, foreColor, color );
   else
-    color[ 3 ] = HH_MAX_ALPHA;
+    Vector4Copy( foreColor, color );
 
   trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
@@ -497,40 +479,42 @@ static void CG_DrawPlayerStaminaBolt( rectDef_t *rect, vec4_t color, qhandle_t s
 CG_DrawPlayerClipsRing
 ==============
 */
-static void CG_DrawPlayerClipsRing( rectDef_t *rect, vec4_t color, qhandle_t shader )
+static void CG_DrawPlayerClipsRing( rectDef_t *rect, vec4_t backColor,
+                                    vec4_t foreColor, qhandle_t shader )
 {
   playerState_t *ps = &cg.snap->ps;
   centity_t     *cent;
   float         buildTime = ps->stats[ STAT_MISC ];
   float         progress;
   float         maxDelay;
+  weapon_t      weapon;
+  vec4_t        color;
 
   cent = &cg_entities[ cg.snap->ps.clientNum ];
+  weapon = BG_GetPlayerWeapon( ps );
 
-  switch( cent->currentState.weapon )
+  switch( weapon )
   {
     case WP_ABUILD:
     case WP_ABUILD2:
     case WP_HBUILD:
-    case WP_HBUILD2:
-      maxDelay = (float)BG_FindBuildDelayForWeapon( cent->currentState.weapon );
+      if( buildTime > MAXIMUM_BUILD_TIME )
+        buildTime = MAXIMUM_BUILD_TIME;
+      progress = ( MAXIMUM_BUILD_TIME - buildTime ) / MAXIMUM_BUILD_TIME;
 
-      if( buildTime > maxDelay )
-        buildTime = maxDelay;
-
-      progress = ( maxDelay - buildTime ) / maxDelay;
-
-      color[ 3 ] = HH_MIN_ALPHA + ( progress * HH_ALPHA_DIFF );
+      Vector4Lerp( progress, backColor, foreColor, color );
       break;
 
     default:
       if( ps->weaponstate == WEAPON_RELOADING )
       {
-        maxDelay = (float)BG_FindReloadTimeForWeapon( cent->currentState.weapon );
+        maxDelay = (float)BG_Weapon( cent->currentState.weapon )->reloadTime;
         progress = ( maxDelay - (float)ps->weaponTime ) / maxDelay;
 
-        color[ 3 ] = HH_MIN_ALPHA + ( progress * HH_ALPHA_DIFF );
+        Vector4Lerp( progress, backColor, foreColor, color );
       }
+      else
+        Com_Memcpy( color, foreColor, sizeof( color ) );
       break;
   }
 
@@ -544,24 +528,22 @@ static void CG_DrawPlayerClipsRing( rectDef_t *rect, vec4_t color, qhandle_t sha
 CG_DrawPlayerBuildTimerRing
 ==============
 */
-static void CG_DrawPlayerBuildTimerRing( rectDef_t *rect, vec4_t color, qhandle_t shader )
+static void CG_DrawPlayerBuildTimerRing( rectDef_t *rect, vec4_t backColor,
+                                         vec4_t foreColor, qhandle_t shader )
 {
   playerState_t *ps = &cg.snap->ps;
   centity_t     *cent;
   float         buildTime = ps->stats[ STAT_MISC ];
   float         progress;
-  float         maxDelay;
+  vec4_t        color;
 
   cent = &cg_entities[ cg.snap->ps.clientNum ];
 
-  maxDelay = (float)BG_FindBuildDelayForWeapon( cent->currentState.weapon );
+  if( buildTime > MAXIMUM_BUILD_TIME )
+    buildTime = MAXIMUM_BUILD_TIME;
+  progress = ( MAXIMUM_BUILD_TIME - buildTime ) / MAXIMUM_BUILD_TIME;
 
-  if( buildTime > maxDelay )
-    buildTime = maxDelay;
-
-  progress = ( maxDelay - buildTime ) / maxDelay;
-
-  color[ 3 ] = AH_MIN_ALPHA + ( progress * AH_ALPHA_DIFF );
+  Vector4Lerp( progress, backColor, foreColor, color );
 
   trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
@@ -573,14 +555,14 @@ static void CG_DrawPlayerBuildTimerRing( rectDef_t *rect, vec4_t color, qhandle_
 CG_DrawPlayerBoosted
 ==============
 */
-static void CG_DrawPlayerBoosted( rectDef_t *rect, vec4_t color, qhandle_t shader )
+static void CG_DrawPlayerBoosted( rectDef_t *rect, vec4_t backColor,
+                                  vec4_t foreColor, qhandle_t shader )
 {
-  if( cg.boostedTime >= 0 )
-    color[ 3 ] = AH_MAX_ALPHA;
+  if( cg.snap->ps.stats[ STAT_STATE ] & SS_BOOSTED )
+    trap_R_SetColor( foreColor );
   else
-    color[ 3 ] = AH_MIN_ALPHA;
+    trap_R_SetColor( backColor );
 
-  trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
   trap_R_SetColor( NULL );
 }
@@ -590,24 +572,20 @@ static void CG_DrawPlayerBoosted( rectDef_t *rect, vec4_t color, qhandle_t shade
 CG_DrawPlayerBoosterBolt
 ==============
 */
-static void CG_DrawPlayerBoosterBolt( rectDef_t *rect, vec4_t color, qhandle_t shader )
+static void CG_DrawPlayerBoosterBolt( rectDef_t *rect, vec4_t backColor,
+                                      vec4_t foreColor, qhandle_t shader )
 {
-  vec4_t        localColor;
+  vec4_t color;
 
-  Vector4Copy( color, localColor );
+  // Flash bolts when the boost is almost out
+  if( ( cg.snap->ps.stats[ STAT_STATE ] & SS_BOOSTED ) &&
+      ( cg.snap->ps.stats[ STAT_STATE ] & SS_BOOSTEDWARNING ) )
+    Vector4Lerp( ( sin( cg.time / 100.f ) + 1 ) / 2,
+                 backColor, foreColor, color );
+  else
+    Vector4Copy( foreColor, color );
 
-  if( cg.boostedTime >= 0 )
-  {
-    if( ( cg.time - cg.boostedTime ) > BOOST_TIME - 3000 )
-    {
-      qboolean flash = ( cg.time / 500 ) % 2;
-
-      if( flash )
-        localColor[ 3 ] = 1.0f;
-    }
-  }
-
-  trap_R_SetColor( localColor );
+  trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
   trap_R_SetColor( NULL );
 }
@@ -619,38 +597,49 @@ CG_DrawPlayerPoisonBarbs
 */
 static void CG_DrawPlayerPoisonBarbs( rectDef_t *rect, vec4_t color, qhandle_t shader )
 {
-  playerState_t *ps = &cg.snap->ps;
-  int           x = rect->x;
-  int           y = rect->y;
-  int           width = rect->w;
-  int           height = rect->h;
-  qboolean      vertical;
-  int           iconsize, numBarbs, i;
+  qboolean vertical;
+  float    x = rect->x, y = rect->y;
+  float    width = rect->w, height = rect->h;
+  float    diff;
+  int      iconsize, numBarbs, maxBarbs;
 
-  numBarbs = ps->ammo;
+  maxBarbs = BG_Weapon( cg.snap->ps.weapon )->maxAmmo;
+  numBarbs = cg.snap->ps.ammo;
+  if( maxBarbs <= 0 || numBarbs <= 0 )
+    return;
+
+  // adjust these first to ensure the aspect ratio of the barb image is
+  // preserved
+  CG_AdjustFrom640( &x, &y, &width, &height );
 
   if( height > width )
   {
     vertical = qtrue;
     iconsize = width;
+    if( maxBarbs != 1 ) // avoid division by zero
+      diff = ( height - iconsize ) / (float)( maxBarbs - 1 );
+    else
+      diff = 0; // doesn't matter, won't be used
   }
-  else if( height <= width )
+  else
   {
     vertical = qfalse;
     iconsize = height;
+    if( maxBarbs != 1 )
+      diff = ( width - iconsize ) / (float)( maxBarbs - 1 );
+    else
+      diff = 0;
   }
 
-  if( color[ 3 ] != 0.0 )
-    trap_R_SetColor( color );
+  trap_R_SetColor( color );
 
-  for( i = 0; i < numBarbs; i ++ )
+  for( ; numBarbs > 0; numBarbs-- )
   {
+    trap_R_DrawStretchPic( x, y, iconsize, iconsize, 0, 0, 1, 1, shader );
     if( vertical )
-      y += iconsize;
+      y += diff;
     else
-      x += iconsize;
-
-    CG_DrawPic( x, y, iconsize, iconsize, shader );
+      x += diff;
   }
 
   trap_R_SetColor( NULL );
@@ -661,63 +650,339 @@ static void CG_DrawPlayerPoisonBarbs( rectDef_t *rect, vec4_t color, qhandle_t s
 CG_DrawPlayerWallclimbing
 ==============
 */
-static void CG_DrawPlayerWallclimbing( rectDef_t *rect, vec4_t color, qhandle_t shader )
+static void CG_DrawPlayerWallclimbing( rectDef_t *rect, vec4_t backColor, vec4_t foreColor, qhandle_t shader )
 {
-  playerState_t *ps = &cg.snap->ps;
-  qboolean      ww = ps->stats[ STAT_STATE ] & SS_WALLCLIMBING;
-
-  if( ww )
-    color[ 3 ] = AH_MAX_ALPHA;
+  if( cg.snap->ps.stats[ STAT_STATE ] & SS_WALLCLIMBING )
+    trap_R_SetColor( foreColor );
   else
-    color[ 3 ] = AH_MIN_ALPHA;
+    trap_R_SetColor( backColor );
 
-  trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
   trap_R_SetColor( NULL );
 }
 
 static void CG_DrawPlayerAmmoValue( rectDef_t *rect, vec4_t color )
 {
-  int           value;
-  centity_t     *cent;
-  playerState_t *ps;
+  int value;
 
-  cent = &cg_entities[ cg.snap->ps.clientNum ];
-  ps = &cg.snap->ps;
-
-  if( cent->currentState.weapon )
+  switch( BG_PrimaryWeapon( cg.snap->ps.stats ) )
   {
-    switch( cent->currentState.weapon )
-    {
-      case WP_ABUILD:
-      case WP_ABUILD2:
-        //percentage of BP remaining
-        value = cgs.alienBuildPoints;
-        break;
+    case WP_NONE:
+    case WP_BLASTER:
+      return;
 
-      case WP_HBUILD:
-      case WP_HBUILD2:
-        //percentage of BP remaining
-        value = cgs.humanBuildPoints;
-        break;
+    case WP_ABUILD:
+    case WP_ABUILD2:
+      // BP remaining
+      value = cgs.alienBuildPoints;
+      break;
 
-      default:
-        value = ps->ammo;
-        break;
-    }
+    case WP_HBUILD:
+      // BP remaining
+      value = cgs.humanBuildPoints;
+      break;
 
-    if( value > 999 )
-      value = 999;
+    default:
+      value = cg.snap->ps.ammo;
+      break;
+  }
 
-    if( value > -1 )
-    {
-      trap_R_SetColor( color );
-      CG_DrawField( rect->x, rect->y, 4, rect->w / 4, rect->h, value );
-      trap_R_SetColor( NULL );
-    }
+  if( value > 999 )
+    value = 999;
+
+  if( value > -1 )
+  {
+    trap_R_SetColor( color );
+    CG_DrawField( rect->x, rect->y, 4, rect->w / 4, rect->h, value );
+    trap_R_SetColor( NULL );
   }
 }
 
+static void CG_DrawStack( rectDef_t *rect, vec4_t color, float fill,
+                          int align, int valign, float val, int max )
+{
+  int   i;
+  float each;
+  int   ival;
+  float frac;
+  float nudge = 0;
+  float fmax = max; // otherwise we'd be (float) casting everywhere
+
+  if( val <= 0 || max <= 0 )
+    return;
+
+  ival = (int)val;
+  frac = val - ival;
+
+  trap_R_SetColor( color );
+
+  if( rect->h >= rect->w ) // vertical stack
+  {
+    each = fill * rect->h / fmax;
+    if( each * cgs.screenYScale < 4.f ) // FIXME: magic number
+    {
+      float offy, h = rect->h * val / fmax;
+      switch( valign )
+      {
+        case VALIGN_TOP:
+          offy = 0;
+          break;
+        case VALIGN_CENTER:
+          offy = ( rect->h - h ) / 2;
+          break;
+        case VALIGN_BOTTOM:
+        default:
+          offy = rect->h - h;
+          break;
+      }
+      CG_DrawPic( rect->x, rect->y + offy, rect->w, h, cgs.media.whiteShader );
+      trap_R_SetColor( NULL );
+      return;
+    }
+
+    if( fmax > 1 )
+      nudge = ( 1 - fill ) / ( fmax - 1 );
+    else
+      return;
+    for( i = 0; i < ival; i++ )
+    {
+      float start;
+      switch( valign )
+      {
+        case VALIGN_TOP:
+          start = ( i * ( 1 + nudge ) + frac ) / fmax;
+          break;
+        case VALIGN_CENTER:
+          // TODO (fallthrough for now)
+        default:
+        case VALIGN_BOTTOM:
+          start = 1 - ( val - i - ( i + fmax - val ) * nudge ) / fmax;
+          break;
+      }
+      CG_DrawPic( rect->x, rect->y + rect->h * start, rect->w, each,
+                  cgs.media.whiteShader );
+    }
+    color[ 3 ] *= frac;
+    trap_R_SetColor( color );
+    switch( valign )
+    {
+      case VALIGN_TOP:
+        CG_DrawPic( rect->x, rect->y - rect->h * ( 1 - frac ) / fmax,
+                    rect->w, each, cgs.media.whiteShader );
+        break;
+      case VALIGN_CENTER:
+        // fallthrough
+      default:
+      case VALIGN_BOTTOM:
+        CG_DrawPic( rect->x, rect->y + rect->h *
+                    ( 1 + ( ( 1 - fill ) / fmax ) - frac / fmax ),
+                    rect->w, each, cgs.media.whiteShader );
+    }
+  }
+  else // horizontal stack
+  {
+    each = fill * rect->w / fmax;
+    if( each < 4.f )
+    {
+      float offx, w = rect->w * val / fmax;
+      switch( align )
+      {
+        case ALIGN_LEFT:
+        default:
+          offx = 0;
+          break;
+        case ALIGN_CENTER:
+          offx = ( rect->w - w ) / 2;
+          break;
+        case ALIGN_RIGHT:
+          offx = rect->w - w;
+          break;
+      }
+      CG_DrawPic( rect->x + offx, rect->y, w, rect->h, cgs.media.whiteShader );
+      trap_R_SetColor( NULL );
+      return;
+    }
+
+    if( fmax > 1 )
+      nudge = ( 1 - fill ) / ( fmax - 1 );
+    for( i = 0; i < ival; i++ )
+    {
+      float start;
+      switch( align )
+      {
+        case ALIGN_LEFT:
+          start = ( i * ( 1 + nudge ) + frac ) / fmax;
+          break;
+        case ALIGN_CENTER:
+          // TODO (fallthrough for now)
+        default:
+        case ALIGN_RIGHT:
+          start = 1 - ( val - i - ( i + fmax - val ) * nudge ) / fmax;
+          break;
+      }
+      CG_DrawPic( rect->x + rect->w * start, rect->y, each, rect->h,
+                  cgs.media.whiteShader );
+    }
+    color[ 3 ] *= frac;
+    trap_R_SetColor( color );
+    switch( align )
+    {
+      case ALIGN_LEFT:
+        CG_DrawPic( rect->x - ( 1 - frac ) * rect->w / fmax, rect->y,
+                    each, rect->h, cgs.media.whiteShader );
+        break;
+      case ALIGN_CENTER:
+        // fallthrough
+      default:
+      case ALIGN_RIGHT:
+        CG_DrawPic( rect->x + rect->w * 
+                    ( 1 + ( ( 1 - fill ) / fmax ) - frac / fmax ),
+                    rect->y, each, rect->h, cgs.media.whiteShader );
+    }
+  }
+
+  trap_R_SetColor( NULL );
+}
+
+static void CG_DrawPlayerAmmoStack( rectDef_t *rect,
+                                    vec4_t backColor, vec4_t foreColor,
+                                    int textalign, int textvalign )
+{
+  float         val;
+  int           maxVal;
+  static int    lastws, maxwt, lastammo, ammodiff;
+  playerState_t *ps = &cg.snap->ps;
+  weapon_t      primary = BG_PrimaryWeapon( ps->stats );
+
+  if( !cg_drawAmmoStack.integer )
+    return;
+
+  switch( primary )
+  {
+    case WP_NONE:
+    case WP_BLASTER:
+      return;
+
+    case WP_ABUILD:
+    case WP_ABUILD2:
+    case WP_HBUILD:
+      // FIXME: send max BP values over the network
+      return;
+
+    default:
+      val = ps->ammo;
+      maxVal = BG_Weapon( primary )->maxAmmo;
+      if( BG_Weapon( primary )->usesEnergy &&
+          BG_InventoryContainsUpgrade( UP_BATTPACK, ps->stats ) )
+        maxVal *= BATTPACK_MODIFIER;
+      break;
+  }
+
+  if( ps->weaponstate != lastws || ps->weaponTime > maxwt )
+  {
+    maxwt = ps->weaponTime;
+    lastws = ps->weaponstate;
+  }
+  else if( ps->weaponTime == 0 )
+  {
+    maxwt = 0;
+  }
+
+  if( lastammo != ps->ammo )
+  {
+    ammodiff = lastammo - ps->ammo;
+    lastammo = ps->ammo;
+  }
+
+  // smoothing effects if we're holding primary weapon
+  if( primary == BG_GetPlayerWeapon( ps ) )
+  {
+    switch( ps->weaponstate )
+    {
+      case WEAPON_FIRING:
+        if( maxwt > 0 )
+        {
+          float f = ps->weaponTime / (float)maxwt;
+          val += ammodiff * f * f;
+        }
+        break;
+  
+      case WEAPON_RELOADING:
+        val = ps->weaponTime / (float)maxwt;
+        val *= val;
+        val = ( 1 - val ) * ( maxVal - ps->ammo ) + ps->ammo;
+        break;
+  
+      default:
+        maxwt = 0;
+        break;
+    }
+  }
+
+  trap_R_SetColor( backColor );
+  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, cgs.media.whiteShader );
+  trap_R_SetColor( NULL );
+  CG_DrawStack( rect, foreColor, 0.8, textalign, textvalign,
+                val, maxVal );
+}
+
+static void CG_DrawPlayerClipsStack( rectDef_t *rect,
+                                     vec4_t backColor, vec4_t foreColor,
+                                     int textalign, int textvalign )
+{
+  float         val;
+  int           maxVal;
+  static int    lastws, maxwt;
+  playerState_t *ps = &cg.snap->ps;
+  weapon_t      primary = BG_PrimaryWeapon( ps->stats );
+
+  if( !cg_drawAmmoStack.integer )
+    return;
+
+  switch( primary )
+  {
+    case WP_NONE:
+    case WP_BLASTER:
+    case WP_ABUILD:
+    case WP_ABUILD2:
+    case WP_HBUILD:
+      return;
+
+    default:
+      val = ps->clips;
+      maxVal = BG_Weapon( primary )->maxClips;
+      break;
+  }
+
+  if( ps->weaponstate != lastws || ps->weaponTime > maxwt )
+  {
+    maxwt = ps->weaponTime;
+    lastws = ps->weaponstate;
+  }
+  else if( ps->weaponTime == 0 )
+    maxwt = 0;
+
+  switch( ps->weaponstate )
+  {
+    case WEAPON_RELOADING:
+      if( maxwt > 0 )
+      {
+        float f = ps->weaponTime / (float)maxwt;
+        val += f * f - 1;
+      }
+      break;
+
+    default:
+      maxwt = 0;
+      break;
+  }
+
+  trap_R_SetColor( backColor );
+  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, cgs.media.whiteShader );
+  trap_R_SetColor( NULL );
+  CG_DrawStack( rect, foreColor, 0.8, textalign, textvalign,
+                val, maxVal );
+}
 
 /*
 ==============
@@ -726,7 +991,7 @@ CG_DrawAlienSense
 */
 static void CG_DrawAlienSense( rectDef_t *rect )
 {
-  if( BG_ClassHasAbility( cg.snap->ps.stats[ STAT_PCLASS ], SCA_ALIENSENSE ) )
+  if( BG_ClassHasAbility( cg.snap->ps.stats[ STAT_CLASS ], SCA_ALIENSENSE ) )
     CG_AlienSense( rect );
 }
 
@@ -761,13 +1026,13 @@ static void CG_DrawUsableBuildable( rectDef_t *rect, qhandle_t shader, vec4_t co
 
   es = &cg_entities[ trace.entityNum ].currentState;
 
-  if( es->eType == ET_BUILDABLE && BG_FindUsableForBuildable( es->modelindex ) &&
-      cg.predictedPlayerState.stats[ STAT_PTEAM ] == BG_FindTeamForBuildable( es->modelindex ) )
+  if( es->eType == ET_BUILDABLE && BG_Buildable( es->modelindex )->usable &&
+      cg.predictedPlayerState.stats[ STAT_TEAM ] == BG_Buildable( es->modelindex )->team )
   {
     //hack to prevent showing the usable buildable when you aren't carrying an energy weapon
     if( ( es->modelindex == BA_H_REACTOR || es->modelindex == BA_H_REPEATER ) &&
-        ( !BG_FindUsesEnergyForWeapon( cg.snap->ps.weapon ) ||
-          BG_FindInfinteAmmoForWeapon( cg.snap->ps.weapon ) ) )
+        ( !BG_Weapon( cg.snap->ps.weapon )->usesEnergy ||
+          BG_Weapon( cg.snap->ps.weapon )->infiniteAmmo ) )
       return;
 
     trap_R_SetColor( color );
@@ -781,110 +1046,77 @@ static void CG_DrawUsableBuildable( rectDef_t *rect, qhandle_t shader, vec4_t co
 
 static void CG_DrawPlayerBuildTimer( rectDef_t *rect, vec4_t color )
 {
-  float         progress;
   int           index;
-  centity_t     *cent;
   playerState_t *ps;
 
-  cent = &cg_entities[ cg.snap->ps.clientNum ];
   ps = &cg.snap->ps;
 
-  if( cent->currentState.weapon )
+  if( ps->stats[ STAT_MISC ] <= 0 )
+    return;
+
+  switch( BG_PrimaryWeapon( ps->stats ) )
   {
-    switch( cent->currentState.weapon )
-    {
-      case WP_ABUILD:
-        progress = (float)ps->stats[ STAT_MISC ] / (float)ABUILDER_BASE_DELAY;
-        break;
+    case WP_ABUILD:
+    case WP_ABUILD2:
+    case WP_HBUILD:
+      break;
 
-      case WP_ABUILD2:
-        progress = (float)ps->stats[ STAT_MISC ] / (float)ABUILDER_ADV_DELAY;
-        break;
-
-      case WP_HBUILD:
-        progress = (float)ps->stats[ STAT_MISC ] / (float)HBUILD_DELAY;
-        break;
-
-      case WP_HBUILD2:
-        progress = (float)ps->stats[ STAT_MISC ] / (float)HBUILD2_DELAY;
-        break;
-
-      default:
-        return;
-        break;
-    }
-
-    if( !ps->stats[ STAT_MISC ] )
+    default:
       return;
-
-    index = (int)( progress * 8.0f );
-
-    if( index > 7 )
-      index = 7;
-    else if( index < 0 )
-      index = 0;
-
-    if( cg.time - cg.lastBuildAttempt <= BUILD_DELAY_TIME )
-    {
-      if( ( ( cg.time - cg.lastBuildAttempt ) / 300 ) % 2 )
-      {
-        color[ 0 ] = 1.0f;
-        color[ 1 ] = color[ 2 ] = 0.0f;
-        color[ 3 ] = 1.0f;
-      }
-    }
-
-    trap_R_SetColor( color );
-    CG_DrawPic( rect->x, rect->y, rect->w, rect->h,
-      cgs.media.buildWeaponTimerPie[ index ] );
-    trap_R_SetColor( NULL );
   }
+
+  index = 8 * ( ps->stats[ STAT_MISC ] - 1 ) / MAXIMUM_BUILD_TIME;
+  if( index > 7 )
+    index = 7;
+  else if( index < 0 )
+    index = 0;
+
+  if( cg.time - cg.lastBuildAttempt <= BUILD_DELAY_TIME &&
+      ( ( cg.time - cg.lastBuildAttempt ) / 300 ) % 2 )
+  {
+    color[ 0 ] = 1.0f;
+    color[ 1 ] = color[ 2 ] = 0.0f;
+    color[ 3 ] = 1.0f;
+  }
+
+  trap_R_SetColor( color );
+  CG_DrawPic( rect->x, rect->y, rect->w, rect->h,
+    cgs.media.buildWeaponTimerPie[ index ] );
+  trap_R_SetColor( NULL );
 }
 
 static void CG_DrawPlayerClipsValue( rectDef_t *rect, vec4_t color )
 {
   int           value;
-  centity_t     *cent;
-  playerState_t *ps;
+  playerState_t *ps = &cg.snap->ps;
 
-  cent = &cg_entities[ cg.snap->ps.clientNum ];
-  ps = &cg.snap->ps;
-
-  if( cent->currentState.weapon )
+  switch( BG_PrimaryWeapon( ps->stats ) )
   {
-    switch( cent->currentState.weapon )
-    {
-      case WP_ABUILD:
-      case WP_ABUILD2:
-      case WP_HBUILD:
-      case WP_HBUILD2:
-        break;
+    case WP_NONE:
+    case WP_BLASTER:
+    case WP_ABUILD:
+    case WP_ABUILD2:
+    case WP_HBUILD:
+      return;
 
-      default:
-        value = ps->clips;
+    default:
+      value = ps->clips;
 
-        if( value > -1 )
-        {
-          trap_R_SetColor( color );
-          CG_DrawField( rect->x, rect->y, 4, rect->w / 4, rect->h, value );
-          trap_R_SetColor( NULL );
-        }
-        break;
-    }
+      if( value > -1 )
+      {
+        trap_R_SetColor( color );
+        CG_DrawField( rect->x, rect->y, 4, rect->w / 4, rect->h, value );
+        trap_R_SetColor( NULL );
+      }
+      break;
   }
 }
 
 static void CG_DrawPlayerHealthValue( rectDef_t *rect, vec4_t color )
 {
-  playerState_t *ps;
-  int value;
-
-  ps = &cg.snap->ps;
-
-  value = ps->stats[ STAT_HEALTH ];
-
   trap_R_SetColor( color );
-  CG_DrawField( rect->x, rect->y, 4, rect->w / 4, rect->h, value );
+  CG_DrawField( rect->x, rect->y, 4, rect->w / 4, rect->h,
+                cg.snap->ps.stats[ STAT_HEALTH ] );
   trap_R_SetColor( NULL );
 }
 
@@ -893,20 +1125,222 @@ static void CG_DrawPlayerHealthValue( rectDef_t *rect, vec4_t color )
 CG_DrawPlayerHealthCross
 ==============
 */
-static void CG_DrawPlayerHealthCross( rectDef_t *rect, vec4_t color, qhandle_t shader )
+static void CG_DrawPlayerHealthCross( rectDef_t *rect, vec4_t ref_color )
 {
-  playerState_t *ps = &cg.snap->ps;
-  int           health = ps->stats[ STAT_HEALTH ];
+  qhandle_t shader;
+  vec4_t color;
+  float ref_alpha;
 
-  if( health < 10 )
+  // Pick the current icon
+  shader = cgs.media.healthCross;
+  if( cg.snap->ps.stats[ STAT_STATE ] & SS_HEALING_3X )
+    shader = cgs.media.healthCross3X;
+  else if( cg.snap->ps.stats[ STAT_STATE ] & SS_HEALING_2X )
+  {
+    if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+      shader = cgs.media.healthCross2X;
+    else
+      shader = cgs.media.healthCrossMedkit;
+  }
+  else if( cg.snap->ps.stats[ STAT_STATE ] & SS_POISONED )
+    shader = cgs.media.healthCrossPoisoned;
+
+  // Pick the alpha value
+  Vector4Copy( ref_color, color );
+  if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS &&
+      cg.snap->ps.stats[ STAT_HEALTH ] < 10 )
   {
     color[ 0 ] = 1.0f;
     color[ 1 ] = color[ 2 ] = 0.0f;
   }
+  ref_alpha = ref_color[ 3 ];
+  if( cg.snap->ps.stats[ STAT_STATE ] & SS_HEALING_ACTIVE )
+    ref_alpha = 1.f;
+    
+  // Don't fade from nothing
+  if( !cg.lastHealthCross )
+    cg.lastHealthCross = shader;
+  
+  // Fade the icon during transition
+  if( cg.lastHealthCross != shader )
+  {
+    cg.healthCrossFade += cg.frametime / 500.f;
+    if( cg.healthCrossFade > 1.f )
+    {
+      cg.healthCrossFade = 0.f;
+      cg.lastHealthCross = shader;
+    }
+    else
+    {
+      // Fading between two icons
+      color[ 3 ] = ref_alpha * cg.healthCrossFade;
+      trap_R_SetColor( color );
+      CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
+      color[ 3 ] = ref_alpha * ( 1.f - cg.healthCrossFade );
+      trap_R_SetColor( color );
+      CG_DrawPic( rect->x, rect->y, rect->w, rect->h, cg.lastHealthCross );
+      trap_R_SetColor( NULL );
+      return;
+    }
+  }
 
+  // Not fading, draw a single icon
+  color[ 3 ] = ref_alpha;
   trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
   trap_R_SetColor( NULL );
+}
+
+static float CG_ChargeProgress( void )
+{
+  float progress;
+  int min = 0, max = 0;
+
+  if( cg.snap->ps.weapon == WP_ALEVEL3 )
+  {
+    min = LEVEL3_POUNCE_TIME_MIN;
+    max = LEVEL3_POUNCE_TIME;
+  }
+  else if( cg.snap->ps.weapon == WP_ALEVEL3_UPG )
+  {
+    min = LEVEL3_POUNCE_TIME_MIN;
+    max = LEVEL3_POUNCE_TIME_UPG;
+  }
+  else if( cg.snap->ps.weapon == WP_ALEVEL4 )
+  {
+    if( cg.predictedPlayerState.stats[ STAT_STATE ] & SS_CHARGING )
+    {
+      min = 0;
+      max = LEVEL4_TRAMPLE_DURATION;
+    }
+    else
+    {
+      min = LEVEL4_TRAMPLE_CHARGE_MIN;
+      max = LEVEL4_TRAMPLE_CHARGE_MAX;
+    }
+  }
+  else if( cg.snap->ps.weapon == WP_LUCIFER_CANNON )
+  {
+    min = LCANNON_CHARGE_TIME_MIN;
+    max = LCANNON_CHARGE_TIME_MAX;
+  }
+  if( max - min <= 0.f )
+    return 0.f;
+  progress = ( (float)cg.predictedPlayerState.stats[ STAT_MISC ] - min ) /
+             ( max - min );
+  if( progress > 1.f )
+    return 1.f;
+  if( progress < 0.f )
+    return 0.f;
+  return progress;
+}
+
+#define CHARGE_BAR_FADE_RATE 0.002f
+
+static void CG_DrawPlayerChargeBarBG( rectDef_t *rect, vec4_t ref_color,
+                                      qhandle_t shader )
+{
+  vec4_t color;
+
+  if( !cg_drawChargeBar.integer || cg.chargeMeterAlpha <= 0.f )
+    return;
+
+  color[ 0 ] = ref_color[ 0 ];
+  color[ 1 ] = ref_color[ 1 ];
+  color[ 2 ] = ref_color[ 2 ];
+  color[ 3 ] = ref_color[ 3 ] * cg.chargeMeterAlpha;
+
+  // Draw meter background
+  trap_R_SetColor( color );
+  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
+  trap_R_SetColor( NULL );
+}
+
+// FIXME: This should come from the element info
+#define CHARGE_BAR_CAP_SIZE 3
+
+static void CG_DrawPlayerChargeBar( rectDef_t *rect, vec4_t ref_color,
+                                    qhandle_t shader )
+{
+  vec4_t color;
+  float x, y, width, height, cap_size, progress;
+  
+  if( !cg_drawChargeBar.integer )
+    return;
+  
+  // Get progress proportion and pump fade
+  progress = CG_ChargeProgress();
+  if( progress <= 0.f )
+  {
+    cg.chargeMeterAlpha -= CHARGE_BAR_FADE_RATE * cg.frametime;
+    if( cg.chargeMeterAlpha <= 0.f )
+    {
+      cg.chargeMeterAlpha = 0.f;
+      return;
+    }
+  }
+  else
+  {
+    cg.chargeMeterValue = progress;
+    cg.chargeMeterAlpha += CHARGE_BAR_FADE_RATE * cg.frametime;
+    if( cg.chargeMeterAlpha > 1.f )
+      cg.chargeMeterAlpha = 1.f;
+  }
+
+  color[ 0 ] = ref_color[ 0 ];
+  color[ 1 ] = ref_color[ 1 ];
+  color[ 2 ] = ref_color[ 2 ];
+  color[ 3 ] = ref_color[ 3 ] * cg.chargeMeterAlpha;
+  
+  // Flash red for Lucifer Cannon warning
+  if( cg.snap->ps.weapon == WP_LUCIFER_CANNON &&
+      cg.snap->ps.stats[ STAT_MISC ] >= LCANNON_CHARGE_TIME_WARN &&
+      ( cg.time & 128 ) )
+  {
+    color[ 0 ] = 1.f;
+    color[ 1 ] = 0.f;
+    color[ 2 ] = 0.f;
+  }
+
+  x = rect->x;
+  y = rect->y;
+  
+  // Horizontal charge bar
+  if( rect->w >= rect->h )
+  {
+    width = ( rect->w - CHARGE_BAR_CAP_SIZE * 2 ) * cg.chargeMeterValue;
+    height = rect->h;
+    CG_AdjustFrom640( &x, &y, &width, &height );
+    cap_size = CHARGE_BAR_CAP_SIZE * cgs.screenXScale;
+  
+    // Draw the meter
+    trap_R_SetColor( color );
+    trap_R_DrawStretchPic( x, y, cap_size, height, 0, 0, 1, 1, shader );
+    trap_R_DrawStretchPic( x + width + cap_size, y, cap_size, height,
+                           1, 0, 0, 1, shader );
+    trap_R_DrawStretchPic( x + cap_size, y, width, height, 1, 0, 1, 1, shader );
+    trap_R_SetColor( NULL );
+  }
+  
+  // Vertical charge bar
+  else
+  {
+    y += rect->h;
+    width = rect->w;
+    height = ( rect->h - CHARGE_BAR_CAP_SIZE * 2 ) * cg.chargeMeterValue;
+    CG_AdjustFrom640( &x, &y, &width, &height );
+    cap_size = CHARGE_BAR_CAP_SIZE * cgs.screenYScale;
+  
+    // Draw the meter
+    trap_R_SetColor( color );
+    trap_R_DrawStretchPic( x, y - cap_size, width, cap_size,
+                           0, 1, 1, 0, shader );
+    trap_R_DrawStretchPic( x, y - height - cap_size * 2, width,
+                           cap_size, 0, 0, 1, 1, shader );
+    trap_R_DrawStretchPic( x, y - height - cap_size, width, height,
+                           0, 1, 1, 1, shader );
+    trap_R_SetColor( NULL );
+  }
 }
 
 static void CG_DrawProgressLabel( rectDef_t *rect, float text_x, float text_y, vec4_t color,
@@ -1098,18 +1532,20 @@ float CG_GetValue( int ownerDraw )
 {
   centity_t *cent;
   playerState_t *ps;
+  weapon_t weapon;
 
   cent = &cg_entities[ cg.snap->ps.clientNum ];
   ps = &cg.snap->ps;
+  weapon = BG_GetPlayerWeapon( ps );
 
   switch( ownerDraw )
   {
     case CG_PLAYER_AMMO_VALUE:
-      if( cent->currentState.weapon )
+      if( weapon )
         return ps->ammo;
       break;
     case CG_PLAYER_CLIPS_VALUE:
-      if( cent->currentState.weapon )
+      if( weapon )
         return ps->clips;
       break;
     case CG_PLAYER_HEALTH:
@@ -1235,7 +1671,7 @@ static void CG_DrawTeamSpectators( rectDef_t *rect, float scale, int textvalign,
 CG_DrawTeamLabel
 ==================
 */
-static void CG_DrawTeamLabel( rectDef_t *rect, pTeam_t team, float text_x, float text_y,
+static void CG_DrawTeamLabel( rectDef_t *rect, team_t team, float text_x, float text_y,
     vec4_t color, float scale, int textalign, int textvalign, int textStyle )
 {
   char  *t;
@@ -1247,13 +1683,13 @@ static void CG_DrawTeamLabel( rectDef_t *rect, pTeam_t team, float text_x, float
 
   switch( team )
   {
-    case PTE_ALIENS:
+    case TEAM_ALIENS:
       t = "Aliens";
       if( cg.intermissionStarted )
         Com_sprintf( stage, MAX_TOKEN_CHARS, "(Stage %d)", cgs.alienStage + 1 );
       break;
 
-    case PTE_HUMANS:
+    case TEAM_HUMANS:
       t = "Humans";
       if( cg.intermissionStarted )
         Com_sprintf( stage, MAX_TOKEN_CHARS, "(Stage %d)", cgs.humanStage + 1 );
@@ -1289,40 +1725,55 @@ static void CG_DrawStageReport( rectDef_t *rect, float text_x, float text_y,
     vec4_t color, float scale, int textalign, int textvalign, int textStyle )
 {
   char  s[ MAX_TOKEN_CHARS ];
+  char *reward;
   float tx, ty;
-  int kills;
 
   if( cg.intermissionStarted )
     return;
 
-  if( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_NONE )
+  if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_NONE )
     return;
 
-  if( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
+  if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
   {
-    kills = cgs.alienNextStageThreshold - cgs.alienKills;
+    int frags = ceil( (float)(cgs.alienNextStageThreshold - cgs.alienCredits) / ALIEN_CREDITS_PER_FRAG );
+    if( frags < 0 )
+      frags = 0;
+
+    if( cgs.alienStage < S3 )
+      reward = "next stage";
+    else
+      reward = "enemy stagedown";
 
     if( cgs.alienNextStageThreshold < 0 )
       Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d", cgs.alienStage + 1 );
-    else if( kills == 1 )
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d kill for next stage",
-          cgs.alienStage + 1, kills );
+    else if( frags == 1 )
+      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, 1 frag for %s",
+                   cgs.alienStage + 1, reward );
     else
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d kills for next stage",
-          cgs.alienStage + 1, kills );
+      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d frags for %s",
+                   cgs.alienStage + 1, frags, reward );
   }
-  else if( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
+  else if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
   {
-    kills = cgs.humanNextStageThreshold - cgs.humanKills;
+    int credits = cgs.humanNextStageThreshold - cgs.humanCredits;
+
+    if( credits < 0 )
+      credits = 0;
+
+    if( cgs.humanStage < S3 )
+      reward = "next stage";
+    else
+      reward = "enemy stagedown";
 
     if( cgs.humanNextStageThreshold < 0 )
       Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d", cgs.humanStage + 1 );
-    else if( kills == 1 )
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d kill for next stage",
-          cgs.humanStage + 1, kills );
+    else if( credits == 1 )
+      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, 1 credit for %s",
+                   cgs.humanStage + 1, reward );
     else
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d kills for next stage",
-          cgs.humanStage + 1, kills );
+      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d credits for %s",
+                   cgs.humanStage + 1, credits, reward );
   }
 
   CG_AlignText( rect, s, scale, 0.0f, 0.0f, textalign, textvalign, &tx, &ty );
@@ -1409,6 +1860,91 @@ static void CG_DrawFPS( rectDef_t *rect, float text_x, float text_y,
   }
 }
 
+/*
+==================
+CG_DrawSpeed
+==================
+*/
+static void CG_DrawSpeed( rectDef_t *rect, float text_x, float text_y,
+                        float scale, vec4_t color,
+                        int textalign, int textvalign, int textStyle )
+{
+  char          *s;
+  float         tx, ty;
+  float         w, h, totalWidth;
+  int           i, strLength;
+  playerState_t *ps;
+  float         speed;
+  static float  speedRecord = 0;
+  static float  previousSpeed = 0;
+  static vec4_t previousColor = { 0, 1, 0, 1 };
+
+  if( cg.snap->ps.pm_type == PM_INTERMISSION )
+    return;
+
+  if( !cg_drawSpeed.integer )
+    return;
+
+  if ( cg_drawSpeed.integer > 1  )
+  {
+    speedRecord = 0;
+    trap_Cvar_Set("cg_drawSpeed", "1");
+  }
+
+  ps = &cg.snap->ps;
+  speed = VectorLength( ps->velocity );
+
+  if ( speed > speedRecord )
+    speedRecord = speed;
+
+  if ( floor(speed) > floor(previousSpeed) )
+  {
+    color[0] = 0;
+    color[1] = 1;
+    color[2] = 0;
+    color[3] = 1;
+  }
+  else if( floor(speed) < floor(previousSpeed) )
+  {
+    color[0] = 1;
+    color[1] = 0;
+    color[2] = 0;
+    color[3] = 1;
+  }
+  else
+  {
+    color[0] = previousColor[0];
+    color[1] = previousColor[1];
+    color[2] = previousColor[2];
+    color[3] = previousColor[3];
+  }
+
+  previousColor[0] = color[0];
+  previousColor[1] = color[1];
+  previousColor[2] = color[2];
+  previousColor[3] = color[3];
+
+  previousSpeed = speed;
+
+  s = va( "Speed: %.0f/%.0f", speed, speedRecord );
+  w = UI_Text_Width( "0", scale, 0 );
+  h = UI_Text_Height( "0", scale, 0 );
+  strLength = CG_DrawStrlen( s );
+  totalWidth = UI_Text_Width( FPS_STRING, scale, 0 ) + w * strLength;
+
+  CG_AlignText( rect, s, 0.0f, totalWidth, h, textalign, textvalign, &tx, &ty );
+
+  for( i = 0; i < strLength; i++ )
+  {
+    char c[ 2 ];
+
+    c[ 0 ] = s[ i ];
+    c[ 1 ] = '\0';
+
+    UI_Text_Paint( text_x + tx + i * w, text_y + ty, scale, color, c, 0, 0, textStyle );
+  }
+}
+
 
 /*
 =================
@@ -1458,7 +1994,6 @@ static void CG_DrawTimerSecs( rectDef_t *rect, vec4_t color )
   CG_DrawFieldPadded( rect->x, rect->y, 2, rect->w / 2, rect->h, seconds );
   trap_R_SetColor( NULL );
 }
-
 
 /*
 =================
@@ -1901,27 +2436,26 @@ CG_DrawWeaponIcon
 */
 void CG_DrawWeaponIcon( rectDef_t *rect, vec4_t color )
 {
-  int           maxAmmo;
   centity_t     *cent;
   playerState_t *ps;
+  weapon_t      weapon;
 
   cent = &cg_entities[ cg.snap->ps.clientNum ];
   ps = &cg.snap->ps;
-
-  BG_FindAmmoForWeapon( cent->currentState.weapon, &maxAmmo, NULL );
+  weapon = BG_GetPlayerWeapon( ps );
 
   // don't display if dead
   if( cg.predictedPlayerState.stats[ STAT_HEALTH ] <= 0 )
     return;
 
-  if( cent->currentState.weapon == 0 )
+  if( weapon == 0 )
     return;
 
-  CG_RegisterWeapon( cent->currentState.weapon );
+  CG_RegisterWeapon( weapon );
 
-  if( ps->clips == 0 && !BG_FindInfinteAmmoForWeapon( cent->currentState.weapon ) )
+  if( ps->clips == 0 && !BG_Weapon( weapon )->infiniteAmmo )
   {
-    float ammoPercent = (float)ps->ammo / (float)maxAmmo;
+    float ammoPercent = (float)ps->ammo / (float)BG_Weapon( weapon )->maxAmmo;
 
     if( ammoPercent < 0.33f )
     {
@@ -1930,7 +2464,9 @@ void CG_DrawWeaponIcon( rectDef_t *rect, vec4_t color )
     }
   }
 
-  if( cg.predictedPlayerState.stats[ STAT_PTEAM ] == PTE_ALIENS && CG_AtHighestClass( ) )
+  if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_ALIENS &&
+      !BG_AlienCanEvolve( cg.predictedPlayerState.stats[ STAT_CLASS ],
+                          ps->persistant[ PERS_CREDIT ], cgs.alienStage ) )
   {
     if( cg.time - cg.lastEvolveAttempt <= NO_CREDITS_TIME )
     {
@@ -1940,7 +2476,8 @@ void CG_DrawWeaponIcon( rectDef_t *rect, vec4_t color )
   }
 
   trap_R_SetColor( color );
-  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, cg_weapons[ cent->currentState.weapon ].weaponIcon );
+  CG_DrawPic( rect->x, rect->y, rect->w, rect->h,
+              cg_weapons[ weapon ].weaponIcon );
   trap_R_SetColor( NULL );
 }
 
@@ -1960,47 +2497,55 @@ CROSSHAIR
 CG_DrawCrosshair
 =================
 */
-static void CG_DrawCrosshair( void )
+static void CG_DrawCrosshair( rectDef_t *rect, vec4_t color )
 {
   float         w, h;
   qhandle_t     hShader;
   float         x, y;
   weaponInfo_t  *wi;
+  weapon_t      weapon;
+  
+  weapon = BG_GetPlayerWeapon( &cg.snap->ps );
 
   if( cg_drawCrosshair.integer == CROSSHAIR_ALWAYSOFF )
     return;
 
   if( cg_drawCrosshair.integer == CROSSHAIR_RANGEDONLY &&
-      !BG_FindLongRangedForWeapon( cg.snap->ps.weapon ) )
-  {
+      !BG_Weapon( weapon )->longRanged )
     return;
-  } 
 
-  if( ( cg.snap->ps.persistant[ PERS_TEAM ] == TEAM_SPECTATOR ) ||
-      ( cg.snap->ps.stats[ STAT_STATE ] & SS_INFESTING ) ||
+  if( ( cg.snap->ps.persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT ) ||
       ( cg.snap->ps.stats[ STAT_STATE ] & SS_HOVELING ) )
     return;
 
   if( cg.renderingThirdPerson )
     return;
 
-  wi = &cg_weapons[ cg.snap->ps.weapon ];
+  wi = &cg_weapons[ weapon ];
 
-  w = h = wi->crossHairSize;
-
+  w = h = wi->crossHairSize * cg_crosshairSize.value;
   w *= cgDC.aspectScale;
-
-  x = cg_crosshairX.integer;
-  y = cg_crosshairY.integer;
-  CG_AdjustFrom640( &x, &y, &w, &h );
+  
+  //FIXME: this still ignores the width/height of the rect, but at least it's
+  //neater than cg_crosshairX/cg_crosshairY
+  x = rect->x + ( rect->w / 2 ) - ( w / 2 );
+  y = rect->y + ( rect->h / 2 ) - ( h / 2 );
 
   hShader = wi->crossHair;
+  
+  //aiming at a friendly player/buildable, dim the crosshair
+  if( cg.time == cg.crosshairClientTime || cg.crosshairBuildable >= 0 )
+  {
+    int i;
+    for( i = 0; i < 3; i++ )
+      color[i] *= .5f;
+  }
 
   if( hShader != 0 )
   {
-    trap_R_DrawStretchPic( x + cg.refdef.x + 0.5 * ( cg.refdef.width - w ),
-      y + cg.refdef.y + 0.5 * ( cg.refdef.height - h ),
-      w, h, 0, 0, 1, 1, hShader );
+    trap_R_SetColor( color );
+    CG_DrawPic( x, y, w, h, hShader );
+    trap_R_SetColor( NULL );
   }
 }
 
@@ -2016,7 +2561,7 @@ static void CG_ScanForCrosshairEntity( void )
   trace_t   trace;
   vec3_t    start, end;
   int       content;
-  pTeam_t   team;
+  team_t    team;
 
   VectorCopy( cg.refdef.vieworg, start );
   VectorMA( start, 131072, cg.refdef.viewaxis[ 0 ], end );
@@ -2024,20 +2569,28 @@ static void CG_ScanForCrosshairEntity( void )
   CG_Trace( &trace, start, vec3_origin, vec3_origin, end,
     cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY );
 
-  if( trace.entityNum >= MAX_CLIENTS )
-    return;
-
   // if the player is in fog, don't show it
   content = trap_CM_PointContents( trace.endpos, 0 );
   if( content & CONTENTS_FOG )
     return;
 
+  if( trace.entityNum >= MAX_CLIENTS )
+  {
+    entityState_t *s = &cg_entities[ trace.entityNum ].currentState;
+    if( s->eType == ET_BUILDABLE && BG_Buildable( s->modelindex )->team ==
+        cg.snap->ps.stats[ STAT_TEAM ] )
+      cg.crosshairBuildable = trace.entityNum;
+    else
+      cg.crosshairBuildable = -1;
+    return;
+  }
+
   team = cgs.clientinfo[ trace.entityNum ].team;
 
-  if( cg.snap->ps.persistant[ PERS_TEAM ] != TEAM_SPECTATOR )
+  if( cg.snap->ps.persistant[ PERS_SPECSTATE ] == SPECTATOR_NOT )
   {
     //only display team names of those on the same team as this player
-    if( team != cg.snap->ps.stats[ STAT_PTEAM ] )
+    if( team != cg.snap->ps.stats[ STAT_TEAM ] )
       return;
   }
 
@@ -2046,6 +2599,31 @@ static void CG_ScanForCrosshairEntity( void )
   cg.crosshairClientTime = cg.time;
 }
 
+
+/*
+=====================
+CG_DrawLocation
+=====================
+*/
+static void CG_DrawLocation( rectDef_t *rect, float scale, int textalign, vec4_t color )
+{
+  const char    *location;
+  centity_t     *locent;
+  float         maxX;
+  float         tx = rect->x, ty = rect->y;
+  maxX = rect->x + rect->w;
+
+  locent = CG_GetPlayerLocation( );
+  if( locent )
+    location = CG_ConfigString( CS_LOCATIONS + locent->currentState.generic1 );
+  else
+    location = CG_ConfigString( CS_LOCATIONS );
+  if( UI_Text_Width( location, scale, 0 ) < rect->w ) 
+    CG_AlignText( rect, location, scale, 0.0f, 0.0f, textalign, VALIGN_CENTER, &tx, &ty );
+
+  UI_Text_Paint_Limit( &maxX, tx, ty, scale, color, location, 0, 0);
+  trap_R_SetColor( NULL );
+}
 
 /*
 =====================
@@ -2068,7 +2646,7 @@ static void CG_DrawCrosshairNames( rectDef_t *rect, float scale, int textStyle )
   CG_ScanForCrosshairEntity( );
 
   // draw the name of the player being looked at
-  color = CG_FadeColor( cg.crosshairClientTime, 1000 );
+  color = CG_FadeColor( cg.crosshairClientTime, CROSSHAIR_CLIENT_TIMEOUT );
   if( !color )
   {
     trap_R_SetColor( NULL );
@@ -2085,6 +2663,109 @@ static void CG_DrawCrosshairNames( rectDef_t *rect, float scale, int textStyle )
 
 /*
 ===============
+CG_DrawSquadMarkers
+===============
+*/
+#define SQUAD_MARKER_W        16.f
+#define SQUAD_MARKER_H        8.f
+#define SQUAD_MARKER_BORDER   8.f
+static void CG_DrawSquadMarkers( vec4_t color )
+{
+  centity_t *cent;
+  vec3_t origin;
+  qhandle_t shader;
+  float x, y, w, h, distance, scale, u1 = 0.f, v1 = 0.f, u2 = 1.f, v2 = 1.f;
+  int i;
+  qboolean vertical, flip;
+  
+  if( cg.snap->ps.persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT )
+    return;
+  trap_R_SetColor( color );
+  for( i = 0; i < cg.snap->numEntities; i++ )
+  {
+    cent = cg_entities + cg.snap->entities[ i ].number;
+    if( cent->currentState.eType != ET_PLAYER ||
+        cgs.clientinfo[ cg.snap->entities[ i ].number ].team !=
+        cg.snap->ps.stats[ STAT_TEAM ] ||
+        !cent->pe.squadMarked )
+      continue;
+    
+    // Find where on screen the player is
+    VectorCopy( cent->lerpOrigin, origin );
+    origin[ 2 ] += ( ( cent->currentState.solid >> 16 ) & 255 ) - 30;
+    if( !CG_WorldToScreenWrap( origin, &x, &y ) )
+      continue;
+            
+    // Scale the size of the marker with distance
+    distance = Distance( cent->lerpOrigin, cg.refdef.vieworg );
+    if( !distance )
+      continue;
+    scale = 200.f / distance;
+    if( scale > 1.f )
+      scale = 1.f;
+    if( scale < 0.25f )
+      scale = 0.25f;
+    
+    // Don't let the marker go off-screen
+    vertical = qfalse;
+    flip = qfalse;
+    if( x < SQUAD_MARKER_BORDER )
+    {
+      x = SQUAD_MARKER_BORDER;
+      vertical = qtrue;
+      flip = qfalse;
+    }
+    if( x > 640.f - SQUAD_MARKER_BORDER )
+    {
+      x = 640.f - SQUAD_MARKER_BORDER;
+      vertical = qtrue;
+      flip = qtrue;
+    }
+    if( y < SQUAD_MARKER_BORDER )
+    {
+      y = SQUAD_MARKER_BORDER;
+      vertical = qfalse;
+      flip = qtrue;
+    }
+    if( y > 480.f - SQUAD_MARKER_BORDER )
+    {
+      y = 480.f - SQUAD_MARKER_BORDER;
+      vertical = qfalse;
+      flip = qfalse;
+    }
+    
+	  // Draw the marker
+    if( vertical )
+    {
+      shader = cgs.media.squadMarkerV;
+      if( flip )
+      {
+        u1 = 1.f;
+        u2 = 0.f;
+      }
+      w = SQUAD_MARKER_H * scale;
+      h = SQUAD_MARKER_W * scale;
+    }
+    else
+    {
+      shader = cgs.media.squadMarkerH;
+      if( flip )
+      {
+        v1 = 1.f;
+        v2 = 0.f;
+      }
+      w = SQUAD_MARKER_W * scale;
+      h = SQUAD_MARKER_H * scale;
+    } 
+    CG_AdjustFrom640( &x, &y, &w, &h );
+    trap_R_DrawStretchPic( x - w / 2, y - h / 2, w, h, u1, v1, u2, v2,
+                           shader );
+  }
+  trap_R_SetColor( NULL );
+}
+
+/*
+===============
 CG_OwnerDraw
 
 Draw an owner drawn item
@@ -2093,7 +2774,7 @@ Draw an owner drawn item
 void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
                    float text_y, int ownerDraw, int ownerDrawFlags,
                    int align, int textalign, int textvalign, float special,
-                   float scale, vec4_t color,
+                   float scale, vec4_t foreColor, vec4_t backColor,
                    qhandle_t shader, int textStyle )
 {
   rectDef_t rect;
@@ -2109,100 +2790,114 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
   switch( ownerDraw )
   {
     case CG_PLAYER_CREDITS_VALUE:
-      CG_DrawPlayerCreditsValue( &rect, color, qtrue );
-      break;
-    case CG_PLAYER_BANK_VALUE:
-      CG_DrawPlayerBankValue( &rect, color, qtrue );
+      CG_DrawPlayerCreditsValue( &rect, foreColor, qtrue );
       break;
     case CG_PLAYER_CREDITS_VALUE_NOPAD:
-      CG_DrawPlayerCreditsValue( &rect, color, qfalse );
-      break;
-    case CG_PLAYER_BANK_VALUE_NOPAD:
-      CG_DrawPlayerBankValue( &rect, color, qfalse );
+      CG_DrawPlayerCreditsValue( &rect, foreColor, qfalse );
       break;
     case CG_PLAYER_STAMINA_1:
-      CG_DrawPlayerStamina1( &rect, color, shader );
-      break;
     case CG_PLAYER_STAMINA_2:
-      CG_DrawPlayerStamina2( &rect, color, shader );
-      break;
     case CG_PLAYER_STAMINA_3:
-      CG_DrawPlayerStamina3( &rect, color, shader );
-      break;
     case CG_PLAYER_STAMINA_4:
-      CG_DrawPlayerStamina4( &rect, color, shader );
+      CG_DrawPlayerStamina( ownerDraw, &rect, backColor, foreColor, shader );
       break;
     case CG_PLAYER_STAMINA_BOLT:
-      CG_DrawPlayerStaminaBolt( &rect, color, shader );
+      CG_DrawPlayerStaminaBolt( &rect, backColor, foreColor, shader );
       break;
     case CG_PLAYER_AMMO_VALUE:
-      CG_DrawPlayerAmmoValue( &rect, color );
+      CG_DrawPlayerAmmoValue( &rect, foreColor );
+      break;
+    case CG_PLAYER_AMMO_STACK:
+      CG_DrawPlayerAmmoStack( &rect, backColor, foreColor, textalign,
+                              textvalign );
       break;
     case CG_PLAYER_CLIPS_VALUE:
-      CG_DrawPlayerClipsValue( &rect, color );
+      CG_DrawPlayerClipsValue( &rect, foreColor );
+      break;
+    case CG_PLAYER_CLIPS_STACK:
+      CG_DrawPlayerClipsStack( &rect, backColor, foreColor, textalign,
+                               textvalign );
       break;
     case CG_PLAYER_BUILD_TIMER:
-      CG_DrawPlayerBuildTimer( &rect, color );
+      CG_DrawPlayerBuildTimer( &rect, foreColor );
       break;
     case CG_PLAYER_HEALTH:
-      CG_DrawPlayerHealthValue( &rect, color );
+      CG_DrawPlayerHealthValue( &rect, foreColor );
       break;
     case CG_PLAYER_HEALTH_CROSS:
-      CG_DrawPlayerHealthCross( &rect, color, shader );
+      CG_DrawPlayerHealthCross( &rect, foreColor );
+      break;
+    case CG_PLAYER_CHARGE_BAR_BG:
+      CG_DrawPlayerChargeBarBG( &rect, foreColor, shader );
+      break;
+    case CG_PLAYER_CHARGE_BAR:
+      CG_DrawPlayerChargeBar( &rect, foreColor, shader );
       break;
     case CG_PLAYER_CLIPS_RING:
-      CG_DrawPlayerClipsRing( &rect, color, shader );
+      CG_DrawPlayerClipsRing( &rect, backColor, foreColor, shader );
       break;
     case CG_PLAYER_BUILD_TIMER_RING:
-      CG_DrawPlayerBuildTimerRing( &rect, color, shader );
+      CG_DrawPlayerBuildTimerRing( &rect, backColor, foreColor, shader );
       break;
     case CG_PLAYER_WALLCLIMBING:
-      CG_DrawPlayerWallclimbing( &rect, color, shader );
+      CG_DrawPlayerWallclimbing( &rect, backColor, foreColor, shader );
       break;
     case CG_PLAYER_BOOSTED:
-      CG_DrawPlayerBoosted( &rect, color, shader );
+      CG_DrawPlayerBoosted( &rect, backColor, foreColor, shader );
       break;
     case CG_PLAYER_BOOST_BOLT:
-      CG_DrawPlayerBoosterBolt( &rect, color, shader );
+      CG_DrawPlayerBoosterBolt( &rect, backColor, foreColor, shader );
       break;
     case CG_PLAYER_POISON_BARBS:
-      CG_DrawPlayerPoisonBarbs( &rect, color, shader );
+      CG_DrawPlayerPoisonBarbs( &rect, foreColor, shader );
       break;
     case CG_PLAYER_ALIEN_SENSE:
       CG_DrawAlienSense( &rect );
       break;
     case CG_PLAYER_HUMAN_SCANNER:
-      CG_DrawHumanScanner( &rect, shader, color );
+      CG_DrawHumanScanner( &rect, shader, foreColor );
       break;
     case CG_PLAYER_USABLE_BUILDABLE:
-      CG_DrawUsableBuildable( &rect, shader, color );
+      CG_DrawUsableBuildable( &rect, shader, foreColor );
       break;
     case CG_KILLER:
-      CG_DrawKiller( &rect, scale, color, shader, textStyle );
+      CG_DrawKiller( &rect, scale, foreColor, shader, textStyle );
       break;
     case CG_PLAYER_SELECT:
-      CG_DrawItemSelect( &rect, color );
+      CG_DrawItemSelect( &rect, foreColor );
       break;
     case CG_PLAYER_WEAPONICON:
-      CG_DrawWeaponIcon( &rect, color );
+      CG_DrawWeaponIcon( &rect, foreColor );
+      break;
+    case CG_PLAYER_ATTACK_FEEDBACK:
+      CG_DrawAttackFeedback( &rect );
       break;
     case CG_PLAYER_SELECTTEXT:
       CG_DrawItemSelectText( &rect, scale, textStyle );
       break;
     case CG_SPECTATORS:
-      CG_DrawTeamSpectators( &rect, scale, textvalign, color, shader );
+      CG_DrawTeamSpectators( &rect, scale, textvalign, foreColor, shader );
+      break;
+    case CG_PLAYER_LOCATION:
+      CG_DrawLocation( &rect, scale, textalign, foreColor );
       break;
     case CG_PLAYER_CROSSHAIRNAMES:
       CG_DrawCrosshairNames( &rect, scale, textStyle );
       break;
+    case CG_PLAYER_CROSSHAIR:
+      CG_DrawCrosshair( &rect, foreColor );
+      break;
     case CG_STAGE_REPORT_TEXT:
-      CG_DrawStageReport( &rect, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawStageReport( &rect, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
     case CG_ALIENS_SCORE_LABEL:
-      CG_DrawTeamLabel( &rect, PTE_ALIENS, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawTeamLabel( &rect, TEAM_ALIENS, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
     case CG_HUMANS_SCORE_LABEL:
-      CG_DrawTeamLabel( &rect, PTE_HUMANS, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawTeamLabel( &rect, TEAM_HUMANS, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
+      break;
+    case CG_SQUAD_MARKERS:
+      CG_DrawSquadMarkers( foreColor );
       break;
 
     //loading screen
@@ -2210,74 +2905,77 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
       CG_DrawLevelShot( &rect );
       break;
     case CG_LOAD_MEDIA:
-      CG_DrawMediaProgress( &rect, color, scale, align, textalign, textStyle, special );
+      CG_DrawMediaProgress( &rect, foreColor, scale, align, textalign, textStyle, special );
       break;
     case CG_LOAD_MEDIA_LABEL:
-      CG_DrawMediaProgressLabel( &rect, text_x, text_y, color, scale, textalign, textvalign );
+      CG_DrawMediaProgressLabel( &rect, text_x, text_y, foreColor, scale, textalign, textvalign );
       break;
     case CG_LOAD_BUILDABLES:
-      CG_DrawBuildablesProgress( &rect, color, scale, align, textalign, textStyle, special );
+      CG_DrawBuildablesProgress( &rect, foreColor, scale, align, textalign, textStyle, special );
       break;
     case CG_LOAD_BUILDABLES_LABEL:
-      CG_DrawBuildablesProgressLabel( &rect, text_x, text_y, color, scale, textalign, textvalign );
+      CG_DrawBuildablesProgressLabel( &rect, text_x, text_y, foreColor, scale, textalign, textvalign );
       break;
     case CG_LOAD_CHARMODEL:
-      CG_DrawCharModelProgress( &rect, color, scale, align, textalign, textStyle, special );
+      CG_DrawCharModelProgress( &rect, foreColor, scale, align, textalign, textStyle, special );
       break;
     case CG_LOAD_CHARMODEL_LABEL:
-      CG_DrawCharModelProgressLabel( &rect, text_x, text_y, color, scale, textalign, textvalign );
+      CG_DrawCharModelProgressLabel( &rect, text_x, text_y, foreColor, scale, textalign, textvalign );
       break;
     case CG_LOAD_OVERALL:
-      CG_DrawOverallProgress( &rect, color, scale, align, textalign, textStyle, special );
+      CG_DrawOverallProgress( &rect, foreColor, scale, align, textalign, textStyle, special );
       break;
     case CG_LOAD_LEVELNAME:
-      CG_DrawLevelName( &rect, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawLevelName( &rect, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
     case CG_LOAD_MOTD:
-      CG_DrawMOTD( &rect, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawMOTD( &rect, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
     case CG_LOAD_HOSTNAME:
-      CG_DrawHostname( &rect, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawHostname( &rect, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
 
     case CG_FPS:
-      CG_DrawFPS( &rect, text_x, text_y, scale, color, textalign, textvalign, textStyle, qtrue );
+      CG_DrawFPS( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle, qtrue );
       break;
     case CG_FPS_FIXED:
-      CG_DrawFPS( &rect, text_x, text_y, scale, color, textalign, textvalign, textStyle, qfalse );
+      CG_DrawFPS( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle, qfalse );
       break;
     case CG_TIMER:
-      CG_DrawTimer( &rect, text_x, text_y, scale, color, textalign, textvalign, textStyle );
+      CG_DrawTimer( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
       break;
     case CG_CLOCK:
-      CG_DrawClock( &rect, text_x, text_y, scale, color, textalign, textvalign, textStyle );
+      CG_DrawClock( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
+      break;
+    case CG_SPEED:
+      CG_DrawSpeed( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
       break;
     case CG_TIMER_MINS:
-      CG_DrawTimerMins( &rect, color );
+      CG_DrawTimerMins( &rect, foreColor );
       break;
     case CG_TIMER_SECS:
-      CG_DrawTimerSecs( &rect, color );
+      CG_DrawTimerSecs( &rect, foreColor );
       break;
     case CG_SNAPSHOT:
-      CG_DrawSnapshot( &rect, text_x, text_y, scale, color, textalign, textvalign, textStyle );
+      CG_DrawSnapshot( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
       break;
     case CG_LAGOMETER:
-      CG_DrawLagometer( &rect, text_x, text_y, scale, color );
+      CG_DrawLagometer( &rect, text_x, text_y, scale, foreColor );
       break;
 
     case CG_DEMO_PLAYBACK:
-      CG_DrawDemoPlayback( &rect, color, shader );
+      CG_DrawDemoPlayback( &rect, foreColor, shader );
       break;
     case CG_DEMO_RECORDING:
-      CG_DrawDemoRecording( &rect, color, shader );
+      CG_DrawDemoRecording( &rect, foreColor, shader );
       break;
 
     case CG_CONSOLE:
-      CG_DrawConsole( &rect, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawConsole( &rect, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
 
     case CG_TUTORIAL:
-      CG_DrawTutorial( &rect, text_x, text_y, color, scale, textalign, textvalign, textStyle );
+      CG_DrawTutorial( &rect, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
 
     default:
@@ -2297,17 +2995,17 @@ void CG_MouseEvent( int x, int y )
     return;
   }
 
-  cgs.cursorX += x;
+  cgs.cursorX += ( x * cgDC.aspectScale );
   if( cgs.cursorX < 0 )
     cgs.cursorX = 0;
-  else if( cgs.cursorX > 640 )
-    cgs.cursorX = 640;
+  else if( cgs.cursorX > SCREEN_WIDTH )
+    cgs.cursorX = SCREEN_WIDTH;
 
   cgs.cursorY += y;
   if( cgs.cursorY < 0 )
     cgs.cursorY = 0;
-  else if( cgs.cursorY > 480 )
-    cgs.cursorY = 480;
+  else if( cgs.cursorY > SCREEN_HEIGHT )
+    cgs.cursorY = SCREEN_HEIGHT;
 
   n = Display_CursorType( cgs.cursorX, cgs.cursorY );
   cgs.activeCursor = 0;
@@ -2315,6 +3013,11 @@ void CG_MouseEvent( int x, int y )
     cgs.activeCursor = cgs.media.selectCursor;
   else if( n == CURSOR_SIZER )
     cgs.activeCursor = cgs.media.sizeCursor;
+
+  cgDC.cursordx = x;
+  cgDC.cursordy = y;
+  cgDC.cursorx = cgs.cursorX;
+  cgDC.cursory = cgs.cursorY;
 
   if( cgs.capturedItem )
     Display_MouseMove( cgs.capturedItem, x, y );
@@ -2423,7 +3126,7 @@ static void CG_DrawLighting( void )
 
   //fade to black if stamina is low
   if( ( cg.snap->ps.stats[ STAT_STAMINA ] < -800 ) &&
-      ( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_HUMANS ) )
+      ( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS ) )
   {
     vec4_t black = { 0, 0, 0, 0 };
     black[ 3 ] = 1.0 - ( (float)( cg.snap->ps.stats[ STAT_STAMINA ] + 1000 ) / 200.0f );
@@ -2584,9 +3287,9 @@ static void CG_DrawTeamVote( void )
   vec4_t  white = { 1.0f, 1.0f, 1.0f, 1.0f };
   char    yeskey[ 32 ], nokey[ 32 ];
 
-  if( cg.predictedPlayerState.stats[ STAT_PTEAM ] == PTE_HUMANS )
+  if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_HUMANS )
     cs_offset = 0;
-  else if( cg.predictedPlayerState.stats[ STAT_PTEAM ] == PTE_ALIENS )
+  else if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_ALIENS )
     cs_offset = 1;
   else
     return;
@@ -2678,7 +3381,8 @@ static void CG_DrawIntermission( void )
   cg.scoreBoardShowing = CG_DrawScoreboard( );
 }
 
-#define FOLLOWING_STRING "following "
+#define FOLLOWING_STRING "Following: "
+#define CHASING_STRING "Chasing: "
 
 /*
 =================
@@ -2691,7 +3395,7 @@ static qboolean CG_DrawFollow( void )
   vec4_t      color;
   char        buffer[ MAX_STRING_CHARS ];
 
-  if( !( cg.snap->ps.pm_flags & PMF_FOLLOW ) )
+  if( cg.snap->ps.clientNum == cg.clientNum )
     return qfalse;
 
   color[ 0 ] = 1;
@@ -2699,7 +3403,10 @@ static qboolean CG_DrawFollow( void )
   color[ 2 ] = 1;
   color[ 3 ] = 1;
 
-  strcpy( buffer, FOLLOWING_STRING );
+  if( !cg.chaseFollow ) 
+    strcpy( buffer, FOLLOWING_STRING );
+  else 
+    strcpy( buffer, CHASING_STRING );
   strcat( buffer, cgs.clientinfo[ cg.snap->ps.clientNum ].name );
 
   w = UI_Text_Width( buffer, 0.7f, 0 );
@@ -2717,7 +3424,8 @@ static qboolean CG_DrawQueue( void )
 {
   float       w;
   vec4_t      color;
-  char        buffer[ MAX_STRING_CHARS ];
+  int         position, remainder;
+  char        *ordinal, buffer[ MAX_STRING_CHARS ];
 
   if( !( cg.snap->ps.pm_flags & PMF_QUEUED ) )
     return qfalse;
@@ -2727,28 +3435,30 @@ static qboolean CG_DrawQueue( void )
   color[ 2 ] = 1;
   color[ 3 ] = 1;
 
-  Com_sprintf( buffer, MAX_STRING_CHARS, "You are in position %d of the spawn queue.",
-               cg.snap->ps.persistant[ PERS_QUEUEPOS ] + 1 );
+  position = cg.snap->ps.persistant[ PERS_QUEUEPOS ] + 1;
+  if( position < 1 )
+    return qfalse;
+  remainder = position % 10;
+  ordinal = "th";
+  if( remainder == 1 )
+    ordinal = "st";
+  else if( remainder == 2 )
+    ordinal = "nd";
+  else if( remainder == 3 )
+    ordinal = "rd";
+  Com_sprintf( buffer, MAX_STRING_CHARS, "You are %d%s in the spawn queue",
+               position, ordinal );
 
   w = UI_Text_Width( buffer, 0.7f, 0 );
   UI_Text_Paint( 320 - w / 2, 360, 0.7f, color, buffer, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
 
-  if( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
-  {
-    if( cgs.numAlienSpawns == 1 )
-      Com_sprintf( buffer, MAX_STRING_CHARS, "There is 1 spawn remaining." );
-    else
-      Com_sprintf( buffer, MAX_STRING_CHARS, "There are %d spawns remaining.",
-                   cgs.numAlienSpawns );
-  }
-  else if( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
-  {
-    if( cgs.numHumanSpawns == 1 )
-      Com_sprintf( buffer, MAX_STRING_CHARS, "There is 1 spawn remaining." );
-    else
-      Com_sprintf( buffer, MAX_STRING_CHARS, "There are %d spawns remaining.",
-                   cgs.numHumanSpawns );
-  }
+  if( cg.snap->ps.persistant[ PERS_SPAWNS ] == 0 )
+    Com_sprintf( buffer, MAX_STRING_CHARS, "There are no spawns remaining" );
+  else if( cg.snap->ps.persistant[ PERS_SPAWNS ] == 1 )
+    Com_sprintf( buffer, MAX_STRING_CHARS, "There is 1 spawn remaining" );
+  else
+    Com_sprintf( buffer, MAX_STRING_CHARS, "There are %d spawns remaining",
+                 cg.snap->ps.persistant[ PERS_SPAWNS ] );
 
   w = UI_Text_Width( buffer, 0.7f, 0 );
   UI_Text_Paint( 320 - w / 2, 400, 0.7f, color, buffer, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
@@ -2790,23 +3500,22 @@ static void CG_Draw2D( void )
 
   defaultMenu = Menus_FindByName( "default_hud" );
 
-  if( cg.snap->ps.persistant[ PERS_TEAM ] == TEAM_SPECTATOR )
+  if( cg.snap->ps.persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT )
   {
     w = UI_Text_Width( SPECTATOR_STRING, 0.7f, 0 );
     UI_Text_Paint( 320 - w / 2, 440, 0.7f, color, SPECTATOR_STRING, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
   }
   else
-    menu = Menus_FindByName( BG_FindHudNameForClass( cg.predictedPlayerState.stats[ STAT_PCLASS ] ) );
+    menu = Menus_FindByName( BG_ClassConfig( cg.predictedPlayerState.stats[ STAT_CLASS ] )->hudName );
 
-  if( !( cg.snap->ps.stats[ STAT_STATE ] & SS_INFESTING ) &&
-      !( cg.snap->ps.stats[ STAT_STATE ] & SS_HOVELING ) && menu &&
+  if( menu && !( cg.snap->ps.stats[ STAT_STATE ] & SS_HOVELING ) &&
       ( cg.snap->ps.stats[ STAT_HEALTH ] > 0 ) )
   {
     CG_DrawBuildableStatus( );
+    CG_DrawTeamStatus( );
     if( cg_drawStatus.integer )
       Menu_Paint( menu, qtrue );
 
-    CG_DrawCrosshair( );
   }
   else if( cg_drawStatus.integer )
     Menu_Paint( defaultMenu, qtrue );
@@ -2862,7 +3571,7 @@ static void CG_PainBlend( void )
   float       x, y, w, h;
   float       s1, t1, s2, t2;
 
-  if( cg.snap->ps.persistant[ PERS_TEAM ] == TEAM_SPECTATOR || cg.intermissionStarted )
+  if( cg.snap->ps.persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT || cg.intermissionStarted )
     return;
 
   damage = cg.lastHealth - cg.snap->ps.stats[ STAT_HEALTH ];
@@ -2889,9 +3598,9 @@ static void CG_PainBlend( void )
     return;
   }
 
-  if( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
+  if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
     VectorSet( color, 0.43f, 0.8f, 0.37f );
-  else if( cg.snap->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
+  else if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
     VectorSet( color, 0.8f, 0.0f, 0.0f );
 
   if( cg.painBlendValue > cg.painBlendTarget )

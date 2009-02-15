@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -61,56 +61,13 @@ void G_UpdatePTRConnection( gclient_t *client )
 {
   if( client && client->pers.connection )
   {
-    if( client->pers.teamSelection == PTE_NONE )
-      client->pers.connection->clientCredit = client->pers.credit;
-    else
-      client->pers.connection->clientCredit = client->ps.persistant[ PERS_CREDIT ];
+    client->pers.connection->oldClient = client - level.clients;
     client->pers.connection->clientTeam = client->pers.teamSelection;
-    if( level.oc )
-    {
-        if( level.totalMedistations && client->pers.medisLastCheckpoint )
-        {
-          if( !client->pers.connection->medisLastCheckpoint )
-            client->pers.connection->medisLastCheckpoint = G_Alloc( ( level.totalMedistations ) * sizeof( gentity_t * ) );
-          memcpy( client->pers.connection->medisLastCheckpoint, client->pers.medisLastCheckpoint, level.totalMedistations + 1);
-        }
-        else
-        {
-            if(client->pers.connection->medisLastCheckpoint)
-                G_Free(client->pers.connection->medisLastCheckpoint);
-            client->pers.connection->medisLastCheckpoint = NULL;
-        }
-
-        if( level.totalArmouries && client->pers.armsLastCheckpoint )
-        {
-          if( !client->pers.connection->armsLastCheckpoint )
-            client->pers.connection->armsLastCheckpoint = G_Alloc( ( level.totalArmouries ) * sizeof( gentity_t * ) );
-          memcpy( client->pers.connection->armsLastCheckpoint, client->pers.armsLastCheckpoint, level.totalArmouries + 1);
-        }
-        else
-        {
-            if(client->pers.connection->armsLastCheckpoint)
-                G_Free(client->pers.connection->armsLastCheckpoint);
-            client->pers.connection->armsLastCheckpoint = NULL;
-        }
-
-        client->pers.connection->totalMedistations = level.totalMedistations;
-        client->pers.connection->totalArmouries = level.totalArmouries;
-        client->pers.connection->checkpoint = client->pers.checkpoint;
-        client->pers.connection->aliveTime = client->pers.aliveTime;
-        client->pers.connection->lastAliveTime = client->pers.lastAliveTime;
-        client->pers.connection->hasCheated = client->pers.hasCheated;
-        if( client->pers.ocTeam )
-        {
-            // don't let them
-            client->pers.connection->hasCheated = 1;
-            client->pers.connection->aliveTime = INFINITE;
-            client->pers.connection->lastAliveTime = INFINITE;
-            while(client->pers.connection->aliveTime < 1) client->pers.connection->aliveTime--;
-            while(client->pers.connection->lastAliveTime < 1) client->pers.connection->lastAliveTime--;
-            client->pers.connection->checkpoint = NULL;
-        }
-    }
+    if( client->pers.teamSelection == TEAM_NONE )
+      client->pers.connection->clientCredit = client->pers.savedCredit;
+    else
+      client->pers.connection->clientCredit =
+          client->ps.persistant[ PERS_CREDIT ];
   }
 }
 
@@ -155,29 +112,6 @@ connectionRecord_t *G_GenerateNewConnection( gclient_t *client )
 
 /*
 ===============
-G_VerifyPTRC
-
-Check a PTR code for validity
-===============
-*/
-qboolean G_VerifyPTRC( int code )
-{
-  int i;
-
-  if( code == 0 )
-    return qfalse;
-
-  for( i = 0; i < MAX_CLIENTS; i++ )
-  {
-    if( connections[ i ].ptrCode == code )
-      return qtrue;
-  }
-
-  return qfalse;
-}
-
-/*
-===============
 G_FindConnectionForCode
 
 Finds a connection for a given code
@@ -197,19 +131,6 @@ connectionRecord_t *G_FindConnectionForCode( int code )
   }
 
   return NULL;
-}
-
-/*
-===============
-G_DeletePTRConnection
-
-Finds a connection and deletes it
-===============
-*/
-void G_DeletePTRConnection( connectionRecord_t *connection )
-{
-  if( connection )
-    memset( connection, 0, sizeof( connectionRecord_t ) );
 }
 
 /*

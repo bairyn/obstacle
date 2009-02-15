@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -35,7 +35,7 @@ static bind_t bindings[ ] =
 {
   { "+button2",       "Activate Upgrade",       { -1, -1 } },
   { "+speed",         "Run/Walk",               { -1, -1 } },
-  { "boost",          "Sprint",                 { -1, -1 } },
+  { "+button6",       "Sprint/Dodge",           { -1, -1 } },
   { "+moveup",        "Jump",                   { -1, -1 } },
   { "+movedown",      "Crouch",                 { -1, -1 } },
   { "+attack",        "Primary Attack",         { -1, -1 } },
@@ -85,6 +85,27 @@ static void CG_GetBindings( void )
 }
 
 /*
+=================
+CG_FixBindings
+
+Fix people who have "boost" bound instead of "+button6"
+Could also extend this function for future bind changes
+=================
+*/
+static void CG_FixBindings( void )
+{
+  int i;
+  char buffer[ MAX_STRING_CHARS ];
+
+  for( i = 0; i < K_LAST_KEY; i++ )
+  {
+    trap_Key_GetBindingBuf( i, buffer, sizeof( buffer ) );
+    if( !Q_stricmp( buffer, "boost" ) )
+      trap_Key_SetBinding( i, "+button6" );
+  }
+}
+
+/*
 ===============
 CG_KeyNameForCommand
 ===============
@@ -122,9 +143,8 @@ static const char *CG_KeyNameForCommand( const char *command )
       }
       else
       {
-        Q_strncpyz( buffer, va( "\"%s\"", bindings[ i ].humanName ),
-            MAX_STRING_CHARS );
-        Q_strcat( buffer, MAX_STRING_CHARS, " (unbound)" );
+        Com_sprintf( buffer, MAX_STRING_CHARS, "\"%s\" (unbound)",
+          bindings[ i ].humanName );
       }
 
       return buffer;
@@ -157,12 +177,12 @@ static entityState_t *CG_BuildableInRange( playerState_t *ps, float *healthFract
 
   if( healthFraction )
   {
-    health = es->generic1 & B_HEALTH_MASK;
+    health = (unsigned char)es->generic1;
     *healthFraction = (float)health / B_HEALTH_MASK;
   }
 
   if( es->eType == ET_BUILDABLE &&
-      ps->stats[ STAT_PTEAM ] == BG_FindTeamForBuildable( es->modelindex ) )
+      ps->stats[ STAT_TEAM ] == BG_Buildable( es->modelindex )->team )
     return es;
   else
     return NULL;
@@ -183,12 +203,12 @@ static void CG_AlienBuilderText( char *text, playerState_t *ps )
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to place the %s\n",
           CG_KeyNameForCommand( "+attack" ),
-          BG_FindHumanNameForBuildable( buildable ) ) );
+          BG_Buildable( buildable )->humanName ) );
 
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to cancel placing the %s\n",
           CG_KeyNameForCommand( "+button5" ),
-          BG_FindHumanNameForBuildable( buildable ) ) );
+          BG_Buildable( buildable )->humanName ) );
   }
   else
   {
@@ -201,7 +221,7 @@ static void CG_AlienBuilderText( char *text, playerState_t *ps )
   {
     if( cgs.markDeconstruct )
     {
-      if( es->generic1 & B_MARKED_TOGGLEBIT )
+      if( es->eFlags & EF_B_MARKED )
       {
         Q_strcat( text, MAX_TUTORIAL_TEXT,
             va( "Press %s to unmark this structure\n",
@@ -222,7 +242,8 @@ static void CG_AlienBuilderText( char *text, playerState_t *ps )
     }
   }
 
-  if( ps->stats[ STAT_PCLASS ] == PCL_ALIEN_BUILDER0_UPG )
+  if( ps->stats[ STAT_CLASS ] == PCL_ALIEN_BUILDER0 ||
+      ps->stats[ STAT_CLASS ] == PCL_ALIEN_BUILDER0_UPG )
   {
     if( ( ps->stats[ STAT_BUILDABLE ] & ~SB_VALID_TOGGLEBIT ) == BA_NONE )
     {
@@ -270,7 +291,7 @@ static void CG_AlienLevel1Text( char *text, playerState_t *ps )
       va( "Press %s to swipe\n",
         CG_KeyNameForCommand( "+attack" ) ) );
 
-  if( ps->stats[ STAT_PCLASS ] == PCL_ALIEN_LEVEL1_UPG )
+  if( ps->stats[ STAT_CLASS ] == PCL_ALIEN_LEVEL1_UPG )
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to spray poisonous gas\n",
@@ -293,7 +314,7 @@ static void CG_AlienLevel2Text( char *text, playerState_t *ps )
       va( "Press %s to bite\n",
         CG_KeyNameForCommand( "+attack" ) ) );
 
-  if( ps->stats[ STAT_PCLASS ] == PCL_ALIEN_LEVEL2_UPG )
+  if( ps->stats[ STAT_CLASS ] == PCL_ALIEN_LEVEL2_UPG )
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to invoke an electrical attack\n",
@@ -316,7 +337,7 @@ static void CG_AlienLevel3Text( char *text, playerState_t *ps )
       va( "Press %s to bite\n",
         CG_KeyNameForCommand( "+attack" ) ) );
 
-  if( ps->stats[ STAT_PCLASS ] == PCL_ALIEN_LEVEL3_UPG )
+  if( ps->stats[ STAT_CLASS ] == PCL_ALIEN_LEVEL3_UPG )
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to launch a projectile\n",
@@ -340,7 +361,7 @@ static void CG_AlienLevel4Text( char *text, playerState_t *ps )
         CG_KeyNameForCommand( "+attack" ) ) );
 
   Q_strcat( text, MAX_TUTORIAL_TEXT,
-      va( "Hold down and release %s to charge\n",
+      va( "Hold down and release %s to trample\n",
         CG_KeyNameForCommand( "+button5" ) ) );
 }
 
@@ -353,42 +374,31 @@ static void CG_HumanCkitText( char *text, playerState_t *ps )
 {
   buildable_t   buildable = ps->stats[ STAT_BUILDABLE ] & ~SB_VALID_TOGGLEBIT;
   entityState_t *es;
-  float         health;
 
   if( buildable > BA_NONE )
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to place the %s\n",
           CG_KeyNameForCommand( "+attack" ),
-          BG_FindHumanNameForBuildable( buildable ) ) );
+          BG_Buildable( buildable )->humanName ) );
 
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to cancel placing the %s\n",
           CG_KeyNameForCommand( "+button5" ),
-          BG_FindHumanNameForBuildable( buildable ) ) );
+          BG_Buildable( buildable )->humanName ) );
   }
   else
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to build a structure\n",
           CG_KeyNameForCommand( "+attack" ) ) );
-
-    if( CG_BuildableInRange( ps, &health ) )
-    {
-      if( health < 1.0f )
-      {
-        Q_strcat( text, MAX_TUTORIAL_TEXT,
-            va( "Hold %s to repair this structure\n",
-              CG_KeyNameForCommand( "+button5" ) ) );
-      }
-    }
   }
 
   if( ( es = CG_BuildableInRange( ps, NULL ) ) )
   {
     if( cgs.markDeconstruct )
     {
-      if( es->generic1 & B_MARKED_TOGGLEBIT )
+      if( es->eFlags & EF_B_MARKED )
       {
         Q_strcat( text, MAX_TUTORIAL_TEXT,
             va( "Press %s to unmark this structure\n",
@@ -428,7 +438,7 @@ static void CG_HumanText( char *text, playerState_t *ps )
     upgrade = cg.weaponSelect - 32;
   }
 
-  if( !ps->ammo && !ps->clips && !BG_FindInfinteAmmoForWeapon( ps->weapon ) )
+  if( !ps->ammo && !ps->clips && !BG_Weapon( ps->weapon )->infiniteAmmo )
   {
     //no ammo
     switch( ps->weapon )
@@ -469,14 +479,14 @@ static void CG_HumanText( char *text, playerState_t *ps )
         Q_strcat( text, MAX_TUTORIAL_TEXT,
             va( "Press %s to fire the %s\n",
               CG_KeyNameForCommand( "+attack" ),
-              BG_FindHumanNameForWeapon( ps->weapon ) ) );
+              BG_Weapon( ps->weapon )->humanName ) );
         break;
 
       case WP_MASS_DRIVER:
         Q_strcat( text, MAX_TUTORIAL_TEXT,
             va( "Press %s to fire the %s\n",
               CG_KeyNameForCommand( "+attack" ),
-              BG_FindHumanNameForWeapon( ps->weapon ) ) );
+              BG_Weapon( ps->weapon )->humanName ) );
 
         Q_strcat( text, MAX_TUTORIAL_TEXT,
             va( "Hold %s to zoom\n",
@@ -487,7 +497,7 @@ static void CG_HumanText( char *text, playerState_t *ps )
         Q_strcat( text, MAX_TUTORIAL_TEXT,
             va( "Hold %s to activate the %s\n",
               CG_KeyNameForCommand( "+attack" ),
-              BG_FindHumanNameForWeapon( ps->weapon ) ) );
+              BG_Weapon( ps->weapon )->humanName ) );
         break;
 
       case WP_LUCIFER_CANNON:
@@ -498,11 +508,10 @@ static void CG_HumanText( char *text, playerState_t *ps )
         Q_strcat( text, MAX_TUTORIAL_TEXT,
             va( "Press %s to fire the %s\n",
               CG_KeyNameForCommand( "+button5" ),
-              BG_FindHumanNameForWeapon( ps->weapon ) ) );
+              BG_Weapon( ps->weapon )->humanName ) );
         break;
 
       case WP_HBUILD:
-      case WP_HBUILD2:
         CG_HumanCkitText( text, ps );
         break;
 
@@ -519,7 +528,7 @@ static void CG_HumanText( char *text, playerState_t *ps )
           CG_KeyNameForCommand( "weapnext" ) ) );
 
   if( upgrade == UP_NONE ||
-      ( upgrade > UP_NONE && BG_FindUsableForUpgrade( upgrade ) ) )
+      ( upgrade > UP_NONE && BG_Upgrade( upgrade )->usable ) )
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to use the %s\n",
@@ -533,7 +542,7 @@ static void CG_HumanText( char *text, playerState_t *ps )
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to use your %s\n",
           CG_KeyNameForCommand( "itemact medkit" ),
-          BG_FindHumanNameForUpgrade( UP_MEDKIT ) ) );
+          BG_Upgrade( UP_MEDKIT )->humanName ) );
   }
 
   Q_strcat( text, MAX_TUTORIAL_TEXT,
@@ -541,8 +550,12 @@ static void CG_HumanText( char *text, playerState_t *ps )
         CG_KeyNameForCommand( "+button7" ) ) );
 
   Q_strcat( text, MAX_TUTORIAL_TEXT,
-      va( "Press %s to sprint\n",
-        CG_KeyNameForCommand( "boost" ) ) );
+      va( "Press %s and forward to sprint\n",
+        CG_KeyNameForCommand( "+button6" ) ) );
+
+  Q_strcat( text, MAX_TUTORIAL_TEXT,
+      va( "Press %s and another direction to dodge\n",
+        CG_KeyNameForCommand( "+button6" ) ) );
 }
 
 /*
@@ -552,34 +565,47 @@ CG_SpectatorText
 */
 static void CG_SpectatorText( char *text, playerState_t *ps )
 {
-  if( cgs.clientinfo[ cg.clientNum ].team != PTE_NONE )
+  if( cgs.clientinfo[ cg.clientNum ].team != TEAM_NONE )
   {
-    Q_strcat( text, MAX_TUTORIAL_TEXT,
-        va( "Press %s to spawn\n", CG_KeyNameForCommand( "+attack" ) ) );
+    if( ps->pm_flags & PMF_QUEUED )
+      Q_strcat( text, MAX_TUTORIAL_TEXT,
+                va( "Press %s to leave spawn queue\n",
+                    CG_KeyNameForCommand( "+attack" ) ) );
+    else
+      Q_strcat( text, MAX_TUTORIAL_TEXT,
+                va( "Press %s to spawn\n",
+                    CG_KeyNameForCommand( "+attack" ) ) );
   }
   else 
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
-        va( "Press %s to join a team\n", CG_KeyNameForCommand( "+attack" ) ) );
+        va( "Press %s to join a team\n",
+          CG_KeyNameForCommand( "+attack" ) ) );
   }
 
   if( ps->pm_flags & PMF_FOLLOW )
   {
-    Q_strcat( text, MAX_TUTORIAL_TEXT,
-        va( "Press %s to stop following\n",
-          CG_KeyNameForCommand( "+button2" ) ) );
+    if( !cg.chaseFollow )
+      Q_strcat( text, MAX_TUTORIAL_TEXT,
+                va( "Press %s to switch to chase-cam spectator mode\n",
+                    CG_KeyNameForCommand( "+button2" ) ) );
+    else
+      Q_strcat( text, MAX_TUTORIAL_TEXT,
+                va( "Press %s to return to free spectator mode\n",
+                    CG_KeyNameForCommand( "+button2" ) ) );
 
     Q_strcat( text, MAX_TUTORIAL_TEXT,
-        va( "Press %s or ", CG_KeyNameForCommand( "weapprev" ) ) );
+          va( "Press %s or ",
+            CG_KeyNameForCommand( "weapprev" ) ) );
     Q_strcat( text, MAX_TUTORIAL_TEXT,
-        va( "%s to change player\n", CG_KeyNameForCommand( "weapnext" ) ) );
+          va( "%s to change player\n",
+            CG_KeyNameForCommand( "weapnext" ) ) );
   }
   else
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
-        va( "Press %s to follow a %s\n", CG_KeyNameForCommand( "+button2" ),
-          ( cgs.clientinfo[ cg.clientNum ].team == PTE_NONE )
-            ? "player" : "teammate" ) );
+        va( "Press %s to follow a player\n",
+            CG_KeyNameForCommand( "+button2" ) ) );
   }
 }
 
@@ -595,6 +621,7 @@ const char *CG_TutorialText( void )
   playerState_t *ps;
   static char   text[ MAX_TUTORIAL_TEXT ];
 
+  CG_FixBindings( );
   CG_GetBindings( );
 
   text[ 0 ] = '\0';
@@ -602,14 +629,14 @@ const char *CG_TutorialText( void )
 
   if( !cg.intermissionStarted && !cg.demoPlayback )
   {
-    if( ps->persistant[ PERS_TEAM ] == TEAM_SPECTATOR ||
+    if( ps->persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT ||
         ps->pm_flags & PMF_FOLLOW )
     {
       CG_SpectatorText( text, ps );
     }
     else if( ps->stats[ STAT_HEALTH ] > 0 )
     {
-      switch( ps->stats[ STAT_PCLASS ] )
+      switch( ps->stats[ STAT_CLASS ] )
       {
         case PCL_ALIEN_BUILDER0:
         case PCL_ALIEN_BUILDER0_UPG:
@@ -648,7 +675,7 @@ const char *CG_TutorialText( void )
           break;
       }
 
-      if( ps->stats[ STAT_PTEAM ] == PTE_ALIENS )
+      if( ps->stats[ STAT_TEAM ] == TEAM_ALIENS )
       {
         entityState_t *es = CG_BuildableInRange( ps, NULL );
 
@@ -659,15 +686,17 @@ const char *CG_TutorialText( void )
                 CG_KeyNameForCommand( "+button7" ) ) );
         }
         else if( es && es->modelindex == BA_A_HOVEL &&
-                 es->generic1 & B_SPAWNED_TOGGLEBIT &&
-                 ( ps->stats[ STAT_PCLASS ] == PCL_ALIEN_BUILDER0 ||
-                   ps->stats[ STAT_PCLASS ] == PCL_ALIEN_BUILDER0_UPG ) )
+                 ( es->eFlags & EF_B_SPAWNED ) &&
+                 ( ps->stats[ STAT_CLASS ] == PCL_ALIEN_BUILDER0 ||
+                   ps->stats[ STAT_CLASS ] == PCL_ALIEN_BUILDER0_UPG ) )
         {
           Q_strcat( text, MAX_TUTORIAL_TEXT,
               va( "Press %s to enter the hovel\n",
                 CG_KeyNameForCommand( "+button7" ) ) );
         }
-        else if( BG_UpgradeClassAvailable( ps ) )
+        else if( BG_AlienCanEvolve( ps->stats[ STAT_CLASS ],
+                                    ps->persistant[ PERS_CREDIT ],
+                                    cgs.alienStage ) )
         {
           Q_strcat( text, MAX_TUTORIAL_TEXT,
               va( "Press %s to evolve\n",

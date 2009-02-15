@@ -39,6 +39,7 @@
 #define WINDOW_BORDER_HORZ                2     // horizontal borders only
 #define WINDOW_BORDER_VERT                3     // vertical borders only
 #define WINDOW_BORDER_KCGRADIENT          4     // horizontal border using the gradient bars
+#define WINDOW_BORDER_ROUNDED             5     // full round borders
 
 #define WINDOW_STYLE_EMPTY                0     // no background
 #define WINDOW_STYLE_FILLED               1     // filled with background color
@@ -79,8 +80,9 @@
 #define FEEDER_TREMALIENBUILD             18    // alien buildables
 #define FEEDER_TREMHUMANBUILD             19    // human buildables
 #define FEEDER_IGNORE_LIST                20    // ignored players
+#define FEEDER_HELP_LIST                  21    // help topics
 
-#define FEEDER_RESOLUTIONS                21    // display resolutions
+#define FEEDER_RESOLUTIONS                22    // display resolutions
 
 // display flags
 #define UI_SHOW_FAVORITESERVERS           0x00000001
@@ -98,11 +100,11 @@
 #define CG_PLAYER_HEALTH_CROSS            1
 #define CG_PLAYER_AMMO_VALUE              2
 #define CG_PLAYER_CLIPS_VALUE             3
-#define CG_PLAYER_BUILD_TIMER             4
+#define CG_PLAYER_AMMO_STACK              4
+#define CG_PLAYER_CLIPS_STACK             5
+#define CG_PLAYER_BUILD_TIMER             6
 #define CG_PLAYER_CREDITS_VALUE           7
-#define CG_PLAYER_BANK_VALUE              8
 #define CG_PLAYER_CREDITS_VALUE_NOPAD     9
-#define CG_PLAYER_BANK_VALUE_NOPAD        10
 #define CG_PLAYER_STAMINA                 11
 #define CG_PLAYER_STAMINA_1               12
 #define CG_PLAYER_STAMINA_2               13
@@ -151,6 +153,7 @@
 #define CG_DEMO_PLAYBACK                  53
 #define CG_DEMO_RECORDING                 54
 
+
 #define CG_CONSOLE                        55
 #define CG_TUTORIAL                       56
 #define CG_CLOCK                          57
@@ -173,5 +176,18 @@
 #define UI_HSELLINFOPANE                  72
 #define UI_ABUILDINFOPANE                 73
 #define UI_HBUILDINFOPANE                 74
+#define UI_HELPINFOPANE                   75
+
+#define CG_PLAYER_CHARGE_BAR_BG           76
+#define CG_PLAYER_CHARGE_BAR              77
+#define CG_PLAYER_CROSSHAIR               78
+#define CG_PLAYER_LOCATION                79
+#define CG_SQUAD_MARKERS                  80
+#define CG_SPEED                          81
+
+#define CG_PLAYER_ATTACK_FEEDBACK         82
+
+#define UI_CREDITS                        83
+#define UI_SCREEN                         84
 
 #endif

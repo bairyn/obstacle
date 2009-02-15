@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -573,7 +573,7 @@ static void CG_UpdateBeam( trailBeam_t *tb )
         if( !CG_AttachmentPoint( &ts->frontAttachment, i->refPosition ) )
           CG_DestroyTrailSystem( &ts );
       }
-      else
+      else if( i->prev )
         VectorCopy( i->prev->refPosition, i->refPosition );
     }
   }
@@ -1009,6 +1009,15 @@ static qboolean CG_ParseTrailSystem( baseTrailSystem_t *bts, char **text_p, cons
     }
     else if( !Q_stricmp( token, "thirdPersonOnly" ) )
       bts->thirdPersonOnly = qtrue;
+    else if( !Q_stricmp( token, "lifeTime" ) )
+    {
+      token = COM_Parse( text_p );
+      if( !Q_stricmp( token, "" ) )
+        break;
+
+      bts->lifeTime = atoi_neg( token, qfalse );
+      continue;
+    }
     else if( !Q_stricmp( token, "beam" ) ) //acceptable text
       continue;
     else if( !Q_stricmp( token, "}" ) )
@@ -1051,9 +1060,11 @@ static qboolean CG_ParseTrailFile( const char *fileName )
   if( len <= 0 )
     return qfalse;
 
-  if( len >= sizeof( text ) - 1 )
+  if( len == 0 || len >= sizeof( text ) - 1 )
   {
-    CG_Printf( S_COLOR_RED "ERROR: trail file %s too long\n", fileName );
+    trap_FS_FCloseFile( f );
+    CG_Printf( S_COLOR_RED "ERROR: trail file %s is %s\n", fileName,
+      len == 0 ? "empty" : "too long" );
     return qfalse;
   }
 
@@ -1170,7 +1181,7 @@ void CG_LoadTrailSystems( void )
     fileLen = strlen( filePtr );
     strcpy( fileName, "scripts/" );
     strcat( fileName, filePtr );
-    CG_Printf( "...loading '%s'\n", fileName );
+    //CG_Printf( "...loading '%s'\n", fileName );
     CG_ParseTrailFile( fileName );
   }
 }
@@ -1291,6 +1302,7 @@ trailSystem_t *CG_SpawnNewTrailSystem( qhandle_t psHandle )
 
       ts->valid = qtrue;
       ts->destroyTime = -1;
+      ts->birthTime = cg.time;
 
       for( j = 0; j < bts->numBeams; j++ )
         CG_SpawnNewTrailBeam( bts->beams[ j ], ts );
@@ -1404,6 +1416,19 @@ static void CG_GarbageCollectTrailSystems( void )
 
       if( !cg_entities[ centNum ].valid )
         CG_DestroyTrailSystem( &tempTS );
+    }
+
+    // lifetime expired
+    if( ts->destroyTime <= 0 && ts->class->lifeTime &&
+        ts->birthTime + ts->class->lifeTime < cg.time )
+    {
+      trailSystem_t *tempTS = ts;
+
+      CG_DestroyTrailSystem( &tempTS );
+      if( cg_debugTrails.integer >= 1 )
+        CG_Printf( "TS %s expired (born %d, lives %d, now %d)\n",
+                   ts->class->name, ts->birthTime, ts->class->lifeTime,
+                   cg.time );
     }
 
     if( cg_debugTrails.integer >= 1 && !ts->valid )

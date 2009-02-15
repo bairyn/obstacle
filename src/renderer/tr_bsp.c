@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -206,11 +206,11 @@ static	void R_LoadLightmaps( lump_t *l ) {
 			}
 		}
 		tr.lightmaps[i] = R_CreateImage( va("*lightmap%d",i), image, 
-			LIGHTMAP_SIZE, LIGHTMAP_SIZE, qfalse, qfalse, GL_CLAMP );
+			LIGHTMAP_SIZE, LIGHTMAP_SIZE, qfalse, qfalse, GL_CLAMP_TO_EDGE );
 	}
 
 	if ( r_lightmap->integer == 2 )	{
-		ri.Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( int ) ( maxIntensity * 255 ) );
+		ri.Printf( PRINT_DEVELOPER, "Brightest lightmap value: %d\n", ( int ) ( maxIntensity * 255 ) );
 	}
 }
 
@@ -1188,7 +1188,7 @@ void R_StitchAllPatches( void ) {
 		}
 	}
 	while (stitched);
-	ri.Printf( PRINT_ALL, "stitched %d LoD cracks\n", numstitches );
+	ri.Printf( PRINT_DEVELOPER, "stitched %d LoD cracks\n", numstitches );
 }
 
 /*
@@ -1293,7 +1293,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	R_MovePatchSurfacesToHunk();
 #endif
 
-	ri.Printf( PRINT_ALL, "...loaded %d faces, %i meshes, %i trisurfs, %i flares\n", 
+	ri.Printf( PRINT_DEVELOPER, "...loaded %d faces, %i meshes, %i trisurfs, %i flares\n", 
 		numFaces, numMeshes, numTriSurfs, numFlares );
 }
 
@@ -1322,6 +1322,9 @@ static	void R_LoadSubmodels( lump_t *l ) {
 		model = R_AllocModel();
 
 		assert( model != NULL );			// this should never happen
+		if ( model == NULL ) {
+			ri.Error(ERR_DROP, "R_LoadSubmodels: R_AllocModel() failed");
+		}
 
 		model->type = MOD_BRUSH;
 		model->bmodel = out;
@@ -1793,7 +1796,10 @@ Called directly from cgame
 void RE_LoadWorldMap( const char *name ) {
 	int			i;
 	dheader_t	*header;
-	byte		*buffer;
+	union {
+		byte *b;
+		void *v;
+	} buffer;
 	byte		*startMarker;
 
 	if ( tr.worldMapLoaded ) {
@@ -1811,8 +1817,8 @@ void RE_LoadWorldMap( const char *name ) {
 	tr.worldMapLoaded = qtrue;
 
 	// load it
-    ri.FS_ReadFile( name, (void **)&buffer );
-	if ( !buffer ) {
+    ri.FS_ReadFile( name, &buffer.v );
+	if ( !buffer.b ) {
 		ri.Error (ERR_DROP, "RE_LoadWorldMap: %s not found", name);
 	}
 
@@ -1829,7 +1835,7 @@ void RE_LoadWorldMap( const char *name ) {
 	startMarker = ri.Hunk_Alloc(0, h_low);
 	c_gridVerts = 0;
 
-	header = (dheader_t *)buffer;
+	header = (dheader_t *)buffer.b;
 	fileBase = (byte *)header;
 
 	i = LittleLong (header->version);
@@ -1861,6 +1867,6 @@ void RE_LoadWorldMap( const char *name ) {
 	// only set tr.world now that we know the entire level has loaded properly
 	tr.world = &s_worldData;
 
-    ri.FS_FreeFile( buffer );
+    ri.FS_FreeFile( buffer.v );
 }
 

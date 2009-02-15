@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -24,6 +24,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cl_cgame.c  -- client system interaction with client game
 
 #include "client.h"
+#include "libmumblelink.h"
+
+#if id386_sse >= 1
+#include "../qcommon/qsse.h"
+clipHandle_t CM_TempBoxModel_sse( v4f mins, v4f maxs, int capsule );
+#endif
 
 extern qboolean loadCamera(const char *name);
 extern void startCamera(int time);
@@ -294,9 +300,9 @@ rescan:
 		// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=552
 		// allow server to indicate why they were disconnected
 		if ( argc >= 2 )
-			Com_Error (ERR_SERVERDISCONNECT, va( "Server Disconnected - %s", Cmd_Argv( 1 ) ) );
+			Com_Error( ERR_SERVERDISCONNECT, "Server disconnected - %s", Cmd_Argv( 1 ) );
 		else
-			Com_Error (ERR_SERVERDISCONNECT,"Server disconnected\n");
+			Com_Error( ERR_SERVERDISCONNECT, "Server disconnected\n" );
 	}
 
 	if ( !strcmp( cmd, "bcs0" ) ) {
@@ -336,6 +342,8 @@ rescan:
 		// the restart to the cgame
 		Con_ClearNotify();
 		Com_Memset( cl.cmds, 0, sizeof( cl.cmds ) );
+		// reparse the string, because Con_ClearNotify may have done another Cmd_TokenizeString()
+		Cmd_TokenizeString( s );
 		return qtrue;
 	}
 
@@ -396,11 +404,9 @@ void CL_ShutdownCGame( void ) {
 }
 
 static int	FloatAsInt( float f ) {
-	int		temp;
-
-	*(float *)&temp = f;
-
-	return temp;
+	floatint_t fi;
+	fi.f = f;
+	return fi.i;
 }
 
 /*
@@ -427,7 +433,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		Cvar_Update( VMA(1) );
 		return 0;
 	case CG_CVAR_SET:
-		Cvar_Set( VMA(1), VMA(2) );
+		Cvar_SetSafe( VMA(1), VMA(2) );
 		return 0;
 	case CG_CVAR_VARIABLESTRINGBUFFER:
 		Cvar_VariableStringBuffer( VMA(1), VMA(2), args[3] );
@@ -465,7 +471,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		CL_AddCgameCommand( VMA(1) );
 		return 0;
 	case CG_REMOVECOMMAND:
-		Cmd_RemoveCommand( VMA(1) );
+		Cmd_RemoveCommandSafe( VMA(1) );
 		return 0;
 	case CG_SENDCLIENTCOMMAND:
 		CL_AddReliableCommand( VMA(1) );
@@ -486,9 +492,21 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_CM_INLINEMODEL:
 		return CM_InlineModel( args[1] );
 	case CG_CM_TEMPBOXMODEL:
+#if id386_sse >= 1
+		if ( com_sse->integer >= 1 ) {
+			return CM_TempBoxModel_sse( vec3Load(VMA(1)), vec3Load(VMA(2)), /*int capsule*/ qfalse );
+		}
+#else
 		return CM_TempBoxModel( VMA(1), VMA(2), /*int capsule*/ qfalse );
+#endif
 	case CG_CM_TEMPCAPSULEMODEL:
+#if id386_sse >= 1
+		if ( com_sse->integer >= 1 ) {
+			return CM_TempBoxModel_sse( vec3Load(VMA(1)), vec3Load(VMA(2)), /*int capsule*/ qtrue );
+		}
+#else
 		return CM_TempBoxModel( VMA(1), VMA(2), /*int capsule*/ qtrue );
+#endif
 	case CG_CM_POINTCONTENTS:
 		return CM_PointContents( VMA(1), args[2] );
 	case CG_CM_TRANSFORMEDPOINTCONTENTS:
@@ -542,6 +560,8 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return 0;
 	case CG_S_REGISTERSOUND:
 		return S_RegisterSound( VMA(1), args[2] );
+	case CG_S_SOUNDDURATION:
+		return S_SoundDuration( args[1] );
 	case CG_S_STARTBACKGROUNDTRACK:
 		S_StartBackgroundTrack( VMA(1), VMA(2) );
 		return 0;
@@ -791,7 +811,7 @@ void CL_InitCGame( void ) {
 
 	t2 = Sys_Milliseconds();
 
-	Com_Printf( "CL_InitCGame: %5.2f seconds\n", (t2-t1)/1000.0 );
+	Com_DPrintf( "CL_InitCGame: %5.2f seconds\n", (t2-t1)/1000.0 );
 
 	// have the renderer touch all its images, so they are present
 	// on the card even if the driver does deferred loading
@@ -804,6 +824,7 @@ void CL_InitCGame( void ) {
 
 	// clear anything that got printed
 	Con_ClearNotify ();
+	CL_WriteClientLog( va("`~=-----------------=~`\n MAP: %s \n`~=-----------------=~`\n", mapname ) );
 }
 
 
@@ -953,6 +974,52 @@ void CL_FirstSnapshot( void ) {
 		Cbuf_AddText( cl_activeAction->string );
 		Cvar_Set( "activeAction", "" );
 	}
+
+#ifdef USE_MUMBLE
+	if ((cl_useMumble->integer) && !mumble_islinked()) {
+		int ret = mumble_link(CLIENT_WINDOW_TITLE);
+		Com_Printf("Mumble: Linking to Mumble application %s\n", ret==0?"ok":"failed");
+	}
+#endif
+
+#ifdef USE_VOIP
+	if (!clc.speexInitialized) {
+		int i;
+		speex_bits_init(&clc.speexEncoderBits);
+		speex_bits_reset(&clc.speexEncoderBits);
+
+		clc.speexEncoder = speex_encoder_init(&speex_nb_mode);
+
+		speex_encoder_ctl(clc.speexEncoder, SPEEX_GET_FRAME_SIZE,
+		                  &clc.speexFrameSize);
+		speex_encoder_ctl(clc.speexEncoder, SPEEX_GET_SAMPLING_RATE,
+		                  &clc.speexSampleRate);
+
+		clc.speexPreprocessor = speex_preprocess_state_init(clc.speexFrameSize,
+		                                                  clc.speexSampleRate);
+
+		i = 1;
+		speex_preprocess_ctl(clc.speexPreprocessor,
+		                     SPEEX_PREPROCESS_SET_DENOISE, &i);
+
+		i = 1;
+		speex_preprocess_ctl(clc.speexPreprocessor,
+		                     SPEEX_PREPROCESS_SET_AGC, &i);
+
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			speex_bits_init(&clc.speexDecoderBits[i]);
+			speex_bits_reset(&clc.speexDecoderBits[i]);
+			clc.speexDecoder[i] = speex_decoder_init(&speex_nb_mode);
+			clc.voipIgnore[i] = qfalse;
+			clc.voipGain[i] = 1.0f;
+		}
+		clc.speexInitialized = qtrue;
+		clc.voipMuteAll = qfalse;
+		Cmd_AddCommand ("voip", CL_Voip_f);
+		Cvar_Set("cl_voipSendTarget", "all");
+		clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0x7FFFFFFF;
+	}
+#endif
 }
 
 /*

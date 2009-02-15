@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -26,21 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include "cg_local.h"
-
-
-
-void CG_TargetCommand_f( void )
-{
-  int   targetNum;
-  char  test[ 4 ];
-
-  targetNum = CG_CrosshairPlayer( );
-  if( !targetNum )
-    return;
-
-  trap_Argv( 1, test, 4 );
-  trap_SendConsoleCommand( va( "gc %i %i", targetNum, atoi( test ) ) );
-}
 
 
 
@@ -188,11 +173,28 @@ static void CG_TellAttacker_f( void )
   trap_SendClientCommand( command );
 }
 
-typedef struct
+static void CG_SquadMark_f( void )
 {
-  char  *cmd;
-  void  (*function)( void );
-} consoleCommand_t;
+  centity_t *cent;
+  vec3_t end;
+  trace_t trace;
+  
+  // Find the player we are looking at
+  VectorMA( cg.refdef.vieworg, 131072, cg.refdef.viewaxis[ 0 ], end );
+  CG_Trace( &trace, cg.refdef.vieworg, NULL, NULL, end,
+            cg.snap->ps.clientNum, CONTENTS_SOLID | CONTENTS_BODY );
+  if( trace.entityNum >= MAX_CLIENTS )
+    return;
+
+  // Only mark teammates
+  cent = cg_entities + trace.entityNum;
+  if( cent->currentState.eType != ET_PLAYER ||
+      cgs.clientinfo[ trace.entityNum ].team !=
+      cg.snap->ps.stats[ STAT_TEAM ] )
+    return;
+      
+  cent->pe.squadMarked = !cent->pe.squadMarked;
+}
 
 static consoleCommand_t commands[ ] =
 {
@@ -214,11 +216,12 @@ static consoleCommand_t commands[ ] =
   { "weapon", CG_Weapon_f },
   { "tell_target", CG_TellTarget_f },
   { "tell_attacker", CG_TellAttacker_f },
-  { "tcmd", CG_TargetCommand_f },
   { "testPS", CG_TestPS_f },
   { "destroyTestPS", CG_DestroyTestPS_f },
   { "testTS", CG_TestTS_f },
   { "destroyTestTS", CG_DestroyTestTS_f },
+  { "reloadhud", CG_LoadHudMenu },
+  { "squadmark", CG_SquadMark_f },
 };
 
 
@@ -233,18 +236,9 @@ Cmd_Argc() / Cmd_Argv()
 qboolean CG_ConsoleCommand( void )
 {
   const char  *cmd;
-  const char  *arg1;
   int         i;
 
   cmd = CG_Argv( 0 );
-
-  // ugly hacky special case
-  if( !Q_stricmp( cmd, "ui_menu" ) )
-  {
-    arg1 = CG_Argv( 1 );
-    trap_SendConsoleCommand( va( "menu %s\n", arg1 ) );
-    return qtrue;
-  }
 
   for( i = 0; i < sizeof( commands ) / sizeof( commands[ 0 ] ); i++ )
   {
@@ -283,8 +277,16 @@ void CG_InitConsoleCommands( void )
   trap_AddCommand( "messagemode2" );
   trap_AddCommand( "messagemode3" );
   trap_AddCommand( "messagemode4" );
+  trap_AddCommand( "messagemode5" );
+  trap_AddCommand( "messagemode6" );
+  trap_AddCommand( "prompt" );
   trap_AddCommand( "say" );
   trap_AddCommand( "say_team" );
+  trap_AddCommand( "vsay" );
+  trap_AddCommand( "vsay_team" );
+  trap_AddCommand( "vsay_local" );
+  trap_AddCommand( "m" );
+  trap_AddCommand( "mt" );
   trap_AddCommand( "tell" );
   trap_AddCommand( "give" );
   trap_AddCommand( "god" );
@@ -293,28 +295,22 @@ void CG_InitConsoleCommands( void )
   trap_AddCommand( "team" );
   trap_AddCommand( "follow" );
   trap_AddCommand( "levelshot" );
-  trap_AddCommand( "addbot" );
   trap_AddCommand( "setviewpos" );
   trap_AddCommand( "callvote" );
   trap_AddCommand( "vote" );
   trap_AddCommand( "callteamvote" );
   trap_AddCommand( "teamvote" );
-  trap_AddCommand( "stats" );
   trap_AddCommand( "class" );
   trap_AddCommand( "build" );
   trap_AddCommand( "buy" );
   trap_AddCommand( "sell" );
   trap_AddCommand( "reload" );
+  trap_AddCommand( "boost" );
   trap_AddCommand( "itemact" );
   trap_AddCommand( "itemdeact" );
   trap_AddCommand( "itemtoggle" );
   trap_AddCommand( "destroy" );
   trap_AddCommand( "deconstruct" );
-  trap_AddCommand( "menu" );
-  trap_AddCommand( "ui_menu" );
-  trap_AddCommand( "mapRotation" );
-  trap_AddCommand( "stopMapRotation" );
-  trap_AddCommand( "advanceMapRotation" );
-  trap_AddCommand( "alienWin" );
-  trap_AddCommand( "humanWin" );
+  trap_AddCommand( "ignore" );
+  trap_AddCommand( "unignore" );
 }

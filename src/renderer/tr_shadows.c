@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -156,6 +156,7 @@ void RB_ShadowTessEnd( void ) {
 	int		i;
 	int		numTris;
 	vec3_t	lightDir;
+	GLboolean rgba[4];
 
 	// we can only do this if we have enough space in the vertex buffers
 	if ( tess.numVertexes >= SHADER_MAX_VERTEXES / 2 ) {
@@ -216,6 +217,7 @@ void RB_ShadowTessEnd( void ) {
 	qglColor3f( 0.2f, 0.2f, 0.2f );
 
 	// don't write to the color buffer
+	qglGetBooleanv(GL_COLOR_WRITEMASK, rgba);
 	qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
 
 	qglEnable( GL_STENCIL_TEST );
@@ -246,7 +248,7 @@ void RB_ShadowTessEnd( void ) {
 
 
 	// reenable writing to the color buffer
-	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	qglColorMask(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
 

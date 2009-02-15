@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -148,10 +148,36 @@ static void SCR_DrawChar( int x, int y, float size, int ch ) {
 	fcol = col*0.0625;
 	size = 0.0625;
 
-	re.DrawStretchPic( ax, ay, aw, ah,
+    re.DrawStretchPic( ax, ay, aw, ah,
 					   fcol, frow, 
 					   fcol + size, frow + size, 
 					   cls.charSetShader );
+}
+
+void SCR_DrawConsoleFontChar( float x, float y, int ch )
+{
+
+    if( cls.useLegacyConsoleFont )
+    {
+        SCR_DrawSmallChar( (int) x, (int) y, ch );
+        return;
+    }
+
+    if(ch==' ') return;
+
+    fontInfo_t *font = &cls.consoleFont;
+
+    glyphInfo_t *glyph = &font->glyphs[ch];
+
+    float yadj = glyph->top;
+
+
+    float xadj = (SCR_ConsoleFontCharWidth( ch ) - glyph->xSkip) / 2.0;
+
+    re.DrawStretchPic( x+xadj, y-yadj, glyph->imageWidth, glyph->imageHeight,
+					   glyph->s, glyph->t, 
+					   glyph->s2, glyph->t2, 
+					   glyph->glyph );
 }
 
 /*
@@ -184,6 +210,49 @@ void SCR_DrawSmallChar( int x, int y, int ch ) {
 					   fcol, frow, 
 					   fcol + size, frow + size, 
 					   cls.charSetShader );
+}
+
+float SCR_ConsoleFontCharWidth( int ch )
+{
+    fontInfo_t *font = &cls.consoleFont;
+    glyphInfo_t *glyph = &font->glyphs[ch];
+    float width = glyph->xSkip + cl_consoleFontKerning->value;
+
+    if( cls.useLegacyConsoleFont ) return SMALLCHAR_WIDTH;
+
+    return (width);
+}
+
+
+float SCR_ConsoleFontCharHeight( )
+{
+    fontInfo_t *font = &cls.consoleFont;
+    int ch = 'I' & 0xff;
+    glyphInfo_t *glyph = &font->glyphs[ch];
+    float vpadding = 0.3 * cl_consoleFontSize->value;
+
+    if( cls.useLegacyConsoleFont ) return SMALLCHAR_HEIGHT;
+
+
+    return (glyph->imageHeight + vpadding);
+}
+
+
+float SCR_ConsoleFontStringWidth( const char* s, int len )
+{
+    int i;
+    fontInfo_t *font = &cls.consoleFont;
+    float width = 0;
+
+    if( cls.useLegacyConsoleFont ) return len * SMALLCHAR_WIDTH;
+
+    for(i=0;i<len;i++)
+    {
+        int ch = s[i] & 0xff;
+        glyphInfo_t *glyph = &font->glyphs[ch];
+        width += glyph->xSkip + cl_consoleFontKerning->value;
+    }
+    return (width);
 }
 
 
@@ -225,14 +294,16 @@ void SCR_DrawStringExt( int x, int y, float size, const char *string, float *set
 	xx = x;
 	re.SetColor( setColor );
 	while ( *s ) {
-		if ( !noColorEscape && Q_IsColorString( s ) ) {
+		if ( Q_IsColorString( s ) ) {
 			if ( !forceColor ) {
 				Com_Memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
 				color[3] = setColor[3];
 				re.SetColor( color );
 			}
-			s += 2;
-			continue;
+			if ( !noColorEscape ) {
+				s += 2;
+				continue;
+			}
 		}
 		SCR_DrawChar( xx, y, size, *s );
 		xx += size;
@@ -267,24 +338,26 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 		qboolean noColorEscape ) {
 	vec4_t		color;
 	const char	*s;
-	int			xx;
+	float       xx;
 
 	// draw the colored text
 	s = string;
 	xx = x;
 	re.SetColor( setColor );
 	while ( *s ) {
-		if ( !noColorEscape && Q_IsColorString( s ) ) {
+		if ( Q_IsColorString( s ) ) {
 			if ( !forceColor ) {
 				Com_Memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
 				color[3] = setColor[3];
 				re.SetColor( color );
 			}
-			s += 2;
-			continue;
+			if ( !noColorEscape ) {
+				s += 2;
+				continue;
+			}
 		}
-		SCR_DrawSmallChar( xx, y, *s );
-		xx += SMALLCHAR_WIDTH;
+        SCR_DrawConsoleFontChar( xx, y, *s );
+        xx += SCR_ConsoleFontCharWidth( *s );
 		s++;
 	}
 	re.SetColor( NULL );
@@ -320,6 +393,80 @@ int	SCR_GetBigStringWidth( const char *str ) {
 
 
 //===============================================================================
+
+
+
+#ifdef USE_VOIP
+/*
+=================
+SCR_DrawVoipMeter
+=================
+*/
+void SCR_DrawVoipMeter( void ) {
+	char	buffer[16];
+	char	string[256];
+	int limit, i;
+
+	if (!cl_voipShowMeter->integer)
+		return;  // player doesn't want to show meter at all.
+	else if (!cl_voipSend->integer)
+		return;  // not recording at the moment.
+	else if (cls.state != CA_ACTIVE)
+		return;  // not connected to a server.
+	else if (!cl_connectedToVoipServer)
+		return;  // server doesn't support VoIP.
+	else if (clc.demoplaying)
+		return;  // playing back a demo.
+	else if (!cl_voip->integer)
+		return;  // client has VoIP support disabled.
+
+	limit = (int) (clc.voipPower * 10.0f);
+	if (limit > 10)
+		limit = 10;
+
+	for (i = 0; i < limit; i++)
+		buffer[i] = '*';
+	while (i < 10)
+		buffer[i++] = ' ';
+	buffer[i] = '\0';
+
+	sprintf( string, "VoIP: [%s]", buffer );
+	SCR_DrawStringExt( 320 - strlen( string ) * 4, 10, 8, string, g_color_table[7], qtrue, qfalse );
+}
+
+/*
+=================
+SCR_DrawVoipSender
+=================
+*/
+void SCR_DrawVoipSender( void ) {
+	char	string[256];
+	
+	// Little bit of a hack here, but its the only thing i could come up with :|
+	if( cls.voipTime < cls.realtime )
+		return;
+
+	if (!cl_voipShowSender->integer)
+		return; // They don't want this on :(
+	else if (cls.state != CA_ACTIVE)
+		return;  // not connected to a server.
+	else if (!cl_connectedToVoipServer)
+		return;  // server doesn't support VoIP.
+	else if (clc.demoplaying)
+		return;  // playing back a demo.
+	else if (!cl_voip->integer)
+		return;  // client has VoIP support disabled.
+
+	sprintf(string, "Client speaking: %s", Info_ValueForKey(cl.gameState.stringData +
+	        cl.gameState.stringOffsets[CS_PLAYERS + cls.voipSender], "n"));
+
+	// I hardcoded the display to be on the left side of the screen, and not to move
+	SCR_DrawStringExt( 6, 310, 12, string, g_color_table[7], qfalse, qfalse );
+}
+#endif
+
+
+
 
 /*
 ===============================================================================
@@ -452,10 +599,22 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 		case CA_LOADING:
 		case CA_PRIMED:
 			// draw the game information screen and loading progress
-			CL_CGameRendering( stereoFrame );
+			CL_CGameRendering(stereoFrame);
+
+			// also draw the connection information, so it doesn't
+			// flash away too briefly on local or lan games
+			// refresh to update the time
+			VM_Call( uivm, UI_REFRESH, cls.realtime );
+			VM_Call( uivm, UI_DRAW_CONNECT_SCREEN, qtrue );
 			break;
 		case CA_ACTIVE:
-			CL_CGameRendering( stereoFrame );
+			// always supply STEREO_CENTER as vieworg offset is now done by the engine.
+			CL_CGameRendering(stereoFrame);
+#ifdef USE_VOIP
+			SCR_DrawVoipMeter();
+			SCR_DrawVoipSender();
+			
+#endif
 			break;
 		}
 	}
@@ -494,20 +653,25 @@ void SCR_UpdateScreen( void ) {
 	}
 	recursive = 1;
 
-	// if running in stereo, we need to draw the frame twice
-	if ( cls.glconfig.stereoEnabled ) {
-		SCR_DrawScreenField( STEREO_LEFT );
-		SCR_DrawScreenField( STEREO_RIGHT );
-	} else {
-		SCR_DrawScreenField( STEREO_CENTER );
-	}
+	// If there is no VM, there are also no rendering commands issued. Stop the renderer in
+	// that case.
+	if( uivm || com_dedicated->integer )
+	{
+		// if running in stereo, we need to draw the frame twice
+		if ( cls.glconfig.stereoEnabled || Cvar_VariableIntegerValue("r_anaglyphMode")) {
+			SCR_DrawScreenField( STEREO_LEFT );
+			SCR_DrawScreenField( STEREO_RIGHT );
+		} else {
+			SCR_DrawScreenField( STEREO_CENTER );
+		}
 
-	if ( com_speeds->integer ) {
-		re.EndFrame( &time_frontend, &time_backend );
-	} else {
-		re.EndFrame( NULL, NULL );
+		if ( com_speeds->integer ) {
+			re.EndFrame( &time_frontend, &time_backend );
+		} else {
+			re.EndFrame( NULL, NULL );
+		}
 	}
-
+	
 	recursive = 0;
 }
 

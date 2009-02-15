@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -138,7 +138,7 @@ static void CG_ClipMoveToEntities ( const vec3_t start, const vec3_t mins,
       bmaxs[ 2 ] = zu;
 
       if( i == cg_numSolidEntities )
-        BG_FindBBoxForClass( ( ent->misc >> 8 ) & 0xFF, bmins, bmaxs, NULL, NULL, NULL );
+        BG_ClassBoundingBox( ( ent->misc >> 8 ) & 0xFF, bmins, bmaxs, NULL, NULL, NULL );
 
       cmodel = trap_CM_TempBoxModel( bmins, bmaxs );
       VectorCopy( vec3_origin, angles );
@@ -590,7 +590,7 @@ void CG_PredictPlayerState( void )
   else
     cg_pmove.tracemask = MASK_PLAYERSOLID;
 
-  if( cg.snap->ps.persistant[ PERS_TEAM ] == TEAM_SPECTATOR )
+  if( cg.snap->ps.persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT )
     cg_pmove.tracemask = MASK_DEADSOLID; // spectators can fly through bodies
 
   cg_pmove.noFootsteps = 0;

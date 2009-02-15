@@ -4,20 +4,20 @@ Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2005 Ludwig Nussel <ludwig.nussel@web.de>
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -235,7 +235,7 @@ void emit(const char* fmt, ...)
 	va_list ap;
 	char line[4096];
 	va_start(ap, fmt);
-	vsnprintf(line, sizeof(line), fmt, ap);
+	Q_vsnprintf(line, sizeof(line), fmt, ap);
 	va_end(ap);
 	assemble_line(line, strlen(line));
 }
@@ -477,7 +477,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 
 	gettimeofday(&tvstart, NULL);
 
-	Com_Printf("compiling %s\n", vm->name);
+	Com_DPrintf("compiling %s\n", vm->name);
 
 #ifdef DEBUG_VM
 	snprintf(fn_s, sizeof(fn_s), "%.63s.s", vm->name);
@@ -994,7 +994,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 	entryPoint = getentrypoint(vm);
 
 //	__asm__ __volatile__ ("int3");
-	Com_Printf("computing jump table\n");
+	Com_DPrintf("computing jump table\n");
 
 	// call code with r8 set to zero to set up instruction pointers
 	__asm__ __volatile__ (
@@ -1027,11 +1027,11 @@ out:
 	{
 		struct timeval tvdone =  {0, 0};
 		struct timeval dur =  {0, 0};
-		Com_Printf( "VM file %s compiled to %i bytes of code (%p - %p)\n", vm->name, vm->codeLength, vm->codeBase, vm->codeBase+vm->codeLength );
+		Com_DPrintf( "VM file %s compiled to %i bytes of code (%p - %p)\n", vm->name, vm->codeLength, vm->codeBase, vm->codeBase+vm->codeLength );
 
 		gettimeofday(&tvdone, NULL);
 		timersub(&tvdone, &tvstart, &dur);
-		Com_Printf( "compilation took %lu.%06lu seconds\n", dur.tv_sec, dur.tv_usec );
+		Com_DPrintf( "compilation took %lu.%06lu seconds\n", dur.tv_sec, dur.tv_usec );
 	}
 }
 
@@ -1041,7 +1041,7 @@ void VM_Destroy_Compiled(vm_t* self)
 #ifdef USE_GAS
 	munmap(self->codeBase, self->codeLength);
 #elif _WIN32
-	VirtualFree(self->codeBase, self->codeLength, MEM_RELEASE);
+	VirtualFree(self->codeBase, 0, MEM_RELEASE);
 #else
 	munmap(self->codeBase, self->codeLength);
 #endif
@@ -1070,7 +1070,6 @@ int	VM_CallCompiled( vm_t *vm, int *args ) {
 
 	currentVM = vm;
 
-	++vm->callLevel;
 //	Com_Printf("entering %s level %d, call %d, arg1 = 0x%x\n", vm->name, vm->callLevel, args[0], args[1]);
 
 	// interpret the code
@@ -1132,7 +1131,6 @@ int	VM_CallCompiled( vm_t *vm, int *args ) {
 	}
 
 //	Com_Printf("exiting %s level %d\n", vm->name, vm->callLevel);
-	--vm->callLevel;
 	vm->programStack = stackOnEntry;
 
 	return *(int *)opStack;

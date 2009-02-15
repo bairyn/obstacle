@@ -3,27 +3,27 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
 // g_public.h -- game module information visible to server
 
-#define GAME_API_VERSION  8
+#define GAME_API_VERSION  9
 
 // entity->svFlags
 // the server does not know how to interpret most of the values
@@ -220,7 +220,8 @@ typedef enum {
   G_PARSE_READ_TOKEN,
   G_PARSE_SOURCE_FILE_AND_LINE,
 
-  G_SEND_GAMESTAT
+  G_SEND_GAMESTAT,
+  G_DEMO_COMMAND
 } gameImport_t;
 
 
@@ -257,7 +258,6 @@ typedef enum {
   // The game can issue trap_argc() / trap_argv() commands to get the command
   // and parameters.  Return qfalse if the game doesn't recognize it as a command.
 
-  GAME_PING_OVERRIDE        // ( void ), guid retrieved through trap_Argc and trap_Argv
-  // returns 1 if the client overrides ping restrictions
+  GAME_DEMO_COMMAND         // ( int cmd, const char *string );
 } gameExport_t;
 

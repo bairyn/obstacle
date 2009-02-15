@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -39,13 +39,32 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // Used to determine where to store user-specific files
 static char homePath[ MAX_OSPATH ] = { 0 };
+static char homePathOld[ MAX_OSPATH ] = { 0 };
+
+/*
+==================
+CON_CtrlHandler
+
+The Windows Console doesn't use signals for terminating the application
+with Ctrl-C, logging off, window closing, etc.  Instead it uses a special
+handler routine.  Fortunately, the values for Ctrl signals don't seem to
+overlap with true signal codes that Windows provides, so calling
+Sys_SigHandler() with those numbers should be safe for generating unique
+shutdown messages.
+==================
+*/
+static BOOL WINAPI CON_CtrlHandler( DWORD sig )
+{
+	Sys_SigHandler( sig );
+	return TRUE;
+}
 
 /*
 ================
 Sys_DefaultHomePath
 ================
 */
-char *Sys_DefaultHomePath( void )
+char *Sys_DefaultHomePath( char **path2 )
 {
 	TCHAR szPath[MAX_PATH];
 	FARPROC qSHGetFolderPath;
@@ -67,27 +86,52 @@ char *Sys_DefaultHomePath( void )
 			return NULL;
 		}
 
+#if USE_OLD_HOMEPATH
 		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_APPDATA,
 						NULL, 0, szPath ) ) )
+#else
+		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_PERSONAL,
+						NULL, 0, szPath ) ) )
+#endif
 		{
-			Com_Printf("Unable to detect CSIDL_APPDATA\n");
+#if USE_OLD_HOMEPATH
+			Com_Printf("Unable to find CSIDL_APPDATA\n");
+#else
+			Com_Printf("Unable to find CSIDL_PERSONAL\n");
+#endif
 			FreeLibrary(shfolder);
 			return NULL;
 		}
 		Q_strncpyz( homePath, szPath, sizeof( homePath ) );
+#if USE_OLD_HOMEPATH
 		Q_strcat( homePath, sizeof( homePath ), "\\Tremulous" );
-		FreeLibrary(shfolder);
-		if( !CreateDirectory( homePath, NULL ) )
+#else
+		Q_strcat( homePath, sizeof( homePath ), "\\My Games\\Tremfusion" );
+#endif
+
+#if USE_OLD_HOMEPATH
+		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_LOCAL_APPDATA,
+						NULL, 0, szPath ) ) )
 		{
-			if( GetLastError() != ERROR_ALREADY_EXISTS )
-			{
-				Com_Printf("Unable to create directory \"%s\"\n", homePath );
-				return NULL;
-			}
+			Com_Printf("Unable to detect CSIDL_LOCAL_APPDATA\n");
+			FreeLibrary(shfolder);
+			return NULL;
 		}
+		Q_strncpyz( homePathOld, szPath, sizeof( homePath ) );
+		Q_strcat( homePathOld, sizeof( homePathOld ), "\\Tremulous" );
+		*path2 = homePathOld;
+#else
+		*path2 = NULL;
+#endif
+		FreeLibrary(shfolder);
 	}
 
 	return homePath;
+}
+
+char *Sys_ResolveLink( char *arg0 )
+{
+	return arg0;
 }
 
 /*
@@ -514,15 +558,26 @@ void Sys_FreeFileList( char **list )
 ==============
 Sys_Sleep
 
-Block execution for msec or until input is recieved.
+Block execution for msec or until input is received.
 ==============
 */
 void Sys_Sleep( int msec )
 {
+	if( msec == 0 )
+		return;
+
+#ifdef DEDICATED
 	if( msec < 0 )
 		WaitForSingleObject( GetStdHandle( STD_INPUT_HANDLE ), INFINITE );
 	else
 		WaitForSingleObject( GetStdHandle( STD_INPUT_HANDLE ), msec );
+#else
+	// Client Sys_Sleep doesn't support waiting on stdin
+	if( msec < 0 )
+		return;
+
+	Sleep( msec );
+#endif
 }
 
 /*
@@ -564,4 +619,67 @@ void Sys_ErrorDialog( const char *error )
 			CloseClipboard( );
 		}
 	}
+}
+
+#ifndef DEDICATED
+static qboolean SDL_VIDEODRIVER_externallySet = qfalse;
+#endif
+
+/*
+==============
+Sys_GLimpInit
+
+Windows specific GL implementation initialisation
+==============
+*/
+void Sys_GLimpInit( void )
+{
+#ifndef DEDICATED
+	if( !SDL_VIDEODRIVER_externallySet )
+	{
+		// It's a little bit weird having in_mouse control the
+		// video driver, but from ioq3's point of view they're
+		// virtually the same except for the mouse input anyway
+		if( Cvar_VariableIntegerValue( "in_mouse" ) == -1 )
+		{
+			// Use the windib SDL backend, which is closest to
+			// the behaviour of idq3 with in_mouse set to -1
+			_putenv( "SDL_VIDEODRIVER=windib" );
+		}
+		else
+		{
+			// Use the DirectX SDL backend
+			_putenv( "SDL_VIDEODRIVER=directx" );
+		}
+	}
+#endif
+}
+
+/*
+==============
+Sys_PlatformInit
+
+Windows specific initialisation
+==============
+*/
+void Sys_PlatformInit( void )
+{
+#ifndef DEDICATED
+	const char *SDL_VIDEODRIVER = getenv( "SDL_VIDEODRIVER" );
+
+	if( SDL_VIDEODRIVER )
+	{
+		Com_Printf( "SDL_VIDEODRIVER is externally set to \"%s\", "
+				"in_mouse -1 will have no effect\n", SDL_VIDEODRIVER );
+		SDL_VIDEODRIVER_externallySet = qtrue;
+	}
+	else
+		SDL_VIDEODRIVER_externallySet = qfalse;
+#endif
+
+	// Set the console title
+	SetConsoleTitle( "Tremfusion Console" );
+
+	// Handle Ctrl-C or other console termination
+	SetConsoleCtrlHandler( CON_CtrlHandler, TRUE );
 }

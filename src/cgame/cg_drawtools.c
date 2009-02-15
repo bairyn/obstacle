@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -99,23 +99,6 @@ void CG_AdjustFrom640( float *x, float *y, float *w, float *h )
   *h *= cgs.screenYScale;
 }
 
-/*
-================
-CG_FillRect
-
-Coordinates are 640*480 virtual values
-=================
-*/
-void CG_FillRect( float x, float y, float width, float height, const float *color )
-{
-  trap_R_SetColor( color );
-
-  CG_AdjustFrom640( &x, &y, &width, &height );
-  trap_R_DrawStretchPic( x, y, width, height, 0, 0, 0, 0, cgs.media.whiteShader );
-
-  trap_R_SetColor( NULL );
-}
-
 
 /*
 ================
@@ -140,6 +123,19 @@ void CG_DrawTopBottom( float x, float y, float w, float h, float size )
   trap_R_DrawStretchPic( x, y + h - size, w, size, 0, 0, 0, 0, cgs.media.whiteShader );
 }
 
+static void CG_DrawCorners( float x, float y, float w, float h, float size, qhandle_t pic )
+{
+  float hs, vs;
+  CG_AdjustFrom640( &x, &y, &w, &h );
+  hs = size * cgs.screenXScale;
+  vs = size * cgs.screenYScale;
+
+  trap_R_DrawStretchPic( x, y, hs , vs, 0, 0, 0.5, 0.5, pic );
+  trap_R_DrawStretchPic( x, y + h - vs, hs, vs, 0, 0.5, 0.5, 1, pic );
+  trap_R_DrawStretchPic( x + w - hs, y, hs, vs, 0.5, 0, 1, 0.5, pic );
+  trap_R_DrawStretchPic( x + w - hs, y + h - vs, hs, vs, 0.5, 0.5, 1, 1, pic );
+}
+
 
 /*
 ================
@@ -154,6 +150,63 @@ void CG_DrawRect( float x, float y, float width, float height, float size, const
 
   CG_DrawTopBottom( x, y, width, height, size );
   CG_DrawSides( x, y, width, height, size );
+
+  trap_R_SetColor( NULL );
+}
+
+
+/*
+================
+CG_DrawRoundedRect
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void CG_DrawRoundedRect( float x, float y, float width, float height, float size, const float *color )
+{
+  trap_R_SetColor( color );
+
+  CG_DrawTopBottom( x + size * 4, y, width - size * 8, height, size );
+  CG_DrawSides( x, y + size * 4, width, height - size * 8, size );
+  CG_DrawCorners( x, y, width, height, size * 4, cgDC.Assets.cornerOut );
+
+  trap_R_SetColor( NULL );
+}
+
+
+/*
+================
+CG_FillRect
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void CG_FillRect( float x, float y, float width, float height, const float *color )
+{
+  trap_R_SetColor( color );
+
+  CG_AdjustFrom640( &x, &y, &width, &height );
+  trap_R_DrawStretchPic( x, y, width, height, 0, 0, 0, 0, cgs.media.whiteShader );
+
+  trap_R_SetColor( NULL );
+}
+
+
+/*
+================
+CG_FillRoundedRect
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void CG_FillRoundedRect( float x, float y, float width, float height, float size, const float *color )
+{
+  CG_FillRect( x, y + size * 3, width, height - size * 6, color );
+
+  trap_R_SetColor( color );
+
+  CG_DrawTopBottom( x + size * 3, y, width - size * 6, height, size * 3 );
+  CG_DrawCorners( x - size, y - size, width + size * 2, height + size * 2, size * 4, cgDC.Assets.cornerIn );
 
   trap_R_SetColor( NULL );
 }
@@ -345,6 +398,59 @@ qboolean CG_WorldToScreen( vec3_t point, float *x, float *y )
 	  *y = yc - DotProduct( trans, cg.refdef.viewaxis[ 2 ] ) * yc / ( z * py );
 
 	return qtrue;
+}
+
+/*
+================
+CG_WorldToScreenWrap
+================
+*/
+qboolean CG_WorldToScreenWrap( vec3_t point, float *x, float *y )
+{
+  vec3_t trans;
+  float px, py, dotForward, dotRight, dotUp, distance, propX, propY;
+
+  px = tan( cg.refdef.fov_x * M_PI / 360.0 );
+  py = tan( cg.refdef.fov_y * M_PI / 360.0 );
+  
+  VectorSubtract( point, cg.refdef.vieworg, trans );
+
+  dotForward = DotProduct( trans, cg.refdef.viewaxis[ 0 ] );
+  dotRight = DotProduct( trans, cg.refdef.viewaxis[ 1 ] );
+  dotUp = DotProduct( trans, cg.refdef.viewaxis[ 2 ] );
+
+  distance = abs( dotForward );
+  propX = dotRight / ( distance * px );
+  propY = dotUp / ( distance * py );
+
+  // The distance along the forward axis does not make sense once the point
+  // moves off-screen so we need to use either the side or the up axis instead
+  if( propX < -1.f || propX > 1.f )
+  {
+    distance = abs( dotRight ) / px;
+    propY = dotUp / ( distance * py );
+  }
+  if( propY < -1.f || propY > 1.f )
+  {
+    distance = abs( dotUp ) / py;
+    propX = dotRight / ( distance * px );
+  }  
+    
+  if( x )
+    *x = 320 - propX * 320;
+  if( y )
+    *y = 240 - propY * 240;
+    
+  // Snap to the edge of the screen when the point is behind us
+  if( dotForward < 0.f && *x > 0 && *x < 640 && *y > 0 && *y < 480 )
+  {
+    if( abs( *x - 320 ) > abs( *y - 240 ) )
+      *x = *x <= 320 ? 0.f : 640;
+    else
+      *y = *y <= 240 ? 0.f : 480;
+  }
+
+  return qtrue;
 }
 
 /*

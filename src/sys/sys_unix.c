@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/qcommon.h"
 #include "sys_local.h"
 
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -43,7 +44,7 @@ static char homePath[ MAX_OSPATH ] = { 0 };
 Sys_DefaultHomePath
 ==================
 */
-char *Sys_DefaultHomePath(void)
+char *Sys_DefaultHomePath(char **path2)
 {
 	char *p;
 
@@ -53,22 +54,50 @@ char *Sys_DefaultHomePath(void)
 		{
 			Q_strncpyz( homePath, p, sizeof( homePath ) );
 #ifdef MACOS_X
+#if USE_OLD_HOMEPATH
 			Q_strcat( homePath, sizeof( homePath ), "/Library/Application Support/Tremulous" );
 #else
-			Q_strcat( homePath, sizeof( homePath ), "/.tremulous" );
+			Q_strcat( homePath, sizeof( homePath ), "/Library/Application Support/Tremfusion" );
 #endif
-			if( mkdir( homePath, 0777 ) )
-			{
-				if( errno != EEXIST )
-				{
-					Sys_Error( "Unable to create directory \"%s\", error is %s(%d)\n",
-							homePath, strerror( errno ), errno );
-				}
-			}
+#else
+#if USE_OLD_HOMEPATH
+			Q_strcat( homePath, sizeof( homePath ), "/.tremulous" );
+#else
+			Q_strcat( homePath, sizeof( homePath ), "/.tremfusion" );
+#endif
+#endif
 		}
 	}
 
+	*path2 = NULL;
 	return homePath;
+}
+
+/*
+=================
+Sys_ResolveLink
+
+This resolves any symlinks to the binary. It's disabled for debug
+builds because there are situations where you are likely to want
+to symlink to binaries and /not/ have the links resolved.
+=================
+*/
+char *Sys_ResolveLink( char *arg0 )
+{
+#if NDEBUG && ( _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200112L )
+	static char dst[ PATH_MAX ];
+	int n = readlink( arg0, dst, PATH_MAX - 1 );
+
+	if( n >= 0 && n < PATH_MAX )
+	{
+		dst[ n ] = '\0';
+		return dst;
+	}
+	else
+		return arg0;
+#else
+	return arg0;
+#endif
 }
 
 /*
@@ -230,7 +259,10 @@ char *Sys_Cwd( void )
 {
 	static char cwd[MAX_OSPATH];
 
-	getcwd( cwd, sizeof( cwd ) - 1 );
+	char *result = getcwd( cwd, sizeof( cwd ) - 1 );
+	if( result != cwd )
+		return NULL;
+
 	cwd[MAX_OSPATH-1] = 0;
 
 	return cwd;
@@ -463,6 +495,9 @@ void Sys_Sleep( int msec )
 {
 	fd_set fdset;
 
+	if( msec == 0 )
+		return;
+
 	FD_ZERO(&fdset);
 	FD_SET(fileno(stdin), &fdset);
 	if( msec < 0 )
@@ -507,4 +542,32 @@ void Sys_ErrorDialog( const char *error )
 		FS_Write( buffer, size, f );
 
 	FS_FCloseFile( f );
+}
+
+/*
+==============
+Sys_GLimpInit
+
+Unix specific GL implementation initialisation
+==============
+*/
+void Sys_GLimpInit( void )
+{
+	// NOP
+}
+
+/*
+==============
+Sys_PlatformInit
+
+Unix specific initialisation
+==============
+*/
+void Sys_PlatformInit( void )
+{
+	signal( SIGHUP, Sys_SigHandler );
+	signal( SIGQUIT, Sys_SigHandler );
+	signal( SIGTRAP, Sys_SigHandler );
+	signal( SIGIOT, Sys_SigHandler );
+	signal( SIGBUS, Sys_SigHandler );
 }

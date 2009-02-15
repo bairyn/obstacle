@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -152,7 +152,7 @@ G_TeamCommand
 Broadcasts a command to only a specific team
 ================
 */
-void G_TeamCommand( pTeam_t team, char *cmd )
+void G_TeamCommand( team_t team, char *cmd )
 {
   int   i;
 
@@ -161,11 +161,17 @@ void G_TeamCommand( pTeam_t team, char *cmd )
     if( level.clients[ i ].pers.connected == CON_CONNECTED )
     {
       if( level.clients[ i ].pers.teamSelection == team ||
-        ( level.clients[ i ].pers.teamSelection == PTE_NONE &&
-          G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) ) )
+        ( level.clients[ i ].pers.teamSelection == TEAM_NONE &&
+          G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) ) ||
+        ( level.clients[ i ].pers.teamSelection == TEAM_NONE &&
+          level.clients[ i ].sess.spectatorState == SPECTATOR_FOLLOW &&
+          level.clients[ i ].sess.spectatorClient >= 0 &&
+          level.clients[ level.clients[ i ].sess.spectatorClient ].pers.teamSelection == team ) )
         trap_SendServerCommand( i, cmd );
     }
   }
+
+  G_DemoCommand( DC_SERVER_COMMAND, cmd );
 }
 
 
@@ -518,8 +524,6 @@ void G_FreeEntity( gentity_t *ent )
   if( ent->neverFree )
     return;
 
-  G_StructureDecon( ent );
-
   memset( ent, 0, sizeof( *ent ) );
   ent->classname = "freent";
   ent->freetime = level.time;
@@ -641,11 +645,11 @@ void G_AddEvent( gentity_t *ent, int event, int eventParm )
     return;
   }
 
-  // eventParm is converted to uint8_t (0 - 255) in msg.c
+  // eventParm is converted to uint8_t (0 - 255) in msg.c 
   if( eventParm & ~0xFF )
   {
-    G_Printf( S_COLOR_YELLOW "WARNING: G_AddEvent: event %d "
-      " eventParm uint8_t overflow (given %d)\n", event, eventParm );
+    G_Printf( S_COLOR_YELLOW "WARNING: G_AddEvent( %s ) has eventParm %d, "
+              "which will overflow\n", BG_EventName( event ), eventParm );
   }
 
   // clients need to add the event in playerState_t instead of entityState_t
@@ -777,16 +781,13 @@ G_Visible
 Test for a LOS between two entities
 ===============
 */
-qboolean G_Visible( gentity_t *ent1, gentity_t *ent2 )
+qboolean G_Visible( gentity_t *ent1, gentity_t *ent2, int contents )
 {
   trace_t trace;
 
-  trap_Trace( &trace, ent1->s.pos.trBase, NULL, NULL, ent2->s.pos.trBase, ent1->s.number, MASK_SHOT );
-
-  if( trace.contents & CONTENTS_SOLID )
-    return qfalse;
-
-  return qtrue;
+  trap_Trace( &trace, ent1->s.pos.trBase, NULL, NULL, ent2->s.pos.trBase,
+              ent1->s.number, contents );
+  return trace.fraction >= 1.0f || trace.entityNum == ent2 - g_entities;
 }
 
 /*
@@ -806,7 +807,8 @@ gentity_t *G_ClosestEnt( vec3_t origin, gentity_t **entities, int numEntities )
   {
     gentity_t *ent = entities[ i ];
 
-    if( ( nd = Distance( origin, ent->s.origin ) ) < d )
+    nd = DistanceSquared( origin, ent->s.origin );
+    if( i == 0 || nd < d )
     {
       d = nd;
       closestEnt = ent;
@@ -827,10 +829,24 @@ void G_TriggerMenu( int clientNum, dynMenu_t menu )
 {
   char buffer[ 32 ];
 
-  Com_sprintf( buffer, 32, "servermenu %d", menu );
+  Com_sprintf( buffer, sizeof( buffer ), "servermenu %d", menu );
   trap_SendServerCommand( clientNum, buffer );
 }
 
+/*
+===============
+G_TriggerMenu2
+
+Trigger a menu on some client and passes an argument
+===============
+*/
+void G_TriggerMenu2( int clientNum, dynMenu_t menu, int arg )
+{
+  char buffer[ 64 ];
+
+  Com_sprintf( buffer, sizeof( buffer ), "servermenu %d %d", menu, arg );
+  trap_SendServerCommand( clientNum, buffer );
+}
 
 /*
 ===============

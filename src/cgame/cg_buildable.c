@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -108,7 +108,7 @@ static void CG_Creep( centity_t *cent )
   float         size, frac;
   trace_t       tr;
   vec3_t        temp, origin;
-  int           scaleUpTime = BG_FindBuildTimeForBuildable( cent->currentState.modelindex );
+  int           scaleUpTime = BG_Buildable( cent->currentState.modelindex )->buildTime;
   int           time;
 
   time = cent->currentState.time;
@@ -169,12 +169,13 @@ static qboolean CG_ParseBuildableAnimationFile( const char *filename, buildable_
 
   // load the file
   len = trap_FS_FOpenFile( filename, &f, FS_READ );
-  if( len <= 0 )
+  if( len < 0 )
     return qfalse;
 
-  if( len >= sizeof( text ) - 1 )
+  if( len == 0 || len >= sizeof( text ) - 1 )
   {
-    CG_Printf( "File %s too long\n", filename );
+    trap_FS_FCloseFile( f );
+    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
     return qfalse;
   }
 
@@ -259,12 +260,13 @@ static qboolean CG_ParseBuildableSoundFile( const char *filename, buildable_t bu
 
   // load the file
   len = trap_FS_FOpenFile( filename, &f, FS_READ );
-  if ( len <= 0 )
+  if ( len < 0 )
     return qfalse;
 
-  if ( len >= sizeof( text ) - 1 )
+  if ( len == 0 || len >= sizeof( text ) - 1 )
   {
-    CG_Printf( "File %s too long\n", filename );
+    trap_FS_FCloseFile( f );
+    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
     return qfalse;
   }
 
@@ -336,7 +338,7 @@ void CG_InitBuildables( void )
 
   for( i = BA_NONE + 1; i < BA_NUM_BUILDABLES; i++ )
   {
-    buildableName = BG_FindNameForBuildable( i );
+    buildableName = BG_Buildable( i )->name;
 
     //animation.cfg
     Com_sprintf( filename, sizeof( filename ), "models/buildables/%s/animation.cfg", buildableName );
@@ -351,7 +353,8 @@ void CG_InitBuildables( void )
     //models
     for( j = 0; j <= 3; j++ )
     {
-      if( ( modelFile = BG_FindModelsForBuildable( i, j ) ) )
+      modelFile = BG_BuildableConfig( i )->models[ j ];
+      if( strlen( modelFile ) > 0 )
         cg_buildables[ i ].models[ j ] = trap_R_RegisterModel( modelFile );
     }
 
@@ -373,7 +376,7 @@ void CG_InitBuildables( void )
         else
         {
           //file doesn't exist - use default
-          if( BG_FindTeamForBuildable( i ) == BIT_ALIENS )
+          if( BG_Buildable( i )->team == TEAM_ALIENS )
             cg_buildables[ i ].sounds[ j ].sound = defaultAlienSounds[ j ];
           else
             cg_buildables[ i ].sounds[ j ].sound = defaultHumanSounds[ j ];
@@ -427,18 +430,9 @@ cg.time should be between oldFrameTime and frameTime after exit
 */
 static void CG_RunBuildableLerpFrame( centity_t *cent )
 {
-  int                   f, numFrames;
   buildable_t           buildable = cent->currentState.modelindex;
   lerpFrame_t           *lf = &cent->lerpFrame;
-  animation_t           *anim;
   buildableAnimNumber_t newAnimation = cent->buildableAnim & ~( ANIM_TOGGLEBIT|ANIM_FORCEBIT );
-
-  // debugging tool to get no animations
-  if( cg_animSpeed.integer == 0 )
-  {
-    lf->oldFrame = lf->frame = lf->backlerp = 0;
-    return;
-  }
 
   // see if the animation sequence is switching
   if( newAnimation != lf->animationNumber || !lf->animation )
@@ -454,7 +448,7 @@ static void CG_RunBuildableLerpFrame( centity_t *cent )
     {
       if( cg_debugRandom.integer )
         CG_Printf( "Sound for animation %d for a %s\n",
-            newAnimation, BG_FindHumanNameForBuildable( buildable ) );
+            newAnimation, BG_Buildable( buildable )->humanName );
 
       trap_S_StartSound( cent->lerpOrigin, cent->currentState.number, CHAN_AUTO,
         cg_buildables[ buildable ].sounds[ newAnimation ].sound );
@@ -466,72 +460,11 @@ static void CG_RunBuildableLerpFrame( centity_t *cent )
     trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin,
       cg_buildables[ buildable ].sounds[ lf->animationNumber ].sound );
 
-  // if we have passed the current frame, move it to
-  // oldFrame and calculate a new frame
-  if( cg.time >= lf->frameTime )
-  {
-    lf->oldFrame = lf->frame;
-    lf->oldFrameTime = lf->frameTime;
+  CG_RunLerpFrame( lf, 1.0f );
 
-    // get the next frame based on the animation
-    anim = lf->animation;
-    if( !anim->frameLerp )
-      return;   // shouldn't happen
-
-    if ( cg.time < lf->animationTime )
-      lf->frameTime = lf->animationTime;    // initial lerp
-    else
-      lf->frameTime = lf->oldFrameTime + anim->frameLerp;
-
-    f = ( lf->frameTime - lf->animationTime ) / anim->frameLerp;
-    numFrames = anim->numFrames;
-    if(anim->flipflop)
-      numFrames *= 2;
-
-    if( f >= numFrames )
-    {
-      f -= numFrames;
-      if( anim->loopFrames )
-      {
-        f %= anim->loopFrames;
-        f += anim->numFrames - anim->loopFrames;
-      }
-      else
-      {
-        f = numFrames - 1;
-        // the animation is stuck at the end, so it
-        // can immediately transition to another sequence
-        lf->frameTime = cg.time;
-        cent->buildableAnim = cent->currentState.torsoAnim;
-      }
-    }
-
-    if( anim->reversed )
-      lf->frame = anim->firstFrame + anim->numFrames - 1 - f;
-    else if( anim->flipflop && f >= anim->numFrames )
-      lf->frame = anim->firstFrame + anim->numFrames - 1 - ( f % anim->numFrames );
-    else
-      lf->frame = anim->firstFrame + f;
-
-    if( cg.time > lf->frameTime )
-    {
-      lf->frameTime = cg.time;
-      if( cg_debugAnim.integer )
-        CG_Printf( "Clamp lf->frameTime\n");
-    }
-  }
-
-  if( lf->frameTime > cg.time + 200 )
-    lf->frameTime = cg.time;
-
-  if( lf->oldFrameTime > cg.time )
-    lf->oldFrameTime = cg.time;
-
-  // calculate current lerp value
-  if( lf->frameTime == lf->oldFrameTime )
-    lf->backlerp = 0;
-  else
-    lf->backlerp = 1.0 - (float)( cg.time - lf->oldFrameTime ) / ( lf->frameTime - lf->oldFrameTime );
+  // animation ended
+  if( lf->frameTime == cg.time )
+    cent->buildableAnim = cent->currentState.torsoAnim;
 }
 
 /*
@@ -548,7 +481,7 @@ static void CG_BuildableAnimation( centity_t *cent, int *old, int *now, float *b
     cent->buildableAnim = es->torsoAnim;
 
   //display the first frame of the construction anim if not yet spawned
-  if( !( es->generic1 & B_SPAWNED_TOGGLEBIT ) )
+  if( !( es->eFlags & EF_B_SPAWNED ) )
   {
     animation_t *anim = &cg_buildables[ es->modelindex ].animations[ BANIM_CONSTRUCT1 ];
 
@@ -573,7 +506,7 @@ static void CG_BuildableAnimation( centity_t *cent, int *old, int *now, float *b
         CG_Printf( "%d->%d l:%d t:%d %s(%d)\n",
                    cent->oldBuildableAnim, cent->buildableAnim,
                    es->legsAnim, es->torsoAnim,
-                   BG_FindHumanNameForBuildable( es->modelindex ), es->number );
+                   BG_Buildable( es->modelindex )->humanName, es->number );
 
       if( cent->buildableAnim == es->torsoAnim || es->legsAnim & ANIM_FORCEBIT )
         cent->buildableAnim = cent->oldBuildableAnim = es->legsAnim;
@@ -622,12 +555,14 @@ static void CG_PositionAndOrientateBuildable( const vec3_t angles, const vec3_t 
 
   VectorMA( inOrigin, -TRACE_DEPTH, normal, end );
   VectorMA( inOrigin, 1.0f, normal, start );
-  CG_CapTrace( &tr, start, mins, maxs, end, skipNumber, MASK_PLAYERSOLID );
+  CG_CapTrace( &tr, start, mins, maxs, end, skipNumber,
+               CONTENTS_SOLID | CONTENTS_PLAYERCLIP );
 
   if( tr.fraction == 1.0f )
   {
     //erm we missed completely - try again with a box trace
-    CG_Trace( &tr, start, mins, maxs, end, skipNumber, MASK_PLAYERSOLID );
+    CG_Trace( &tr, start, mins, maxs, end, skipNumber,
+              CONTENTS_SOLID | CONTENTS_PLAYERCLIP );
   }
 
   VectorMA( inOrigin, tr.fraction * -TRACE_DEPTH, normal, outOrigin );
@@ -651,7 +586,7 @@ void CG_GhostBuildable( buildable_t buildable )
 
   memset( &ent, 0, sizeof( ent ) );
 
-  BG_FindBBoxForBuildable( buildable, mins, maxs );
+  BG_BuildableBoundingBox( buildable, mins, maxs );
 
   BG_PositionBuildableRelativeToPlayer( ps, mins, maxs, CG_Trace, entity_origin, angles, &tr );
 
@@ -659,7 +594,7 @@ void CG_GhostBuildable( buildable_t buildable )
                                     mins, maxs, ent.axis, ent.origin );
 
   //offset on the Z axis if required
-  VectorMA( ent.origin, BG_FindZOffsetForBuildable( buildable ), tr.plane.normal, ent.origin );
+  VectorMA( ent.origin, BG_BuildableConfig( buildable )->zOffset, tr.plane.normal, ent.origin );
 
   VectorCopy( ent.origin, ent.lightingOrigin );
   VectorCopy( ent.origin, ent.oldorigin ); // don't positionally lerp at all
@@ -672,7 +607,7 @@ void CG_GhostBuildable( buildable_t buildable )
     ent.customShader = cgs.media.redBuildShader;
 
   //rescale the model
-  scale = BG_FindModelScaleForBuildable( buildable );
+  scale = BG_BuildableConfig( buildable )->modelScale;
 
   if( scale != 1.0f )
   {
@@ -697,14 +632,14 @@ CG_BuildableParticleEffects
 static void CG_BuildableParticleEffects( centity_t *cent )
 {
   entityState_t   *es = &cent->currentState;
-  buildableTeam_t team = BG_FindTeamForBuildable( es->modelindex );
+  team_t          team = BG_Buildable( es->modelindex )->team;
   int             health = es->generic1 & B_HEALTH_MASK;
   float           healthFrac = (float)health / B_HEALTH_MASK;
 
-  if( !( es->generic1 & B_SPAWNED_TOGGLEBIT ) )
+  if( !( es->eFlags & EF_B_SPAWNED ) )
     return;
 
-  if( team == BIT_HUMANS )
+  if( team == TEAM_HUMANS )
   {
     if( healthFrac < 0.33f && !CG_IsParticleSystemValid( &cent->buildablePS ) )
     {
@@ -719,7 +654,7 @@ static void CG_BuildableParticleEffects( centity_t *cent )
     else if( healthFrac >= 0.33f && CG_IsParticleSystemValid( &cent->buildablePS ) )
       CG_DestroyParticleSystem( &cent->buildablePS );
   }
-  else if( team == BIT_ALIENS )
+  else if( team == TEAM_ALIENS )
   {
     if( healthFrac < 0.33f && !CG_IsParticleSystemValid( &cent->buildablePS ) )
     {
@@ -904,8 +839,10 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   qboolean        visible = qfalse;
   vec3_t          mins, maxs;
   entityState_t   *hit;
+  int             anim;
+  float           transparency=1.0f;
 
-  if( BG_FindTeamForBuildable( es->modelindex ) == BIT_ALIENS )
+  if( BG_Buildable( es->modelindex )->team == TEAM_ALIENS )
     bs = &cgs.alienBuildStat;
   else
     bs = &cgs.humanBuildStat;
@@ -920,7 +857,13 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   Vector4Copy( bs->foreColor, color );
 
   // trace for center point
-  BG_FindBBoxForBuildable( es->modelindex, mins, maxs );
+  BG_BuildableBoundingBox( es->modelindex, mins, maxs );
+
+  // hack for shrunken barricades
+  anim = es->torsoAnim & ~( ANIM_FORCEBIT | ANIM_TOGGLEBIT );
+  if( es->modelindex == BA_A_BARRICADE &&
+      ( anim == BANIM_DESTROYED || !( es->eFlags & EF_B_SPAWNED ) ) )
+    maxs[ 2 ] = (int)( maxs[ 2 ] * BARRICADE_SHRINKPROP );
 
   VectorCopy( cent->lerpOrigin, origin );
 
@@ -965,8 +908,8 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
       hit  = &cg_entities[ tr.entityNum ].currentState;
 
       if( tr.entityNum < MAX_CLIENTS || ( hit->eType == ET_BUILDABLE &&
-          ( !( es->generic1 & B_SPAWNED_TOGGLEBIT ) ||
-            BG_FindTransparentTestForBuildable( hit->modelindex ) ) ) )
+          ( !( es->eFlags & EF_B_SPAWNED ) ||
+            BG_Buildable( hit->modelindex )->transparentTest ) ) )
       {
         entNum = tr.entityNum;
         VectorCopy( tr.endpos, trOrigin );
@@ -977,13 +920,31 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   }
   // hack to make the kit obscure view
   if( cg_drawGun.integer && visible &&
-      cg.predictedPlayerState.stats[ STAT_PTEAM ] == PTE_HUMANS &&
+      cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_HUMANS &&
       CG_WorldToScreen( origin, &x, &y ) )
   {
     if( x > 450 && y > 290 )
       visible = qfalse;
   }
 
+  health = (unsigned char)es->generic1;
+  healthScale = (float)health / B_HEALTH_MASK;
+
+  if( healthScale < 0.0f )
+    healthScale = 0.0f;
+  else if( healthScale > 1.0f )
+    healthScale = 1.0f;
+
+  powered = es->eFlags & EF_B_POWERED;
+  marked = es->eFlags & EF_B_MARKED;
+
+  if( cg_hideHealthyBuildableStatus.integer &&
+      healthScale == 1.0f &&
+      powered &&
+      !marked )
+  {
+    visible = qfalse;
+  }
   if( !visible && cent->buildableStatus.visible )
   {
     cent->buildableStatus.visible   = qfalse;
@@ -995,31 +956,23 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
     cent->buildableStatus.lastTime  = cg.time;
   }
 
+  color[ 3 ] = transparency;
   // Fade up
   if( cent->buildableStatus.visible )
   {
     if( cent->buildableStatus.lastTime + STATUS_FADE_TIME > cg.time )
-      color[ 3 ] = (float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME;
+      color[ 3 ] = transparency*(float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME;
   }
 
   // Fade down
   if( !cent->buildableStatus.visible )
   {
     if( cent->buildableStatus.lastTime + STATUS_FADE_TIME > cg.time )
-      color[ 3 ] = 1.0f - (float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME;
+      color[ 3 ] = transparency*(1.0f - (float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME);
     else
       return;
   }
 
-  health = es->generic1 & B_HEALTH_MASK;
-  healthScale = (float)health / B_HEALTH_MASK;
-
-  if( health > 0 && healthScale < 0.01f )
-    healthScale = 0.01f;
-  else if( healthScale < 0.0f )
-    healthScale = 0.0f;
-  else if( healthScale > 1.0f )
-    healthScale = 1.0f;
 
   if( CG_WorldToScreen( origin, &x, &y ) )
   {
@@ -1034,8 +987,7 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
     // this is fudged to get the width/height in the cfg to be more realistic
     scale = ( picH / d ) * 3;
 
-    powered = es->generic1 & B_POWERED_TOGGLEBIT;
-    marked = es->generic1 & B_MARKED_TOGGLEBIT;
+
 
     picH *= scale;
     picW *= scale;
@@ -1122,7 +1074,7 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
       int healthMax;
       int healthPoints;
 
-      healthMax = BG_FindHealthForBuildable( es->modelindex );
+      healthMax = BG_Buildable( es->modelindex )->health;
       healthPoints = (int)( healthScale * healthMax );
       if( health > 0 && healthPoints < 1 )
         healthPoints = 1;
@@ -1177,9 +1129,8 @@ static qboolean CG_PlayerIsBuilder( buildable_t buildable )
     case WP_ABUILD:
     case WP_ABUILD2:
     case WP_HBUILD:
-    case WP_HBUILD2:
-      return BG_FindTeamForBuildable( buildable ) ==
-             BG_FindTeamForWeapon( cg.predictedPlayerState.weapon );
+      return BG_Buildable( buildable )->team ==
+             BG_Weapon( cg.predictedPlayerState.weapon )->team;
 
     default:
       return qfalse;
@@ -1226,7 +1177,14 @@ void CG_DrawBuildableStatus( void )
     cent  = &cg_entities[ cg.snap->entities[ i ].number ];
     es    = &cent->currentState;
 
-    if( es->eType == ET_BUILDABLE && CG_PlayerIsBuilder( es->modelindex ) )
+    if( es->eType == ET_BUILDABLE &&
+        ( CG_PlayerIsBuilder( es->modelindex ) ||
+          ( cg_drawBuildableStatus.integer &&
+             BG_Buildable( es->modelindex )->team ==
+             BG_Weapon( cg.predictedPlayerState.weapon )->team
+          )
+        )
+      )
       buildableList[ buildables++ ] = cg.snap->entities[ i ].number;
   }
 
@@ -1250,13 +1208,13 @@ void CG_Buildable( centity_t *cent )
   vec3_t          surfNormal, xNormal, mins, maxs;
   vec3_t          refNormal = { 0.0f, 0.0f, 1.0f };
   float           rotAngle;
-  buildableTeam_t team = BG_FindTeamForBuildable( es->modelindex );
+  team_t          team = BG_Buildable( es->modelindex )->team;
   float           scale;
   int             health;
   float           healthScale;
 
   //must be before EF_NODRAW check
-  if( team == BIT_ALIENS )
+  if( team == TEAM_ALIENS )
     CG_Creep( cent );
 
   // if set to invisible, skip
@@ -1277,30 +1235,53 @@ void CG_Buildable( centity_t *cent )
   VectorCopy( es->origin2, surfNormal );
 
   VectorCopy( es->angles, angles );
-  BG_FindBBoxForBuildable( es->modelindex, mins, maxs );
+  BG_BuildableBoundingBox( es->modelindex, mins, maxs );
 
   if( es->pos.trType == TR_STATIONARY )
-    CG_PositionAndOrientateBuildable( angles, ent.origin, surfNormal, es->number,
-                                      mins, maxs, ent.axis, ent.origin );
+  {
+    // Positioning a buildable involves potentially up to two traces, and
+    // seeing as buildables rarely move, we cache the results and recalculate
+    // only if the buildable moves or changes orientation
+    if( VectorCompare( cent->buildableCache.cachedOrigin, cent->lerpOrigin ) &&
+        VectorCompare( cent->buildableCache.cachedNormal, surfNormal ) )
+    {
+      VectorCopy( cent->buildableCache.axis[ 0 ], ent.axis[ 0 ] );
+      VectorCopy( cent->buildableCache.axis[ 1 ], ent.axis[ 1 ] );
+      VectorCopy( cent->buildableCache.axis[ 2 ], ent.axis[ 2 ] );
+      VectorCopy( cent->buildableCache.origin, ent.origin );
+    }
+    else
+    {
+      CG_PositionAndOrientateBuildable( angles, ent.origin, surfNormal,
+                                        es->number, mins, maxs, ent.axis,
+                                        ent.origin );
+      VectorCopy( ent.axis[ 0 ], cent->buildableCache.axis[ 0 ] );
+      VectorCopy( ent.axis[ 1 ], cent->buildableCache.axis[ 1 ] );
+      VectorCopy( ent.axis[ 2 ], cent->buildableCache.axis[ 2 ] );
+      VectorCopy( ent.origin, cent->buildableCache.origin );
+      VectorCopy( cent->lerpOrigin, cent->buildableCache.cachedOrigin );
+      VectorCopy( surfNormal, cent->buildableCache.cachedNormal );
+    }
+  }
 
   //offset on the Z axis if required
-  VectorMA( ent.origin, BG_FindZOffsetForBuildable( es->modelindex ), surfNormal, ent.origin );
+  VectorMA( ent.origin, BG_BuildableConfig( es->modelindex )->zOffset, surfNormal, ent.origin );
 
   VectorCopy( ent.origin, ent.oldorigin ); // don't positionally lerp at all
   VectorCopy( ent.origin, ent.lightingOrigin );
 
   ent.hModel = cg_buildables[ es->modelindex ].models[ 0 ];
 
-  if( !( es->generic1 & B_SPAWNED_TOGGLEBIT ) )
+  if( !( es->eFlags & EF_B_SPAWNED ) )
   {
     sfxHandle_t prebuildSound = cgs.media.humanBuildablePrebuild;
 
-    if( team == BIT_HUMANS )
+    if( team == TEAM_HUMANS )
     {
       ent.customShader = cgs.media.humanSpawningShader;
       prebuildSound = cgs.media.humanBuildablePrebuild;
     }
-    else if( team == BIT_ALIENS )
+    else if( team == TEAM_ALIENS )
       prebuildSound = cgs.media.alienBuildablePrebuild;
 
     trap_S_AddLoopingSound( es->number, cent->lerpOrigin, vec3_origin, prebuildSound );
@@ -1309,7 +1290,7 @@ void CG_Buildable( centity_t *cent )
   CG_BuildableAnimation( cent, &ent.oldframe, &ent.frame, &ent.backlerp );
 
   //rescale the model
-  scale = BG_FindModelScaleForBuildable( es->modelindex );
+  scale = BG_BuildableConfig( es->modelindex )->modelScale;
 
   if( scale != 1.0f )
   {
@@ -1424,7 +1405,7 @@ void CG_Buildable( centity_t *cent )
     weaponInfo_t  *weapon = &cg_weapons[ es->weapon ];
 
     if( cg.time - cent->muzzleFlashTime > MUZZLE_FLASH_TIME ||
-        BG_FindProjTypeForBuildable( es->modelindex ) == WP_TESLAGEN )
+        BG_Buildable( es->modelindex )->turretProjType == WP_TESLAGEN )
     {
       if( weapon->wim[ WPM_PRIMARY ].flashDlightColor[ 0 ] ||
           weapon->wim[ WPM_PRIMARY ].flashDlightColor[ 1 ] ||
@@ -1446,20 +1427,37 @@ void CG_Buildable( centity_t *cent )
       trap_S_AddLoopingSound( es->number, cent->lerpOrigin, vec3_origin, weapon->readySound );
   }
 
-  health = es->generic1 & B_HEALTH_MASK;
+  health = (unsigned char)es->generic1;
   healthScale = (float)health / B_HEALTH_MASK;
 
-  if( healthScale < cent->lastBuildableHealthScale && ( es->generic1 & B_SPAWNED_TOGGLEBIT ) )
+  if( healthScale < cent->lastBuildableHealthScale &&
+      ( es->eFlags & EF_B_SPAWNED ) )
   {
     if( cent->lastBuildableDamageSoundTime + BUILDABLE_SOUND_PERIOD < cg.time )
     {
-      if( team == BIT_HUMANS )
+      if( team == TEAM_HUMANS )
       {
         int i = rand( ) % 4;
         trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.humanBuildableDamage[ i ] );
+        if( cent->lastBuildableHealthScale - healthScale > 99) {
+          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.humanBuildableHitLargePS );
+        } else {
+          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.humanBuildableHitSmallPS );
+        }
       }
-      else if( team == BIT_ALIENS )
+      else if( team == TEAM_ALIENS ) {
         trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.alienBuildableDamage );
+        if( cent->lastBuildableHealthScale - healthScale > 30) {
+          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.alienBuildableHitLargePS );
+        } else {
+          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.alienBuildableHitSmallPS );
+        }
+      }
+      if( CG_IsParticleSystemValid( &cent->buildableHitPS ) )
+      {
+        CG_SetAttachmentCent( &cent->buildableHitPS->attachment, cent );
+        CG_AttachToCent( &cent->buildableHitPS->attachment );
+      }
 
       cent->lastBuildableDamageSoundTime = cg.time;
     }

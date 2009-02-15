@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -47,19 +47,17 @@ LAN_LoadCachedServers
 void LAN_LoadCachedServers( void ) {
 	int size;
 	fileHandle_t fileIn;
-	cls.numglobalservers = cls.nummplayerservers = cls.numfavoriteservers = 0;
+	cls.numglobalservers = cls.numfavoriteservers = 0;
 	cls.numGlobalServerAddresses = 0;
 	if (FS_SV_FOpenFileRead("servercache.dat", &fileIn)) {
 		FS_Read(&cls.numglobalservers, sizeof(int), fileIn);
-		FS_Read(&cls.nummplayerservers, sizeof(int), fileIn);
 		FS_Read(&cls.numfavoriteservers, sizeof(int), fileIn);
 		FS_Read(&size, sizeof(int), fileIn);
-		if (size == sizeof(cls.globalServers) + sizeof(cls.favoriteServers) + sizeof(cls.mplayerServers)) {
+		if (size == sizeof(cls.globalServers) + sizeof(cls.favoriteServers)) {
 			FS_Read(&cls.globalServers, sizeof(cls.globalServers), fileIn);
-			FS_Read(&cls.mplayerServers, sizeof(cls.mplayerServers), fileIn);
 			FS_Read(&cls.favoriteServers, sizeof(cls.favoriteServers), fileIn);
 		} else {
-			cls.numglobalservers = cls.nummplayerservers = cls.numfavoriteservers = 0;
+			cls.numglobalservers = cls.numfavoriteservers = 0;
 			cls.numGlobalServerAddresses = 0;
 		}
 		FS_FCloseFile(fileIn);
@@ -75,12 +73,10 @@ void LAN_SaveServersToCache( void ) {
 	int size;
 	fileHandle_t fileOut = FS_SV_FOpenFileWrite("servercache.dat");
 	FS_Write(&cls.numglobalservers, sizeof(int), fileOut);
-	FS_Write(&cls.nummplayerservers, sizeof(int), fileOut);
 	FS_Write(&cls.numfavoriteservers, sizeof(int), fileOut);
-	size = sizeof(cls.globalServers) + sizeof(cls.favoriteServers) + sizeof(cls.mplayerServers);
+	size = sizeof(cls.globalServers) + sizeof(cls.favoriteServers);
 	FS_Write(&size, sizeof(int), fileOut);
 	FS_Write(&cls.globalServers, sizeof(cls.globalServers), fileOut);
-	FS_Write(&cls.mplayerServers, sizeof(cls.mplayerServers), fileOut);
 	FS_Write(&cls.favoriteServers, sizeof(cls.favoriteServers), fileOut);
 	FS_FCloseFile(fileOut);
 }
@@ -101,10 +97,7 @@ static void LAN_ResetPings(int source) {
 			servers = &cls.localServers[0];
 			count = MAX_OTHER_SERVERS;
 			break;
-		case AS_MPLAYER :
-			servers = &cls.mplayerServers[0];
-			count = MAX_OTHER_SERVERS;
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			servers = &cls.globalServers[0];
 			count = MAX_GLOBAL_SERVERS;
@@ -138,10 +131,7 @@ static int LAN_AddServer(int source, const char *name, const char *address) {
 			count = &cls.numlocalservers;
 			servers = &cls.localServers[0];
 			break;
-		case AS_MPLAYER :
-			count = &cls.nummplayerservers;
-			servers = &cls.mplayerServers[0];
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			max = MAX_GLOBAL_SERVERS;
 			count = &cls.numglobalservers;
@@ -153,7 +143,7 @@ static int LAN_AddServer(int source, const char *name, const char *address) {
 			break;
 	}
 	if (servers && *count < max) {
-		NET_StringToAdr( address, &adr );
+		NET_StringToAdr( address, &adr, NA_IP );
 		for ( i = 0; i < *count; i++ ) {
 			if (NET_CompareAdr(servers[i].adr, adr)) {
 				break;
@@ -185,10 +175,7 @@ static void LAN_RemoveServer(int source, const char *addr) {
 			count = &cls.numlocalservers;
 			servers = &cls.localServers[0];
 			break;
-		case AS_MPLAYER :
-			count = &cls.nummplayerservers;
-			servers = &cls.mplayerServers[0];
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			count = &cls.numglobalservers;
 			servers = &cls.globalServers[0];
@@ -200,7 +187,7 @@ static void LAN_RemoveServer(int source, const char *addr) {
 	}
 	if (servers) {
 		netadr_t comp;
-		NET_StringToAdr( addr, &comp );
+		NET_StringToAdr( addr, &comp, NA_IP );
 		for (i = 0; i < *count; i++) {
 			if (NET_CompareAdr( comp, servers[i].adr)) {
 				int j = i;
@@ -226,9 +213,7 @@ static int LAN_GetServerCount( int source ) {
 		case AS_LOCAL :
 			return cls.numlocalservers;
 			break;
-		case AS_MPLAYER :
-			return cls.nummplayerservers;
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			return cls.numglobalservers;
 			break;
@@ -248,30 +233,91 @@ static void LAN_GetServerAddressString( int source, int n, char *buf, int buflen
 	switch (source) {
 		case AS_LOCAL :
 			if (n >= 0 && n < MAX_OTHER_SERVERS) {
-				Q_strncpyz(buf, NET_AdrToString( cls.localServers[n].adr) , buflen );
+				Q_strncpyz(buf, NET_AdrToStringwPort( cls.localServers[n].adr) , buflen );
 				return;
 			}
 			break;
-		case AS_MPLAYER :
-			if (n >= 0 && n < MAX_OTHER_SERVERS) {
-				Q_strncpyz(buf, NET_AdrToString( cls.mplayerServers[n].adr) , buflen );
-				return;
-			}
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			if (n >= 0 && n < MAX_GLOBAL_SERVERS) {
-				Q_strncpyz(buf, NET_AdrToString( cls.globalServers[n].adr) , buflen );
+				Q_strncpyz(buf, NET_AdrToStringwPort( cls.globalServers[n].adr) , buflen );
 				return;
 			}
 			break;
 		case AS_FAVORITES :
 			if (n >= 0 && n < MAX_OTHER_SERVERS) {
-				Q_strncpyz(buf, NET_AdrToString( cls.favoriteServers[n].adr) , buflen );
+				Q_strncpyz(buf, NET_AdrToStringwPort( cls.favoriteServers[n].adr) , buflen );
 				return;
 			}
 			break;
 	}
 	buf[0] = '\0';
+}
+
+/*
+==================
+G_SanitiseHostName
+
+Remove non-alphanumeric characters, black characters, and leading spaces from a host name
+==================
+*/
+static void G_SanitiseHostName( char *string )
+{
+	qboolean firstChar  = qfalse;
+	qboolean isBlack    = qfalse;
+	qboolean isGoodChar = qtrue;
+	qboolean skipSpaces = qtrue;
+	
+	char *reader = string;
+	char *writer = string;
+	
+	char lastChar = '\0';
+	
+	while( *reader )
+	{
+		// Ignore leading spaces
+		if( *reader == ' ' && ( skipSpaces == qtrue || lastChar == ' ' ) )
+			isGoodChar = qfalse;
+		
+		// Ignore black coloured characters
+		if ( lastChar == '^' && ColorIndex(*reader) == 0 )
+			isBlack = qtrue;
+		
+		if ( isBlack && *reader != '^' )
+			isGoodChar = qfalse;
+		else if ( isBlack && *reader == '^' )
+			isBlack = isGoodChar = qfalse;
+		else
+			isBlack = qfalse;
+		
+		// Ignore non-alphanumeric characters
+		if ( !isprint( *reader ) )
+			isGoodChar = qfalse;
+		else
+			skipSpaces = qfalse;
+
+		// Determine the first visible character
+		if ( !firstChar && lastChar != '^' && *reader != '^' )
+		{
+			// Strip the first visible character if it's a space
+			if ( *reader == ' ' )
+				isGoodChar = qfalse;
+			else
+				firstChar = qtrue;
+		}
+		
+		if ( isGoodChar == qtrue )
+		{
+			*writer = *reader;
+			writer++;
+		}
+		
+		isGoodChar = qtrue;
+		lastChar = *reader;
+		reader++;
+	}
+	
+	*writer = '\0';
 }
 
 /*
@@ -289,11 +335,7 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 				server = &cls.localServers[n];
 			}
 			break;
-		case AS_MPLAYER :
-			if (n >= 0 && n < MAX_OTHER_SERVERS) {
-				server = &cls.mplayerServers[n];
-			}
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			if (n >= 0 && n < MAX_GLOBAL_SERVERS) {
 				server = &cls.globalServers[n];
@@ -305,8 +347,13 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 			}
 			break;
 	}
+	
 	if (server && buf) {
 		buf[0] = '\0';
+		
+		if ( cl_cleanHostNames->integer )
+			G_SanitiseHostName( server->hostName );
+		
 		Info_SetValueForKey( info, "hostname", server->hostName);
 		Info_SetValueForKey( info, "mapname", server->mapName);
 		Info_SetValueForKey( info, "clients", va("%i",server->clients));
@@ -317,7 +364,7 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 		Info_SetValueForKey( info, "game", server->game);
 		Info_SetValueForKey( info, "gametype", va("%i",server->gameType));
 		Info_SetValueForKey( info, "nettype", va("%i",server->netType));
-		Info_SetValueForKey( info, "addr", NET_AdrToString(server->adr));
+		Info_SetValueForKey( info, "addr", NET_AdrToStringwPort(server->adr));
 		Q_strncpyz(buf, info, buflen);
 	} else {
 		if (buf) {
@@ -339,11 +386,7 @@ static int LAN_GetServerPing( int source, int n ) {
 				server = &cls.localServers[n];
 			}
 			break;
-		case AS_MPLAYER :
-			if (n >= 0 && n < MAX_OTHER_SERVERS) {
-				server = &cls.mplayerServers[n];
-			}
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			if (n >= 0 && n < MAX_GLOBAL_SERVERS) {
 				server = &cls.globalServers[n];
@@ -373,11 +416,7 @@ static serverInfo_t *LAN_GetServerPtr( int source, int n ) {
 				return &cls.localServers[n];
 			}
 			break;
-		case AS_MPLAYER :
-			if (n >= 0 && n < MAX_OTHER_SERVERS) {
-				return &cls.mplayerServers[n];
-			}
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			if (n >= 0 && n < MAX_GLOBAL_SERVERS) {
 				return &cls.globalServers[n];
@@ -449,6 +488,7 @@ static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int
 			}
 			break;
 		case SORT_PING:
+		case 4: // Hack to make 1.1 ui work
 			if (server1->ping < server2->ping) {
 				res = -1;
 			}
@@ -520,9 +560,7 @@ static void LAN_MarkServerVisible(int source, int n, qboolean visible ) {
 			case AS_LOCAL :
 				server = &cls.localServers[0];
 				break;
-			case AS_MPLAYER :
-				server = &cls.mplayerServers[0];
-				break;
+			case AS_MPLAYER:
 			case AS_GLOBAL :
 				server = &cls.globalServers[0];
 				count = MAX_GLOBAL_SERVERS;
@@ -544,11 +582,7 @@ static void LAN_MarkServerVisible(int source, int n, qboolean visible ) {
 					cls.localServers[n].visible = visible;
 				}
 				break;
-			case AS_MPLAYER :
-				if (n >= 0 && n < MAX_OTHER_SERVERS) {
-					cls.mplayerServers[n].visible = visible;
-				}
-				break;
+			case AS_MPLAYER:
 			case AS_GLOBAL :
 				if (n >= 0 && n < MAX_GLOBAL_SERVERS) {
 					cls.globalServers[n].visible = visible;
@@ -576,11 +610,7 @@ static int LAN_ServerIsVisible(int source, int n ) {
 				return cls.localServers[n].visible;
 			}
 			break;
-		case AS_MPLAYER :
-			if (n >= 0 && n < MAX_OTHER_SERVERS) {
-				return cls.mplayerServers[n].visible;
-			}
-			break;
+		case AS_MPLAYER:
 		case AS_GLOBAL :
 			if (n >= 0 && n < MAX_GLOBAL_SERVERS) {
 				return cls.globalServers[n].visible;
@@ -673,11 +703,9 @@ FloatAsInt
 ====================
 */
 static int FloatAsInt( float f ) {
-	int		temp;
-
-	*(float *)&temp = f;
-
-	return temp;
+	floatint_t fi;
+	fi.f = f;
+	return fi.i;
 }
 
 /*
@@ -709,7 +737,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CVAR_SET:
-		Cvar_Set( VMA(1), VMA(2) );
+		Cvar_SetSafe( VMA(1), VMA(2) );
 		return 0;
 
 	case UI_CVAR_VARIABLEVALUE:
@@ -720,7 +748,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CVAR_SETVALUE:
-		Cvar_SetValue( VMA(1), VMF(2) );
+		Cvar_SetValueSafe( VMA(1), VMF(2) );
 		return 0;
 
 	case UI_CVAR_RESET:
@@ -743,6 +771,14 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CMD_EXECUTETEXT:
+		if(args[1] == 0
+		&& (!strncmp(VMA(2), "snd_restart", 11)
+		|| !strncmp(VMA(2), "vid_restart", 11)
+		|| !strncmp(VMA(2), "quit", 5)))
+		{
+			Com_DPrintf (S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n", (const char*)VMA(2));
+			args[1] = EXEC_INSERT;
+		}
 		Cbuf_ExecuteText( args[1], VMA(2) );
 		return 0;
 
@@ -942,6 +978,12 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_SET_PBCLSTATUS:
 		return 0;	
 
+	case UI_CROSSHAIR_PLAYER:
+		return VM_Call( cgvm, CG_CROSSHAIR_PLAYER );
+
+	case UI_LAST_ATTACKER:
+		return VM_Call( cgvm, CG_LAST_ATTACKER );
+
 	case UI_R_REGISTERFONT:
 		re.RegisterFont( VMA(1), args[2], VMA(3));
 		return 0;
@@ -1050,6 +1092,14 @@ CL_InitUI
 */
 #define UI_OLD_API_VERSION	4
 
+void Con_MessageMode_f(void);
+void Con_MessageMode2_f(void);
+void Con_MessageMode3_f(void);
+void Con_MessageMode4_f(void);
+void Con_MessageMode5_f(void);
+void Con_MessageMode6_f(void);
+void Con_Prompt_f(void);
+
 void CL_InitUI( void ) {
 	int		v;
 	vmInterpret_t		interpret;
@@ -1066,20 +1116,56 @@ void CL_InitUI( void ) {
 	if ( !uivm ) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );
 	}
+	
+	// Don't use ui messagemode unless it askes us to
+	Cvar_Set( "ui_useMessagemode", "0" );
 
 	// sanity check
 	v = VM_Call( uivm, UI_GETAPIVERSION );
-	if (v == UI_OLD_API_VERSION) {
+	if (v == UI_OLD_API_VERSION || v == UI_API_VERSION) {
 		// init for this gamestate
 		VM_Call( uivm, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE));
 	}
-	else if (v != UI_API_VERSION) {
+	else {
 		Com_Error( ERR_DROP, "User Interface is version %d, expected %d", v, UI_API_VERSION );
 		cls.uiStarted = qfalse;
 	}
+	
+	// See who gets control of messagemodes
+	if ( !Cvar_VariableIntegerValue( "ui_useMessagemode" ) )
+	{
+		// client messagemode commands
+		Cmd_RemoveCommand( "messagemode" );
+		Cmd_RemoveCommand( "messagemode2" );
+		Cmd_RemoveCommand( "messagemode3" );
+		Cmd_RemoveCommand( "messagemode4" );
+		Cmd_RemoveCommand( "messagemode5" );
+		Cmd_RemoveCommand( "messagemode6" );
+		Cmd_RemoveCommand( "prompt" );
+		Cmd_AddCommand( "messagemode", Con_MessageMode_f );
+		Cmd_AddCommand( "messagemode2", Con_MessageMode2_f );
+		Cmd_AddCommand( "messagemode3", Con_MessageMode3_f );
+		Cmd_AddCommand( "messagemode4", Con_MessageMode4_f );
+		Cmd_AddCommand( "messagemode5", Con_MessageMode5_f );
+		Cmd_AddCommand( "messagemode6", Con_MessageMode6_f );
+		Cmd_AddCommand( "prompt", Con_Prompt_f );
+	}
 	else {
-		// init for this gamestate
-		VM_Call( uivm, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
+		// ui messagemode commands
+		Cmd_RemoveCommand( "messagemode" );
+		Cmd_RemoveCommand( "messagemode2" );
+		Cmd_RemoveCommand( "messagemode3" );
+		Cmd_RemoveCommand( "messagemode4" );
+		Cmd_RemoveCommand( "messagemode5" );
+		Cmd_RemoveCommand( "messagemode6" );
+		Cmd_RemoveCommand( "prompt" );
+		Cmd_AddCommand( "messagemode", NULL );
+		Cmd_AddCommand( "messagemode2", NULL );
+		Cmd_AddCommand( "messagemode3", NULL );
+		Cmd_AddCommand( "messagemode4", NULL );
+		Cmd_AddCommand( "messagemode5", NULL );
+		Cmd_AddCommand( "messagemode6", NULL );
+		Cmd_AddCommand( "prompt", NULL );
 	}
 
 	// reset any CVAR_CHEAT cvars registered by ui

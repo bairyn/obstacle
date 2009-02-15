@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -54,11 +54,11 @@ void multi_trigger( gentity_t *ent, gentity_t *activator )
   if( activator->client )
   {
     if( ( ent->spawnflags & 1 ) &&
-        activator->client->ps.stats[ STAT_PTEAM ] != PTE_HUMANS )
+        activator->client->ps.stats[ STAT_TEAM ] != TEAM_HUMANS )
       return;
 
     if( ( ent->spawnflags & 2 ) &&
-        activator->client->ps.stats[ STAT_PTEAM ] != PTE_ALIENS )
+        activator->client->ps.stats[ STAT_TEAM ] != TEAM_ALIENS )
       return;
   }
 
@@ -81,7 +81,8 @@ void multi_trigger( gentity_t *ent, gentity_t *activator )
 
 void Use_Multi( gentity_t *ent, gentity_t *other, gentity_t *activator )
 {
-  multi_trigger( ent, activator );
+  if( activator )
+    multi_trigger( ent, activator );
 }
 
 void Touch_Multi( gentity_t *self, gentity_t *other, trace_t *trace )
@@ -283,7 +284,7 @@ void trigger_teleporter_touch( gentity_t *self, gentity_t *other, trace_t *trace
 
   // Spectators only?
   if( ( self->spawnflags & 1 ) &&
-      other->client->sess.sessionTeam != TEAM_SPECTATOR )
+      other->client->sess.spectatorState == SPECTATOR_NOT )
     return;
 
 
@@ -489,7 +490,7 @@ G_Checktrigger_stages
 Called when stages change
 ===============
 */
-void G_Checktrigger_stages( pTeam_t team, stage_t stage )
+void G_Checktrigger_stages( team_t team, stage_t stage )
 {
   int i;
   gentity_t *ent;
@@ -694,7 +695,7 @@ qboolean trigger_class_match( gentity_t *self, gentity_t *activator )
     //otherwise check against the list
     for( i = 0; self->cTriggers[ i ] != PCL_NONE; i++ )
     {
-      if( activator->client->ps.stats[ STAT_PCLASS ] == self->cTriggers[ i ] )
+      if( activator->client->ps.stats[ STAT_CLASS ] == self->cTriggers[ i ] )
         return qtrue;
     }
   }
@@ -713,7 +714,7 @@ void trigger_class_trigger( gentity_t *self, gentity_t *activator )
   if( !activator->client )
     return;
 
-  if( activator->client->ps.stats[ STAT_PTEAM ] != PTE_ALIENS )
+  if( activator->client->ps.stats[ STAT_TEAM ] != TEAM_ALIENS )
     return;
 
   if( self->s.eFlags & EF_NODRAW )
@@ -853,7 +854,7 @@ void trigger_equipment_trigger( gentity_t *self, gentity_t *activator )
   if( !activator->client )
     return;
 
-  if( activator->client->ps.stats[ STAT_PTEAM ] != PTE_HUMANS )
+  if( activator->client->ps.stats[ STAT_TEAM ] != TEAM_HUMANS )
     return;
 
   if( self->s.eFlags & EF_NODRAW )
@@ -1073,12 +1074,12 @@ trigger_ammo_touch
 */
 void trigger_ammo_touch( gentity_t *self, gentity_t *other, trace_t *trace )
 {
-  int ammo, clips, maxClips, maxAmmo;
+  int maxClips, maxAmmo;
 
   if( !other->client )
     return;
 
-  if( other->client->ps.stats[ STAT_PTEAM ] != PTE_HUMANS )
+  if( other->client->ps.stats[ STAT_TEAM ] != TEAM_HUMANS )
     return;
 
   if( self->timestamp > level.time )
@@ -1087,10 +1088,10 @@ void trigger_ammo_touch( gentity_t *self, gentity_t *other, trace_t *trace )
   if( other->client->ps.weaponstate != WEAPON_READY )
     return;
 
-  if( BG_FindUsesEnergyForWeapon( other->client->ps.weapon ) && self->spawnflags & 2 )
+  if( BG_Weapon( other->client->ps.weapon )->usesEnergy && self->spawnflags & 2 )
     return;
 
-  if( !BG_FindUsesEnergyForWeapon( other->client->ps.weapon ) && self->spawnflags & 4 )
+  if( !BG_Weapon( other->client->ps.weapon )->usesEnergy && self->spawnflags & 4 )
     return;
 
   if( self->spawnflags & 1 )
@@ -1098,25 +1099,21 @@ void trigger_ammo_touch( gentity_t *self, gentity_t *other, trace_t *trace )
   else
     self->timestamp = level.time + FRAMETIME;
 
-  BG_FindAmmoForWeapon( other->client->ps.weapon, &maxAmmo, &maxClips );
-  BG_UnpackAmmoArray( other->client->ps.weapon, other->client->ps.ammo, other->client->ps.misc,
-                      &ammo, &clips );
+  maxAmmo = BG_Weapon( other->client->ps.weapon )->maxAmmo;
+  maxClips = BG_Weapon( other->client->ps.weapon )->maxClips;
 
-  if( ( ammo + self->damage ) > maxAmmo )
+  if( ( other->client->ps.ammo + self->damage ) > maxAmmo )
   {
-    if( clips < maxClips )
+    if( other->client->ps.clips < maxClips )
     {
-      clips++;
-      ammo = 1;
+      other->client->ps.clips++;
+      other->client->ps.ammo = 1;
     }
     else
-      ammo = maxAmmo;
+      other->client->ps.ammo = maxAmmo;
   }
   else
-    ammo += self->damage;
-
-  BG_PackAmmoArray( other->client->ps.weapon, other->client->ps.ammo, other->client->ps.misc,
-                    ammo, clips );
+    other->client->ps.ammo += self->damage;
 }
 
 /*

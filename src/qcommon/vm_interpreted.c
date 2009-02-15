@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -377,8 +377,6 @@ int	VM_CallInterpreted( vm_t *vm, int *args ) {
 	*(int *)&image[ programStack + 4 ] = 0;	// return stack
 	*(int *)&image[ programStack ] = -1;	// will terminate the loop on return
 
-	vm->callLevel = 0;
-	
 	VM_Debug(0);
 
 //	vm_debugLevel=2;
@@ -483,7 +481,7 @@ nextInstruction2:
 		case OP_BLOCK_COPY:
 			{
 				int		*src, *dest;
-				int		i, count, srci, desti;
+				int		count, srci, desti;
 
 				count = r2;
 				// MrE: copy range check
@@ -492,16 +490,10 @@ nextInstruction2:
 				count = ((srci + count) & dataMask) - srci;
 				count = ((desti + count) & dataMask) - desti;
 
-				src = (int *)&image[ r0&dataMask ];
-				dest = (int *)&image[ r1&dataMask ];
-				if ( ( (intptr_t)src | (intptr_t)dest | count ) & 3 ) {
-					// happens in westernq3
-					Com_Printf( S_COLOR_YELLOW "Warning: OP_BLOCK_COPY not dword aligned\n");
-				}
-				count >>= 2;
-				for ( i = count-1 ; i>= 0 ; i-- ) {
-					dest[i] = src[i];
-				}
+				src = (int *)&image[ srci ];
+				dest = (int *)&image[ desti ];
+				
+				memcpy(dest, src, count);
 				programCounter += 4;
 				opStack -= 2;
 			}
@@ -517,7 +509,7 @@ nextInstruction2:
 			if ( programCounter < 0 ) {
 				// system call
 				int		r;
-				int		temp;
+//				int		temp;
 #ifdef DEBUG_VM
 				int		stomped;
 
@@ -526,7 +518,7 @@ nextInstruction2:
 				}
 #endif
 				// save the stack to allow recursive VM entry
-				temp = vm->callLevel;
+//				temp = vm->callLevel;
 				vm->programStack = programStack - 4;
 #ifdef DEBUG_VM
 				stomped = *(int *)&image[ programStack + 4 ];
@@ -559,7 +551,7 @@ nextInstruction2:
 				opStack++;
 				*opStack = r;
 				programCounter = *(int *)&image[ programStack ];
-				vm->callLevel = temp;
+//				vm->callLevel = temp;
 #ifdef DEBUG_VM
 				if ( vm_debugLevel ) {
 					Com_Printf( "%s<--- %s\n", DEBUGSTR, VM_ValueToSymbol( vm, programCounter ) );
@@ -600,7 +592,7 @@ nextInstruction2:
 //					vm_debugLevel = 2;
 //					VM_StackTrace( vm, programCounter, programStack );
 				}
-				vm->callLevel++;
+//				vm->callLevel++;
 			}
 #endif
 			goto nextInstruction;
@@ -615,7 +607,7 @@ nextInstruction2:
 #ifdef DEBUG_VM
 			profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
 			if ( vm_debugLevel ) {
-				vm->callLevel--;
+//				vm->callLevel--;
 				Com_Printf( "%s<--- %s\n", DEBUGSTR, VM_ValueToSymbol( vm, programCounter ) );
 			}
 #endif

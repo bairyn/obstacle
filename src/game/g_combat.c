@@ -3,30 +3,30 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
 #include "g_local.h"
 
-damageRegion_t  g_damageRegions[ PCL_NUM_CLASSES ][ MAX_LOCDAMAGE_REGIONS ];
+damageRegion_t  g_damageRegions[ PCL_NUM_CLASSES ][ MAX_DAMAGE_REGIONS ];
 int             g_numDamageRegions[ PCL_NUM_CLASSES ];
 
-armourRegion_t  g_armourRegions[ UP_NUM_UPGRADES ][ MAX_ARMOUR_REGIONS ];
+damageRegion_t  g_armourRegions[ UP_NUM_UPGRADES ][ MAX_DAMAGE_REGIONS ];
 int             g_numArmourRegions[ UP_NUM_UPGRADES ];
 
 /*
@@ -39,6 +39,10 @@ Adds score to both the client and his team
 void AddScore( gentity_t *ent, int score )
 {
   if( !ent->client )
+    return;
+
+  // no scoring during pre-match warmup
+  if( level.warmupTime )
     return;
 
   ent->client->ps.persistant[ PERS_SCORE ] += score;
@@ -91,6 +95,8 @@ char *modNames[ ] =
   "MOD_TELEFRAG",
   "MOD_FALLING",
   "MOD_SUICIDE",
+  "MOD_DECONSTRUCT",
+  "MOD_NOCREEP",
   "MOD_TARGET_LASER",
   "MOD_TRIGGER_HURT",
 
@@ -104,7 +110,8 @@ char *modNames[ ] =
   "MOD_LEVEL2_CLAW",
   "MOD_LEVEL2_ZAP",
   "MOD_LEVEL4_CLAW",
-  "MOD_LEVEL4_CHARGE",
+  "MOD_LEVEL4_TRAMPLE",
+  "MOD_LEVEL4_CRUSH",
 
   "MOD_SLOWBLOB",
   "MOD_POISON",
@@ -122,6 +129,71 @@ char *modNames[ ] =
 
 /*
 ==================
+G_RewardAttackers
+
+Function to distribute rewards to entities that killed this one.
+Returns the total damage dealt.
+==================
+*/
+float G_RewardAttackers( gentity_t *self )
+{
+  float value, totalDamage = 0;
+  int team, i, maxHealth = 0;
+
+  // Total up all the damage done by every client
+  for( i = 0; i < MAX_CLIENTS; i++ )
+    totalDamage += (float)self->credits[ i ];
+  if( totalDamage <= 0.0f )
+    return 0.f;
+
+  // Only give credits for killing players and buildables
+  if( self->client )
+  {
+    value = BG_GetValueOfPlayer( &self->client->ps );
+    team = self->client->pers.teamSelection;
+    maxHealth = self->client->ps.stats[ STAT_MAX_HEALTH ];
+  }
+  else if( self->s.eType == ET_BUILDABLE )
+  {
+    value = BG_Buildable( self->s.modelindex )->value;
+    // only give partial credits for a buildable not yet completed
+    if( !self->spawned )
+      value *= (float)( level.time - self->buildTime ) /
+          BG_Buildable( self->s.modelindex )->buildTime;
+    team = self->buildableTeam;
+    maxHealth = BG_Buildable( self->s.modelindex )->health;
+  }
+  else
+    return totalDamage;
+
+  // Give credits and empty the array
+  for( i = 0; i < MAX_CLIENTS; i++ )
+  {
+    gentity_t *player = g_entities + i;
+    short num = value * self->credits[ i ] / totalDamage;
+    int stageValue = num;
+    if( totalDamage < maxHealth )
+      stageValue *= totalDamage / maxHealth;
+
+    if( !player->client || !self->credits[ i ] ||
+        player->client->ps.stats[ STAT_TEAM ] == team )
+      continue;
+    G_AddCreditToClient( player->client, num, qtrue );
+
+    // add to stage counters
+    if( player->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+      trap_Cvar_Set( "g_alienCredits", va( "%d", g_alienCredits.integer + stageValue ) );
+    else if( player->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
+      trap_Cvar_Set( "g_humanCredits", va( "%d", g_humanCredits.integer + stageValue ) );
+
+    self->credits[ i ] = 0;
+  }
+  
+  return totalDamage;
+}
+
+/*
+==================
 player_die
 ==================
 */
@@ -130,22 +202,15 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
   gentity_t *ent;
   int       anim;
   int       killer;
-  int       i, j;
+  int       i;
   char      *killerName, *obit;
   float     totalDamage = 0.0f;
-  gentity_t *player;
-  qboolean  tk = qfalse;
-
-  G_OCPlayerDie( self );
 
   if( self->client->ps.pm_type == PM_DEAD )
     return;
 
   if( level.intermissiontime )
     return;
-
-  // stop any following clients
-  // r1: removed, annoying.
 
   self->client->ps.pm_type = PM_DEAD;
   self->suicideTime = 0;
@@ -155,11 +220,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     killer = attacker->s.number;
 
     if( attacker->client )
-    {
       killerName = attacker->client->pers.netname;
-      tk = ( attacker != self && attacker->client->ps.stats[ STAT_PTEAM ]
-        == self->client->ps.stats[ STAT_PTEAM ] );
-    }
     else
       killerName = "<non-client>";
   }
@@ -180,7 +241,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
   else
     obit = modNames[ meansOfDeath ];
 
-  G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n",
+  G_LogPrintf("Kill: %i %i %i: %s^7 killed %s^7 by %s\n",
     killer, self->s.number, meansOfDeath, killerName,
     self->client->pers.netname, obit );
 
@@ -192,216 +253,42 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     BG_DeactivateUpgrade( i, self->client->ps.stats );
 
   // broadcast the death event to everyone
-  if( !tk )
-  {
-    ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
-    ent->s.eventParm = meansOfDeath;
-    ent->s.otherEntityNum = self->s.number;
-    ent->s.otherEntityNum2 = killer;
-    ent->r.svFlags = SVF_BROADCAST; // send to everyone
-  }
-  else
-  {
-    // tjw: obviously this is a hack and belongs in the client, but
-    //      this works as a temporary fix.
-
-    trap_SendServerCommand( -1,
-      va( "print \"%s^7 was killed by ^1TEAMMATE^7 %s^7 (Did %d damage to %d max)\n\"",
-      self->client->pers.netname, attacker->client->pers.netname, self->client->tkcredits[ attacker->s.number ], self->client->ps.stats[ STAT_MAX_HEALTH ] ) );
-    trap_SendServerCommand( attacker - g_entities,
-      va( "cp \"You killed ^1TEAMMATE^7 %s\"", self->client->pers.netname ) );
-  }
+  ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
+  ent->s.eventParm = meansOfDeath;
+  ent->s.otherEntityNum = self->s.number;
+  ent->s.otherEntityNum2 = killer;
+  ent->r.svFlags = SVF_BROADCAST; // send to everyone
 
   self->enemy = attacker;
 
   self->client->ps.persistant[ PERS_KILLED ]++;
+
   if( attacker && attacker->client )
   {
     attacker->client->lastkilled_client = self->s.number;
-
-   if( g_devmapKillerHP.integer && g_cheats.integer )
-   {
-     trap_SendServerCommand( self-g_entities, va( "print \"Your killer, %s, had %3i HP.\n\"", killerName, attacker->health ) );
-   }
 
     if( attacker == self || OnSameTeam( self, attacker ) )
     {
       AddScore( attacker, -1 );
 
-      // Retribution: transfer value of player from attacker to victim
-      if( g_retribution.integer) {
-          if(attacker!=self){
-        int max = ALIEN_MAX_KILLS, tk_value = 0;
-        char *type = "evos";
-
-        if( attacker->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS ) {
-          tk_value = BG_ClassCanEvolveFromTo( PCL_ALIEN_LEVEL0,
-            self->client->ps.stats[ STAT_PCLASS ], ALIEN_MAX_KILLS, 0 );
-        } else {
-          tk_value = BG_GetValueOfEquipment( &self->client->ps );
-          max = HUMAN_MAX_CREDITS;
-          type = "credits";
-        }
-
-        if( attacker->client->ps.persistant[ PERS_CREDIT ] < tk_value )
-          tk_value = attacker->client->ps.persistant[ PERS_CREDIT ];
-        if( self->client->ps.persistant[ PERS_CREDIT ]+tk_value > max )
-          tk_value = max-self->client->ps.persistant[ PERS_CREDIT ];
-
-        if( tk_value > 0 ) {
-
-          // adjust using the retribution cvar (in percent)
-          tk_value = tk_value*g_retribution.integer/100;
-
-          G_AddCreditToClient( self->client, tk_value, qtrue );
-          G_AddCreditToClient( attacker->client, -tk_value, qtrue );
-
-          trap_SendServerCommand( self->client->ps.clientNum,
-            va( "print \"Received ^3%d %s ^7from %s ^7in retribution.\n\"",
-            tk_value, type, attacker->client->pers.netname ) );
-          trap_SendServerCommand( attacker->client->ps.clientNum,
-            va( "print \"Transfered ^3%d %s ^7to %s ^7in retribution.\n\"",
-            tk_value, type, self->client->pers.netname ) );
-        }
-          }
-      }
-
-      // Normal teamkill penalty
-      else {
-        if( attacker->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
-          G_AddCreditToClient( attacker->client, -FREEKILL_ALIEN, qtrue );
-        else if( attacker->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
-          G_AddCreditToClient( attacker->client, -FREEKILL_HUMAN, qtrue );
-      }
+      //punish team kills and suicides
+      if( attacker->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+        G_AddCreditToClient( attacker->client, -ALIEN_TK_SUICIDE_PENALTY, qtrue );
+      else if( attacker->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
+        G_AddCreditToClient( attacker->client, -HUMAN_TK_SUICIDE_PENALTY, qtrue );
     }
     else
     {
       AddScore( attacker, 1 );
 
       attacker->client->lastKillTime = level.time;
-     }
+    }
   }
   else if( attacker->s.eType != ET_BUILDABLE )
     AddScore( self, -1 );
 
-  //total up all the damage done by every client
-  for( i = 0; i < MAX_CLIENTS; i++ )
-    totalDamage += (float)self->credits[ i ];
-
-  // if players did more than DAMAGE_FRACTION_FOR_KILL increment the stage counters
-  if( !OnSameTeam( self, attacker ) && totalDamage >= ( self->client->ps.stats[ STAT_MAX_HEALTH ] * DAMAGE_FRACTION_FOR_KILL ) )
-  {
-    if( self->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
-      trap_Cvar_Set( "g_alienKills", va( "%d", g_alienKills.integer + 1 ) );
-    else if( self->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
-      trap_Cvar_Set( "g_humanKills", va( "%d", g_humanKills.integer + 1 ) );
-  }
-
-  if( totalDamage > 0.0f )
-  {
-    if( self->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
-    {
-      //nice simple happy bouncy human land
-      float classValue = BG_FindValueOfClass( self->client->ps.stats[ STAT_PCLASS ] );
-
-      for( i = 0; i < MAX_CLIENTS; i++ )
-      {
-        player = g_entities + i;
-
-        if( !player->client )
-          continue;
-
-        if( player->client->ps.stats[ STAT_PTEAM ] != PTE_HUMANS )
-          continue;
-
-        if( !self->credits[ i ] )
-          continue;
-
-        //add credit
-        G_AddCreditToClient( player->client,
-            (int)( classValue * ( (float)self->credits[ i ] / totalDamage ) ), qtrue );
-      }
-    }
-    else if( self->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
-    {
-      //horribly complex nasty alien land
-      float humanValue = BG_GetValueOfHuman( &self->client->ps );
-      int   frags;
-      int   unclaimedFrags = (int)humanValue;
-
-      for( i = 0; i < MAX_CLIENTS; i++ )
-      {
-        player = g_entities + i;
-
-        if( !player->client )
-          continue;
-
-        if( player->client->ps.stats[ STAT_PTEAM ] != PTE_ALIENS )
-          continue;
-
-        //this client did no damage
-        if( !self->credits[ i ] )
-          continue;
-
-        //nothing left to claim
-        if( !unclaimedFrags )
-          break;
-
-        frags = (int)floor( humanValue * ( (float)self->credits[ i ] / totalDamage ) );
-
-        if( frags > 0 )
-        {
-          //add kills
-          G_AddCreditToClient( player->client, frags, qtrue );
-
-          //can't revist this account later
-          self->credits[ i ] = 0;
-
-          //reduce frags left to be claimed
-          unclaimedFrags -= frags;
-        }
-      }
-
-      //there are frags still to be claimed
-      if( unclaimedFrags )
-      {
-        //the clients remaining at this point do not
-        //have enough credit to claim even one frag
-        //so simply give the top <unclaimedFrags> clients
-        //a frag each
-
-        for( i = 0; i < unclaimedFrags; i++ )
-        {
-          int maximum = 0;
-          int topClient = 0;
-
-          for( j = 0; j < MAX_CLIENTS; j++ )
-          {
-            //this client did no damage
-            if( !self->credits[ j ] )
-              continue;
-
-            if( self->credits[ j ] > maximum )
-            {
-              maximum = self->credits[ j ];
-              topClient = j;
-            }
-          }
-
-          if( maximum > 0 )
-          {
-            player = g_entities + topClient;
-
-            //add kills
-            G_AddCreditToClient( player->client, 1, qtrue );
-
-            //can't revist this account again
-            self->credits[ topClient ] = 0;
-          }
-        }
-      }
-    }
-  }
+  // give credits for killing this player
+  totalDamage = G_RewardAttackers( self );
 
   ScoreboardMessage( self );    // show scores
 
@@ -415,14 +302,13 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     if( client->pers.connected != CON_CONNECTED )
       continue;
 
-    if( client->sess.sessionTeam != TEAM_SPECTATOR )
+    if( client->sess.spectatorState == SPECTATOR_NOT )
       continue;
 
     if( client->sess.spectatorClient == self->s.number )
       ScoreboardMessage( g_entities + i );
   }
 
-  self->client->pers.classSelection = PCL_NONE; // reset the classtype
   VectorCopy( self->s.origin, self->client->pers.lastDeathLocation );
 
   self->takedamage = qfalse; // can still be gibbed
@@ -507,152 +393,41 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 /*
 ===============
-G_ParseArmourScript
-===============
-*/
-void G_ParseArmourScript( char *buf, int upgrade )
-{
-  char  *token;
-  int   count;
-
-  count = 0;
-
-  while( 1 )
-  {
-    token = COM_Parse( &buf );
-
-    if( !token[0] )
-      break;
-
-    if( strcmp( token, "{" ) )
-    {
-      G_Printf( "Missing { in armour file\n" );
-      break;
-    }
-
-    if( count == MAX_ARMOUR_REGIONS )
-    {
-      G_Printf( "Max armour regions exceeded in locdamage file\n" );
-      break;
-    }
-
-    //default
-    g_armourRegions[ upgrade ][ count ].minHeight = 0.0;
-    g_armourRegions[ upgrade ][ count ].maxHeight = 1.0;
-    g_armourRegions[ upgrade ][ count ].minAngle = 0;
-    g_armourRegions[ upgrade ][ count ].maxAngle = 360;
-    g_armourRegions[ upgrade ][ count ].modifier = 1.0;
-    g_armourRegions[ upgrade ][ count ].crouch = qfalse;
-
-    while( 1 )
-    {
-      token = COM_ParseExt( &buf, qtrue );
-
-      if( !token[0] )
-      {
-        G_Printf( "Unexpected end of armour file\n" );
-        break;
-      }
-
-      if( !Q_stricmp( token, "}" ) )
-      {
-        break;
-      }
-      else if( !strcmp( token, "minHeight" ) )
-      {
-        token = COM_ParseExt( &buf, qfalse );
-
-        if ( !token[0] )
-          strcpy( token, "0" );
-
-        g_armourRegions[ upgrade ][ count ].minHeight = atof( token );
-      }
-      else if( !strcmp( token, "maxHeight" ) )
-      {
-        token = COM_ParseExt( &buf, qfalse );
-
-        if ( !token[0] )
-          strcpy( token, "100" );
-
-        g_armourRegions[ upgrade ][ count ].maxHeight = atof( token );
-      }
-      else if( !strcmp( token, "minAngle" ) )
-      {
-        token = COM_ParseExt( &buf, qfalse );
-
-        if ( !token[0] )
-          strcpy( token, "0" );
-
-        g_armourRegions[ upgrade ][ count ].minAngle = atoi( token );
-      }
-      else if( !strcmp( token, "maxAngle" ) )
-      {
-        token = COM_ParseExt( &buf, qfalse );
-
-        if ( !token[0] )
-          strcpy( token, "360" );
-
-        g_armourRegions[ upgrade ][ count ].maxAngle = atoi( token );
-      }
-      else if( !strcmp( token, "modifier" ) )
-      {
-        token = COM_ParseExt( &buf, qfalse );
-
-        if ( !token[0] )
-          strcpy( token, "1.0" );
-
-        g_armourRegions[ upgrade ][ count ].modifier = atof( token );
-      }
-      else if( !strcmp( token, "crouch" ) )
-      {
-        g_armourRegions[ upgrade ][ count ].crouch = qtrue;
-      }
-    }
-
-    g_numArmourRegions[ upgrade ]++;
-    count++;
-  }
-}
-
-
-/*
-===============
 G_ParseDmgScript
 ===============
 */
-void G_ParseDmgScript( char *buf, int class )
+int G_ParseDmgScript( damageRegion_t *regions, char *buf )
 {
   char  *token;
+  float angleSpan, heightSpan;
   int   count;
 
-  count = 0;
-
-  while( 1 )
+  for( count = 0; ; count++ )
   {
     token = COM_Parse( &buf );
-
     if( !token[0] )
       break;
 
     if( strcmp( token, "{" ) )
     {
-      G_Printf( "Missing { in locdamage file\n" );
+      G_Printf( "Missing { in damage region file\n" );
       break;
     }
 
-    if( count == MAX_LOCDAMAGE_REGIONS )
+    if( count >= MAX_DAMAGE_REGIONS )
     {
-      G_Printf( "Max damage regions exceeded in locdamage file\n" );
+      G_Printf( "Max damage regions exceeded in damage region file\n" );
       break;
     }
 
-    //default
-    g_damageRegions[ class ][ count ].minHeight = 0.0;
-    g_damageRegions[ class ][ count ].maxHeight = 1.0;
-    g_damageRegions[ class ][ count ].minAngle = 0;
-    g_damageRegions[ class ][ count ].maxAngle = 360;
-    g_damageRegions[ class ][ count ].modifier = 1.0;
-    g_damageRegions[ class ][ count ].crouch = qfalse;
+    // defaults
+    regions[ count ].name[ 0 ] = 0;
+    regions[ count ].minHeight = 0.0;
+    regions[ count ].maxHeight = 1.0;
+    regions[ count ].minAngle = 0;
+    regions[ count ].maxAngle = 360;
+    regions[ count ].modifier = 1.0;
+    regions[ count ].crouch = qfalse;
 
     while( 1 )
     {
@@ -660,7 +435,7 @@ void G_ParseDmgScript( char *buf, int class )
 
       if( !token[0] )
       {
-        G_Printf( "Unexpected end of locdamage file\n" );
+        G_Printf( "Unexpected end of damage region file\n" );
         break;
       }
 
@@ -668,62 +443,251 @@ void G_ParseDmgScript( char *buf, int class )
       {
         break;
       }
+      else if( !strcmp( token, "name" ) )
+      {
+        token = COM_ParseExt( &buf, qfalse );
+        if( token[ 0 ] )
+          Q_strncpyz( regions[ count ].name, token,
+                      sizeof( regions[ count ].name ) );
+      }
       else if( !strcmp( token, "minHeight" ) )
       {
         token = COM_ParseExt( &buf, qfalse );
-
         if ( !token[0] )
           strcpy( token, "0" );
-
-        g_damageRegions[ class ][ count ].minHeight = atof( token );
+        regions[ count ].minHeight = atof( token );
       }
       else if( !strcmp( token, "maxHeight" ) )
       {
         token = COM_ParseExt( &buf, qfalse );
-
         if ( !token[0] )
           strcpy( token, "100" );
-
-        g_damageRegions[ class ][ count ].maxHeight = atof( token );
+        regions[ count ].maxHeight = atof( token );
       }
       else if( !strcmp( token, "minAngle" ) )
       {
         token = COM_ParseExt( &buf, qfalse );
-
         if ( !token[0] )
           strcpy( token, "0" );
-
-        g_damageRegions[ class ][ count ].minAngle = atoi( token );
+        regions[ count ].minAngle = atoi( token );
       }
       else if( !strcmp( token, "maxAngle" ) )
       {
         token = COM_ParseExt( &buf, qfalse );
-
         if ( !token[0] )
           strcpy( token, "360" );
-
-        g_damageRegions[ class ][ count ].maxAngle = atoi( token );
+        regions[ count ].maxAngle = atoi( token );
       }
       else if( !strcmp( token, "modifier" ) )
       {
         token = COM_ParseExt( &buf, qfalse );
-
         if ( !token[0] )
           strcpy( token, "1.0" );
-
-        g_damageRegions[ class ][ count ].modifier = atof( token );
+        regions[ count ].modifier = atof( token );
       }
       else if( !strcmp( token, "crouch" ) )
       {
-        g_damageRegions[ class ][ count ].crouch = qtrue;
+        regions[ count ].crouch = qtrue;
       }
     }
 
-    g_numDamageRegions[ class ]++;
-    count++;
+    // Angle portion covered
+    angleSpan = regions[ count ].maxAngle - regions[ count ].minAngle;
+    if( angleSpan < 0.f )
+      angleSpan += 360.f;
+    angleSpan /= 360.f;
+          
+    // Height portion covered
+    heightSpan = regions[ count ].maxHeight - regions[ count ].minHeight;
+    if( heightSpan < 0.f )
+      heightSpan = -heightSpan;
+    if( heightSpan > 1.f )
+      heightSpan = 1.f;
+
+    regions[ count ].area = angleSpan * heightSpan;
+    if( !regions[ count ].area )
+      regions[ count ].area = 0.00001f;
   }
+
+  return count;
 }
 
+/*
+============
+GetRegionDamageModifier
+============
+*/
+static float GetRegionDamageModifier( gentity_t *targ, int class, int piece )
+{
+  damageRegion_t *regions, *overlap;
+  float modifier = 0.f, areaSum = 0.f;
+  int j, i;
+  qboolean crouch;
+
+  crouch = targ->client->ps.pm_flags & PMF_DUCKED;
+  overlap = &g_damageRegions[ class ][ piece ];
+
+  if( g_debugDamage.integer > 2 )
+    G_Printf( "GetRegionDamageModifier():\n"
+              ".   bodyRegion = [%d %d %f %f] (%s)\n"
+              ".   modifier = %f\n",
+              overlap->minAngle, overlap->maxAngle,
+              overlap->minHeight, overlap->maxHeight,
+              overlap->name, overlap->modifier );
+
+  // Find the armour layer modifier, assuming that none of the armour regions
+  // overlap and that any areas that are not covered have a modifier of 1.0
+  for( j = UP_NONE + 1; j < UP_NUM_UPGRADES; j++ )
+  {
+    if( !BG_InventoryContainsUpgrade( j, targ->client->ps.stats ) ||
+        !g_numArmourRegions[ j ] )
+      continue;
+    regions = g_armourRegions[ j ];
+
+    for( i = 0; i < g_numArmourRegions[ j ]; i++ )
+    {
+      float overlapMaxA, regionMinA, regionMaxA, angleSpan, heightSpan, area;
+
+      if( regions[ i ].crouch != crouch )
+        continue;
+
+      // Convert overlap angle to 0 to max    
+      overlapMaxA = overlap->maxAngle - overlap->minAngle;
+      if( overlapMaxA < 0.f )
+        overlapMaxA += 360.f;
+
+      // Convert region angles to match overlap
+      regionMinA = regions[ i ].minAngle - overlap->minAngle;
+      if( regionMinA < 0.f )
+        regionMinA += 360.f;
+      regionMaxA = regions[ i ].maxAngle - overlap->minAngle;
+      if( regionMaxA < 0.f )
+        regionMaxA += 360.f;
+
+      // Overlapping Angle portion
+      if( regionMinA <= regionMaxA )
+      {
+        angleSpan = 0.f;
+        if( regionMinA < overlapMaxA )
+        {
+          if( regionMaxA > overlapMaxA )
+            regionMaxA = overlapMaxA;
+          angleSpan = regionMaxA - regionMinA;
+        }
+      }
+      else
+      {
+        if( regionMaxA > overlapMaxA )
+          regionMaxA = overlapMaxA;
+        angleSpan = regionMaxA;
+        if( regionMinA < overlapMaxA )
+          angleSpan += overlapMaxA - regionMinA;
+      }
+      angleSpan /= 360.f;
+
+      // Overlapping height portion
+      heightSpan = MIN( overlap->maxHeight, regions[ i ].maxHeight ) -
+                   MAX( overlap->minHeight, regions[ i ].minHeight );
+      if( heightSpan < 0.f )
+        heightSpan = 0.f;
+      if( heightSpan > 1.f )
+        heightSpan = 1.f;
+
+      if( g_debugDamage.integer > 2 )
+        G_Printf( ".   armourRegion = [%d %d %f %f] (%s)\n"
+                  ".   .   modifier = %f\n"
+                  ".   .   angleSpan = %f\n"
+                  ".   .   heightSpan = %f\n",
+                  regions[ i ].minAngle, regions[ i ].maxAngle,
+                  regions[ i ].minHeight, regions[ i ].maxHeight,
+                  regions[ i ].name, regions[ i ].modifier,
+                  angleSpan, heightSpan );
+            
+      areaSum += area = angleSpan * heightSpan;
+      modifier += regions[ i ].modifier * area;
+    }
+  }
+
+  if( g_debugDamage.integer > 2 )
+    G_Printf( ".   areaSum = %f\n"
+              ".   armourModifier = %f\n", areaSum, modifier );
+
+  return overlap->modifier * ( overlap->area + modifier - areaSum );
+}
+
+/*
+============
+GetNonLocDamageModifier
+============
+*/
+static float GetNonLocDamageModifier( gentity_t *targ, int class )
+{
+  float modifier = 0., area = 0.f, scale = 0.f;
+  int i;
+  qboolean crouch;
+
+  // For every body region, use stretch-armor formula to apply armour modifier
+  // for any overlapping area that armour shares with the body region
+  crouch = targ->client->ps.pm_flags & PMF_DUCKED;
+  for( i = 0; i < g_numDamageRegions[ class ]; i++ )
+  {
+    damageRegion_t *region;
+
+    region = &g_damageRegions[ class ][ i ];
+    if( region->crouch != crouch )
+      continue;    
+    modifier += GetRegionDamageModifier( targ, class, i );
+    scale += region->modifier * region->area;
+    area += region->area;
+  }
+  modifier = !scale ? 1.f : 1.f + ( modifier / scale - 1.f ) * area;
+
+  if( g_debugDamage.integer > 1 )
+    G_Printf( "GetNonLocDamageModifier() modifier:%f, area:%f, scale:%f\n",
+              modifier, area, scale );
+
+  return modifier;
+}
+
+/*
+============
+GetPointDamageModifier
+
+Returns the damage region given an angle and a height proportion
+============
+*/
+static float GetPointDamageModifier( gentity_t *targ, damageRegion_t *regions,
+                                     int len, float angle, float height )
+{
+  float modifier = 1.f;
+  int i;
+
+  for( i = 0; i < len; i++ )
+  {
+    if( regions[ i ].crouch != ( targ->client->ps.pm_flags & PMF_DUCKED ) )
+      continue;
+
+    // Angle must be within range
+    if( ( regions[ i ].minAngle <= regions[ i ].maxAngle &&
+          ( angle < regions[ i ].minAngle ||
+            angle > regions[ i ].maxAngle ) ) ||
+        ( regions[ i ].minAngle > regions[ i ].maxAngle &&
+          angle > regions[ i ].maxAngle && angle < regions[ i ].minAngle ) )
+      continue;
+    
+    // Height must be within range
+    if( height < regions[ i ].minHeight || height > regions[ i ].maxHeight )
+      continue;      
+      
+    modifier *= regions[ i ].modifier;
+  }
+
+  if( g_debugDamage.integer )
+    G_Printf( "GetDamageRegionModifier(angle = %f, height = %f): %f\n",
+              angle, height, modifier );
+
+  return modifier;
+}
 
 /*
 ============
@@ -732,134 +696,52 @@ G_CalcDamageModifier
 */
 static float G_CalcDamageModifier( vec3_t point, gentity_t *targ, gentity_t *attacker, int class, int dflags )
 {
-  vec3_t  targOrigin;
-  vec3_t  bulletPath;
-  vec3_t  bulletAngle;
-  vec3_t  pMINUSfloor, floor, normal;
-
-  float   clientHeight, hitRelative, hitRatio;
-  int     bulletRotation, clientRotation, hitRotation;
-  float   modifier = 1.0f;
-  int     i, j;
+  vec3_t  targOrigin, bulletPath, bulletAngle, pMINUSfloor, floor, normal;
+  float   clientHeight, hitRelative, hitRatio, modifier;
+  int     hitRotation, i;
 
   if( point == NULL )
     return 1.0f;
 
+  // Don't need to calculate angles and height for non-locational damage
+  if( dflags & DAMAGE_NO_LOCDAMAGE )
+    return GetNonLocDamageModifier( targ, class );
+  
+  // Get the point location relative to the floor under the target
   if( g_unlagged.integer && targ->client && targ->client->unlaggedCalc.used )
     VectorCopy( targ->client->unlaggedCalc.origin, targOrigin );
   else
     VectorCopy( targ->r.currentOrigin, targOrigin );
-
-  clientHeight = targ->r.maxs[ 2 ] - targ->r.mins[ 2 ];
-
   BG_GetClientNormal( &targ->client->ps, normal );
-
   VectorMA( targOrigin, targ->r.mins[ 2 ], normal, floor );
   VectorSubtract( point, floor, pMINUSfloor );
 
+  // Get the proportion of the target height where the hit landed
+  clientHeight = targ->r.maxs[ 2 ] - targ->r.mins[ 2 ];
+  if( !clientHeight )
+    clientHeight = 1.f;
   hitRelative = DotProduct( normal, pMINUSfloor ) / VectorLength( normal );
-
   if( hitRelative < 0.0f )
     hitRelative = 0.0f;
-
   if( hitRelative > clientHeight )
     hitRelative = clientHeight;
-
   hitRatio = hitRelative / clientHeight;
 
+  // Get the yaw of the attack relative to the target's view yaw
   VectorSubtract( targOrigin, point, bulletPath );
   vectoangles( bulletPath, bulletAngle );
+  hitRotation = AngleNormalize360( targ->client->ps.viewangles[ YAW ] -
+                                   bulletAngle[ YAW ] );
 
-  clientRotation = targ->client->ps.viewangles[ YAW ];
-  bulletRotation = bulletAngle[ YAW ];
-
-  hitRotation = abs( clientRotation - bulletRotation );
-
-  hitRotation = hitRotation % 360; // Keep it in the 0-359 range
-
-  if( dflags & DAMAGE_NO_LOCDAMAGE )
-  {
-    for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
-    {
-      float totalModifier = 0.0f;
-      float averageModifier = 1.0f;
-
-      //average all of this upgrade's armour regions together
-      if( BG_InventoryContainsUpgrade( i, targ->client->ps.stats ) )
-      {
-        for( j = 0; j < g_numArmourRegions[ i ]; j++ )
-          totalModifier += g_armourRegions[ i ][ j ].modifier;
-
-        if( g_numArmourRegions[ i ] )
-          averageModifier = totalModifier / g_numArmourRegions[ i ];
-        else
-          averageModifier = 1.0f;
-      }
-
-      modifier *= averageModifier;
-    }
-  }
-  else
-  {
-    for( i = 0; i < g_numDamageRegions[ class ]; i++ )
-    {
-      qboolean rotationBound;
-
-      if( g_damageRegions[ class ][ i ].minAngle >
-          g_damageRegions[ class ][ i ].maxAngle )
-      {
-        rotationBound = ( hitRotation >= g_damageRegions[ class ][ i ].minAngle &&
-                          hitRotation <= 360 ) || ( hitRotation >= 0 &&
-                          hitRotation <= g_damageRegions[ class ][ i ].maxAngle );
-      }
-      else
-      {
-        rotationBound = ( hitRotation >= g_damageRegions[ class ][ i ].minAngle &&
-                          hitRotation <= g_damageRegions[ class ][ i ].maxAngle );
-      }
-
-      if( rotationBound &&
-          hitRatio >= g_damageRegions[ class ][ i ].minHeight &&
-          hitRatio <= g_damageRegions[ class ][ i ].maxHeight &&
-          ( g_damageRegions[ class ][ i ].crouch ==
-            ( targ->client->ps.pm_flags & PMF_DUCKED ) ) )
-        modifier *= g_damageRegions[ class ][ i ].modifier;
-    }
-
-
-
-    for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
-    {
-      if( BG_InventoryContainsUpgrade( i, targ->client->ps.stats ) )
-      {
-        for( j = 0; j < g_numArmourRegions[ i ]; j++ )
-        {
-          qboolean rotationBound;
-
-          if( g_armourRegions[ i ][ j ].minAngle >
-              g_armourRegions[ i ][ j ].maxAngle )
-          {
-            rotationBound = ( hitRotation >= g_armourRegions[ i ][ j ].minAngle &&
-                              hitRotation <= 360 ) || ( hitRotation >= 0 &&
-                              hitRotation <= g_armourRegions[ i ][ j ].maxAngle );
-          }
-          else
-          {
-            rotationBound = ( hitRotation >= g_armourRegions[ i ][ j ].minAngle &&
-                              hitRotation <= g_armourRegions[ i ][ j ].maxAngle );
-          }
-
-          if( rotationBound &&
-              hitRatio >= g_armourRegions[ i ][ j ].minHeight &&
-              hitRatio <= g_armourRegions[ i ][ j ].maxHeight &&
-              ( g_armourRegions[ i ][ j ].crouch ==
-                ( targ->client->ps.pm_flags & PMF_DUCKED ) ) )
-            modifier *= g_armourRegions[ i ][ j ].modifier;
-        }
-      }
-    }
-  }
-
+  // Get modifiers from the target's damage regions
+  modifier = GetPointDamageModifier( targ, g_damageRegions[ class ],
+                                     g_numDamageRegions[ class ],
+                                     hitRotation, hitRatio );
+  for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
+    if( BG_InventoryContainsUpgrade( i, targ->client->ps.stats ) )
+      modifier *= GetPointDamageModifier( targ, g_armourRegions[ i ],
+                                          g_numArmourRegions[ i ],
+                                          hitRotation, hitRatio );
   return modifier;
 }
 
@@ -876,23 +758,24 @@ void G_InitDamageLocations( void )
   int           i;
   int           len;
   fileHandle_t  fileHandle;
-  char          buffer[ MAX_LOCDAMAGE_TEXT ];
+  char          buffer[ MAX_DAMAGE_REGION_TEXT ];
 
   for( i = PCL_NONE + 1; i < PCL_NUM_CLASSES; i++ )
   {
-    modelName = BG_FindModelNameForClass( i );
+    modelName = BG_ClassConfig( i )->modelName;
     Com_sprintf( filename, sizeof( filename ), "models/players/%s/locdamage.cfg", modelName );
 
     len = trap_FS_FOpenFile( filename, &fileHandle, FS_READ );
     if ( !fileHandle )
     {
-      G_Printf( va( S_COLOR_RED "file not found: %s\n", filename ) );
+      G_Printf( S_COLOR_RED "file not found: %s\n", filename );
       continue;
     }
 
-    if( len >= MAX_LOCDAMAGE_TEXT )
+    if( len >= MAX_DAMAGE_REGION_TEXT )
     {
-      G_Printf( va( S_COLOR_RED "file too large: %s is %i, max allowed is %i", filename, len, MAX_LOCDAMAGE_TEXT ) );
+      G_Printf( S_COLOR_RED "file too large: %s is %i, max allowed is %i",
+                filename, len, MAX_DAMAGE_REGION_TEXT );
       trap_FS_FCloseFile( fileHandle );
       continue;
     }
@@ -901,12 +784,12 @@ void G_InitDamageLocations( void )
     buffer[len] = 0;
     trap_FS_FCloseFile( fileHandle );
 
-    G_ParseDmgScript( buffer, i );
+    g_numDamageRegions[ i ] = G_ParseDmgScript( g_damageRegions[ i ], buffer );
   }
 
   for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
   {
-    modelName = BG_FindNameForUpgrade( i );
+    modelName = BG_Upgrade( i )->name;
     Com_sprintf( filename, sizeof( filename ), "armour/%s.armour", modelName );
 
     len = trap_FS_FOpenFile( filename, &fileHandle, FS_READ );
@@ -915,9 +798,10 @@ void G_InitDamageLocations( void )
     if ( !fileHandle )
       continue;
 
-    if( len >= MAX_LOCDAMAGE_TEXT )
+    if( len >= MAX_DAMAGE_REGION_TEXT )
     {
-      G_Printf( va( S_COLOR_RED "file too large: %s is %i, max allowed is %i", filename, len, MAX_LOCDAMAGE_TEXT ) );
+      G_Printf( S_COLOR_RED "file too large: %s is %i, max allowed is %i",
+                filename, len, MAX_DAMAGE_REGION_TEXT );
       trap_FS_FCloseFile( fileHandle );
       continue;
     }
@@ -926,7 +810,7 @@ void G_InitDamageLocations( void )
     buffer[len] = 0;
     trap_FS_FCloseFile( fileHandle );
 
-    G_ParseArmourScript( buffer, i );
+    g_numArmourRegions[ i ] = G_ParseDmgScript( g_armourRegions[ i ], buffer );
   }
 }
 
@@ -959,7 +843,7 @@ dflags    these flags are used to control how T_Damage works
 void G_SelectiveDamage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
          vec3_t dir, vec3_t point, int damage, int dflags, int mod, int team )
 {
-  if( targ->client && ( team != targ->client->ps.stats[ STAT_PTEAM ] ) )
+  if( targ->client && ( team != targ->client->ps.stats[ STAT_TEAM ] ) )
     G_Damage( targ, inflictor, attacker, dir, point, damage, dflags, mod );
 }
 
@@ -972,12 +856,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
   int     asave = 0;
   int     knockback;
 
-  if( !targ->takedamage )
-    return;
-
-  // the intermission has allready been qualified for, so don't
-  // allow any extra scoring
-  if( level.intermissionQueued )
+  // Can't deal damage sometimes
+  if( !targ->takedamage || targ->health <= 0 || level.intermissionQueued )
     return;
 
   if( !inflictor )
@@ -992,17 +872,25 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     if( targ->use && ( targ->moverState == MOVER_POS1 ||
                        targ->moverState == ROTATOR_POS1 ) )
       targ->use( targ, inflictor, attacker );
-
+    if( attacker->client->pers.teamSelection == TEAM_ALIENS)
+    {
+      if( mod == MOD_LEVEL3_BOUNCEBALL ||
+          mod == MOD_SLOWBLOB          ||
+          mod == MOD_LEVEL4_TRAMPLE    ||
+          mod == MOD_LEVEL4_CRUSH      ||
+          mod == MOD_LEVEL3_POUNCE     ||
+          mod == MOD_LEVEL1_PCLOUD     ||
+          mod == MOD_LEVEL2_ZAP )
+        G_AddEvent( attacker, EV_ALIENRANGED_HIT, targ->s.number );
+      else
+        G_AddEvent( attacker, EV_ALIEN_HIT, targ->s.number );
+    }
     return;
   }
 
   client = targ->client;
-
-  if( client )
-  {
-    if( client->noclip && !g_devmapNoGod.integer)
-      return;
-  }
+  if( client && client->noclip )
+    return;
 
   if( !dir )
     dflags |= DAMAGE_NO_KNOCKBACK;
@@ -1014,13 +902,13 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
   if( inflictor->s.weapon != WP_NONE )
   {
     knockback = (int)( (float)knockback *
-      BG_FindKnockbackScaleForWeapon( inflictor->s.weapon ) );
+      BG_Weapon( inflictor->s.weapon )->knockbackScale );
   }
 
   if( targ->client )
   {
     knockback = (int)( (float)knockback *
-      BG_FindKnockbackScaleForClass( targ->client->ps.stats[ STAT_PCLASS ] ) );
+      BG_Class( targ->client->ps.stats[ STAT_CLASS ] )->knockbackScale );
   }
 
   if( knockback > 200 )
@@ -1061,6 +949,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     }
   }
 
+  // don't do friendly fire on movement attacks
+  if( ( mod == MOD_LEVEL4_TRAMPLE || mod == MOD_LEVEL3_POUNCE ||
+        mod == MOD_LEVEL4_CRUSH ) &&
+      targ->s.eType == ET_BUILDABLE && targ->buildableTeam == TEAM_ALIENS )
+  {
+    return;
+  }
+
   // check for completely getting out of the damage
   if( !( dflags & DAMAGE_NO_PROTECTION ) )
   {
@@ -1069,8 +965,13 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     // if the attacker was on the same team
     if( targ != attacker && OnSameTeam( targ, attacker ) )
     {
+      // don't do friendly fire on movement attacks
+      if( mod == MOD_LEVEL4_TRAMPLE || mod == MOD_LEVEL3_POUNCE ||
+          mod == MOD_LEVEL4_CRUSH )
+        return;
+      // if dretchpunt is enabled and this is a dretch, do dretchpunt instead of damage
       if( g_dretchPunt.integer &&
-        targ->client->ps.stats[ STAT_PCLASS ] == PCL_ALIEN_LEVEL0 )
+          targ->client->ps.stats[ STAT_CLASS ] == PCL_ALIEN_LEVEL0 )
       {
         vec3_t dir, push;
 
@@ -1080,50 +981,89 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
         push[2] = 64.0f;
         VectorAdd( targ->client->ps.velocity, push, targ->client->ps.velocity );
         return;
-      } else if( !g_friendlyFireMovementAttacks.integer && (mod == MOD_LEVEL4_CHARGE || mod == MOD_LEVEL3_POUNCE )){
-           // don't do friendly fire on movement attacks
-           return;
       }
+      // check if friendly fire has been disabled
       else if( !g_friendlyFire.integer )
       {
-        if( ( !g_friendlyFireHumans.integer )
-          && targ->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
+        if( !g_friendlyFireHumans.integer &&
+            targ->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
         {
           return;
         }
-        if( ( !g_friendlyFireAliens.integer )
-          && targ->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
+        if( !g_friendlyFireAliens.integer &&
+             targ->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
         {
+          if( mod == MOD_LEVEL3_BOUNCEBALL ||
+              mod == MOD_SLOWBLOB          ||
+              mod == MOD_LEVEL4_TRAMPLE    ||
+              mod == MOD_LEVEL4_CRUSH      ||
+              mod == MOD_LEVEL3_POUNCE     ||
+              mod == MOD_LEVEL1_PCLOUD     ||
+              mod == MOD_LEVEL2_ZAP )
+            G_AddEvent( attacker, EV_ALIENRANGED_TEAMHIT, targ->s.number );
+          else
+            G_AddEvent( attacker, EV_ALIEN_TEAMHIT, targ->s.number );
           return;
+        }
+        else
+        {
+          if( mod == MOD_LEVEL3_BOUNCEBALL ||
+              mod == MOD_SLOWBLOB          ||
+              mod == MOD_LEVEL4_TRAMPLE    ||
+              mod == MOD_LEVEL4_CRUSH      ||
+              mod == MOD_LEVEL3_POUNCE     ||
+              mod == MOD_LEVEL1_PCLOUD     ||
+              mod == MOD_LEVEL2_ZAP )
+            G_AddEvent( attacker, EV_ALIENRANGED_MISS, targ->s.number );
+          else
+            G_AddEvent( attacker, EV_ALIEN_MISS, targ->s.number );
         }
       }
     }
 
-        // If target is buildable on the same team as the attacking client
-        if( !level.oc && targ->s.eType == ET_BUILDABLE && ( ( attacker->client &&
-                targ->biteam == attacker->client->pers.teamSelection ) ) )
-        {
-            if( !g_friendlyBuildableFire.integer )
-                return;
-            // don't do friendly fire on movement attacks
-             if( !g_friendlyFireMovementAttacks.integer && (mod == MOD_LEVEL4_CHARGE || mod == MOD_LEVEL3_POUNCE ))
-            return;
+    if( targ->s.eType == ET_BUILDABLE && attacker->client )
+    {
+      if( targ->buildableTeam == attacker->client->pers.teamSelection )
+      {
+        if( !g_friendlyBuildableFire.integer ) {
+          if( mod == MOD_LEVEL3_BOUNCEBALL ||
+              mod == MOD_SLOWBLOB          ||
+              mod == MOD_LEVEL4_TRAMPLE    ||
+              mod == MOD_LEVEL4_CRUSH      ||
+              mod == MOD_LEVEL3_POUNCE     ||
+              mod == MOD_LEVEL1_PCLOUD     ||
+              mod == MOD_LEVEL2_ZAP )
+            G_AddEvent( attacker, EV_ALIENRANGED_MISS, targ->s.number );
+          else
+            G_AddEvent( attacker, EV_ALIEN_MISS, targ->s.number );
+          return;
         }
+        else
+          if( mod == MOD_LEVEL3_BOUNCEBALL ||
+              mod == MOD_SLOWBLOB          ||
+              mod == MOD_LEVEL4_TRAMPLE    ||
+              mod == MOD_LEVEL4_CRUSH      ||
+              mod == MOD_LEVEL3_POUNCE     ||
+              mod == MOD_LEVEL1_PCLOUD     ||
+              mod == MOD_LEVEL2_ZAP )
+            G_AddEvent( attacker, EV_ALIENRANGED_HIT, targ->s.number );
+          else
+            G_AddEvent( attacker, EV_ALIEN_HIT, targ->s.number );
+      }
 
-    G_OCPlayerCheckpoint( targ, attacker );
-
-    // check for oc
-    if ( level.oc && attacker->client )
-        return;
-    if ( level.oc && targ->s.eType == ET_BUILDABLE )
-        return;
+      // base is under attack warning if DCC'd
+      if( targ->buildableTeam == TEAM_HUMANS && G_FindDCC( targ ) &&
+          level.time > level.humanBaseAttackTimer &&
+          mod != MOD_DECONSTRUCT && mod != MOD_SUICIDE )
+      {
+        level.humanBaseAttackTimer = level.time + DC_ATTACK_PERIOD;
+        G_BroadcastEvent( EV_DCC_ATTACK, 0 );
+      }
+    }
 
     // check for godmode
-    if ( targ->flags & FL_GODMODE && !g_devmapNoGod.integer)
+    if( targ->flags & FL_GODMODE )
       return;
-
-    if(targ->s.eType == ET_BUILDABLE && g_cheats.integer && g_devmapNoStructDmg.integer)
-        return;
   }
 
   // add to the attacker's hit counter
@@ -1168,15 +1108,16 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     // set the last client who damaged the target
     targ->client->lasthurt_client = attacker->s.number;
     targ->client->lasthurt_mod = mod;
+    take = (int)( take * G_CalcDamageModifier( point, targ, attacker,
+                                               client->ps.stats[ STAT_CLASS ],
+                                               dflags ) + 0.5f );
 
-     take = (int)( (float)take * G_CalcDamageModifier( point, targ, attacker,
-                                                       client->ps.stats[ STAT_PCLASS ], dflags ) );
     //if boosted poison every attack
     if( attacker->client && attacker->client->ps.stats[ STAT_STATE ] & SS_BOOSTED )
     {
-      if( targ->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS &&
-          !( targ->client->ps.stats[ STAT_STATE ] & SS_POISONED ) &&
-          mod != MOD_LEVEL2_ZAP &&
+      if( targ->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS &&
+          mod != MOD_LEVEL2_ZAP && mod != MOD_POISON &&
+          mod != MOD_LEVEL1_PCLOUD &&
           targ->client->poisonImmunityTime < level.time )
       {
         targ->client->ps.stats[ STAT_STATE ] |= SS_POISONED;
@@ -1195,28 +1136,34 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       targ->health, take, asave );
   }
 
-
-
+  // do the damage
   if( take )
   {
+    if( attacker->client && attacker->client->pers.teamSelection == TEAM_ALIENS)
+    {
+      if( mod == MOD_LEVEL3_BOUNCEBALL ||
+          mod == MOD_SLOWBLOB          ||
+          mod == MOD_LEVEL4_TRAMPLE    ||
+          mod == MOD_LEVEL4_CRUSH      ||
+          mod == MOD_LEVEL3_POUNCE     ||
+          mod == MOD_LEVEL1_PCLOUD     ||
+          mod == MOD_LEVEL2_ZAP )
+        G_AddEvent( attacker, EV_ALIENRANGED_HIT, targ->s.number );
+      else
+        G_AddEvent( attacker, EV_ALIEN_HIT, targ->s.number );
+    }
 
-
-
-    targ->health = targ->health - take;   // do the damage
+    targ->health = targ->health - take;
 
     if( targ->client )
       targ->client->ps.stats[ STAT_HEALTH ] = targ->health;
 
     targ->lastDamageTime = level.time;
+    targ->nextRegenTime = level.time + ALIEN_REGEN_DAMAGE_TIME;
 
     // add to the attackers "account" on the target
-    if( targ->client && attacker->client )
-    {
-      if( attacker != targ && !OnSameTeam( targ, attacker ) )
-        targ->credits[ attacker->client->ps.clientNum ] += take;
-      else if( attacker != targ && OnSameTeam( targ, attacker ) )
-        targ->client->tkcredits[ attacker->client->ps.clientNum ] += take;
-    }
+    if( attacker->client && attacker != targ && !OnSameTeam( targ, attacker ) )
+      targ->credits[ attacker->client->ps.clientNum ] += take;
 
     if( targ->health <= 0 )
     {
@@ -1349,14 +1296,16 @@ qboolean G_SelectiveRadiusDamage( vec3_t origin, gentity_t *attacker, float dama
 
     points = damage * ( 1.0 - dist / radius );
 
-    if( CanDamage( ent, origin ) )
+    if( CanDamage( ent, origin ) && ent->client &&
+        ent->client->ps.stats[ STAT_TEAM ] != team )
     {
       VectorSubtract( ent->r.currentOrigin, origin, dir );
       // push the center of mass higher than the origin so players
       // get knocked into the air more
       dir[ 2 ] += 24;
-      G_SelectiveDamage( ent, NULL, attacker, dir, origin,
-          (int)points, DAMAGE_RADIUS|DAMAGE_NO_LOCDAMAGE, mod, team );
+      hitClient = qtrue;
+      G_Damage( ent, NULL, attacker, dir, origin,
+          (int)points, DAMAGE_RADIUS|DAMAGE_NO_LOCDAMAGE, mod );
     }
   }
 
@@ -1426,10 +1375,50 @@ qboolean G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
       // push the center of mass higher than the origin so players
       // get knocked into the air more
       dir[ 2 ] += 24;
+      hitClient = qtrue;
       G_Damage( ent, NULL, attacker, dir, origin,
           (int)points, DAMAGE_RADIUS|DAMAGE_NO_LOCDAMAGE, mod );
     }
   }
 
   return hitClient;
+}
+
+/*
+================
+G_LogDestruction
+
+Log deconstruct/destroy events
+================
+*/
+void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
+{
+  if( !actor || !actor->client )
+    return;
+
+  if( actor->client->ps.stats[ STAT_TEAM ] ==
+    BG_Buildable( self->s.modelindex )->team )
+  {
+    G_TeamCommand( actor->client->ps.stats[ STAT_TEAM ],
+      va( "print \"%s ^3%s^7 by %s\n\"",
+        BG_Buildable( self->s.modelindex )->humanName,
+        mod == MOD_DECONSTRUCT ? "DECONSTRUCTED" : "DESTROYED",
+        actor->client->pers.netname ) );
+  }
+
+  if( mod == MOD_DECONSTRUCT )
+    G_LogPrintf( "Decon: %d %d %d: %s^7 deconstructed %s\n",
+      actor->client->ps.clientNum,
+      self->s.modelindex,
+      mod,
+      actor->client->pers.netname,
+      BG_Buildable( self->s.modelindex )->name );
+  else
+    G_LogPrintf( "Decon: %d %d %d: %s^7 destroyed %s by %s\n",
+      actor->client->ps.clientNum,
+      self->s.modelindex,
+      mod,
+      actor->client->pers.netname,
+      BG_Buildable( self->s.modelindex )->name,
+      modNames[ mod ] );
 }

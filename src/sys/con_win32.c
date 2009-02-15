@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -25,18 +25,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "sys_local.h"
 #include "windows.h"
 
-#define QCONSOLE_HISTORY 32
+/* fallbacks for con_curses.c */
+#ifdef USE_CURSES
+#define CON_Init CON_Init_tty
+#define CON_Shutdown CON_Shutdown_tty
+#define CON_Print CON_Print_tty
+#define CON_Input CON_Input_tty
+#define CON_Clear_f CON_Clear_tty
+#endif
 
 static WORD qconsole_attrib;
 
 // saved console status
 static DWORD qconsole_orig_mode;
 static CONSOLE_CURSOR_INFO qconsole_orig_cursorinfo;
-
-// cmd history
-static char qconsole_history[ QCONSOLE_HISTORY ][ MAX_EDIT_LINE ];
-static int qconsole_history_pos = -1;
-static int qconsole_history_oldest = 0;
 
 // current edit buffer
 static char qconsole_line[ MAX_EDIT_LINE ];
@@ -47,88 +49,20 @@ static HANDLE qconsole_hin;
 
 /*
 ==================
-CON_CtrlHandler
-
-The Windows Console doesn't use signals for terminating the application
-with Ctrl-C, logging off, window closing, etc.  Instead it uses a special
-handler routine.  Fortunately, the values for Ctrl signals don't seem to
-overlap with true signal codes that Windows provides, so calling
-Sys_SigHandler() with those numbers should be safe for generating unique
-shutdown messages.
+CON_Clear_f
 ==================
 */
-static BOOL WINAPI CON_CtrlHandler( DWORD sig )
+void CON_Clear_f( void )
 {
-	Sys_SigHandler( sig );
-	return TRUE;
+	CONSOLE_SCREEN_BUFFER_INFO binfo;
+	COORD coord = { 0, 0 };
+	DWORD count;
+
+	GetConsoleScreenBufferInfo( qconsole_hout, &binfo );
+	FillConsoleOutputCharacter( qconsole_hout, (TCHAR) 32, binfo.dwSize.X * binfo.dwSize.Y, coord, &count );
+	FillConsoleOutputAttribute( qconsole_hout, binfo.wAttributes, binfo.dwSize.X * binfo.dwSize.Y, coord, &count );
+	SetConsoleCursorPosition( qconsole_hout, coord );
 }
-
-/*
-==================
-CON_HistAdd
-==================
-*/
-static void CON_HistAdd( void )
-{
-	Q_strncpyz( qconsole_history[ qconsole_history_oldest ], qconsole_line,
-		sizeof( qconsole_history[ qconsole_history_oldest ] ) );
-
-	if( qconsole_history_oldest >= QCONSOLE_HISTORY - 1 )
-		qconsole_history_oldest = 0;
-	else
-		qconsole_history_oldest++;
-
-	qconsole_history_pos = qconsole_history_oldest;
-}
-
-/*
-==================
-CON_HistPrev
-==================
-*/
-static void CON_HistPrev( void )
-{
-	int pos;
-
-	pos = ( qconsole_history_pos < 1 ) ?
-		( QCONSOLE_HISTORY - 1 ) : ( qconsole_history_pos - 1 );
-
-	// don' t allow looping through history
-	if( pos == qconsole_history_oldest )
-		return;
-
-	qconsole_history_pos = pos;
-	Q_strncpyz( qconsole_line, qconsole_history[ qconsole_history_pos ], 
-		sizeof( qconsole_line ) );
-	qconsole_linelen = strlen( qconsole_line );
-}
-
-/*
-==================
-CON_HistNext
-==================
-*/
-static void CON_HistNext( void )
-{
-	int pos;
-
-	pos = ( qconsole_history_pos >= QCONSOLE_HISTORY - 1 ) ?
-		0 : ( qconsole_history_pos + 1 ); 
-
-	// clear the edit buffer if they try to advance to a future command
-	if( pos == qconsole_history_oldest )
-	{
-		qconsole_line[ 0 ] = '\0';
-		qconsole_linelen = 0;
-		return;
-	}
-
-	qconsole_history_pos = pos;
-	Q_strncpyz( qconsole_line, qconsole_history[ qconsole_history_pos ],
-		sizeof( qconsole_line ) );
-	qconsole_linelen = strlen( qconsole_line );
-}
-
 
 /*
 ==================
@@ -201,10 +135,6 @@ void CON_Init( void )
 {
 	CONSOLE_CURSOR_INFO curs;
 	CONSOLE_SCREEN_BUFFER_INFO info;
-	int i;
-
-	// handle Ctrl-C or other console termination
-	SetConsoleCtrlHandler( CON_CtrlHandler, TRUE );
 
 	qconsole_hin = GetStdHandle( STD_INPUT_HANDLE );
 	if( qconsole_hin == INVALID_HANDLE_VALUE )
@@ -225,17 +155,11 @@ void CON_Init( void )
 	GetConsoleScreenBufferInfo( qconsole_hout, &info );
 	qconsole_attrib = info.wAttributes;
 
-	SetConsoleTitle("Tremulous Dedicated Server Console");
-
 	// make cursor invisible
 	GetConsoleCursorInfo( qconsole_hout, &qconsole_orig_cursorinfo );
 	curs.dwSize = 1;
 	curs.bVisible = FALSE;
 	SetConsoleCursorInfo( qconsole_hout, &curs );
-
-	// initialize history
-	for( i = 0; i < QCONSOLE_HISTORY; i++ )
-		qconsole_history[ i ][ 0 ] = '\0';
 }
 
 /*
@@ -285,12 +209,14 @@ char *CON_Input( void )
 		}
 		else if( key == VK_UP )
 		{
-			CON_HistPrev();
+			Q_strncpyz( qconsole_line, Hist_Prev( ), sizeof( qconsole_line ) );
+			qconsole_linelen = strlen( qconsole_line );
 			break;
 		}
 		else if( key == VK_DOWN )
 		{
-			CON_HistNext();
+			Q_strncpyz( qconsole_line, Hist_Next( qconsole_line ), sizeof( qconsole_line ) );
+			qconsole_linelen = strlen( qconsole_line );
 			break;
 		}
 		else if( key == VK_TAB )
@@ -299,7 +225,7 @@ char *CON_Input( void )
 
 			Q_strncpyz( f.buffer, qconsole_line,
 				sizeof( f.buffer ) );
-			Field_AutoComplete( &f );
+			Field_AutoComplete( &f, "]" );
 			Q_strncpyz( qconsole_line, f.buffer,
 				sizeof( qconsole_line ) );
 			qconsole_linelen = strlen( qconsole_line );
@@ -337,8 +263,8 @@ char *CON_Input( void )
 		return NULL;
 	}
 
-	CON_HistAdd();
-	Com_Printf( "%s\n", qconsole_line );
+	Hist_Add( qconsole_line );
+	Com_Printf( "]%s\n", qconsole_line );
 
 	qconsole_linelen = 0;
 

@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Tremfusion.
 
-Tremulous is free software; you can redistribute it
+Tremfusion is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Tremfusion is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Tremfusion; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -315,8 +315,6 @@ punctuation_t default_punctuations[] =
   {"$",P_DOLLAR, NULL},
   {NULL, 0}
 };
-
-char basefolder[MAX_QPATH];
 
 /*
 ===============
@@ -900,10 +898,10 @@ static int Parse_ReadPrimitive(script_t *script, token_t *token)
 
 /*
 ===============
-Parse_ReadSciptToken
+Parse_ReadScriptToken
 ===============
 */
-static int Parse_ReadSciptToken(script_t *script, token_t *token)
+static int Parse_ReadScriptToken(script_t *script, token_t *token)
 {
   //if there is a token available (from UnreadToken)
   if (script->tokenavailable)
@@ -981,7 +979,7 @@ static void Parse_StripDoubleQuotes(char *string)
 {
   if (*string == '\"')
   {
-    strcpy(string, string+1);
+    memmove( string, string + 1, strlen( string ) + 1 );
   }
   if (string[strlen(string)-1] == '\"')
   {
@@ -1007,16 +1005,11 @@ Parse_LoadScriptFile
 static script_t *Parse_LoadScriptFile(const char *filename)
 {
   fileHandle_t fp;
-  char pathname[MAX_QPATH];
   int length;
   void *buffer;
   script_t *script;
 
-  if (strlen(basefolder))
-    Com_sprintf(pathname, sizeof(pathname), "%s/%s", basefolder, filename);
-  else
-    Com_sprintf(pathname, sizeof(pathname), "%s", filename);
-  length = FS_FOpenFileRead( pathname, &fp, qfalse );
+  length = FS_FOpenFileRead( filename, &fp, qfalse );
   if (!fp) return NULL;
 
   buffer = Z_Malloc(sizeof(script_t) + length + 1);
@@ -1097,16 +1090,6 @@ static void Parse_FreeScript(script_t *script)
 {
   if (script->punctuationtable) Z_Free(script->punctuationtable);
   Z_Free(script);
-}
-
-/*
-===============
-Parse_SetBaseFolder
-===============
-*/
-static void Parse_SetBaseFolder(char *path)
-{
-  Com_sprintf(basefolder, sizeof(basefolder), path);
 }
 
 /*
@@ -1259,7 +1242,7 @@ static int Parse_ReadSourceToken(source_t *source, token_t *token)
   while(!source->tokens)
   {
     //if there's a token to read from the script
-    if (Parse_ReadSciptToken(source->scriptstack, token)) return qtrue;
+    if (Parse_ReadScriptToken(source->scriptstack, token)) return qtrue;
     //if at the end of the script
     if (Parse_EndOfScript(source->scriptstack))
     {
@@ -1555,11 +1538,7 @@ static int Parse_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define
                     token_t **firsttoken, token_t **lasttoken)
 {
   token_t *token;
-#ifdef _WIN32
-  unsigned long t;  //  time_t t; //to prevent LCC warning
-#else
   time_t t;
-#endif
 
   char *curtime;
 
@@ -2568,7 +2547,7 @@ static int Parse_Directive_include(source_t *source)
         break;
       }
       if (token.type == TT_PUNCTUATION && *token.string == '>') break;
-      strncat(path, token.string, MAX_QPATH);
+      strncat(path, token.string, MAX_QPATH - strlen(path));
     }
     if (*token.string != '>')
     {
@@ -3513,7 +3492,6 @@ int Parse_LoadSourceHandle(const char *filename)
   }
   if (i >= MAX_SOURCEFILES)
     return 0;
-  Parse_SetBaseFolder("");
   source = Parse_LoadSourceFile(filename);
   if (!source)
     return 0;
