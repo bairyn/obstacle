@@ -5026,7 +5026,7 @@ Index: src/game/g_local.h
    qboolean            teamInfo;           // send team overlay updates?
  
    pClass_t            classSelection;     // player class (copied to ent->client->ps.stats[ STAT_PCLASS ] once spawned)
-@@ -342,20 +478,72 @@
+@@ -342,20 +478,73 @@
    int                 nameChangeTime;
    int                 nameChanges;
  
@@ -5080,6 +5080,7 @@ Index: src/game/g_local.h
 +  int                 ocNeedSpawn;
 +  int                 ocNeedSpawnTime;
 +  int                 ocTimeDisplay;
++  int                 speedometer;
 +  mix_cp_t            *clientCP;
 +  int                 autoAngleDisabled;
 +  int                 nextWeaponTime;
@@ -5102,7 +5103,7 @@ Index: src/game/g_local.h
  } clientPersistant_t;
  
  #define MAX_UNLAGGED_MARKERS 10
-@@ -455,11 +643,16 @@
+@@ -455,11 +644,16 @@
  
    int                 lastFlameBall;        // s.number of the last flame ball fired
  
@@ -5119,7 +5120,7 @@ Index: src/game/g_local.h
  };
  
  
-@@ -477,7 +670,8 @@
+@@ -477,7 +671,8 @@
  int       G_GetSpawnQueueLength( spawnQueue_t *sq );
  int       G_PopSpawnQueue( spawnQueue_t *sq );
  int       G_PeekSpawnQueue( spawnQueue_t *sq );
@@ -5129,7 +5130,7 @@ Index: src/game/g_local.h
  qboolean  G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum );
  int       G_GetPosInSpawnQueue( spawnQueue_t *sq, int clientNum );
  
-@@ -518,6 +712,32 @@
+@@ -518,6 +713,32 @@
    TW_PASSED
  } timeWarning_t;
  
@@ -5162,7 +5163,7 @@ Index: src/game/g_local.h
  //
  // this structure is cleared as each map is entered
  //
-@@ -526,14 +746,43 @@
+@@ -526,14 +747,43 @@
  
  typedef struct
  {
@@ -5208,7 +5209,7 @@ Index: src/game/g_local.h
    fileHandle_t      logFile;
  
    // store latched cvars here that we want to get at often
-@@ -542,6 +791,7 @@
+@@ -542,6 +792,7 @@
    int               framenum;
    int               time;                         // in msec
    int               previousTime;                 // so movers can back up when blocked
@@ -5216,7 +5217,7 @@ Index: src/game/g_local.h
  
    int               startTime;                    // level.time the map was started
  
-@@ -558,13 +808,14 @@
+@@ -558,13 +809,14 @@
    int               numPlayingClients;            // connected, non-spectators
    int               sortedClients[MAX_CLIENTS];   // sorted by score
  
@@ -5233,7 +5234,7 @@ Index: src/game/g_local.h
    int               voteTime;                     // level.time vote was called
    int               voteExecuteTime;              // time the vote is executed
    int               voteYes;
-@@ -634,6 +885,9 @@
+@@ -634,6 +886,9 @@
  
    pTeam_t           lastWin;
  
@@ -5243,7 +5244,7 @@ Index: src/game/g_local.h
    timeWarning_t     suddenDeathWarning;
    timeWarning_t     timelimitWarning;
  
-@@ -649,6 +903,8 @@
+@@ -649,6 +904,8 @@
    qboolean          uncondHumanWin;
    qboolean          alienTeamLocked;
    qboolean          humanTeamLocked;
@@ -5252,7 +5253,7 @@ Index: src/game/g_local.h
  
    int unlaggedIndex;
    int unlaggedTimes[ MAX_UNLAGGED_MARKERS ];
-@@ -656,17 +912,51 @@
+@@ -656,17 +913,51 @@
    char              layout[ MAX_QPATH ];
  
    pTeam_t           surrenderTeam;
@@ -5312,7 +5313,7 @@ Index: src/game/g_local.h
  typedef struct
  {
    char *cmdName;
-@@ -689,11 +979,14 @@
+@@ -689,11 +980,14 @@
  // g_cmds.c
  //
  void      Cmd_Score_f( gentity_t *ent );
@@ -5327,7 +5328,7 @@ Index: src/game/g_local.h
  int       G_SayArgc( void );
  qboolean  G_SayArgv( int n, char *buffer, int bufferLength );
  char      *G_SayConcatArgs( int start );
-@@ -702,6 +995,19 @@
+@@ -702,6 +996,19 @@
  void      G_ChangeTeam( gentity_t *ent, pTeam_t newTeam );
  void      G_SanitiseName( char *in, char *out );
  void      G_PrivateMessage( gentity_t *ent );
@@ -5347,7 +5348,7 @@ Index: src/game/g_local.h
  
  //
  // g_physics.c
-@@ -741,27 +1047,74 @@
+@@ -741,27 +1048,74 @@
    IBE_MAXERRORS
  } itemBuildError_t;
  
@@ -5426,7 +5427,7 @@ Index: src/game/g_local.h
  
  //
  // g_utils.c
-@@ -905,15 +1258,20 @@
+@@ -905,15 +1259,20 @@
  //
  void      G_AddCreditToClient( gclient_t *client, short credit, qboolean cap );
  team_t    TeamCount( int ignoreClientNum, int team );
@@ -5450,7 +5451,7 @@ Index: src/game/g_local.h
  
  //
  // g_svcmds.c
-@@ -939,12 +1297,17 @@
+@@ -939,12 +1298,17 @@
  void ScoreboardMessage( gentity_t *client );
  void MoveClientToIntermission( gentity_t *client );
  void G_MapConfigs( const char *mapname );
@@ -5468,7 +5469,7 @@ Index: src/game/g_local.h
  void QDECL G_Error( const char *fmt, ... );
  void G_Vote( gentity_t *ent, qboolean voting );
  void G_TeamVote( gentity_t *ent, qboolean voting );
-@@ -952,6 +1315,10 @@
+@@ -952,6 +1316,10 @@
  void CheckTeamVote( int teamnum );
  void LogExit( const char *string );
  int  G_TimeTilSuddenDeath( void );
@@ -5479,7 +5480,7 @@ Index: src/game/g_local.h
  
  //
  // g_client.c
-@@ -961,6 +1328,7 @@
+@@ -961,6 +1329,7 @@
  void ClientDisconnect( int clientNum );
  void ClientBegin( int clientNum );
  void ClientCommand( int clientNum );
@@ -5487,7 +5488,7 @@ Index: src/game/g_local.h
  
  //
  // g_active.c
-@@ -1102,15 +1470,26 @@
+@@ -1102,15 +1471,26 @@
  extern  vmCvar_t  g_maxclients;     // allow this many total, including spectators
  extern  vmCvar_t  g_maxGameClients;   // allow this many active
  extern  vmCvar_t  g_restarted;
@@ -5514,7 +5515,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_friendlyBuildableFire;
  extern  vmCvar_t  g_password;
  extern  vmCvar_t  g_needpass;
-@@ -1131,6 +1510,15 @@
+@@ -1131,6 +1511,15 @@
  extern  vmCvar_t  g_blood;
  extern  vmCvar_t  g_allowVote;
  extern  vmCvar_t  g_voteLimit;
@@ -5530,7 +5531,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_teamAutoJoin;
  extern  vmCvar_t  g_teamForceBalance;
  extern  vmCvar_t  g_banIPs;
-@@ -1139,6 +1527,8 @@
+@@ -1139,6 +1528,8 @@
  extern  vmCvar_t  pmove_fixed;
  extern  vmCvar_t  pmove_msec;
  extern  vmCvar_t  g_rankings;
@@ -5539,7 +5540,7 @@ Index: src/game/g_local.h
  extern  vmCvar_t  g_enableDust;
  extern  vmCvar_t  g_enableBreath;
  extern  vmCvar_t  g_singlePlayer;
-@@ -1155,6 +1545,7 @@
+@@ -1155,6 +1546,7 @@
  extern  vmCvar_t  g_alienMaxStage;
  extern  vmCvar_t  g_alienStage2Threshold;
  extern  vmCvar_t  g_alienStage3Threshold;
@@ -5547,7 +5548,7 @@ Index: src/game/g_local.h
  
  extern  vmCvar_t  g_unlagged;
  
-@@ -1163,12 +1554,15 @@
+@@ -1163,12 +1555,15 @@
  extern  vmCvar_t  g_disabledBuildables;
  
  extern  vmCvar_t  g_markDeconstruct;
@@ -5563,7 +5564,7 @@ Index: src/game/g_local.h
  
  extern  vmCvar_t  g_shove;
  
-@@ -1180,11 +1574,47 @@
+@@ -1180,11 +1575,47 @@
  extern  vmCvar_t  g_admin;
  extern  vmCvar_t  g_adminLog;
  extern  vmCvar_t  g_adminParseSay;
@@ -6134,34 +6135,42 @@ Index: src/game/g_active.c
  
    ucmd = &ent->client->pers.cmd;
  
-@@ -581,6 +616,26 @@
+@@ -581,6 +616,34 @@
          client->ps.stats[ STAT_STAMINA ] = MAX_STAMINA;
      }
  
 +    if( level.oc )
 +    {
-+      client->ps.stats[ STAT_STAMINA ] = MAX_STAMINA;
-+      if( ent->client->pers.ocTimeDisplay )
-+      {
-+        if(ent->client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
++        client->ps.stats[ STAT_STAMINA ] = MAX_STAMINA;
++        if( client->pers.ocTimeDisplay )
 +        {
-+            // hack for SCRIMTIME
-+            oc_scrimTeam_t tmp;
-+            oc_scrimTeam_t *t = &tmp;
-+            t->time = level.time;
-+            G_ClientCP(ent, va("^t^i^m^e^2%dm:%ds:%dms", MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME) ), "^t^i^m^e", CLIENT_SPECTATORS);
++            if(client->pers.ocTeam && level.ocScrimState >= OC_STATE_PLAY)
++            {
++                // hack for SCRIMTIME
++                oc_scrimTeam_t tmp;
++                oc_scrimTeam_t *t = &tmp;
++                t->time = level.time;
++                G_ClientCP(ent, va("^t^i^m^e^2%dm:%ds:%dms", MINS(SCRIMTIME), SECS(SCRIMTIME), MSEC(SCRIMTIME) ), "^t^i^m^e", CLIENT_SPECTATORS);
++            }
++            else
++            {
++                G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( client->pers.aliveTime ), SECS( client->pers.aliveTime ), MSEC( client->pers.aliveTime ) ), "^t^i^m^e", CLIENT_SPECTATORS );
++            }
 +        }
-+        else
++        if(client->pers.speedometer)
 +        {
-+            G_ClientCP( ent, va( "^t^i^m^e^2%dm:%ds:%dms", MINS( ent->client->pers.aliveTime ), SECS( ent->client->pers.aliveTime ), MSEC( ent->client->pers.aliveTime ) ), "^t^i^m^e", CLIENT_SPECTATORS );
++            float tmp = ent->client->ps.velocity[2];
++            G_ClientCP(ent, va("^s^p^e^e^d^z^2XYZ: %d^7ups", (int)VectorLength(ent->client->ps.velocity)), "^s^p^e^e^d^z", CLIENT_SPECTATORS);
++            ent->client->ps.velocity[2] = 0;
++            G_ClientCP(ent, va("^s^p^e^e^d^n^2XY: %d^7ups", (int)VectorLength(ent->client->ps.velocity)), "^s^p^e^e^d^n", CLIENT_SPECTATORS);
++            ent->client->ps.velocity[2] = tmp;
 +        }
-+      }
 +    }
 +
      //client is charging up for a pounce
      if( client->ps.weapon == WP_ALEVEL3 || client->ps.weapon == WP_ALEVEL3_UPG )
      {
-@@ -665,14 +720,23 @@
+@@ -665,14 +728,23 @@
      //client is charging up an lcannon
      if( client->ps.weapon == WP_LUCIFER_CANNON )
      {
@@ -6187,7 +6196,7 @@ Index: src/game/g_active.c
      }
  
      switch( client->ps.weapon )
-@@ -692,22 +756,9 @@
+@@ -692,22 +764,9 @@
              client->ps.stats[ STAT_BUILDABLE ] |= SB_VALID_TOGGLEBIT;
            else
              client->ps.stats[ STAT_BUILDABLE ] &= ~SB_VALID_TOGGLEBIT;
@@ -6211,7 +6220,7 @@ Index: src/game/g_active.c
          //update build timer
          if( client->ps.stats[ STAT_MISC ] > 0 )
            client->ps.stats[ STAT_MISC ] -= 100;
-@@ -770,22 +821,17 @@
+@@ -770,22 +829,17 @@
      //client is poisoned
      if( client->ps.stats[ STAT_STATE ] & SS_POISONED )
      {
@@ -6243,7 +6252,7 @@ Index: src/game/g_active.c
      }
  
      //replenish alien health
-@@ -830,6 +876,10 @@
+@@ -830,6 +884,10 @@
          ent->health = client->ps.stats[ STAT_MAX_HEALTH ];
      }
  
@@ -6254,7 +6263,7 @@ Index: src/game/g_active.c
      // turn off life support when a team admits defeat
      if( client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS &&
        level.surrenderTeam == PTE_ALIENS )
-@@ -851,12 +901,16 @@
+@@ -851,12 +909,16 @@
  
      if( client->ps.weapon == WP_ALEVEL3_UPG )
      {
@@ -6274,7 +6283,7 @@ Index: src/game/g_active.c
      }
    }
  }
-@@ -1001,8 +1055,8 @@
+@@ -1001,8 +1063,8 @@
  ==============
   G_UnlaggedStore
  
@@ -6285,7 +6294,7 @@ Index: src/game/g_active.c
   This data is used by G_UnlaggedCalc()
  ==============
  */
-@@ -1011,24 +1065,24 @@
+@@ -1011,24 +1073,24 @@
    int i = 0;
    gentity_t *ent;
    unlagged_t *save;
@@ -6316,7 +6325,7 @@ Index: src/game/g_active.c
      VectorCopy( ent->r.mins, save->mins );
      VectorCopy( ent->r.maxs, save->maxs );
      VectorCopy( ent->s.pos.trBase, save->origin );
-@@ -1039,7 +1093,7 @@
+@@ -1039,7 +1101,7 @@
  /*
  ==============
   G_UnlaggedClear
@@ -6325,7 +6334,7 @@ Index: src/game/g_active.c
   Mark all unlaggedHist[] markers for this client invalid.  Useful for
   preventing teleporting and death.
  ==============
-@@ -1071,7 +1125,7 @@
+@@ -1071,7 +1133,7 @@
  
    if( !g_unlagged.integer )
      return;
@@ -6334,7 +6343,7 @@ Index: src/game/g_active.c
    // clear any calculated values from a previous run
    for( i = 0; i < level.maxclients; i++ )
    {
-@@ -1104,15 +1158,15 @@
+@@ -1104,15 +1166,15 @@
    if( frameMsec > 0 )
    {
      lerp = ( float )( time - level.unlaggedTimes[ startIndex ] )
@@ -6353,7 +6362,7 @@ Index: src/game/g_active.c
        continue;
      if( ent->client->pers.connected != CON_CONNECTED )
        continue;
-@@ -1147,10 +1201,10 @@
+@@ -1147,10 +1209,10 @@
  {
    int i = 0;
    gentity_t *ent;
@@ -6366,7 +6375,7 @@ Index: src/game/g_active.c
    for( i = 0; i < level.maxclients; i++ )
    {
      ent = &g_entities[ i ];
-@@ -1183,10 +1237,10 @@
+@@ -1183,10 +1245,10 @@
    int i = 0;
    gentity_t *ent;
    unlagged_t *calc;
@@ -6379,7 +6388,7 @@ Index: src/game/g_active.c
    for( i = 0; i < level.maxclients; i++ )
    {
      ent = &g_entities[ i ];
-@@ -1196,7 +1250,7 @@
+@@ -1196,7 +1258,7 @@
        continue;
      if( ent->client->unlaggedBackup.used )
        continue;
@@ -6388,7 +6397,7 @@ Index: src/game/g_active.c
        continue;
      if( VectorCompare( ent->r.currentOrigin, calc->origin ) )
        continue;
-@@ -1207,7 +1261,7 @@
+@@ -1207,7 +1269,7 @@
        float maxRadius = ( r1 > r2 ) ? r1 : r2;
  
        if( Distance( muzzle, calc->origin ) > range + maxRadius )
@@ -6397,7 +6406,7 @@ Index: src/game/g_active.c
      }
  
      // create a backup of the real positions
-@@ -1272,7 +1326,7 @@
+@@ -1272,7 +1334,7 @@
    G_UnlaggedOn( ent->client->oldOrigin, range );
  
    trap_Trace(&tr, ent->client->oldOrigin, ent->r.mins, ent->r.maxs,
@@ -6406,7 +6415,7 @@ Index: src/game/g_active.c
    if( tr.entityNum >= 0 && tr.entityNum < MAX_CLIENTS )
      g_entities[ tr.entityNum ].client->unlaggedCalc.used = qfalse;
  
-@@ -1293,10 +1347,15 @@
+@@ -1293,10 +1355,15 @@
  void ClientThink_real( gentity_t *ent )
  {
    gclient_t *client;
@@ -6422,7 +6431,7 @@ Index: src/game/g_active.c
  
    client = ent->client;
  
-@@ -1320,6 +1379,32 @@
+@@ -1320,6 +1387,32 @@
  //    G_Printf("serverTime >>>>>\n" );
    }
  
@@ -6455,7 +6464,7 @@ Index: src/game/g_active.c
    msec = ucmd->serverTime - client->ps.commandTime;
    // following others may result in bad times, but we still want
    // to check for follow toggles
-@@ -1343,6 +1428,15 @@
+@@ -1343,6 +1436,15 @@
      //  return;
    }
  
@@ -6471,7 +6480,7 @@ Index: src/game/g_active.c
    //
    // check for exiting intermission
    //
-@@ -1458,7 +1552,10 @@
+@@ -1458,7 +1560,10 @@
    }
  
    // set speed
@@ -6483,7 +6492,7 @@ Index: src/game/g_active.c
  
    if( client->lastCreepSlowTime + CREEP_TIMEOUT < level.time )
      client->ps.stats[ STAT_STATE ] &= ~SS_CREEPSLOWED;
-@@ -1474,7 +1571,7 @@
+@@ -1474,7 +1579,7 @@
      }
  
      //switch jetpack off if no reactor
@@ -6492,7 +6501,7 @@ Index: src/game/g_active.c
        BG_DeactivateUpgrade( UP_JETPACK, client->ps.stats );
    }
  
-@@ -1508,6 +1605,32 @@
+@@ -1508,6 +1613,32 @@
      }
    }
  
@@ -6525,7 +6534,7 @@ Index: src/game/g_active.c
    if( ent->flags & FL_FORCE_GESTURE )
    {
      ent->flags &= ~FL_FORCE_GESTURE;
-@@ -1527,6 +1650,19 @@
+@@ -1527,6 +1658,19 @@
    else
      pm.tracemask = MASK_PLAYERSOLID;
  
@@ -6545,7 +6554,7 @@ Index: src/game/g_active.c
    pm.trace = trap_Trace;
    pm.pointcontents = trap_PointContents;
    pm.debugLevel = g_debugMove.integer;
-@@ -1645,9 +1781,9 @@
+@@ -1645,9 +1789,9 @@
  
        traceEnt = &g_entities[ trace.entityNum ];
  
@@ -6557,7 +6566,7 @@ Index: src/game/g_active.c
        {
          //no entity in front of player - do a small area search
  
-@@ -1684,20 +1820,197 @@
+@@ -1684,20 +1828,197 @@
    }
  
    // Give clients some credit periodically
@@ -6763,7 +6772,7 @@ Index: src/game/g_active.c
    // perform once-a-second actions
    ClientTimerActions( ent, msec );
  
-@@ -1764,13 +2077,14 @@
+@@ -1764,13 +2085,14 @@
      {
        cl = &level.clients[ clientNum ];
  
@@ -6780,7 +6789,7 @@ Index: src/game/g_active.c
        }
      }
    }
-@@ -1789,6 +2103,13 @@
+@@ -1789,6 +2111,13 @@
  {
    clientPersistant_t  *pers;
  
@@ -6794,7 +6803,7 @@ Index: src/game/g_active.c
    if( ent->client->sess.sessionTeam == TEAM_SPECTATOR )
    {
      SpectatorClientEndFrame( ent );
-@@ -1797,6 +2118,14 @@
+@@ -1797,6 +2126,14 @@
  
    pers = &ent->client->pers;
  
@@ -11126,7 +11135,7 @@ Index: src/game/g_main.c
 +#define MCONCAT(x, y) x # y
 +#define MTOSTRING(x) MCONCAT("", x)
 +
-+#define VERSION "1.4.4"
++#define VERSION "1.4.5"
 +#define BUILDID MTOSTRING(GAMESUM)
 +
  level_locals_t  level;
@@ -17136,7 +17145,17 @@ Index: src/game/bg_pmove.c
    if( pm->ps->pm_flags & PMF_CHARGE )
      return qfalse;
  
-@@ -1350,7 +1357,7 @@
+@@ -716,6 +723,9 @@
+   // jump away from wall
+   BG_GetClientNormal( pm->ps, normal );
+ 
++  if( pm->ps->velocity[ 2 ] < 0 )
++    pm->ps->velocity[ 2 ] = 0;
++
+   VectorMA( pm->ps->velocity, BG_FindJumpMagnitudeForClass( pm->ps->stats[ STAT_PCLASS ] ),
+             normal, pm->ps->velocity );
+ 
+@@ -1350,7 +1360,7 @@
  
    VectorMA( pm->ps->origin, 1.0f, forward, end );
  
@@ -17145,7 +17164,7 @@ Index: src/game/bg_pmove.c
  
    if( ( trace.fraction < 1.0f ) && ( trace.surfaceFlags & SURF_LADDER ) )
      pml.ladder = qtrue;
-@@ -2659,7 +2666,7 @@
+@@ -2659,7 +2669,7 @@
  static void PM_Weapon( void )
  {
    int           addTime = 200; //default addTime - should never be used
@@ -17154,7 +17173,7 @@ Index: src/game/bg_pmove.c
    qboolean      attack1 = qfalse;
    qboolean      attack2 = qfalse;
    qboolean      attack3 = qfalse;
-@@ -2685,7 +2692,15 @@
+@@ -2685,7 +2695,15 @@
      return;
    }
  
@@ -17171,7 +17190,7 @@ Index: src/game/bg_pmove.c
    if( pm->ps->weaponTime > 0 )
      pm->ps->weaponTime -= pml.msec;
  
-@@ -2757,10 +2772,11 @@
+@@ -2757,10 +2775,11 @@
  
    // start the animation even if out of ammo
  
@@ -17184,7 +17203,7 @@ Index: src/game/bg_pmove.c
    {
      PM_AddEvent( EV_NOAMMO );
      pm->ps->weaponTime += 200;
-@@ -2776,14 +2792,16 @@
+@@ -2776,14 +2795,16 @@
    {
      if( maxClips > 0 )
      {
@@ -17204,7 +17223,7 @@ Index: src/game/bg_pmove.c
      //allow some time for the weapon to be raised
      pm->ps->weaponstate = WEAPON_RAISING;
      PM_StartTorsoAnim( TORSO_RAISE );
-@@ -2792,7 +2810,7 @@
+@@ -2792,7 +2813,7 @@
    }
  
    // check for end of clip
@@ -17213,7 +17232,7 @@ Index: src/game/bg_pmove.c
    {
      pm->ps->pm_flags &= ~PMF_WEAPON_RELOAD;
  
-@@ -2911,7 +2929,7 @@
+@@ -2911,7 +2932,7 @@
      if( BG_WeaponHasThirdMode( pm->ps->weapon ) )
      {
        //hacky special case for slowblob
@@ -17222,7 +17241,7 @@ Index: src/game/bg_pmove.c
        {
          PM_AddEvent( EV_NOAMMO );
          pm->ps->weaponTime += 200;
-@@ -3033,19 +3051,22 @@
+@@ -3033,19 +3054,22 @@
      //special case for lcannon
      if( pm->ps->weapon == WP_LUCIFER_CANNON && attack1 && !attack2 )
      {
@@ -17250,7 +17269,7 @@ Index: src/game/bg_pmove.c
    }
  
    //FIXME: predicted angles miss a problem??
-@@ -3247,8 +3268,12 @@
+@@ -3247,8 +3271,12 @@
  
  void PmoveSingle( pmove_t *pmove )
  {
@@ -17263,7 +17282,7 @@ Index: src/game/bg_pmove.c
    // this counter lets us debug movement problems with a journal
    // by setting a conditional breakpoint fot the previous frame
    c_pmove++;
-@@ -3275,7 +3300,7 @@
+@@ -3275,7 +3303,7 @@
    // set the firing flag for continuous beam weapons
    if( !(pm->ps->pm_flags & PMF_RESPAWNED) && pm->ps->pm_type != PM_INTERMISSION &&
        ( pm->cmd.buttons & BUTTON_ATTACK ) &&
@@ -17272,7 +17291,7 @@ Index: src/game/bg_pmove.c
      pm->ps->eFlags |= EF_FIRING;
    else
      pm->ps->eFlags &= ~EF_FIRING;
-@@ -3283,7 +3308,7 @@
+@@ -3283,7 +3311,7 @@
    // set the firing flag for continuous beam weapons
    if( !(pm->ps->pm_flags & PMF_RESPAWNED) && pm->ps->pm_type != PM_INTERMISSION &&
        ( pm->cmd.buttons & BUTTON_ATTACK2 ) &&
@@ -17281,7 +17300,7 @@ Index: src/game/bg_pmove.c
      pm->ps->eFlags |= EF_FIRING2;
    else
      pm->ps->eFlags &= ~EF_FIRING2;
-@@ -3291,7 +3316,7 @@
+@@ -3291,7 +3319,7 @@
    // set the firing flag for continuous beam weapons
    if( !(pm->ps->pm_flags & PMF_RESPAWNED) && pm->ps->pm_type != PM_INTERMISSION &&
        ( pm->cmd.buttons & BUTTON_USE_HOLDABLE ) &&
@@ -24448,7 +24467,7 @@ Index: src/game/g_cmds.c
    if( matches < 1 )
    {
      trap_SendServerCommand( ent-g_entities, va( "print \"[skipnotify]"
-@@ -2773,6 +6188,580 @@
+@@ -2773,6 +6188,601 @@
    }
  }
  
@@ -24855,6 +24874,27 @@ Index: src/game/g_cmds.c
 +//  }
 +}
 +
++static void Cmd_Speedometer_f( gentity_t *ent )
++{
++  char cmd[ MAX_STRING_CHARS ];
++
++  trap_Argv( 0, cmd, sizeof( cmd ) );
++  if( !level.oc )
++  {
++    ADMP( va( "%s: can only be used during an obstacle course\n", cmd ) );
++    return;
++  }
++  ent->client->pers.speedometer = !ent->client->pers.speedometer;
++  if( ent->client->pers.speedometer )
++  {
++    ADMP( "Speedometer has been toggled to on\n" );
++  }
++  else
++  {
++    ADMP( "Speedometer has been toggled to off\n" );
++  }
++}
++
 +static void Cmd_QuickRestartOC_f( gentity_t *ent )
 +{
 +  if( !ent )
@@ -25029,7 +25069,7 @@ Index: src/game/g_cmds.c
  commands_t cmds[ ] = {
    // normal commands
    { "team", 0, Cmd_Team_f },
-@@ -2784,21 +6773,27 @@
+@@ -2784,21 +6794,27 @@
    { "tell", CMD_MESSAGE, Cmd_Tell_f },
    { "callvote", CMD_MESSAGE, Cmd_CallVote_f },
    { "callteamvote", CMD_MESSAGE|CMD_TEAM, Cmd_CallTeamVote_f },
@@ -25059,7 +25099,7 @@ Index: src/game/g_cmds.c
    { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
  
    { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
-@@ -2807,24 +6802,87 @@
+@@ -2807,24 +6823,88 @@
    { "ptrcverify", 0, Cmd_PTRCVerify_f },
    { "ptrcrestore", 0, Cmd_PTRCRestore_f },
  
@@ -25128,6 +25168,7 @@ Index: src/game/g_cmds.c
 +  { "testHidden", 0, Cmd_TestHidden_f },
 +//  { "normalTime", 0, Cmd_TimeDisplay_f },
 +  { "OCTime", 0, Cmd_TimeDisplay_f },
++  { "speedometer", 0, Cmd_Speedometer_f },
 +  { "teleboost", CMD_TEAM|CMD_LIVING, Cmd_TeleportToCheckpoint_f },
 +  { "quickRestartOC", CMD_TEAM|CMD_LIVING, Cmd_QuickRestartOC_f },
 +  { "EnableAutoAngle", CMD_TEAM|CMD_LIVING, Cmd_AutoAngle_f },
@@ -25158,7 +25199,7 @@ Index: src/game/g_cmds.c
  };
  static int numCmds = sizeof( cmds ) / sizeof( cmds[ 0 ] );
  
-@@ -2861,7 +6919,7 @@
+@@ -2861,7 +6941,7 @@
  
    // do tests here to reduce the amount of repeated code
  
@@ -25167,7 +25208,7 @@ Index: src/game/g_cmds.c
      return;
  
    if( cmds[ i ].cmdFlags & CMD_CHEAT && !g_cheats.integer )
-@@ -2872,7 +6930,11 @@
+@@ -2872,7 +6952,11 @@
    }
  
    if( cmds[ i ].cmdFlags & CMD_MESSAGE && ent->client->pers.muted )
@@ -25179,7 +25220,7 @@ Index: src/game/g_cmds.c
  
    if( cmds[ i ].cmdFlags & CMD_TEAM &&
        ent->client->pers.teamSelection == PTE_NONE )
-@@ -2881,7 +6943,8 @@
+@@ -2881,7 +6965,8 @@
      return;
    }
  
@@ -25189,7 +25230,7 @@ Index: src/game/g_cmds.c
        ent->client->pers.teamSelection != PTE_NONE )
    {
      trap_SendServerCommand( clientNum,
-@@ -2898,7 +6961,7 @@
+@@ -2898,7 +6983,7 @@
    }
  
    if( cmds[ i ].cmdFlags & CMD_HUMAN &&
@@ -25198,7 +25239,7 @@ Index: src/game/g_cmds.c
    {
      trap_SendServerCommand( clientNum,
        "print \"Must be human to use this command\n\"" );
-@@ -2907,13 +6970,19 @@
+@@ -2907,13 +6992,19 @@
  
    if( cmds[ i ].cmdFlags & CMD_LIVING &&
      ( ent->client->ps.stats[ STAT_HEALTH ] <= 0 ||
@@ -25219,7 +25260,7 @@ Index: src/game/g_cmds.c
    cmds[ i ].cmdHandler( ent );
  }
  
-@@ -2929,7 +6998,7 @@
+@@ -2929,7 +7020,7 @@
    {
      if( *s == ' ' )
      {
@@ -25228,7 +25269,7 @@ Index: src/game/g_cmds.c
        if( *s != ' ' )
        {
          c++;
-@@ -3019,7 +7088,7 @@
+@@ -3019,7 +7110,7 @@
  }
  
  void G_DecolorString( char *in, char *out )
@@ -25237,7 +25278,7 @@ Index: src/game/g_cmds.c
    while( *in ) {
      if( *in == 27 || *in == '^' ) {
        in++;
-@@ -3053,6 +7122,13 @@
+@@ -3053,6 +7144,13 @@
      return;
    }
  
@@ -25251,7 +25292,7 @@ Index: src/game/g_cmds.c
    G_SayArgv( 0, cmd, sizeof( cmd ) );
    if( !Q_stricmp( cmd, "say" ) || !Q_stricmp( cmd, "say_team" ) )
    {
-@@ -3102,6 +7178,17 @@
+@@ -3102,6 +7200,17 @@
  
    color = teamonly ? COLOR_CYAN : COLOR_YELLOW;
  
@@ -25269,7 +25310,7 @@ Index: src/game/g_cmds.c
    Q_strncpyz( str,
      va( "^%csent to %i player%s: ^7", color, matches,
        ( matches == 1 ) ? "" : "s" ),
-@@ -3123,13 +7210,7 @@
+@@ -3123,13 +7232,7 @@
        color,
        msg,
        ent ? ent-g_entities : -1 ) );
@@ -25284,7 +25325,7 @@ Index: src/game/g_cmds.c
        "cp \"^%cprivate message from ^7%s^7\"", color,
        ( ent ) ? ent->client->pers.netname : "console" ) );
    }
-@@ -3139,7 +7220,9 @@
+@@ -3139,7 +7242,9 @@
        name ) );
    else
    {
@@ -25295,7 +25336,7 @@ Index: src/game/g_cmds.c
      ADMP( va( "%s\n", str ) );
  
      G_LogPrintf( "%s: %s: %s: %s\n",
-@@ -3163,3 +7246,539 @@
+@@ -3163,3 +7268,539 @@
    }
  }
  
