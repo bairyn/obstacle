@@ -30,4 +30,7 @@ enum
 	gameMode_NULL
 };
 
-int oc_gameMode = gameMode_none;
+int oc_gameMode = gameMode_OC;
+
+#ifdef OC_GAME
+#endif /* ifdef OC_GAME */

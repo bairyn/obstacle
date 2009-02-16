@@ -876,8 +876,8 @@ void BG_InitBuildableConfigs( void )
     bc = BG_BuildableConfig( i );
     Com_Memset( bc, 0, sizeof( buildableConfig_t ) );
 
-    BG_ParseBuildableFile( va( "configs/buildables/%s.cfg",
-                               BG_Buildable( i )->name ), bc );
+    BG_ParseBuildableFile( va( "configs%s/buildables/%s.cfg",
+                               BG_Buildable( i )->name ), G_OCMode() ? "oc/" : "", bc );
   }
 }
 
@@ -1698,8 +1698,8 @@ void BG_InitClassConfigs( void )
   {
     cc = BG_ClassConfig( i );
 
-    BG_ParseClassFile( va( "configs/classes/%s.cfg",
-                           BG_Class( i )->name ), cc );
+    BG_ParseClassFile( va( "configs%s/classes/%s.cfg",
+                           BG_Class( i )->name ), G_OCMode() ? "oc/" : "", cc );
   }
 }
 
