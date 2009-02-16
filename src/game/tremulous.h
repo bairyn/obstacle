@@ -36,7 +36,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define _TREMULOUS_H
 
-#ifdef _G_OC_H
+// TREMULOUS_VALUE is here for 1.1 behaviour.  'd' is the
+// real value while 'o' is the 1.1 value for oc's
+//#ifdef _G_OC_H
+#ifdef AGJKAHSSSSSSSKGASGJKG
 #define TREMULOUS_VALUE(d, o) ((G_OCMode()) ? (d) : (o))
 #else
 #define TREMULOUS_VALUE(d, o) (d)
@@ -375,7 +378,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ALIEN_TK_SUICIDE_PENALTY    TREMULOUS_VALUE(350, 350)
 
 // Allow Aliens to wallwalk on any entity (buildables, etc) but not players
-#define ALIEN_WALLWALK_ENTITIESTREMULOUS_VALUE(, )
+//#define ALIEN_WALLWALK_ENTITIESTREMULOUS_VALUE(, )
 
 /*
  * HUMAN weapons
@@ -431,7 +434,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SHOTGUN_RELOAD              TREMULOUS_VALUE(2000, 2000)
 #define SHOTGUN_SPREAD              TREMULOUS_VALUE(900, 900)
 #define SHOTGUN_DMG                 TREMULOUS_VALUE(HDM(4), HDM(7))
-#define SHOTGUN_RANGE               TREMULOUS_VALUE((8192, (8192) * 12)
+#define SHOTGUN_RANGE               TREMULOUS_VALUE((8192 * 12), (8192 * 12))
 
 #define LASGUN_PRICE                TREMULOUS_VALUE(250, 250)
 #define LASGUN_AMMO                 TREMULOUS_VALUE(200, 200)
@@ -556,9 +559,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #define HUMAN_BHLTH_MODIFIER        TREMULOUS_VALUE(1.0f, 1.0f)
-#define HBHMTREMULOUS_VALUE((h), (h))                     ((int)((float)h*HUMAN_BHLTH_MODIFIER))
+#define HBHM(h)                     ((int)((float)h*HUMAN_BHLTH_MODIFIER))
 #define HUMAN_BVALUE_MODIFIER       TREMULOUS_VALUE(0.0f, 0.0f)
-#define HBVMTREMULOUS_VALUE((h), (h))                     ((int)((float)h*(float)HUMAN_BVALUE_MODIFIER)) // remember these are measured in credits not frags (c.f. ALIEN_CREDITS_PER_FRAG)
+#define HBVM(h)                     ((int)((float)h*(float)HUMAN_BVALUE_MODIFIER)) // remember these are measured in credits not frags (c.f. ALIEN_CREDITS_PER_FRAG)
 
 #define REACTOR_BASESIZE            TREMULOUS_VALUE(1000, 1000)
 #define REPEATER_BASESIZE           TREMULOUS_VALUE(500, 500)
@@ -678,7 +681,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define MIN_FALL_DISTANCE           TREMULOUS_VALUE(30.0f, 30.0f) //the fall distance at which fall damage kicks in
 #define MAX_FALL_DISTANCE           TREMULOUS_VALUE(120.0f, 120.0f) //the fall distance at which maximum damage is dealt
-#define AVG_FALL_DISTANCE           TREMULOUS_VALUE(((MIN_FALL_DISTANCE+MAX_FALL_DISTANCE), ((MIN_FALL_DISTANCE+MAX_FALL_DISTANCE))/2.0f)
+#define AVG_FALL_DISTANCE           TREMULOUS_VALUE(((MIN_FALL_DISTANCE+MAX_FALL_DISTANCE)/2.0f), ((MIN_FALL_DISTANCE+MAX_FALL_DISTANCE)/2.0f))
 
 #define FREEKILL_PERIOD             TREMULOUS_VALUE(120000, 120000) //msec
 #define FREEKILL_ALIEN              TREMULOUS_VALUE(ALIEN_CREDITS_PER_FRAG, ALIEN_CREDITS_PER_FRAG)

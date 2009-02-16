@@ -686,7 +686,7 @@ static qboolean PM_CheckWallJump( void )
     VectorMA( dir, upFraction, refNormal, dir );
     VectorNormalize( dir );
 
-    VectorMA( pm->ps->velocity, BG_FindJumpMagnitudeForClass( pm->ps->stats[ STAT_PCLASS ] ),
+    VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
               dir, pm->ps->velocity );
 
     //for a long run of wall jumps the velocity can get pretty large, this caps it

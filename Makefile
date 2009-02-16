@@ -1742,6 +1742,7 @@ CGOBJ_ = \
   $(B)/base/cgame/cg_ptr.o \
   $(B)/base/cgame/cg_tutorial.o \
   $(B)/base/ui/ui_shared.o \
+  $(B)/base/game/g_oc.o \
   \
   $(B)/base/qcommon/q_math.o \
   $(B)/base/qcommon/q_shared.o
@@ -1818,6 +1819,7 @@ UIOBJ_ = \
   $(B)/base/ui/ui_atoms.o \
   $(B)/base/ui/ui_shared.o \
   $(B)/base/ui/ui_gameinfo.o \
+  $(B)/base/game/g_oc.o \
   \
   $(B)/base/ui/bg_misc.o \
   $(B)/base/ui/bg_lib.o \
