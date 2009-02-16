@@ -32,14 +32,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
-#include "g_oc.h"
+#include "bg_oc.h"
 
 #define _TREMULOUS_H
 
 // TREMULOUS_VALUE is here for 1.1 behaviour.  'd' is the
 // real value while 'o' is the 1.1 value for oc's
-//#ifdef _G_OC_H
-#ifdef AGJKAHSSSSSSSKGASGJKG
+#ifdef _G_OC_H
 #define TREMULOUS_VALUE(d, o) ((G_OCMode()) ? (d) : (o))
 #else
 #define TREMULOUS_VALUE(d, o) (d)
