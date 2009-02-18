@@ -701,7 +701,7 @@ BG_ParseBuildableFile
 Parses a configuration file describing a buildable
 ======================
 */
-static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *bc )
+static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *bc, const char *buildableName )
 {
   char          *text_p;
   int           i;
@@ -838,29 +838,24 @@ static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *
       defined |= ZOFFSET;
       continue;
     }
-    else if( bc->humanName[ 0 ] )
+    // hack: redefine some constants
+    else if( !Q_stricmp( token, "bp" ) )
     {
-        // hackery:
-        // re-balance some stuff (for oc behaviour)
-        if(0);
-        else if( !Q_stricmp( token, "bp" ) )
-        {
-          token = COM_Parse( &text_p );
-          BG_BuildableByName(bc->humanName)->buildPoints = atoi( token );
-          continue;
-        }
-        else if( !Q_stricmp( token, "splashRadius" ) )
-        {
-          token = COM_Parse( &text_p );
-          BG_BuildableByName(bc->humanName)->splashRadius = atoi( token );
-          continue;
-        }
-        else if( !Q_stricmp( token, "value" ) )
-        {
-          token = COM_Parse( &text_p );
-          BG_BuildableByName(bc->humanName)->value = atoi( token );
-          continue;
-        }
+      token = COM_Parse( &text_p );
+      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->buildPoints = atoi( token );
+      continue;
+    }
+    else if( !Q_stricmp( token, "splashRadius" ) )
+    {
+      token = COM_Parse( &text_p );
+      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->splashRadius = atoi( token );
+      continue;
+    }
+    else if( !Q_stricmp( token, "value" ) )
+    {
+      token = COM_Parse( &text_p );
+      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->value = atoi( token );
+      continue;
     }
 
 
@@ -901,7 +896,7 @@ void BG_InitBuildableConfigs( void )
     Com_Memset( bc, 0, sizeof( buildableConfig_t ) );
 
     BG_ParseBuildableFile( va( "configs%s/buildables/%s.cfg",
-                               G_OCMode() ? "/oc" : "", BG_Buildable( i )->name ), bc );
+                               G_OCMode() ? "/oc" : "", BG_Buildable( i )->name ), bc, BG_Buildable( i )->name );
   }
 }
 
@@ -1442,7 +1437,7 @@ BG_ParseClassFile
 Parses a configuration file describing a class
 ======================
 */
-static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc )
+static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc, const char *className )
 {
   char          *text_p;
   int           i;
@@ -1676,35 +1671,30 @@ static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc )
       defined |= NAME;
       continue;
     }
-    else if( cc->humanName[ 0 ] )
+    // hack: redefine some constants
+    else if( !Q_stricmp( token, "health" ) )
     {
-        // hackery:
-        // re-balance some stuff (for oc behaviour); name must be defined first
-        if(0);
-        else if( !Q_stricmp( token, "health" ) )
-        {
-          token = COM_Parse( &text_p );
-          BG_ClassByName(cc->humanName)->health = atoi( token );
-          continue;
-        }
-        else if( !Q_stricmp( token, "value" ) )
-        {
-          token = COM_Parse( &text_p );
-          BG_ClassByName(cc->humanName)->value = atoi( token );
-          continue;
-        }
-        else if( !Q_stricmp( token, "regen" ) )
-        {
-          token = COM_Parse( &text_p );
-          BG_ClassByName(cc->humanName)->regenRate = atoi( token );
-          continue;
-        }
-        else if( !Q_stricmp( token, "speed" ) )
-        {
-          token = COM_Parse( &text_p );
-          BG_ClassByName(cc->humanName)->speed = atof( token );
-          continue;
-        }
+      token = COM_Parse( &text_p );
+      ((classAttributes_t *)(BG_ClassByName(className)))->health = atoi( token );
+      continue;
+    }
+    else if( !Q_stricmp( token, "value" ) )
+    {
+      token = COM_Parse( &text_p );
+      ((classAttributes_t *)(BG_ClassByName(className)))->value = atoi( token );
+      continue;
+    }
+    else if( !Q_stricmp( token, "regen" ) )
+    {
+      token = COM_Parse( &text_p );
+      ((classAttributes_t *)(BG_ClassByName(className)))->regenRate = atoi( token );
+      continue;
+    }
+    else if( !Q_stricmp( token, "speed" ) )
+    {
+      token = COM_Parse( &text_p );
+      ((classAttributes_t *)(BG_ClassByName(className)))->speed = atof( token );
+      continue;
     }
 
 
@@ -1753,7 +1743,7 @@ void BG_InitClassConfigs( void )
     cc = BG_ClassConfig( i );
 
     BG_ParseClassFile( va( "configs%s/classes/%s.cfg",
-                           G_OCMode() ? "/oc" : "", BG_Class( i )->name ), cc );
+                           G_OCMode() ? "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
   }
 }
 
@@ -2486,8 +2476,7 @@ the weapon's constant data
 */
 static qboolean BG_ParseWeaponFile( const char *filename, const char *weaponName )
 {
-  char          *text_p, name_p;
-  int           i;
+  char          *text_p;
   int           len;
   char          *token;
   char          text[ 20000 ];
@@ -2534,48 +2523,38 @@ static qboolean BG_ParseWeaponFile( const char *filename, const char *weaponName
 
       continue;
     }
-//    else if( name[ 0 ] )
-    else
+    // hack: redefine some constants
+    else if( !Q_stricmp( token, "repeat" ) || !Q_stricmp( token, "repeat1" ) )
     {
-      name_p = name;
+      token = COM_Parse( &text_p );
+      if( !token )
+        break;
 
-      if( !*name_p)
-      {
-        name_p = weaponName;
-      }
+      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate1 = atoi( token );
 
-      if( 0 );
-      else if( !Q_stricmp( token, "repeat" ) || !Q_stricmp( token, "repeat1" ) )
-      {
-        token = COM_Parse( &text_p );
-        if( !token )
-          break;
-
-        BG_WeaponByName( name_p )->repeatRate1 = atoi( token );
-
-        continue;
-      }
-      else if( !Q_stricmp( token, "repeat2" ) )
-      {
-        token = COM_Parse( &text_p );
-        if( !token )
-          break;
-
-        BG_WeaponByName( name_p )->repeatRate2 = atoi( token );
-
-        continue;
-      }
-      else if( !Q_stricmp( token, "repeat3" ) )
-      {
-        token = COM_Parse( &text_p );
-        if( !token )
-          break;
-
-        BG_WeaponByName( name_p )->repeatRate3 = atoi( token );
-
-        continue;
-      }
+      continue;
     }
+    else if( !Q_stricmp( token, "repeat2" ) )
+    {
+      token = COM_Parse( &text_p );
+      if( !token )
+        break;
+
+      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate2 = atoi( token );
+
+      continue;
+    }
+    else if( !Q_stricmp( token, "repeat3" ) )
+    {
+      token = COM_Parse( &text_p );
+      if( !token )
+        break;
+
+      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate3 = atoi( token );
+
+      continue;
+    }
+
 
     Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
     return qfalse;
@@ -2589,7 +2568,7 @@ static qboolean BG_ParseWeaponFile( const char *filename, const char *weaponName
 BG_InitWeaponConfigs
 ===============
 */
-void BG_InitClassConfigs( void )
+void BG_InitWeaponConfigs( void )
 {
   int i;
 
