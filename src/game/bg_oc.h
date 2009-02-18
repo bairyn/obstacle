@@ -29,9 +29,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define G_OCMode() ((oc_gameMode) ? (1) : (0))
 
+// some constants need to be defined at compile time
+#define TREMULOUS_VALUE(d, o) ((G_OCMode()) ? (o) : (d))
+
 extern int oc_gameMode;
 
 #ifdef OC_GAME
 #endif /* ifdef OC_GAME */
+
+#ifdef OC_CGAME
+#endif /* ifdef OC_CGAME */
 
 #endif /* ifndef _G_OC_H */

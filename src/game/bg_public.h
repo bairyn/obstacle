@@ -26,6 +26,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //tremulous balance header
 #include "tremulous.h"
 
+//oc stuff
+#include "bg_oc.h"
+
 // because games can change separately from the main system version, we need a
 // second version that must match between game and cgame
 #define GAME_VERSION            "base"
@@ -1140,6 +1143,7 @@ int                         BG_ClassCanEvolveFromTo( class_t fclass,
                                                      int cost );
 
 void                        BG_InitClassConfigs( void );
+void                        BG_InitWeaponConfigs( void );
 
 const weaponAttributes_t    *BG_WeaponByName( const char *name );
 const weaponAttributes_t    *BG_Weapon( weapon_t weapon );

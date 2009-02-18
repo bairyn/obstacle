@@ -4,6 +4,10 @@
 # GNU Make required
 #
 
+
+GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
+OCFLAGS=-DGAMESUM=$(GAMESUM)
+
 COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]')
 
 COMPILE_ARCH=$(shell uname -m | sed -e s/i.86/x86/)
@@ -1089,14 +1093,14 @@ default: release
 all: debug release
 
 debug:
-	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) $(OCFLAGS) $(DEPEND_CFLAGS) \
 		$(DEBUG_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) debug VERSION=$(VERSION_NUMBER)
 endif
 
 release:
-	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) $(OCFLAGS) $(DEPEND_CFLAGS) \
 		$(RELEASE_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) release VERSION=$(VERSION_NUMBER)
