@@ -1095,11 +1095,15 @@ poisonCloud
 void poisonCloud( gentity_t *ent )
 {
   int       entityList[ MAX_GENTITIES ];
-  vec3_t    range = { LEVEL1_PCLOUD_RANGE, LEVEL1_PCLOUD_RANGE, LEVEL1_PCLOUD_RANGE };
+  vec3_t    range;
   vec3_t    mins, maxs;
   int       i, num;
   gentity_t *humanPlayer;
   trace_t   tr;
+
+  range[ 0 ] = LEVEL1_PCLOUD_RANGE;
+  range[ 1 ] = LEVEL1_PCLOUD_RANGE;
+  range[ 2 ] = LEVEL1_PCLOUD_RANGE;
 
   VectorAdd( ent->client->ps.origin, range, maxs );
   VectorSubtract( ent->client->ps.origin, range, mins );
