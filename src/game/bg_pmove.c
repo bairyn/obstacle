@@ -640,6 +640,40 @@ static qboolean PM_CheckWallJump( void )
 
   if(G_OCMode())
   {
+    if( !( BG_Class( pm->ps->stats[ STAT_CLASS ] )->abilities & SCA_WALLJUMPER ) )
+      return qfalse;
+
+    ProjectPointOnPlane( movedir, pml.forward, refNormal );
+    VectorNormalize( movedir );
+    
+    if( pm->cmd.forwardmove < 0 )
+      VectorNegate( movedir, movedir );
+    
+    //allow strafe transitions
+    if( pm->cmd.rightmove )
+    {
+      VectorCopy( pml.right, movedir );
+      
+      if( pm->cmd.rightmove < 0 )
+        VectorNegate( movedir, movedir );
+    }
+    
+    //trace into direction we are moving
+    VectorMA( pm->ps->origin, 0.25f, movedir, point );
+    pm->trace( &trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask );
+    
+    if( trace.fraction < 1.0f &&
+        !( trace.surfaceFlags & ( SURF_SKY | SURF_SLICK ) ) &&
+        trace.plane.normal[ 2 ] < MIN_WALK_NORMAL )
+    {
+      if( !VectorCompare( trace.plane.normal, pm->ps->grapplePoint ) )
+      {
+        VectorCopy( trace.plane.normal, pm->ps->grapplePoint );
+      }
+    }
+    else
+      return qfalse;
+    
     if( pm->ps->pm_flags & PMF_RESPAWNED )
       return qfalse;    // don't allow jump until all buttons are up
 
