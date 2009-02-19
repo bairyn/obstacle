@@ -22,6 +22,16 @@ if ! cp -R ./configs build/release-linux-x86/base/configs; then
 	exit
 fi
 
+if [ -d "build/release-linux-x86/base/ui" ]; then
+	if ! rm -r build/release-linux-x86/base/ui; then
+		exit
+	fi
+fi
+
+if ! cp -R ./ui build/release-linux-x86/base/ui; then
+	exit
+fi
+
 if ! cp build/release-linux-x86/base/vm/game.qvm ~/.tremulousoc/oc/vm/; then
 	exit
 fi
@@ -34,7 +44,7 @@ if ! cd build/release-linux-x86/base/; then
 	exit
 fi
 
-if [ -d ${1}.pk3 ]; then
+if [ -e ${1}.pk3 ]; then
 	if ! rm ${1}.pk3; then
 		exit
 	fi
