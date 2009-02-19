@@ -27,12 +27,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #error tremulous.h was included before g_oc.h
 #endif /* ifndef _TREMULOUS_H */
 
-#define G_OCMode() ((oc_gameMode) ? (1) : (0))
+#define BG_OCMode() ((oc_gameMode) ? (1) : (0))
 
 // some constants need to be defined at compile time
-#define TREMULOUS_VALUE(d, o) ((G_OCMode()) ? (o) : (d))
+#define TREMULOUS_VALUE(d, o) ((BG_OCMode()) ? (o) : (d))
 
 extern int oc_gameMode;
+
+#define BG_OCPmove_jump() ((BG_OCMode()) ? (1) : (1))  // TODO: let height be lost
 
 #ifdef OC_GAME
 #endif /* ifdef OC_GAME */

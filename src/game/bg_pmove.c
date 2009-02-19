@@ -945,6 +945,7 @@ static qboolean PM_CheckJump( void )
   BG_GetClientNormal( pm->ps, normal );
   
   if( pm->ps->velocity[ 2 ] < 0 )
+  if( BG_OCPmove_jump() )
     pm->ps->velocity[ 2 ] = 0;
   VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
             normal, pm->ps->velocity );
