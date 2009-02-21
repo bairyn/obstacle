@@ -896,7 +896,7 @@ void BG_InitBuildableConfigs( void )
     Com_Memset( bc, 0, sizeof( buildableConfig_t ) );
 
     BG_ParseBuildableFile( va( "configs%s/buildables/%s.cfg",
-                               G_OCMode() ? "/oc" : "", BG_Buildable( i )->name ), bc, BG_Buildable( i )->name );
+                               BG_OC_OCMode() ? "/oc" : "", BG_Buildable( i )->name ), bc, BG_Buildable( i )->name );
   }
 }
 
@@ -1696,6 +1696,12 @@ static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc, cons
       ((classAttributes_t *)(BG_ClassByName(className)))->speed = atof( token );
       continue;
     }
+    else if( !Q_stricmp( token, "jump" ) )
+    {
+      token = COM_Parse( &text_p );
+      ((classAttributes_t *)(BG_ClassByName(className)))->jumpMagnitude = atof( token );
+      continue;
+    }
 
 
     Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
@@ -1743,7 +1749,7 @@ void BG_InitClassConfigs( void )
     cc = BG_ClassConfig( i );
 
     BG_ParseClassFile( va( "configs%s/classes/%s.cfg",
-                           G_OCMode() ? "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
+                           BG_OC_OCMode() ? "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
   }
 }
 
@@ -2572,7 +2578,7 @@ void BG_InitWeaponConfigs( void )
 {
   int i;
 
-  if( G_OCMode() )
+  if( BG_OC_OCMode() )
   {
     for( i = WP_NONE; i < WP_NUM_WEAPONS; i++ )
     {

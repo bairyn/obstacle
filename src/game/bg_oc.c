@@ -20,7 +20,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#define OC_CGAME
+#define OC_GAME
+#define OC_BGAME
+
+#include "../qcommon/q_shared.h"
+#include "bg_public.h"
+#include "bg_local.h"
 #include "g_local.h"
+#include "bg_oc.h"
 
 enum
 {
@@ -31,6 +39,4 @@ enum
 };
 
 int oc_gameMode = gameMode_OC;
-
-#ifdef OC_GAME
-#endif /* ifdef OC_GAME */
+int oc_heightNeverLost = 0;  // if the layout being played has a certain flag then this will be set.

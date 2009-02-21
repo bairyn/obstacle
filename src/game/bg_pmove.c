@@ -588,12 +588,19 @@ static qboolean PM_CheckPounce( void )
   pml.walking = qfalse;
   pm->ps->pm_flags |= PMF_CHARGE;
   pm->ps->groundEntityNum = ENTITYNUM_NONE;
-  if( pm->ps->weapon == WP_ALEVEL3 )
-    jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
-                    LEVEL3_POUNCE_JUMP_MAG / LEVEL3_POUNCE_TIME;
+  if( BG_OC_PMOCPounce() )
+  {
+    BG_OC_PMPounce();
+  }
   else
-    jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
-                    LEVEL3_POUNCE_JUMP_MAG_UPG / LEVEL3_POUNCE_TIME_UPG;
+  {
+    if( pm->ps->weapon == WP_ALEVEL3 )
+      jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
+                      LEVEL3_POUNCE_JUMP_MAG / LEVEL3_POUNCE_TIME;
+    else
+      jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
+                      LEVEL3_POUNCE_JUMP_MAG_UPG / LEVEL3_POUNCE_TIME_UPG;
+  }
   VectorMA( pm->ps->velocity, jumpMagnitude, pml.forward, pm->ps->velocity );
   PM_AddEvent( EV_JUMP );
 
@@ -638,120 +645,9 @@ static qboolean PM_CheckWallJump( void )
   float   upFraction = 1.5f;
   trace_t trace;
 
-  if(G_OCMode())
+  if(BG_OC_PMOCWallJump())
   {
-    if( !( BG_Class( pm->ps->stats[ STAT_CLASS ] )->abilities & SCA_WALLJUMPER ) )
-      return qfalse;
-
-    ProjectPointOnPlane( movedir, pml.forward, refNormal );
-    VectorNormalize( movedir );
-    
-    if( pm->cmd.forwardmove < 0 )
-      VectorNegate( movedir, movedir );
-    
-    //allow strafe transitions
-    if( pm->cmd.rightmove )
-    {
-      VectorCopy( pml.right, movedir );
-      
-      if( pm->cmd.rightmove < 0 )
-        VectorNegate( movedir, movedir );
-    }
-    
-    //trace into direction we are moving
-    VectorMA( pm->ps->origin, 0.25f, movedir, point );
-    pm->trace( &trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask );
-    
-    if( trace.fraction < 1.0f &&
-        !( trace.surfaceFlags & ( SURF_SKY | SURF_SLICK ) ) &&
-        trace.plane.normal[ 2 ] < MIN_WALK_NORMAL )
-    {
-      if( !VectorCompare( trace.plane.normal, pm->ps->grapplePoint ) )
-      {
-        VectorCopy( trace.plane.normal, pm->ps->grapplePoint );
-      }
-    }
-    else
-      return qfalse;
-    
-    if( pm->ps->pm_flags & PMF_RESPAWNED )
-      return qfalse;    // don't allow jump until all buttons are up
-
-    if( pm->cmd.upmove < 10 )
-      // not holding jump
-      return qfalse;
-
-    if( pm->ps->pm_flags & PMF_TIME_WALLJUMP )
-      return qfalse;
-
-    // must wait for jump to be released
-    if( pm->ps->pm_flags & PMF_JUMP_HELD &&
-        pm->ps->grapplePoint[ 2 ] == 1.0f )
-    {
-      // clear upmove so cmdscale doesn't lower running speed
-      pm->cmd.upmove = 0;
-      return qfalse;
-    }
-
-    pm->ps->pm_flags |= PMF_TIME_WALLJUMP;
-    pm->ps->pm_time = 200;
-
-    pml.groundPlane = qfalse;   // jumping away
-    pml.walking = qfalse;
-    pm->ps->pm_flags |= PMF_JUMP_HELD;
-
-    pm->ps->groundEntityNum = ENTITYNUM_NONE;
-
-    ProjectPointOnPlane( forward, pml.forward, pm->ps->grapplePoint );
-    ProjectPointOnPlane( right, pml.right, pm->ps->grapplePoint );
-
-    VectorScale( pm->ps->grapplePoint, normalFraction, dir );
-
-    if( pm->cmd.forwardmove > 0 )
-      VectorMA( dir, cmdFraction, forward, dir );
-    else if( pm->cmd.forwardmove < 0 )
-      VectorMA( dir, -cmdFraction, forward, dir );
-
-    if( pm->cmd.rightmove > 0 )
-      VectorMA( dir, cmdFraction, right, dir );
-    else if( pm->cmd.rightmove < 0 )
-      VectorMA( dir, -cmdFraction, right, dir );
-
-    VectorMA( dir, upFraction, refNormal, dir );
-    VectorNormalize( dir );
-
-    VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
-              dir, pm->ps->velocity );
-
-    //for a long run of wall jumps the velocity can get pretty large, this caps it
-    if( VectorLength( pm->ps->velocity ) > LEVEL2_WALLJUMP_MAXSPEED )
-    {
-      VectorNormalize( pm->ps->velocity );
-      VectorScale( pm->ps->velocity, LEVEL2_WALLJUMP_MAXSPEED, pm->ps->velocity );
-    }
-
-    PM_AddEvent( EV_JUMP );
-
-    if( pm->cmd.forwardmove >= 0 )
-    {
-      if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
-        PM_ForceLegsAnim( LEGS_JUMP );
-      else
-        PM_ForceLegsAnim( NSPA_JUMP );
-
-      pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-    }
-    else
-    {
-      if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
-        PM_ForceLegsAnim( LEGS_JUMPB );
-      else
-        PM_ForceLegsAnim( NSPA_JUMPBACK );
-
-      pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
-    }
-
-    return qtrue;
+    BG_OC_PMCheckWallJump();
   }
   else
   {
@@ -945,7 +841,7 @@ static qboolean PM_CheckJump( void )
   BG_GetClientNormal( pm->ps, normal );
   
   if( pm->ps->velocity[ 2 ] < 0 )
-  if( BG_OCPmove_jump() )
+  if( BG_OC_PMZeroJump() )
     pm->ps->velocity[ 2 ] = 0;
   VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
             normal, pm->ps->velocity );
@@ -2414,6 +2310,12 @@ static void PM_GroundTrace( void )
       PM_GroundTraceMissed( );
       pml.groundPlane = qfalse;
       pml.walking = qfalse;
+
+      if( BG_OC_PMOCGroundTraceWallJump() )
+      {
+        BG_OC_PMGroundTraceWallJump();
+      }
+
       return;
     }
   }
