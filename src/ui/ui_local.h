@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
  
-This file is part of Tremfusion.
+This file is part of Tremulous.
  
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
  
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -256,9 +256,8 @@ typedef struct
   int         helpCount;
   int         helpIndex;
 
-  int         weapon;
+  int         weapons;
   int         upgrades;
-  int         credits;
 
   serverStatus_t serverStatus;
 
@@ -278,15 +277,10 @@ typedef struct
 
   resolution_t  resolutions[ MAX_RESOLUTIONS ];
   int numResolutions;
-  qboolean oldResolutions;
 
   qboolean inGameLoad;
 
   qboolean  chatTeam;
-  qboolean  chatAdmins;
-  qboolean  chatClan;
-  qboolean  chatPrompt;
-  char      chatPromptCallback[ MAX_STRING_CHARS ];
   int       chatTargetClientNum;
 }
 uiInfo_t;
@@ -300,6 +294,7 @@ void      UI_SetColor( const float *rgba );
 void      UI_AdjustFrom640( float *x, float *y, float *w, float *h );
 void      UI_Refresh( int time );
 void      UI_DrawHandlePic( float x, float y, float w, float h, qhandle_t hShader );
+void      UI_FillRect( float x, float y, float width, float height, const float *color );
 
 //
 // ui_syscalls.c
@@ -384,8 +379,5 @@ int        trap_RealTime( qtime_t *qtime );
 void      trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );
 
 void      trap_SetPbClStatus( int status );
-
-int        trap_CrosshairPlayer( void );
-int        trap_LastAttacker( void );
 
 #endif

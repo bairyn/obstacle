@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -65,7 +65,7 @@ static void SV_Netchan_Encode( client_t *client, msg_t *msg ) {
 		// modify the key with the last received and with this message acknowledged client command
 		if (!string[index])
 			index = 0;
-		if (string[index] > 127 || string[index] == '%') {
+		if (string[index] > 127) {
 			key ^= '.' << (i & 1);
 		}
 		else {
@@ -115,7 +115,7 @@ static void SV_Netchan_Decode( client_t *client, msg_t *msg ) {
 		// modify the key with the last sent and acknowledged server command
 		if (!string[index])
 			index = 0;
-		if (string[index] > 127 || string[index] == '%') {
+		if (string[index] > 127) {
 			key ^= '.' << (i & 1);
 		}
 		else {
@@ -133,23 +133,7 @@ SV_Netchan_TransmitNextFragment
 =================
 */
 void SV_Netchan_TransmitNextFragment( client_t *client ) {
-
-	int delay = 0;
-	
-	if( client->ping < sv_minPing->integer && client->lastCheck <= svs.time  )
-	{
-		client->delayRate += 5;
-		client->lastCheck = svs.time + 750;
-	}
-	else if( client->ping >= sv_minPing->integer && client->delayRate != 0  && client->lastCheck <= svs.time )
-	{
-		client->delayRate -= 5;
-		client->lastCheck = svs.time + 750;
-	}
-	
-	delay = client->delayRate;
-	
-	Netchan_TransmitNextFragment( &client->netchan, delay );
+	Netchan_TransmitNextFragment( &client->netchan );
 	if (!client->netchan.unsentFragments)
 	{
 		// make sure the netchan queue has been properly initialized (you never know)
@@ -162,7 +146,7 @@ void SV_Netchan_TransmitNextFragment( client_t *client ) {
 			Com_DPrintf("#462 Netchan_TransmitNextFragment: popping a queued message for transmit\n");
 			netbuf = client->netchan_start_queue;
 			SV_Netchan_Encode( client, &netbuf->msg );
-			Netchan_Transmit( &client->netchan, netbuf->msg.cursize, netbuf->msg.data, delay );
+			Netchan_Transmit( &client->netchan, netbuf->msg.cursize, netbuf->msg.data );
 			// pop from queue
 			client->netchan_start_queue = netbuf->next;
 			if (!client->netchan_start_queue) {
@@ -189,22 +173,6 @@ then buffer them and make sure they get sent in correct order
 */
 
 void SV_Netchan_Transmit( client_t *client, msg_t *msg) {	//int length, const byte *data ) {
-
-	int delay = 0;
-	
-	if( client->ping < sv_minPing->integer && client->lastCheck <= svs.time  )
-	{
-		client->delayRate += 5;
-		client->lastCheck = svs.time + 750;
-	}
-	else if( client->ping >= sv_minPing->integer && client->delayRate != 0  && client->lastCheck <= svs.time )
-	{
-		client->delayRate -= 5;
-		client->lastCheck = svs.time + 750;
-	}
-	
-	delay = client->delayRate;
-	
 	MSG_WriteByte( msg, svc_EOF );
 	if (client->netchan.unsentFragments) {
 		netchan_buffer_t *netbuf;
@@ -217,10 +185,10 @@ void SV_Netchan_Transmit( client_t *client, msg_t *msg) {	//int length, const by
 		*client->netchan_end_queue = netbuf;
 		client->netchan_end_queue = &(*client->netchan_end_queue)->next;
 		// emit the next fragment of the current message for now
-		Netchan_TransmitNextFragment(&client->netchan, delay);
+		Netchan_TransmitNextFragment(&client->netchan);
 	} else {
 		SV_Netchan_Encode( client, msg );
-		Netchan_Transmit( &client->netchan, msg->cursize, msg->data, delay );
+		Netchan_Transmit( &client->netchan, msg->cursize, msg->data );
 	}
 }
 

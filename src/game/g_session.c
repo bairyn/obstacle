@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -53,7 +53,7 @@ void G_WriteClientSessionData( gclient_t *client )
     BG_ClientListString( &client->sess.ignoreList )
     );
 
-  var = va( "session%i", (int)(client - level.clients) );
+  var = va( "session%i", client - level.clients );
 
   trap_Cvar_Set( var, s );
 }
@@ -71,7 +71,7 @@ void G_ReadSessionData( gclient_t *client )
   const char  *var;
   int spectatorState;
 
-  var = va( "session%i", (int)(client - level.clients) );
+  var = va( "session%i", client - level.clients );
   trap_Cvar_VariableStringBuffer( var, s, sizeof(s) );
 
   // FIXME: should be using BG_ClientListParse() for ignoreList, but
@@ -142,9 +142,4 @@ void G_WriteSessionData( void )
     if( level.clients[ i ].pers.connected == CON_CONNECTED )
       G_WriteClientSessionData( &level.clients[ i ] );
   }
-
-  // write values for sv_maxclients and sv_democlients because they invalidate session data
-  trap_Cvar_Set( "session", va( "%i %i", 
-                 trap_Cvar_VariableIntegerValue( "sv_maxclients" ),
-                 trap_Cvar_VariableIntegerValue( "sv_democlients" ) ) );
 }

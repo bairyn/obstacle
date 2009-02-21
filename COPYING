@@ -22,4 +22,3 @@ is contained within the files as listed.
     src/game/bg_lib.c                                            BSD license
     src/client/snd_adpcm.c            Stichting Mathematisch Centrum license
     src/jpeg-6/*                                                JPEG license
-    src/ogg_vorbis/*                                             OGG license

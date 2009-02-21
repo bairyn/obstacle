@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -262,9 +262,7 @@ void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEnti
 					   playerState_t *clients, int sizeofGameClient ) {
 	sv.gentities = gEnts;
 	sv.gentitySize = sizeofGEntity_t;
-
-	if ( sv.num_entities < numGEntities )
-		sv.num_entities = numGEntities;
+	sv.num_entities = numGEntities;
 
 	sv.gameClients = clients;
 	sv.gameClientSize = sizeofGameClient;
@@ -287,9 +285,14 @@ void SV_GetUsercmd( int clientNum, usercmd_t *cmd ) {
 //==============================================
 
 static int	FloatAsInt( float f ) {
-	floatint_t fi;
-	fi.f = f;
-	return fi.i;
+	union
+	{
+	    int i;
+	    float f;
+	} temp;
+	
+	temp.f = f;
+	return temp.i;
 }
 
 /*
@@ -316,7 +319,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		Cvar_Update( VMA(1) );
 		return 0;
 	case G_CVAR_SET:
-		Cvar_SetSafe( (const char *)VMA(1), (const char *)VMA(2) );
+		Cvar_Set( (const char *)VMA(1), (const char *)VMA(2) );
 		return 0;
 	case G_CVAR_VARIABLE_INTEGER_VALUE:
 		return Cvar_VariableIntegerValue( (const char *)VMA(1) );
@@ -430,16 +433,6 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 
 	case G_SEND_GAMESTAT:
 		SV_MasterGameStat( VMA(1) );
-		return 0;
-
-	case G_DEMO_COMMAND:
-		if ( sv.demoState == DS_RECORDING )
-		{
-			if ( args[1] == -1 )
-				SV_DemoWriteServerCommand( VMA(2) );
-			else
-				SV_DemoWriteGameCommand( args[1], VMA(2) );
-		}
 		return 0;
 
 	//====================================

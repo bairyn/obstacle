@@ -56,7 +56,7 @@ extern "C" {
    header should only be included in files that actually use them.
 */
 #if defined(__GNUC__) && defined(__i386__) && \
-   !(__GNUC__ == 2 && __GNUC_MINOR__ <= 95 /* broken gcc version */)
+   !(__GNUC__ == 2 && __GNUC_MINOR__ == 95 /* broken gcc version */)
 static __inline__ Uint16 SDL_Swap16(Uint16 x)
 {
 	__asm__("xchgb %b0,%h0" : "=q" (x) :  "0" (x));
@@ -88,8 +88,7 @@ static __inline__ Uint16 SDL_Swap16(Uint16 x) {
 }
 #endif
 
-#if defined(__GNUC__) && defined(__i386__) && \
-   !(__GNUC__ == 2 && __GNUC_MINOR__ <= 95 /* broken gcc version */)
+#if defined(__GNUC__) && defined(__i386__)
 static __inline__ Uint32 SDL_Swap32(Uint32 x)
 {
 	__asm__("bswap %0" : "=r" (x) : "0" (x));
@@ -124,8 +123,7 @@ static __inline__ Uint32 SDL_Swap32(Uint32 x) {
 #endif
 
 #ifdef SDL_HAS_64BIT_TYPE
-#if defined(__GNUC__) && defined(__i386__) && \
-   !(__GNUC__ == 2 && __GNUC_MINOR__ <= 95 /* broken gcc version */)
+#if defined(__GNUC__) && defined(__i386__)
 static __inline__ Uint64 SDL_Swap64(Uint64 x)
 {
 	union { 

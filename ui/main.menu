@@ -31,7 +31,7 @@
     background "ui/assets/mainmenu.jpg"
     aspectBias ASPECT_NONE
 
-    onOpen { uiScript stopRefresh ; playlooped "sound/ui/heartbeat.ogg" }
+    onOpen { uiScript stopRefresh ; playlooped "sound/ui/heartbeat.wav" }
     onESC { open quit_popmenu }
 
     itemDef

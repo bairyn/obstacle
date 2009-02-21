@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -873,9 +873,6 @@ typedef struct {
 	byte		color2D[4];
 	qboolean	vertexes2D;		// shader needs to be finished
 	trRefEntity_t	entity2D;	// currentEntity will point at this when doing 2D rendering
-	qboolean	doneBloom;		// done bloom this frame
-	qboolean	doneSurfaces;   // done any 3d surfaces already
-	
 } backEndState_t;
 
 /*
@@ -1026,11 +1023,6 @@ extern cvar_t	*r_drawSun;				// controls drawing of sun quad
 extern cvar_t	*r_dynamiclight;		// dynamic lights enabled/disabled
 extern cvar_t	*r_dlightBacks;			// dlight non-facing surfaces for continuity
 
-extern cvar_t	*r_minEntityLight;		// minimum entity light value
-
-extern cvar_t	*r_specularLighting;		// extra specular pass for default shader
-extern cvar_t	*r_specularLightingExponent;	// specular exponent for extra pass
-
 extern	cvar_t	*r_norefresh;			// bypasses the ref rendering
 extern	cvar_t	*r_drawentities;		// disable/enable entity rendering
 extern	cvar_t	*r_drawworld;			// disable/enable world rendering
@@ -1046,14 +1038,7 @@ extern cvar_t	*r_width;
 extern cvar_t	*r_height;
 extern cvar_t	*r_pixelAspect;
 
-// compatibility
-extern cvar_t   *r_mode;
-extern cvar_t	*r_customwidth;
-extern cvar_t	*r_customheight;
-extern cvar_t	*r_custompixelAspect;
-
 extern cvar_t	*r_fullscreen;
-extern cvar_t	*r_minimize;
 extern cvar_t	*r_gamma;
 extern cvar_t	*r_displayRefresh;		// optional display refresh option
 extern cvar_t	*r_ignorehwgamma;		// overrides hardware gamma capabilities
@@ -1126,9 +1111,6 @@ extern	cvar_t	*r_printShaders;
 extern	cvar_t	*r_saveFontData;
 
 extern	cvar_t	*r_GLlibCoolDownMsec;
-
-extern	cvar_t	*r_celshadalgo;					// Cell shading, chooses method: 0 = disabled, 1 = kuwahara, 2 = whiteTexture
-extern	cvar_t	*r_celoutline;						//. cel outline. 1 on, 0 off. (maybe other options later)
 
 //====================================================================
 
@@ -1315,16 +1297,16 @@ typedef struct stageVars
 
 typedef struct shaderCommands_s 
 {
-	glIndex_t	indexes[SHADER_MAX_INDEXES] ALIGNED(16);
-	vec4_t		xyz[SHADER_MAX_VERTEXES] ALIGNED(16);
-	vec4_t		normal[SHADER_MAX_VERTEXES] ALIGNED(16);
-	vec2_t		texCoords[SHADER_MAX_VERTEXES][2] ALIGNED(16);
-	color4ub_t	vertexColors[SHADER_MAX_VERTEXES] ALIGNED(16);
-	int			vertexDlightBits[SHADER_MAX_VERTEXES] ALIGNED(16);
+	glIndex_t	indexes[SHADER_MAX_INDEXES] ALIGN(16);
+	vec4_t		xyz[SHADER_MAX_VERTEXES] ALIGN(16);
+	vec4_t		normal[SHADER_MAX_VERTEXES] ALIGN(16);
+	vec2_t		texCoords[SHADER_MAX_VERTEXES][2] ALIGN(16);
+	color4ub_t	vertexColors[SHADER_MAX_VERTEXES] ALIGN(16);
+	int			vertexDlightBits[SHADER_MAX_VERTEXES] ALIGN(16);
 
-	stageVars_t	svars ALIGNED(16);
+	stageVars_t	svars ALIGN(16);
 
-	color4ub_t	constantColor255[SHADER_MAX_VERTEXES] ALIGNED(16);
+	color4ub_t	constantColor255[SHADER_MAX_VERTEXES] ALIGN(16);
 
 	shader_t	*shader;
   float   shaderTime;
@@ -1343,7 +1325,6 @@ typedef struct shaderCommands_s
 
 extern	shaderCommands_t	tess;
 
-void RB_SetGL2D (void);
 void RB_BeginSurface(shader_t *shader, int fogNum );
 void RB_EndSurface(void);
 void RB_CheckOverflow( int verts, int indexes );
@@ -1723,10 +1704,6 @@ void RE_TakeVideoFrame( int width, int height,
 void R_InitFreeType( void );
 void R_DoneFreeType( void );
 void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font);
-
-//Bloom Stuff
-void R_BloomInit( void );
-void R_BloomScreen( void );
 
 
 #endif //TR_LOCAL_H

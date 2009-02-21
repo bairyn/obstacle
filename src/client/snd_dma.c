@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -1332,10 +1332,6 @@ void S_Base_StartBackgroundTrack( const char *intro, const char *loop ){
 		return;
 	}
 
-	if ( !strncmp( s_backgroundLoop, intro, sizeof( s_backgroundLoop ) ) ) {
-		return;
-	}
-
 	if( !loop ) {
 		s_backgroundLoop[0] = 0;
 	} else {
@@ -1373,13 +1369,17 @@ void S_UpdateBackgroundTrack( void ) {
 	byte	raw[30000];		// just enough to fit in a mac stack frame
 	int		fileBytes;
 	int		r;
+	static	float	musicVolume = 0.5f;
 
 	if(!s_backgroundStream) {
 		return;
 	}
 
+	// graeme see if this is OK
+	musicVolume = (musicVolume + (s_musicVolume->value * 2))/4.0f;
+
 	// don't bother playing anything if musicvolume is 0
-	if ( s_musicVolume->value <= 0 ) {
+	if ( musicVolume <= 0 ) {
 		return;
 	}
 
@@ -1413,13 +1413,19 @@ void S_UpdateBackgroundTrack( void ) {
 		{
 			// add to raw buffer
 			S_Base_RawSamples( 0, fileSamples, s_backgroundStream->info.rate,
-				s_backgroundStream->info.width, s_backgroundStream->info.channels, raw, s_musicVolume->value );
+				s_backgroundStream->info.width, s_backgroundStream->info.channels, raw, musicVolume );
 		}
 		else
 		{
 			// loop
 			if(s_backgroundLoop[0])
-				S_CodecLoopStream(s_backgroundStream);
+			{
+				S_CodecCloseStream(s_backgroundStream);
+				s_backgroundStream = NULL;
+				S_Base_StartBackgroundTrack( s_backgroundLoop, s_backgroundLoop );
+				if(!s_backgroundStream)
+					return;
+			}
 			else
 			{
 				S_Base_StopBackgroundTrack();

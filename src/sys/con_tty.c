@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -30,15 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/time.h>
-
-/* fallbacks for con_curses.c */
-#ifdef USE_CURSES
-#define CON_Init CON_Init_tty
-#define CON_Shutdown CON_Shutdown_tty
-#define CON_Print CON_Print_tty
-#define CON_Input CON_Input_tty
-#define CON_Clear_f CON_Clear_tty
-#endif
 
 /*
 =============================================================
@@ -61,6 +52,12 @@ static int TTY_eof;
 static struct termios TTY_tc;
 
 static field_t TTY_con;
+
+// This is somewhat of aduplicate of the graphical console history
+// but it's safer more modular to have our own here
+#define CON_HISTORY 32
+static field_t ttyEditLines[ CON_HISTORY ];
+static int hist_current = -1, hist_count = 0;
 
 /*
 ==================
@@ -90,14 +87,12 @@ send "\b \b"
 static void CON_Back( void )
 {
 	char key;
-	size_t size;
-
 	key = '\b';
-	size = write(1, &key, 1);
+	write(1, &key, 1);
 	key = ' ';
-	size = write(1, &key, 1);
+	write(1, &key, 1);
 	key = '\b';
-	size = write(1, &key, 1);
+	write(1, &key, 1);
 }
 
 /*
@@ -148,13 +143,12 @@ static void CON_Show( void )
 		ttycon_hide--;
 		if (ttycon_hide == 0)
 		{
-			size_t size;
-			size = write( 1, "]", 1 );
+			write( 1, "]", 1 );
 			if (TTY_con.cursor)
 			{
 				for (i=0; i<TTY_con.cursor; i++)
 				{
-					size = write(1, TTY_con.buffer+i, 1);
+					write(1, TTY_con.buffer+i, 1);
 				}
 			}
 		}
@@ -182,13 +176,70 @@ void CON_Shutdown( void )
 
 /*
 ==================
-CON_Clear_f
+Hist_Add
 ==================
 */
-void CON_Clear_f( void )
+void Hist_Add(field_t *field)
 {
-	Com_Printf("\033[2J"); /* VT100 clear screen */
-	Com_Printf("\033[0;0f"); /* VT100 move cursor to top left */
+	int i;
+	assert(hist_count <= CON_HISTORY);
+	assert(hist_count >= 0);
+	assert(hist_current >= -1);
+	assert(hist_current <= hist_count);
+	// make some room
+	for (i=CON_HISTORY-1; i>0; i--)
+	{
+		ttyEditLines[i] = ttyEditLines[i-1];
+	}
+	ttyEditLines[0] = *field;
+	if (hist_count<CON_HISTORY)
+	{
+		hist_count++;
+	}
+	hist_current = -1; // re-init
+}
+
+/*
+==================
+Hist_Prev
+==================
+*/
+field_t *Hist_Prev( void )
+{
+	int hist_prev;
+	assert(hist_count <= CON_HISTORY);
+	assert(hist_count >= 0);
+	assert(hist_current >= -1);
+	assert(hist_current <= hist_count);
+	hist_prev = hist_current + 1;
+	if (hist_prev >= hist_count)
+	{
+		return NULL;
+	}
+	hist_current++;
+	return &(ttyEditLines[hist_current]);
+}
+
+/*
+==================
+Hist_Next
+==================
+*/
+field_t *Hist_Next( void )
+{
+	assert(hist_count <= CON_HISTORY);
+	assert(hist_count >= 0);
+	assert(hist_current >= -1);
+	assert(hist_current <= hist_count);
+	if (hist_current >= 0)
+	{
+		hist_current--;
+	}
+	if (hist_current == -1)
+	{
+		return NULL;
+	}
+	return &(ttyEditLines[hist_current]);
 }
 
 /*
@@ -210,9 +261,9 @@ void CON_Init( void )
 	// Make stdin reads non-blocking
 	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
 
-	if (isatty(STDIN_FILENO)!=1 || isatty(STDOUT_FILENO)!=1 || isatty(STDERR_FILENO)!=1)
+	if (isatty(STDIN_FILENO)!=1)
 	{
-		Com_DPrintf( "stdin/stdout/stderr are not tty, tty console mode disabled\n");
+		Com_Printf( "stdin is not a tty, tty console mode disabled\n");
 		ttycon_on = qfalse;
 		return;
 	}
@@ -256,7 +307,7 @@ char *CON_Input( void )
 	static char text[256];
 	int avail;
 	char key;
-	size_t size;
+	field_t *history;
 
 	if( ttycon_on )
 	{
@@ -282,18 +333,18 @@ char *CON_Input( void )
 				if (key == '\n')
 				{
 					// push it in history
-					Hist_Add(TTY_con.buffer);
+					Hist_Add(&TTY_con);
 					strcpy(text, TTY_con.buffer);
 					Field_Clear(&TTY_con);
 					key = '\n';
-					size = write(1, &key, 1);
-					size = write( 1, "]", 1 );
+					write(1, &key, 1);
+					write( 1, "]", 1 );
 					return text;
 				}
 				if (key == '\t')
 				{
 					CON_Hide();
-					Field_AutoComplete( &TTY_con, "]" );
+					Field_AutoComplete( &TTY_con );
 					CON_Show();
 					return NULL;
 				}
@@ -309,19 +360,30 @@ char *CON_Input( void )
 							switch (key)
 							{
 								case 'A':
-									CON_Hide();
-									Q_strncpyz(TTY_con.buffer, Hist_Prev(), sizeof(TTY_con.buffer));
-									TTY_con.cursor = strlen(TTY_con.buffer);
-									CON_Show();
+									history = Hist_Prev();
+									if (history)
+									{
+										CON_Hide();
+										TTY_con = *history;
+										CON_Show();
+									}
 									CON_FlushIn();
 									return NULL;
+									break;
 								case 'B':
+									history = Hist_Next();
 									CON_Hide();
-									Q_strncpyz(TTY_con.buffer, Hist_Next(TTY_con.buffer), sizeof(TTY_con.buffer));
-									TTY_con.cursor = strlen(TTY_con.buffer);
+									if (history)
+									{
+										TTY_con = *history;
+									} else
+									{
+										Field_Clear(&TTY_con);
+									}
 									CON_Show();
 									CON_FlushIn();
 									return NULL;
+									break;
 								case 'C':
 									return NULL;
 								case 'D':
@@ -338,7 +400,7 @@ char *CON_Input( void )
 			TTY_con.buffer[TTY_con.cursor] = key;
 			TTY_con.cursor++;
 			// print the current line (this is differential)
-			size = write(1, &key, 1);
+			write(1, &key, 1);
 		}
 
 		return NULL;
@@ -389,7 +451,7 @@ void CON_Print( const char *msg )
 {
 	CON_Hide( );
 
-	if( ttycon_on && com_ansiColor && com_ansiColor->integer )
+	if( com_ansiColor && com_ansiColor->integer )
 		Sys_AnsiColorPrint( msg );
 	else
 		fputs( msg, stderr );

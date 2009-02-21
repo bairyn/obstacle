@@ -3,27 +3,25 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
 // g_local.h -- local definitions for game module
-
-#define OC_GAME
 
 #include "../qcommon/q_shared.h"
 #include "bg_public.h"
@@ -286,7 +284,6 @@ typedef struct
 typedef struct connectionRecord_s
 {
   int       clientNum;
-  int       oldClient;
   team_t    clientTeam;
   int       clientCredit;
 
@@ -339,7 +336,6 @@ typedef struct
   char                ip[ 40 ];
   qboolean            muted;
   qboolean            denyBuild;
-  qboolean            demoClient;
   int                 adminLevel;
   char                voice[ MAX_VOICE_NAME_LEN ];
   qboolean            useUnlagged;  
@@ -480,15 +476,6 @@ typedef struct damageRegion_s
   int       minAngle, maxAngle;
   qboolean  crouch;
 } damageRegion_t;
-
-// demo commands
-typedef enum
-{
-    DC_SERVER_COMMAND = -1,
-    DC_CLIENT_SET = 0,
-    DC_CLIENT_REMOVE,
-    DC_SET_STAGE
-} demoCommand_t;
 
 //status of the warning of certain events
 typedef enum
@@ -632,10 +619,6 @@ typedef struct
   int               humanStage2Time;
   int               humanStage3Time;
 
-  int               alienStagedownCredits;    //credits at the time the opposing team 
-  int               humanStagedownCredits;   //became vulnerable to a stage-down
-
-
   qboolean          uncondAlienWin;
   qboolean          uncondHumanWin;
   qboolean          alienTeamLocked;
@@ -652,8 +635,6 @@ typedef struct
 
   char              emoticons[ MAX_EMOTICONS ][ MAX_EMOTICON_NAME_LEN ];
   int               emoticonCount;
-
-  demoState_t       demoState;
 } level_locals_t;
 
 #define CMD_CHEAT         0x0001
@@ -957,7 +938,6 @@ void G_TeamVote( gentity_t *ent, qboolean voting );
 void CheckVote( void );
 void CheckTeamVote( team_t teamnum );
 void LogExit( const char *string );
-void G_DemoCommand( demoCommand_t cmd, const char *string );
 int  G_TimeTilSuddenDeath( void );
 
 //
@@ -1084,8 +1064,10 @@ void      G_InitMapRotations( void );
 //
 void                G_UpdatePTRConnection( gclient_t *client );
 connectionRecord_t  *G_GenerateNewConnection( gclient_t *client );
+qboolean            G_VerifyPTRC( int code );
 void                G_ResetPTRConnections( void );
 connectionRecord_t  *G_FindConnectionForCode( int code );
+void                G_DeletePTRConnection( connectionRecord_t *connection );
 
 
 //some maxs
@@ -1094,7 +1076,7 @@ connectionRecord_t  *G_FindConnectionForCode( int code );
 extern  level_locals_t  level;
 extern  gentity_t       g_entities[ MAX_GENTITIES ];
 
-#define FOFS(x) ((size_t)&(((gentity_t *)0)->x))
+#define FOFS(x) ((int)&(((gentity_t *)0)->x))
 
 extern  vmCvar_t  g_dedicated;
 extern  vmCvar_t  g_cheats;
@@ -1112,11 +1094,13 @@ extern  vmCvar_t  g_friendlyFire;
 extern  vmCvar_t  g_friendlyFireHumans;
 extern  vmCvar_t  g_friendlyFireAliens;
 extern  vmCvar_t  g_friendlyBuildableFire;
+extern  vmCvar_t  g_dretchPunt;
 extern  vmCvar_t  g_password;
 extern  vmCvar_t  g_needpass;
 extern  vmCvar_t  g_gravity;
 extern  vmCvar_t  g_speed;
 extern  vmCvar_t  g_knockback;
+extern  vmCvar_t  g_quadfactor;
 extern  vmCvar_t  g_inactivity;
 extern  vmCvar_t  g_debugMove;
 extern  vmCvar_t  g_debugAlloc;
@@ -1127,6 +1111,7 @@ extern  vmCvar_t  g_synchronousClients;
 extern  vmCvar_t  g_motd;
 extern  vmCvar_t  g_warmup;
 extern  vmCvar_t  g_doWarmup;
+extern  vmCvar_t  g_blood;
 extern  vmCvar_t  g_allowVote;
 extern  vmCvar_t  g_voteLimit;
 extern  vmCvar_t  g_suddenDeathVotePercent;
@@ -1136,6 +1121,7 @@ extern  vmCvar_t  g_teamForceBalance;
 extern  vmCvar_t  g_smoothClients;
 extern  vmCvar_t  pmove_fixed;
 extern  vmCvar_t  pmove_msec;
+extern  vmCvar_t  g_rankings;
 extern  vmCvar_t  g_enableDust;
 extern  vmCvar_t  g_enableBreath;
 extern  vmCvar_t  g_singlePlayer;
@@ -1147,13 +1133,13 @@ extern  vmCvar_t  g_alienBuildQueueTime;
 extern  vmCvar_t  g_humanStage;
 extern  vmCvar_t  g_humanCredits;
 extern  vmCvar_t  g_humanMaxStage;
-extern  vmCvar_t  g_humanMaxReachedStage;
-extern  vmCvar_t  g_humanStageThreshold;
+extern  vmCvar_t  g_humanStage2Threshold;
+extern  vmCvar_t  g_humanStage3Threshold;
 extern  vmCvar_t  g_alienStage;
 extern  vmCvar_t  g_alienCredits;
 extern  vmCvar_t  g_alienMaxStage;
-extern  vmCvar_t  g_alienMaxReachedStage;
-extern  vmCvar_t  g_alienStageThreshold;
+extern  vmCvar_t  g_alienStage2Threshold;
+extern  vmCvar_t  g_alienStage3Threshold;
 
 extern  vmCvar_t  g_unlagged;
 
@@ -1195,8 +1181,6 @@ extern  vmCvar_t  g_dretchPunt;
 
 extern  vmCvar_t  g_privateMessages;
 extern  vmCvar_t  g_publicAdminMessages;
-
-
 
 void      trap_Print( const char *fmt );
 void      trap_Error( const char *fmt );
@@ -1246,4 +1230,3 @@ qboolean  trap_GetEntityToken( char *buffer, int bufferSize );
 
 void      trap_SnapVector( float *v );
 void      trap_SendGameStat( const char *data );
-void      trap_DemoCommand( demoCommand_t cmd, const char *string );

@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -2525,24 +2525,11 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 	// create the default shading commands
 	//
 	if ( shader.lightmapIndex == LIGHTMAP_NONE ) {
-		if ( r_specularLighting->integer >= 1 ) { // extra pass for specular lighting
-			// dynamic colors at vertexes
-			stages[0].bundle[0].image[0] = image;
-			stages[0].active = qtrue;
-			stages[0].stateBits = GLS_DEFAULT;
-
-			stages[1].bundle[0].image[0] = tr.whiteImage;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_LIGHTING_DIFFUSE;
-			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
-			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_SRC_ALPHA;
-		} else {
-			// dynamic colors at vertexes
-			stages[0].bundle[0].image[0] = image;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-			stages[0].stateBits = GLS_DEFAULT;
-		}
+		// dynamic colors at vertexes
+		stages[0].bundle[0].image[0] = image;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+		stages[0].stateBits = GLS_DEFAULT;
 	} else if ( shader.lightmapIndex == LIGHTMAP_BY_VERTEX ) {
 		// explicit colors at vertexes
 		stages[0].bundle[0].image[0] = image;
@@ -2571,40 +2558,18 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 		stages[1].rgbGen = CGEN_IDENTITY;
 		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	} else {
-		if ( r_specularLighting->integer >= 1 ) {
-			// three pass lightmap with specular
-			stages[0].bundle[0].image[0] = image;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_IDENTITY;													// for identitylight
-			stages[0].stateBits = GLS_DEFAULT;
+		// two pass lightmap
+		stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
+		stages[0].bundle[0].isLightmap = qtrue;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
+													// for identitylight
+		stages[0].stateBits = GLS_DEFAULT;
 
-			stages[1].bundle[0].image[0] = image;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_CONST;
-			stages[1].constantColor[0] = r_specularLightingExponent->value * 255;
-			stages[1].constantColor[1] = r_specularLightingExponent->value * 255;
-			stages[1].constantColor[2] = r_specularLightingExponent->value * 255;
-			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
-			stages[1].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE;
-
-			stages[2].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
-			stages[2].bundle[0].isLightmap = qtrue;
-			stages[2].active = qtrue;
-			stages[2].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-			stages[2].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-		} else {
-			// two pass lightmap
-			stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
-			stages[0].bundle[0].isLightmap = qtrue;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation													// for identitylight
-			stages[0].stateBits = GLS_DEFAULT;
-
-			stages[1].bundle[0].image[0] = image;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_IDENTITY;
-			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-		}
+		stages[1].bundle[0].image[0] = image;
+		stages[1].active = qtrue;
+		stages[1].rgbGen = CGEN_IDENTITY;
+		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	}
 
 	return FinishShader();
@@ -2665,24 +2630,11 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 	// create the default shading commands
 	//
 	if ( shader.lightmapIndex == LIGHTMAP_NONE ) {
-		if ( r_specularLighting->integer >= 1 ) { // extra pass for specular lighting
-			// dynamic colors at vertexes
-			stages[0].bundle[0].image[0] = image;
-			stages[0].active = qtrue;
-			stages[0].stateBits = GLS_DEFAULT;
-
-			stages[1].bundle[0].image[0] = tr.whiteImage;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_LIGHTING_DIFFUSE;
-			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
-			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_SRC_ALPHA;
-		} else {
-			// dynamic colors at vertexes
-			stages[0].bundle[0].image[0] = image;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-			stages[0].stateBits = GLS_DEFAULT;
-		}
+		// dynamic colors at vertexes
+		stages[0].bundle[0].image[0] = image;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+		stages[0].stateBits = GLS_DEFAULT;
 	} else if ( shader.lightmapIndex == LIGHTMAP_BY_VERTEX ) {
 		// explicit colors at vertexes
 		stages[0].bundle[0].image[0] = image;
@@ -2711,40 +2663,18 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 		stages[1].rgbGen = CGEN_IDENTITY;
 		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	} else {
-		if ( r_specularLighting->integer >= 1 ) {
-			// three pass lightmap with specular
-			stages[0].bundle[0].image[0] = image;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_IDENTITY;													// for identitylight
-			stages[0].stateBits = GLS_DEFAULT;
+		// two pass lightmap
+		stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
+		stages[0].bundle[0].isLightmap = qtrue;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
+													// for identitylight
+		stages[0].stateBits = GLS_DEFAULT;
 
-			stages[1].bundle[0].image[0] = image;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_CONST;
-			stages[1].constantColor[0] = r_specularLightingExponent->value * 255;
-			stages[1].constantColor[1] = r_specularLightingExponent->value * 255;
-			stages[1].constantColor[2] = r_specularLightingExponent->value * 255;
-			stages[1].alphaGen = AGEN_LIGHTING_SPECULAR;
-			stages[1].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE;
-
-			stages[2].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
-			stages[2].bundle[0].isLightmap = qtrue;
-			stages[2].active = qtrue;
-			stages[2].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-			stages[2].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-		} else {
-			// two pass lightmap
-			stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex];
-			stages[0].bundle[0].isLightmap = qtrue;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation													// for identitylight
-			stages[0].stateBits = GLS_DEFAULT;
-
-			stages[1].bundle[0].image[0] = image;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_IDENTITY;
-			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-		}
+		stages[1].bundle[0].image[0] = image;
+		stages[1].active = qtrue;
+		stages[1].rgbGen = CGEN_IDENTITY;
+		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	}
 
 	sh = FinishShader();
@@ -2829,17 +2759,6 @@ For menu graphics that should never be picmiped
 */
 qhandle_t RE_RegisterShaderNoMip( const char *name ) {
 	shader_t	*sh;
-	
-	// Remember previous value
-	int			old_r_celshadalgo;
-
-	/*
-	 * This will prevent sprites, like buttons, go through
-	 * cel shading filters, like kuwahara.
-	 * @author gmiranda
-	 */
-	old_r_celshadalgo = r_celshadalgo->integer;
-	r_celshadalgo->integer=0;
 
 	if ( strlen( name ) >= MAX_QPATH ) {
 		Com_Printf( "Shader name exceeds MAX_QPATH\n" );
@@ -2847,9 +2766,6 @@ qhandle_t RE_RegisterShaderNoMip( const char *name ) {
 	}
 
 	sh = R_FindShader( name, LIGHTMAP_2D, qfalse );
-	
-	// Restore value
-	r_celshadalgo->integer=old_r_celshadalgo;
 
 	// we want to return 0 if the shader failed to
 	// load for some reason, but R_FindShader should
@@ -3146,7 +3062,7 @@ R_InitShaders
 ==================
 */
 void R_InitShaders( void ) {
-	ri.Printf( PRINT_DEVELOPER, "Initializing Shaders\n" );
+	ri.Printf( PRINT_ALL, "Initializing Shaders\n" );
 
 	Com_Memset(hashTable, 0, sizeof(hashTable));
 

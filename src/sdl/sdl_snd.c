@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -23,7 +23,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <SDL.h>
+#ifdef USE_LOCAL_HEADERS
+#	include "SDL.h"
+#else
+#	include <SDL.h>
+#endif
 
 #include "../qcommon/q_shared.h"
 #include "../client/snd_local.h"
@@ -108,7 +112,7 @@ static void SNDDMA_PrintAudiospec(const char *str, const SDL_AudioSpec *spec)
 	int		i;
 	char	*fmt = NULL;
 
-	Com_DPrintf("%s:\n", str);
+	Com_Printf("%s:\n", str);
 
 	for( i = 0; i < formatToStringTableSize; i++ ) {
 		if( spec->format == formatToStringTable[ i ].enumFormat ) {
@@ -117,14 +121,14 @@ static void SNDDMA_PrintAudiospec(const char *str, const SDL_AudioSpec *spec)
 	}
 
 	if( fmt ) {
-		Com_DPrintf( "  Format:   %s\n", fmt );
+		Com_Printf( "  Format:   %s\n", fmt );
 	} else {
-		Com_DPrintf( "  Format:   " S_COLOR_RED "UNKNOWN\n");
+		Com_Printf( "  Format:   " S_COLOR_RED "UNKNOWN\n");
 	}
 
-	Com_DPrintf( "  Freq:     %d\n", (int) spec->freq );
-	Com_DPrintf( "  Samples:  %d\n", (int) spec->samples );
-	Com_DPrintf( "  Channels: %d\n", (int) spec->channels );
+	Com_Printf( "  Freq:     %d\n", (int) spec->freq );
+	Com_Printf( "  Samples:  %d\n", (int) spec->samples );
+	Com_Printf( "  Channels: %d\n", (int) spec->channels );
 }
 
 /*
@@ -165,7 +169,7 @@ qboolean SNDDMA_Init(void)
 
 	if (SDL_AudioDriverName(drivername, sizeof (drivername)) == NULL)
 		strcpy(drivername, "(UNKNOWN)");
-	Com_DPrintf("SDL audio driver is \"%s\".\n", drivername);
+	Com_Printf("SDL audio driver is \"%s\".\n", drivername);
 
 	memset(&desired, '\0', sizeof (desired));
 	memset(&obtained, '\0', sizeof (obtained));
@@ -236,10 +240,10 @@ qboolean SNDDMA_Init(void)
 	dmasize = (dma.samples * (dma.samplebits/8));
 	dma.buffer = calloc(1, dmasize);
 
-	Com_DPrintf("Starting SDL audio callback...\n");
+	Com_Printf("Starting SDL audio callback...\n");
 	SDL_PauseAudio(0);  // start callback.
 
-	Com_DPrintf("SDL audio initialized.\n");
+	Com_Printf("SDL audio initialized.\n");
 	snd_inited = qtrue;
 	return qtrue;
 }
@@ -261,7 +265,7 @@ SNDDMA_Shutdown
 */
 void SNDDMA_Shutdown(void)
 {
-	Com_DPrintf("Closing SDL audio device...\n");
+	Com_Printf("Closing SDL audio device...\n");
 	SDL_PauseAudio(1);
 	SDL_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -269,7 +273,7 @@ void SNDDMA_Shutdown(void)
 	dma.buffer = NULL;
 	dmapos = dmasize = 0;
 	snd_inited = qfalse;
-	Com_DPrintf("SDL audio device shut down.\n");
+	Com_Printf("SDL audio device shut down.\n");
 }
 
 /*

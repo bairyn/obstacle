@@ -50,7 +50,6 @@ equ trap_Parse_ReadToken            -46
 equ trap_Parse_SourceFileAndLine    -47
 
 equ trap_SendGameStat               -48
-equ trap_DemoCommand                -49
 
 
 equ memset                          -101

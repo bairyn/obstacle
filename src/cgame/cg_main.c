@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -77,7 +77,7 @@ intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
       return 0;
 
     case CG_MOUSE_EVENT:
-      CG_MouseEvent( arg0, arg1 );
+      // cgame doesn't care where the cursor is
       return 0;
 
     case CG_EVENT_HANDLING:
@@ -102,7 +102,6 @@ upgradeInfo_t   cg_upgrades[ 32 ];
 
 buildableInfo_t cg_buildables[ BA_NUM_BUILDABLES ];
 
-vmCvar_t  cg_version;
 vmCvar_t  cg_teslaTrailTime;
 vmCvar_t  cg_centertime;
 vmCvar_t  cg_runpitch;
@@ -112,7 +111,6 @@ vmCvar_t  cg_shadows;
 vmCvar_t  cg_drawTimer;
 vmCvar_t  cg_drawClock;
 vmCvar_t  cg_drawFPS;
-vmCvar_t  cg_drawSpeed;
 vmCvar_t  cg_drawDemoState;
 vmCvar_t  cg_drawSnapshot;
 vmCvar_t  cg_drawChargeBar;
@@ -205,7 +203,7 @@ vmCvar_t  cg_unlagged;
 
 vmCvar_t  ui_currentClass;
 vmCvar_t  ui_carriage;
-vmCvar_t  ui_stage;
+vmCvar_t  ui_stages;
 vmCvar_t  ui_dialog;
 vmCvar_t  ui_voteActive;
 vmCvar_t  ui_alienTeamVoteActive;
@@ -216,16 +214,10 @@ vmCvar_t  cg_debugRandom;
 vmCvar_t  cg_optimizePrediction;
 vmCvar_t  cg_projectileNudge;
 
-vmCvar_t  cg_drawBuildableStatus;
-vmCvar_t  cg_hideHealthyBuildableStatus;
-vmCvar_t  cg_drawTeamStatus;
-vmCvar_t  cg_hideHealthyTeamStatus;
-
 vmCvar_t  cg_suppressWAnimWarnings;
 
 vmCvar_t  cg_voice;
 vmCvar_t  cg_emoticons;
-vmCvar_t  cg_drawAlienFeedback;
 
 
 typedef struct
@@ -238,7 +230,6 @@ typedef struct
 
 static cvarTable_t cvarTable[ ] =
 {
-  { &cg_version, "cg_version", PRODUCT_NAME, CVAR_ROM | CVAR_USERINFO },
   { &cg_autoswitch, "cg_autoswitch", "1", CVAR_ARCHIVE },
   { &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
   { &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
@@ -247,9 +238,8 @@ static cvarTable_t cvarTable[ ] =
   { &cg_draw2D, "cg_draw2D", "1", CVAR_ARCHIVE  },
   { &cg_drawStatus, "cg_drawStatus", "1", CVAR_ARCHIVE  },
   { &cg_drawTimer, "cg_drawTimer", "1", CVAR_ARCHIVE  },
-  { &cg_drawClock, "cg_drawClock", "1", CVAR_ARCHIVE  },
+  { &cg_drawClock, "cg_drawClock", "0", CVAR_ARCHIVE  },
   { &cg_drawFPS, "cg_drawFPS", "1", CVAR_ARCHIVE  },
-  { &cg_drawSpeed, "cg_drawSpeed", "0", CVAR_ARCHIVE  },
   { &cg_drawDemoState, "cg_drawDemoState", "1", CVAR_ARCHIVE  },
   { &cg_drawSnapshot, "cg_drawSnapshot", "0", CVAR_ARCHIVE  },
   { &cg_drawChargeBar, "cg_drawChargeBar", "1", CVAR_ARCHIVE  },
@@ -259,7 +249,7 @@ static cvarTable_t cvarTable[ ] =
   { &cg_drawAmmoStack, "cg_drawAmmoStack", "1", CVAR_ARCHIVE },
   { &cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE },
   { &cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE },
-  { &cg_lagometer, "cg_lagometer", "1", CVAR_ARCHIVE },
+  { &cg_lagometer, "cg_lagometer", "0", CVAR_ARCHIVE },
   { &cg_teslaTrailTime, "cg_teslaTrailTime", "250", CVAR_ARCHIVE  },
   { &cg_gun_x, "cg_gunX", "0", CVAR_CHEAT },
   { &cg_gun_y, "cg_gunY", "0", CVAR_CHEAT },
@@ -320,7 +310,9 @@ static cvarTable_t cvarTable[ ] =
   { &cg_tutorial, "cg_tutorial", "1", CVAR_ARCHIVE },
   { &cg_hudFiles, "cg_hudFiles", "ui/hud.txt", CVAR_ARCHIVE},
   { &cg_hudFilesEnable, "cg_hudFilesEnable", "0", CVAR_ARCHIVE},
-
+  { NULL, "cg_alienConfig", "", CVAR_ARCHIVE },
+  { NULL, "cg_humanConfig", "", CVAR_ARCHIVE },
+  { NULL, "cg_spectatorConfig", "", CVAR_ARCHIVE },
   { &cg_painBlendUpRate, "cg_painBlendUpRate", "10.0", 0 },
   { &cg_painBlendDownRate, "cg_painBlendDownRate", "0.5", 0 },
   { &cg_painBlendMax, "cg_painBlendMax", "0.7", 0 },
@@ -331,7 +323,7 @@ static cvarTable_t cvarTable[ ] =
   
   { &ui_currentClass, "ui_currentClass", "0", 0 },
   { &ui_carriage, "ui_carriage", "", 0 },
-  { &ui_stage, "ui_stage", "0", 0 },
+  { &ui_stages, "ui_stages", "0 0", 0 },
   { &ui_dialog, "ui_dialog", "Text not set", 0 },
   { &ui_voteActive, "ui_voteActive", "0", 0 },
   { &ui_humanTeamVoteActive, "ui_humanTeamVoteActive", "0", 0 },
@@ -341,12 +333,6 @@ static cvarTable_t cvarTable[ ] =
   
   { &cg_optimizePrediction, "cg_optimizePrediction", "1", CVAR_ARCHIVE },
   { &cg_projectileNudge, "cg_projectileNudge", "1", CVAR_ARCHIVE },
-
-  { &cg_drawBuildableStatus, "cg_drawBuildableStatus", "1", CVAR_ARCHIVE },
-  { &cg_hideHealthyBuildableStatus, "cg_hideHealthyBuildableStatus", "1", CVAR_ARCHIVE },
-  { &cg_drawTeamStatus, "cg_drawTeamStatus", "1", CVAR_USERINFO | CVAR_ARCHIVE },
-  { &cg_hideHealthyTeamStatus, "cg_hideHealthyTeamStatus", "1", CVAR_ARCHIVE },
-  { NULL, "teamoverlay", "1", CVAR_USERINFO | CVAR_ARCHIVE }, //if this is 0 the server will not send tinfo and teammate health will not work
 
   // the following variables are created in other parts of the system,
   // but we also reference them here
@@ -368,8 +354,7 @@ static cvarTable_t cvarTable[ ] =
 
   { &cg_voice, "voice", "default", CVAR_USERINFO|CVAR_ARCHIVE},
 
-  { &cg_emoticons, "cg_emoticons", "1", CVAR_LATCH|CVAR_ARCHIVE},
-  { &cg_drawAlienFeedback, "cg_drawAlienFeedback", "1", 0}
+  { &cg_emoticons, "cg_emoticons", "1", CVAR_LATCH|CVAR_ARCHIVE}
 };
 
 static int   cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -397,9 +382,6 @@ void CG_RegisterCvars( void )
   // see if we are also running the server on this machine
   trap_Cvar_VariableStringBuffer( "sv_running", var, sizeof( var ) );
   cgs.localServer = atoi( var );
-  
-  // override any existing version cvar
-  trap_Cvar_Set( "cg_version", PRODUCT_NAME );
 }
 
 
@@ -412,84 +394,32 @@ Set some cvars used by the UI
 */
 static void CG_SetUIVars( void )
 {
-  int   i, upgrades = 0;
+  int   i;
+  char  carriageCvar[ MAX_TOKEN_CHARS ];
 
   if( !cg.snap )
     return;
 
+  *carriageCvar = 0;
+
   //determine what the player is carrying
+  for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
+  {
+    if( BG_InventoryContainsWeapon( i, cg.snap->ps.stats ) &&
+        BG_Weapon( i )->purchasable )
+      strcat( carriageCvar, va( "W%d ", i ) );
+  }
   for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
   {
     if( BG_InventoryContainsUpgrade( i, cg.snap->ps.stats ) &&
         BG_Upgrade( i )->purchasable )
-      upgrades |= ( 1 << i );
+      strcat( carriageCvar, va( "U%d ", i ) );
   }
+  strcat( carriageCvar, "$" );
 
-  trap_Cvar_Set( "ui_carriage", va( "%d %d %d", cg.snap->ps.stats[ STAT_WEAPON ],
-                 upgrades, cg.snap->ps.persistant[ PERS_CREDIT ] ) );
+  trap_Cvar_Set( "ui_carriage", carriageCvar );
 
-  switch( cg.snap->ps.stats[ STAT_TEAM ] )
-  {
-  case TEAM_NONE:
-    trap_Cvar_Set( "ui_stage", "0" );
-    break;
-  case TEAM_ALIENS:
-    trap_Cvar_Set( "ui_stage", va( "%d", cgs.alienStage ) );
-    break;
-  case TEAM_HUMANS:
-    trap_Cvar_Set( "ui_stage", va( "%d", cgs.humanStage ) );
-    break;
-  }
-}
-
-/*
-===============
-CG_SetPVars
-
-Set the p_* cvars
-===============
-*/
-static void CG_SetPVars( void )
-{
-  playerState_t *ps;
-
-  if( !cg.snap )
-    return;
-
-  ps = &cg.snap->ps;
-
-  trap_Cvar_Set( "p_hp", va( "%d", ps->stats[ STAT_HEALTH ] ) );
-  trap_Cvar_Set( "p_maxhp", va( "%d", ps->stats[ STAT_MAX_HEALTH ] ) );
-  trap_Cvar_Set( "p_team", va( "%d", ps->stats[ STAT_TEAM ] ) );
-  switch( ps->stats[ STAT_TEAM ] )
-  {
-  case TEAM_NONE:
-    trap_Cvar_Set( "p_teamname", "^3Spectator" );
-    trap_Cvar_Set( "p_stage", "0" );
-    break;
-  case TEAM_ALIENS:
-    trap_Cvar_Set( "p_teamname", "^1Alien" );
-    trap_Cvar_Set( "p_stage", va( "%d", cgs.alienStage ) );
-    break;
-  case TEAM_HUMANS:
-    trap_Cvar_Set( "p_teamname", "^4Human" );
-    trap_Cvar_Set( "p_stage", va( "%d", cgs.humanStage ) );
-    break;
-  }
-  trap_Cvar_Set( "p_class", va( "%d", ps->stats[ STAT_CLASS ] ) );
-  trap_Cvar_Set( "p_classname", BG_ClassConfig( ps->stats[ STAT_CLASS ] )->humanName );
-  trap_Cvar_Set( "p_weapon", va( "%d", ps->stats[ STAT_WEAPON ] ) );
-  trap_Cvar_Set( "p_weaponname", BG_Weapon( ps->stats[ STAT_WEAPON ] )->humanName );
-  trap_Cvar_Set( "p_ammo", va( "%d", ps->ammo ) );
-  trap_Cvar_Set( "p_clips", va( "%d", ps->clips ) );
-  trap_Cvar_Set( "p_credits", va( "%d", ps->persistant[ PERS_CREDIT ] ) );
-  trap_Cvar_Set( "p_score", va( "%d", ps->persistant[ PERS_SCORE ] ) );
-  trap_Cvar_Set( "p_attacker", va( "%d", CG_LastAttacker( ) ) );
-  if ( CG_LastAttacker( ) != -1 )
-    trap_Cvar_Set( "p_attackername", cgs.clientinfo[ CG_LastAttacker( ) ].name );
-  trap_Cvar_Set( "p_crosshair", va( "%d", CG_CrosshairPlayer( ) ) );
-  if ( CG_CrosshairPlayer( ) != -1 )
-    trap_Cvar_Set( "p_crosshairrname", cgs.clientinfo[ CG_CrosshairPlayer( ) ].name );
+  trap_Cvar_Set( "ui_stages", va( "%d %d", cgs.alienStage, cgs.humanStage ) );
 }
 
 /*
@@ -509,7 +439,6 @@ void CG_UpdateCvars( void )
   // check for modications here
 
   CG_SetUIVars( );
-  CG_SetPVars( );
 }
 
 
@@ -809,48 +738,6 @@ static void CG_RegisterGraphics( void )
     "ui/assets/neutral/10_5pie",
     "ui/assets/neutral/12_0pie",
   };
-   static char *alienAttackFeedbackShaders[ 11 ] =
-  {
-        "ui/assets/alien/feedback/scratch_00",
-        "ui/assets/alien/feedback/scratch_01",
-        "ui/assets/alien/feedback/scratch_02",
-        "ui/assets/alien/feedback/scratch_03",
-        "ui/assets/alien/feedback/scratch_04",
-        "ui/assets/alien/feedback/scratch_05",
-        "ui/assets/alien/feedback/scratch_06",
-        "ui/assets/alien/feedback/scratch_07",
-        "ui/assets/alien/feedback/scratch_08",
-        "ui/assets/alien/feedback/scratch_09",
-        "ui/assets/alien/feedback/scratch_10"
-  };
-   static char *alienAttackFeedbackShadersFlipped[ 11 ] =
-  {
-        "ui/assets/alien/feedback/scratchr_00",
-        "ui/assets/alien/feedback/scratchr_01",
-        "ui/assets/alien/feedback/scratchr_02",
-        "ui/assets/alien/feedback/scratchr_03",
-        "ui/assets/alien/feedback/scratchr_04",
-        "ui/assets/alien/feedback/scratchr_05",
-        "ui/assets/alien/feedback/scratchr_06",
-        "ui/assets/alien/feedback/scratchr_07",
-        "ui/assets/alien/feedback/scratchr_08",
-        "ui/assets/alien/feedback/scratchr_09",
-        "ui/assets/alien/feedback/scratchr_10"
-  };
-   static char *alienRangedAttackFeedbackShaders[ 11 ] =
-  {
-        "ui/assets/alien/feedback/rangefeedback_00",
-        "ui/assets/alien/feedback/rangefeedback_01",
-        "ui/assets/alien/feedback/rangefeedback_02",
-        "ui/assets/alien/feedback/rangefeedback_03",
-        "ui/assets/alien/feedback/rangefeedback_04",
-        "ui/assets/alien/feedback/rangefeedback_05",
-        "ui/assets/alien/feedback/rangefeedback_06",
-        "ui/assets/alien/feedback/rangefeedback_07",
-        "ui/assets/alien/feedback/rangefeedback_08",
-        "ui/assets/alien/feedback/rangefeedback_09",
-        "ui/assets/alien/feedback/rangefeedback_10"
-  };
 
   // clear any references to old media
   memset( &cg.refdef, 0, sizeof( cg.refdef ) );
@@ -883,12 +770,6 @@ static void CG_RegisterGraphics( void )
 
   for( i = 0; i < 8; i++ )
     cgs.media.buildWeaponTimerPie[ i ] = trap_R_RegisterShader( buildWeaponTimerPieShaders[ i ] );
-  for( i = 0; i < 11; i++ )
-    cgs.media.alienAttackFeedbackShaders[i] = trap_R_RegisterShader( alienAttackFeedbackShaders[i] );
-  for( i = 0; i < 11; i++ )
-    cgs.media.alienAttackFeedbackShadersFlipped[i] = trap_R_RegisterShader( alienAttackFeedbackShadersFlipped[i] );
-  for( i = 0; i < 11; i++ )
-    cgs.media.alienRangedAttackFeedbackShaders[i] = trap_R_RegisterShader( alienRangedAttackFeedbackShaders[i] );
 
   // player health cross shaders
   cgs.media.healthCross               = trap_R_RegisterShader( "ui/assets/neutral/cross.tga" );
@@ -897,10 +778,6 @@ static void CG_RegisterGraphics( void )
   cgs.media.healthCrossMedkit         = trap_R_RegisterShader( "ui/assets/neutral/cross_medkit.tga" );
   cgs.media.healthCrossPoisoned       = trap_R_RegisterShader( "ui/assets/neutral/cross_poison.tga" );
   
-  // squad markers
-  cgs.media.squadMarkerH              = trap_R_RegisterShader( "ui/assets/neutral/squad_h" );
-  cgs.media.squadMarkerV              = trap_R_RegisterShader( "ui/assets/neutral/squad_v" );
-
   cgs.media.upgradeClassIconShader    = trap_R_RegisterShader( "icons/icona_upgrade.tga" );
 
   cgs.media.balloonShader             = trap_R_RegisterShader( "gfx/sprites/chatballoon" );
@@ -926,13 +803,12 @@ static void CG_RegisterGraphics( void )
 
   cgs.media.humanBuildableDamagedPS   = CG_RegisterParticleSystem( "humanBuildableDamagedPS" );
   cgs.media.alienBuildableDamagedPS   = CG_RegisterParticleSystem( "alienBuildableDamagedPS" );
-  cgs.media.humanBuildableHitSmallPS   = CG_RegisterParticleSystem( "humanBuildableHitSmallPS" );
-  cgs.media.alienBuildableHitSmallPS   = CG_RegisterParticleSystem( "alienBuildableHitSmallPS" );
-  cgs.media.humanBuildableHitLargePS   = CG_RegisterParticleSystem( "humanBuildableHitLargePS" );
-  cgs.media.alienBuildableHitLargePS   = CG_RegisterParticleSystem( "alienBuildableHitLargePS" );
   cgs.media.humanBuildableDestroyedPS = CG_RegisterParticleSystem( "humanBuildableDestroyedPS" );
   cgs.media.alienBuildableDestroyedPS = CG_RegisterParticleSystem( "alienBuildableDestroyedPS" );
 
+  cgs.media.humanBuildableBleedPS     = CG_RegisterParticleSystem( "humanBuildableBleedPS");  
+  cgs.media.alienBuildableBleedPS     = CG_RegisterParticleSystem( "alienBuildableBleedPS" );
+  // use the regular alien bleed ps for buildables for now
   cgs.media.alienBleedPS              = CG_RegisterParticleSystem( "alienBleedPS" );
   cgs.media.humanBleedPS              = CG_RegisterParticleSystem( "humanBleedPS" );
 
@@ -1471,7 +1347,7 @@ void CG_LoadMenus( const char *menuFile )
     }
   }
 
-  //Com_Printf( "UI menu load time = %d milli seconds\n", trap_Milliseconds( ) - start );
+  Com_Printf( "UI menu load time = %d milli seconds\n", trap_Milliseconds( ) - start );
 }
 
 
@@ -1568,19 +1444,16 @@ static clientInfo_t * CG_InfoFromScoreIndex( int index, int team, int *scoreInde
 
 static qboolean CG_ClientIsReady( int clientNum )
 {
-  // CS_CLIENTS_READY is a hex string, each character of which is 4 bits
-  // the highest bit of the first char is a toggle for client 0, the second
-  // highest for client 1, etc.
-  // there are exactly four bits of information in each character
-  int val;
+  // each character of the hex string corresponds to 4 bits, which correspond
+  // to readiness for client (0, 1, 2, 3...) i.e. the highest order bit
+  // corresponds to the lowest clientnum
+  // so we only need one character for a given client
+  int val = clientNum / 4;
   const char *s = CG_ConfigString( CS_CLIENTS_READY );
-
-  // select the appropriate character without passing the end of the string
-  for( val = clientNum / 4; *s && val > 0; s++, val-- );
-
-  // convert hex -> int
-  // FIXME: replace with sscanf when it supports width conversions (or some
-  // other appropriate library function)
+  while( *s && val > 0 )
+    s++, val--;
+  if( !*s )
+    return qfalse;
   if( isdigit( *s ) )
     val = *s - '0';
   else if( *s >= 'a' && *s <= 'f' )
@@ -1589,8 +1462,6 @@ static qboolean CG_ClientIsReady( int clientNum )
     val = 10 + *s - 'A';
   else
     return qfalse;
-
-  // select appropriate bit
   return ( ( val & 1 << ( 3 - clientNum % 4 ) ) != 0 );
 }
 
@@ -1782,8 +1653,6 @@ void CG_LoadHudMenu( void )
   cgDC.modelBounds          = &trap_R_ModelBounds;
   cgDC.fillRect             = &CG_FillRect;
   cgDC.drawRect             = &CG_DrawRect;
-  cgDC.fillRoundedRect      = &CG_FillRoundedRect;
-  cgDC.drawRoundedRect      = &CG_DrawRoundedRect;
   cgDC.drawSides            = &CG_DrawSides;
   cgDC.drawTopBottom        = &CG_DrawTopBottom;
   cgDC.clearScene           = &trap_R_ClearScene;
@@ -1821,8 +1690,7 @@ void CG_LoadHudMenu( void )
   cgDC.stopCinematic        = &CG_StopCinematic;
   cgDC.drawCinematic        = &CG_DrawCinematic;
   cgDC.runCinematicFrame    = &CG_RunCinematicFrame;
-  cgDC.getFileList          = &trap_FS_GetFileList;
-  cgDC.hudloading           = qtrue;
+
   Init_Display( &cgDC );
 
   Menu_Reset( );
@@ -1834,7 +1702,6 @@ void CG_LoadHudMenu( void )
     hudSet = "ui/hud.txt";
 
   CG_LoadMenus( hudSet );
-  cgDC.hudloading = qfalse;
 }
 
 void CG_AssetCache( void )
@@ -1850,8 +1717,6 @@ void CG_AssetCache( void )
   cgDC.Assets.scrollBarThumb      = trap_R_RegisterShaderNoMip( ASSET_SCROLL_THUMB );
   cgDC.Assets.sliderBar           = trap_R_RegisterShaderNoMip( ASSET_SLIDER_BAR );
   cgDC.Assets.sliderThumb         = trap_R_RegisterShaderNoMip( ASSET_SLIDER_THUMB );
-  cgDC.Assets.cornerIn            = trap_R_RegisterShaderNoMip( ASSET_CORNERIN );
-  cgDC.Assets.cornerOut           = trap_R_RegisterShaderNoMip( ASSET_CORNEROUT );
 
   if( cg_emoticons.integer )
   {
@@ -1918,8 +1783,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 
   CG_AssetCache( );
   CG_LoadHudMenu( );
-  cg.feedbackAnimation = 0;
-  cg.feedbackAnimationType = 0;
 
   cg.weaponSelect = WP_NONE;
 
@@ -1963,10 +1826,10 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   CG_UpdateMediaFraction( 1.0f );
 
   CG_InitBuildables( );
-
+ 
   cgs.voices = BG_VoiceInit( );
   BG_PrintVoices( cgs.voices, cg_debugVoices.integer );
- 
+
   CG_RegisterClients( );   // if low on memory, some clients will be deferred
 
   cg.loading = qfalse;  // future players will be deferred
@@ -1997,7 +1860,4 @@ void CG_Shutdown( void )
 {
   // some mods may need to do cleanup work here,
   // like closing files or archiving session data
-
-  // Reset cg_version
-  trap_Cvar_Set( "cg_version", "" );
 }

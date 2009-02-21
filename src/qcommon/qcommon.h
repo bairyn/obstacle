@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -104,11 +104,6 @@ void MSG_WriteDeltaEntity( msg_t *msg, struct entityState_s *from, struct entity
 void MSG_ReadDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, 
 						 int number );
 
-void MSG_WriteDeltaSharedEntity( msg_t *msg, void *from, void *to
-						   , qboolean force, int number );
-void MSG_ReadDeltaSharedEntity( msg_t *msg, void *from, void *to, 
-						 int number );
-
 void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct playerState_s *to );
 void MSG_ReadDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct playerState_s *to );
 
@@ -158,7 +153,6 @@ typedef struct {
 	byte	ip6[16];
 
 	unsigned short	port;
-	unsigned long	scope_id;	// Needed for IPv6 link-local addresses
 } netadr_t;
 
 void		NET_Init( void );
@@ -166,7 +160,7 @@ void		NET_Shutdown( void );
 void		NET_Restart( void );
 void		NET_Config( qboolean enableNetworking );
 void		NET_FlushPacketQueue(void);
-void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to, int delay);
+void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
 void		QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len );
 
@@ -179,8 +173,8 @@ int		NET_StringToAdr ( const char *s, netadr_t *a, netadrtype_t family);
 qboolean	NET_GetLoopPacket (netsrc_t sock, netadr_t *net_from, msg_t *net_message);
 void		NET_JoinMulticast6(void);
 void		NET_LeaveMulticast6(void);
-
 void		NET_Sleep(int msec);
+
 
 #define	MAX_MSGLEN				16384		// max length of a message, which may
 											// be fragmented into multiple packets
@@ -221,8 +215,8 @@ typedef struct {
 void Netchan_Init( int qport );
 void Netchan_Setup( netsrc_t sock, netchan_t *chan, netadr_t adr, int qport );
 
-void Netchan_Transmit( netchan_t *chan, int length, const byte *data, int delay );
-void Netchan_TransmitNextFragment( netchan_t *chan, int delay );
+void Netchan_Transmit( netchan_t *chan, int length, const byte *data );
+void Netchan_TransmitNextFragment( netchan_t *chan );
 
 qboolean Netchan_Process( netchan_t *chan, msg_t *msg );
 
@@ -244,9 +238,6 @@ extern int demo_protocols[];
 // override on command line, config files etc.
 #ifndef MASTER_SERVER_NAME
 #define MASTER_SERVER_NAME	"master.tremulous.net"
-#endif
-#ifndef MOTD_SERVER_NAME
-#define MOTD_SERVER_NAME	"master.tremforges.net"
 #endif
 
 #define	PORT_MASTER			30710
@@ -350,9 +341,12 @@ void	*VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue );
 #define	VMA(x) VM_ArgPtr(args[x])
 static ID_INLINE float _vmf(intptr_t x)
 {
-	floatint_t fi;
-	fi.i = (int) x;
-	return fi.f;
+	union {
+		intptr_t l;
+		float f;
+	} t;
+	t.l = x;
+	return t.f;
 }
 #define	VMF(x)	_vmf(args[x])
 
@@ -390,10 +384,6 @@ void Cbuf_Execute (void);
 // Normally called once per frame, but may be explicitly invoked.
 // Do not call inside a command function, or current args will be destroyed.
 
-void Cdelay_Frame (void);
-//Check if a delayed command have to be executed and decreases the remaining
-//delay time for all of them
-
 //===========================================================================
 
 /*
@@ -416,19 +406,8 @@ void	Cmd_AddCommand( const char *cmd_name, xcommand_t function );
 
 void	Cmd_RemoveCommand( const char *cmd_name );
 
-// don't allow VMs to remove system commands
-void	Cmd_RemoveCommandSafe( const char *cmd_name );
-
-typedef void (*completionFunc_t)( char *args, int argNum );
-
 void	Cmd_CommandCompletion( void(*callback)(const char *s) );
-void	Cmd_AliasCompletion( void(*callback)(const char *s) );
-void	Cmd_DelayCompletion( void(*callback)(const char *s) );
 // callback with each valid string
-void Cmd_SetCommandCompletionFunc( const char *command,
-	completionFunc_t complete );
-void Cmd_CompleteArgument( const char *command, char *args, int argNum );
-void Cmd_CompleteCfgName( char *args, int argNum );
 
 int		Cmd_Argc (void);
 char	*Cmd_Argv (int arg);
@@ -438,24 +417,18 @@ char	*Cmd_ArgsFrom( int arg );
 void	Cmd_ArgsBuffer( char *buffer, int bufferLength );
 void	Cmd_LiteralArgsBuffer( char *buffer, int bufferLength );
 char	*Cmd_Cmd (void);
-char	*Cmd_EscapeString(const char *in);
 // The functions that execute commands get their parameters with these
 // functions. Cmd_Argv () will return an empty string, not a NULL
 // if arg > argc, so string operations are allways safe.
 
 void	Cmd_TokenizeString( const char *text );
 void	Cmd_TokenizeStringIgnoreQuotes( const char *text_in );
-void	Cmd_TokenizeStringParseCvar( const char *text_in );
 // Takes a null terminated string.  Does not need to be /n terminated.
 // breaks the string up into arg tokens.
 
 void	Cmd_ExecuteString( const char *text );
 // Parses a single line of text into arguments and tries to execute it
 // as if it was typed at the console
-
-void 	Cmd_WriteAliases( fileHandle_t f );
-// First writes "clearaliases" and then
-// writes lines containing "alias name exec" for all aliases
 
 void Cmd_SaveCmdContext( void );
 void Cmd_RestoreCmdContext( void );
@@ -502,16 +475,11 @@ void	Cvar_Update( vmCvar_t *vmCvar );
 void 	Cvar_Set( const char *var_name, const char *value );
 // will create the variable with no flags if it doesn't exist
 
-void	Cvar_SetSafe( const char *var_name, const char *value );
-// sometimes we set variables from an untrusted source: fail if flags & CVAR_PROTECTED
-
 void Cvar_SetLatched( const char *var_name, const char *value);
 // don't set the cvar immediately
 
 void	Cvar_SetValue( const char *var_name, float value );
-void	Cvar_SetValueLatched( const char *var_name, float value );
-void	Cvar_SetValueSafe( const char *var_name, float value );
-// expands value to a string and calls Cvar_Set/Cvar_SetSafe
+// expands value to a string and calls Cvar_Set
 
 float	Cvar_VariableValue( const char *var_name );
 int		Cvar_VariableIntegerValue( const char *var_name );
@@ -538,7 +506,7 @@ qboolean Cvar_Command( void );
 // command.  Returns true if the command was a variable reference that
 // was handled. (print or change)
 
-void 	Cvar_WriteVariables( fileHandle_t f, qboolean vmCvars );
+void 	Cvar_WriteVariables( fileHandle_t f );
 // writes lines containing "set variable value" for all variables
 // with the archive flag set to true.
 
@@ -552,8 +520,6 @@ void	Cvar_InfoStringBuffer( int bit, char *buff, int buffsize );
 void Cvar_CheckRange( cvar_t *cv, float minVal, float maxVal, qboolean shouldBeIntegral );
 
 void	Cvar_Restart_f( void );
-
-void Cvar_CompleteCvarName( char *args, int argNum );
 
 extern	int			cvar_modifiedFlags;
 // whenever a cvar is modifed, its flags will be OR'd into this, so
@@ -577,6 +543,9 @@ issues.
 #define FS_GENERAL_REF	0x01
 #define FS_UI_REF		0x02
 #define FS_CGAME_REF	0x04
+#define FS_QAGAME_REF	0x08
+// number of id paks that will never be autodownloaded from baseq3
+#define NUM_ID_PAKS		9
 
 #define	MAX_FILE_HANDLES	64
 
@@ -704,6 +673,7 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames );
 // sole exception of .cfg files.
 
 qboolean FS_CheckDirTraversal(const char *checkdir);
+qboolean FS_idPak( char *pak, char *base );
 qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring );
 
 void FS_Rename( const char *from, const char *to );
@@ -713,8 +683,6 @@ void FS_HomeRemove( const char *homePath );
 
 void	FS_FilenameCompletion( const char *dir, const char *ext,
 		qboolean stripExt, void(*callback)(const char *s) );
-
-extern cvar_t *fs_autogen;
 
 /*
 ==============================================================
@@ -733,14 +701,7 @@ typedef struct {
 } field_t;
 
 void Field_Clear( field_t *edit );
-void Field_AutoComplete( field_t *edit, const char *prompt );
-void Field_CompleteKeyname( void );
-void Field_CompleteFilename( const char *dir,
-		const char *ext, qboolean stripExt );
-void Field_CompleteAlias( void );
-void Field_CompleteDelay( void );
-void Field_CompleteCommand( char *cmd,
-		qboolean doCommands, qboolean doCvars );
+void Field_AutoComplete( field_t *edit );
 
 /*
 ==============================================================
@@ -788,6 +749,7 @@ typedef struct {
 
 void		Com_QueueEvent( int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr );
 int			Com_EventLoop( void );
+sysEvent_t	Com_GetSystemEvent( void );
 
 char		*CopyString( const char *in );
 void		Info_Print( const char *s );
@@ -821,6 +783,7 @@ extern	cvar_t	*com_timescale;
 extern	cvar_t	*com_sv_running;
 extern	cvar_t	*com_cl_running;
 extern	cvar_t	*com_version;
+extern	cvar_t	*com_blood;
 extern	cvar_t	*com_buildScript;		// for building release pak files
 extern	cvar_t	*com_journal;
 extern	cvar_t	*com_cameraMode;
@@ -830,7 +793,6 @@ extern	cvar_t	*com_maxfpsUnfocused;
 extern	cvar_t	*com_minimized;
 extern	cvar_t	*com_maxfpsMinimized;
 extern	cvar_t	*com_altivec;
-extern	cvar_t	*com_sse;
 
 // both client and server must agree to pause
 extern	cvar_t	*cl_paused;
@@ -964,10 +926,13 @@ void	CL_ForwardCommandToServer( const char *string );
 // things like godmode, noclip, etc, are commands directed to the server,
 // so when they are typed in at the console, they will need to be forwarded.
 
+void CL_CDDialog( void );
+// bring up the "need a cd to play" dialog
+
 void CL_ShutdownAll( void );
 // shutdown all the client stuff
 
-void CL_FlushMemory( qboolean defaultUI );
+void CL_FlushMemory( void );
 // dump all memory on an error
 
 void CL_StartHunkUsers( qboolean rendererOnly );
@@ -1078,7 +1043,8 @@ char	*Sys_DefaultInstallPath(void);
 char    *Sys_DefaultAppPath(void);
 #endif
 
-char	*Sys_DefaultHomePath(char **path2);
+void  Sys_SetDefaultHomePath(const char *path);
+char	*Sys_DefaultHomePath(void);
 const char *Sys_Dirname( char *path );
 const char *Sys_Basename( char *path );
 char *Sys_ConsoleInput(void);
@@ -1088,13 +1054,6 @@ void	Sys_FreeFileList( char **list );
 void	Sys_Sleep(int msec);
 
 qboolean Sys_LowPhysicalMemory( void );
-
-void CON_Clear_f( void );
-
-void Hist_Load( void );
-void Hist_Add( const char *field );
-const char *Hist_Next( const char *field );
-const char *Hist_Prev( void );
 
 /* This is based on the Adaptive Huffman algorithm described in Sayood's Data
  * Compression book.  The ranks are not actually stored, but implicitly defined

@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -350,7 +350,6 @@ void CL_SystemInfoChanged( void ) {
 	char			key[BIG_INFO_KEY];
 	char			value[BIG_INFO_VALUE];
 	qboolean		gameSet;
-	qboolean		baseGameSet;
 
 	systemInfo = cl.gameState.stringData + cl.gameState.stringOffsets[ CS_SYSTEMINFO ];
 	// NOTE TTimo:
@@ -359,6 +358,11 @@ void CL_SystemInfoChanged( void ) {
 	// in some cases, outdated cp commands might get sent with this news serverId
 	cl.serverId = atoi( Info_ValueForKey( systemInfo, "sv_serverid" ) );
 
+	// don't set any vars when playing a demo
+	if ( clc.demoplaying ) {
+		return;
+	}
+
 #ifdef USE_VOIP
 	// in the future, (val) will be a protocol version string, so only
 	//  accept explicitly 1, not generally non-zero.
@@ -366,14 +370,10 @@ void CL_SystemInfoChanged( void ) {
 	cl_connectedToVoipServer = (atoi( s ) == 1);
 #endif
 
-	if ( clc.demoplaying )
-		cl_connectedToCheatServer = qtrue;
-	else {
-		s = Info_ValueForKey( systemInfo, "sv_cheats" );
-		cl_connectedToCheatServer = atoi( s );
-		if ( !cl_connectedToCheatServer ) {
-			Cvar_SetCheatState();
-		}
+	s = Info_ValueForKey( systemInfo, "sv_cheats" );
+	cl_connectedToCheatServer = atoi( s );
+	if ( !cl_connectedToCheatServer ) {
+		Cvar_SetCheatState();
 	}
 
 	// check pure server string
@@ -386,7 +386,6 @@ void CL_SystemInfoChanged( void ) {
 	FS_PureServerSetReferencedPaks( s, t );
 
 	gameSet = qfalse;
-	baseGameSet = qfalse;
 	// scan through all the variables in the systeminfo and locally set cvars to match
 	s = systemInfo;
 	while ( s ) {
@@ -408,21 +407,6 @@ void CL_SystemInfoChanged( void ) {
 				
 			gameSet = qtrue;
 		}
-		
-		// ehw!
-		if (!Q_stricmp(key, "fs_basegame"))
-		{
-			if(FS_CheckDirTraversal(value))
-			{
-				Com_Printf(S_COLOR_YELLOW "WARNING: Server sent invalid fs_basegame value %s\n", value);
-				continue;
-			}
-				
-			baseGameSet = qtrue;
-		}
-
-		if (!Q_stricmp(key, "sv_pure"))
-			cl_connectedToPureServer = atoi(value);
 
 		if((cvar_flags = Cvar_Flags(key)) == CVAR_NONEXISTENT)
 			Cvar_Get(key, value, CVAR_SERVER_CREATED | CVAR_ROM);
@@ -435,21 +419,14 @@ void CL_SystemInfoChanged( void ) {
 				continue;
 			}
 
-			Cvar_SetSafe(key, value);
+			Cvar_Set(key, value);
 		}
 	}
 	// if game folder should not be set and it is set at the client side
 	if ( !gameSet && *Cvar_VariableString("fs_game") ) {
 		Cvar_Set( "fs_game", "" );
 	}
-	if ( !baseGameSet && *Cvar_VariableString("fs_basegame") ) {
-		Cvar_Set( "fs_basegame", "" );
-	}
-	if ( clc.demoplaying ) {
-		Cvar_Set( "sv_pure", "0" );
-		Cvar_Set( "sv_cheats", "1" );
-		cl_connectedToPureServer = qfalse;
-	}
+	cl_connectedToPureServer = Cvar_VariableValue( "sv_pure" );
 }
 
 /*
@@ -460,29 +437,15 @@ CL_ParseServerInfo
 static void CL_ParseServerInfo(void)
 {
 	const char *serverInfo;
-	const char *systemInfo;
 
 	serverInfo = cl.gameState.stringData
 		+ cl.gameState.stringOffsets[ CS_SERVERINFO ];
-	systemInfo = cl.gameState.stringData
-		+ cl.gameState.stringOffsets[ CS_SYSTEMINFO ];
 
 	clc.sv_allowDownload = atoi(Info_ValueForKey(serverInfo,
 		"sv_allowDownload"));
 	Q_strncpyz(clc.sv_dlURL,
 		Info_ValueForKey(serverInfo, "sv_dlURL"),
 		sizeof(clc.sv_dlURL));
-	if (!clc.sv_dlURL[0]) {
-		Q_strncpyz(clc.sv_dlURL,
-			Info_ValueForKey(systemInfo, "sv_wwwBaseURL"),
-			sizeof(clc.sv_dlURL));
-	}
-	// If we have an URL, assume we can use HTTP
-	if (clc.sv_dlURL[0] || cl_dlURLOverride->string[0]) {
-		clc.sv_allowDownload |= DLF_ENABLE;
-		clc.sv_allowDownload &= ~DLF_NO_REDIRECT;
-	}
-	Cvar_SetValue("ui_serverinfo_allowdl", clc.sv_allowDownload);
 }
 
 /*
@@ -564,9 +527,6 @@ void CL_ParseGamestate( msg_t *msg ) {
 	
 	// reinitialize the filesystem if the game directory has changed
 	FS_ConditionalRestart( clc.checksumFeed );
-
-	if(clc.demoplaying && cl_demoConfig->string[0] )
-		Cbuf_AddText ( va( "exec %s\n", cl_demoConfig->string ) );
 
 	// This used to call CL_StartHunkUsers, but now we enter the download state before loading the
 	// cgame
@@ -677,9 +637,6 @@ void CL_ParseDownload ( msg_t *msg ) {
 }
 
 #ifdef USE_VOIP
-
-void SCR_DrawVoipSender( int sender );
-
 static
 qboolean CL_ShouldIgnoreVoipSender(int sender)
 {
@@ -757,9 +714,6 @@ void CL_ParseVoip ( msg_t *msg ) {
 	// !!! FIXME: make sure data is narrowband? Does decoder handle this?
 
 	Com_DPrintf("VoIP: packet accepted!\n");
-	
-	cls.voipTime = cls.realtime + 500; // Aka half a second
-	cls.voipSender = sender;
 
 	// This is a new "generation" ... a new recording started, reset the bits.
 	if (generation != clc.voipIncomingGeneration[sender]) {
@@ -807,7 +761,7 @@ void CL_ParseVoip ( msg_t *msg ) {
 			Com_DPrintf("VoIP: playback %d bytes, %d samples, %d frames\n",
 			            written * 2, written, i);
 			S_RawSamples(sender + 1, written, clc.speexSampleRate, 2, 1,
-			             (const byte *) decoded, ( clc.voipGain[sender] + cl_voipDefaultGain->value ) );
+			             (const byte *) decoded, clc.voipGain[sender]);
 			written = 0;
 		}
 
@@ -832,7 +786,7 @@ void CL_ParseVoip ( msg_t *msg ) {
 
 	if (written > 0) {
 		S_RawSamples(sender + 1, written, clc.speexSampleRate, 2, 1,
-		             (const byte *) decoded, ( clc.voipGain[sender] + cl_voipDefaultGain->value ) );
+		             (const byte *) decoded, clc.voipGain[sender]);
 	}
 
 	clc.voipIncomingSequence[sender] = sequence + frames;

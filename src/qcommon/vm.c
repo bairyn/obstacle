@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -35,17 +35,6 @@ and one exported function: Perform
 */
 
 #include "vm_local.h"
-#include <sys/types.h>
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/mman.h>
-#include <limits.h>
-#include <unistd.h>
-#ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
-#endif
-#endif
 
 
 vm_t	*currentVM = NULL;
@@ -83,7 +72,7 @@ VM_Init
 */
 void VM_Init( void ) {
 	Cvar_Get( "vm_cgame", "2", CVAR_ARCHIVE );	// !@# SHIP WITH SET TO 2
-	Cvar_Get( "vm_game", "0", CVAR_ARCHIVE );	// !@# SHIP WITH SET TO 0
+	Cvar_Get( "vm_game", "2", CVAR_ARCHIVE );	// !@# SHIP WITH SET TO 2
 	Cvar_Get( "vm_ui", "2", CVAR_ARCHIVE );		// !@# SHIP WITH SET TO 2
 
 	Cmd_AddCommand ("vmprofile", VM_VmProfile_f );
@@ -230,11 +219,7 @@ VM_LoadSymbols
 */
 void VM_LoadSymbols( vm_t *vm ) {
 	int		len;
-	union {
-		char	*c;
-		void	*v;
-	} mapfile;
-	char *text_p, *token;
+	char	*mapfile, *text_p, *token;
 	char	name[MAX_QPATH];
 	char	symbols[MAX_QPATH];
 	vmSymbol_t	**prev, *sym;
@@ -251,8 +236,8 @@ void VM_LoadSymbols( vm_t *vm ) {
 
 	COM_StripExtension(vm->name, name, sizeof(name));
 	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
-	len = FS_ReadFile( symbols, &mapfile.v );
-	if ( !mapfile.c ) {
+	len = FS_ReadFile( symbols, (void **)&mapfile );
+	if ( !mapfile ) {
 		Com_Printf( "Couldn't load symbol file: %s\n", symbols );
 		return;
 	}
@@ -260,7 +245,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 	numInstructions = vm->instructionPointersLength >> 2;
 
 	// parse the symbols
-	text_p = mapfile.c;
+	text_p = mapfile;
 	prev = &vm->symbols;
 	count = 0;
 
@@ -307,7 +292,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 
 	vm->numSymbols = count;
 	Com_Printf( "%i symbols parsed from %s\n", count, symbols );
-	FS_FreeFile( mapfile.v );
+	FS_FreeFile( mapfile );
 }
 
 /*
@@ -380,50 +365,47 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc ) {
 	int					dataLength;
 	int					i;
 	char				filename[MAX_QPATH];
-	union {
-		vmHeader_t	*h;
-		void		*v;
-	} header;
+	vmHeader_t	*header;
 
 	// load the image
 	Com_sprintf( filename, sizeof(filename), "vm/%s.qvm", vm->name );
 	Com_Printf( "Loading vm file %s...\n", filename );
-	length = FS_ReadFile( filename, &header.v );
-	if ( !header.h ) {
+	length = FS_ReadFile( filename, (void **)&header );
+	if ( !header ) {
 		Com_Printf( "Failed.\n" );
 		VM_Free( vm );
 		return NULL;
 	}
 
-	if( LittleLong( header.h->vmMagic ) == VM_MAGIC_VER2 ) {
-		Com_DPrintf( "...which has vmMagic VM_MAGIC_VER2\n" );
+	if( LittleLong( header->vmMagic ) == VM_MAGIC_VER2 ) {
+		Com_Printf( "...which has vmMagic VM_MAGIC_VER2\n" );
 
 		// byte swap the header
 		for ( i = 0 ; i < sizeof( vmHeader_t ) / 4 ; i++ ) {
-			((int *)header.h)[i] = LittleLong( ((int *)header.h)[i] );
+			((int *)header)[i] = LittleLong( ((int *)header)[i] );
 		}
 
 		// validate
-		if ( header.h->jtrgLength < 0
-			|| header.h->bssLength < 0
-			|| header.h->dataLength < 0
-			|| header.h->litLength < 0
-			|| header.h->codeLength <= 0 ) {
+		if ( header->jtrgLength < 0
+			|| header->bssLength < 0
+			|| header->dataLength < 0
+			|| header->litLength < 0
+			|| header->codeLength <= 0 ) {
 			VM_Free( vm );
 			Com_Error( ERR_FATAL, "%s has bad header", filename );
 		}
-	} else if( LittleLong( header.h->vmMagic ) == VM_MAGIC ) {
+	} else if( LittleLong( header->vmMagic ) == VM_MAGIC ) {
 		// byte swap the header
 		// sizeof( vmHeader_t ) - sizeof( int ) is the 1.32b vm header size
 		for ( i = 0 ; i < ( sizeof( vmHeader_t ) - sizeof( int ) ) / 4 ; i++ ) {
-			((int *)header.h)[i] = LittleLong( ((int *)header.h)[i] );
+			((int *)header)[i] = LittleLong( ((int *)header)[i] );
 		}
 
 		// validate
-		if ( header.h->bssLength < 0
-			|| header.h->dataLength < 0
-			|| header.h->litLength < 0
-			|| header.h->codeLength <= 0 ) {
+		if ( header->bssLength < 0
+			|| header->dataLength < 0
+			|| header->litLength < 0
+			|| header->codeLength <= 0 ) {
 			VM_Free( vm );
 			Com_Error( ERR_FATAL, "%s has bad header", filename );
 		}
@@ -435,84 +417,48 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc ) {
 
 	// round up to next power of 2 so all data operations can
 	// be mask protected
-	dataLength = header.h->dataLength + header.h->litLength + header.h->bssLength;
+	dataLength = header->dataLength + header->litLength + header->bssLength;
 	for ( i = 0 ; dataLength > ( 1 << i ) ; i++ ) {
 	}
 	dataLength = 1 << i;
 
 	if( alloc ) {
 		// allocate zero filled space for initialized and uninitialized data
-		vm->mmaped = qtrue;
-#ifdef _WIN32
-		vm->dataBase = VirtualAlloc( NULL, dataLength, MEM_COMMIT, PAGE_READWRITE );
-		if(!vm->dataBase) {
-			Com_DPrintf("VM_LoadQVM: VirtualAlloc failed");
-			vm->mmaped = qfalse;
-			vm->dataBase = Hunk_Alloc( dataLength, h_high );
-		}
-#else
-		vm->dataBase = mmap( NULL, dataLength, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_ANONYMOUS, -1, 0 );
-		if(vm->dataBase == (void*)-1) {
-			Com_DPrintf("VM_LoadQVM: can't mmap memory");
-			vm->mmaped = qfalse;
-			vm->dataBase = Hunk_Alloc( dataLength, h_high );
-		}
-#endif
+		vm->dataBase = Hunk_Alloc( dataLength, h_high );
 		vm->dataMask = dataLength - 1;
 	} else {
-		if ( vm->mmaped ) {
-#ifdef _WIN32
-			DWORD _unused = 0;
-			VirtualProtect( vm->dataBase, 4096, PAGE_READWRITE, &_unused );
-#else
-			mprotect( vm->dataBase, 4096, PROT_READ|PROT_WRITE );
-#endif
-		}
 		// clear the data
 		Com_Memset( vm->dataBase, 0, dataLength );
 	}
 
 	// copy the intialized data
-	Com_Memcpy( vm->dataBase, (byte *)header.h + header.h->dataOffset,
-		header.h->dataLength + header.h->litLength );
+	Com_Memcpy( vm->dataBase, (byte *)header + header->dataOffset, header->dataLength + header->litLength );
 
 	// byte swap the longs
-	for ( i = 0 ; i < header.h->dataLength ; i += 4 ) {
+	for ( i = 0 ; i < header->dataLength ; i += 4 ) {
 		*(int *)(vm->dataBase + i) = LittleLong( *(int *)(vm->dataBase + i ) );
 	}
 
-	// lock the first page to catch NULL pointers (only do this if the loaded qvm supports it)
-	// Fail silently
-	if ( vm->dataBase[0] == 1 && vm->mmaped ) {
-#ifdef _WIN32
-		DWORD _unused = 0;
-		VirtualProtect( vm->dataBase, 4096, PAGE_NOACCESS, &_unused );
-#else
-		if ( 4096 % sysconf( _SC_PAGESIZE ) == 0 )
-			mprotect( vm->dataBase, 4096, PROT_NONE );
-#endif
-	}
-
-	if( header.h->vmMagic == VM_MAGIC_VER2 ) {
-		vm->numJumpTableTargets = header.h->jtrgLength >> 2;
-		Com_DPrintf( "Loading %d jump table targets\n", vm->numJumpTableTargets );
+	if( header->vmMagic == VM_MAGIC_VER2 ) {
+		vm->numJumpTableTargets = header->jtrgLength >> 2;
+		Com_Printf( "Loading %d jump table targets\n", vm->numJumpTableTargets );
 
 		if( alloc ) {
-			vm->jumpTableTargets = Hunk_Alloc( header.h->jtrgLength, h_high );
+			vm->jumpTableTargets = Hunk_Alloc( header->jtrgLength, h_high );
 		} else {
-			Com_Memset( vm->jumpTableTargets, 0, header.h->jtrgLength );
+			Com_Memset( vm->jumpTableTargets, 0, header->jtrgLength );
 		}
 
-		Com_Memcpy( vm->jumpTableTargets, (byte *)header.h + header.h->dataOffset +
-				header.h->dataLength + header.h->litLength, header.h->jtrgLength );
+		Com_Memcpy( vm->jumpTableTargets, (byte *)header + header->dataOffset +
+				header->dataLength + header->litLength, header->jtrgLength );
 
 		// byte swap the longs
-		for ( i = 0 ; i < header.h->jtrgLength ; i += 4 ) {
+		for ( i = 0 ; i < header->jtrgLength ; i += 4 ) {
 			*(int *)(vm->jumpTableTargets + i) = LittleLong( *(int *)(vm->jumpTableTargets + i ) );
 		}
 	}
 
-	return header.h;
+	return header;
 }
 
 /*
@@ -541,7 +487,7 @@ vm_t *VM_Restart( vm_t *vm ) {
 	}
 
 	// load the image
-	Com_DPrintf( "VM_Restart()\n" );
+	Com_Printf( "VM_Restart()\n" );
 
 	if( !( header = VM_LoadQVM( vm, qfalse ) ) ) {
 		Com_Error( ERR_DROP, "VM_Restart failed.\n" );
@@ -603,7 +549,7 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 
 	if ( interpret == VMI_NATIVE ) {
 		// try to load as a system dll
-		Com_DPrintf( "Loading dll file %s.\n", vm->name );
+		Com_Printf( "Loading dll file %s.\n", vm->name );
 		vm->dllHandle = Sys_LoadDll( module, vm->fqpath , &vm->entryPoint, VM_DllSyscall );
 		if ( vm->dllHandle ) {
 			return vm;
@@ -629,7 +575,7 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 
 #ifdef NO_VM_COMPILED
 	if(interpret >= VMI_COMPILED) {
-		Com_DPrintf("Architecture doesn't have a bytecode compiler, using interpreter\n");
+		Com_Printf("Architecture doesn't have a bytecode compiler, using interpreter\n");
 		interpret = VMI_BYTECODE;
 	}
 #else
@@ -654,7 +600,7 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 	vm->programStack = vm->dataMask + 1;
 	vm->stackBottom = vm->programStack - STACK_SIZE;
 
-	Com_DPrintf("%s loaded in %d bytes on the hunk\n", module, remaining - Hunk_MemoryRemaining());
+	Com_Printf("%s loaded in %d bytes on the hunk\n", module, remaining - Hunk_MemoryRemaining());
 
 	return vm;
 }
@@ -686,13 +632,17 @@ void VM_Free( vm_t *vm ) {
 		Sys_UnloadDll( vm->dllHandle );
 		Com_Memset( vm, 0, sizeof( *vm ) );
 	}
-	if ( vm->dataBase && vm->mmaped ) {
-#ifdef _WIN32
-		VirtualFree( vm->dataBase, 0, MEM_RELEASE );
-#else
-		munmap( vm->dataBase, vm->dataMask + 1 );
-#endif
+#if 0	// now automatically freed by hunk
+	if ( vm->codeBase ) {
+		Z_Free( vm->codeBase );
 	}
+	if ( vm->dataBase ) {
+		Z_Free( vm->dataBase );
+	}
+	if ( vm->instructionPointers ) {
+		Z_Free( vm->instructionPointers );
+	}
+#endif
 	Com_Memset( vm, 0, sizeof( *vm ) );
 
 	currentVM = NULL;

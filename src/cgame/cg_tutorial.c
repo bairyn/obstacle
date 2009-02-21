@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -81,27 +81,6 @@ static void CG_GetBindings( void )
           break;
       }
     }
-  }
-}
-
-/*
-=================
-CG_FixBindings
-
-Fix people who have "boost" bound instead of "+button6"
-Could also extend this function for future bind changes
-=================
-*/
-static void CG_FixBindings( void )
-{
-  int i;
-  char buffer[ MAX_STRING_CHARS ];
-
-  for( i = 0; i < K_LAST_KEY; i++ )
-  {
-    trap_Key_GetBindingBuf( i, buffer, sizeof( buffer ) );
-    if( !Q_stricmp( buffer, "boost" ) )
-      trap_Key_SetBinding( i, "+button6" );
   }
 }
 
@@ -621,7 +600,6 @@ const char *CG_TutorialText( void )
   playerState_t *ps;
   static char   text[ MAX_TUTORIAL_TEXT ];
 
-  CG_FixBindings( );
   CG_GetBindings( );
 
   text[ 0 ] = '\0';

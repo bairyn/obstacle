@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
  
-This file is part of Tremfusion.
+This file is part of Tremulous.
  
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
  
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -35,9 +35,9 @@ void dllEntry( intptr_t ( QDECL *syscallptr )( intptr_t arg, ... ) )
 
 int PASSFLOAT( float x )
 {
-  floatint_t fi;
-  fi.f = x;
-  return fi.i;
+  float  floatTemp;
+  floatTemp = x;
+  return *( int * ) & floatTemp;
 }
 
 void trap_Print( const char *string )
@@ -72,9 +72,9 @@ void trap_Cvar_Set( const char *var_name, const char *value )
 
 float trap_Cvar_VariableValue( const char *var_name )
 {
-  floatint_t fi;
-  fi.i = syscall( UI_CVAR_VARIABLEVALUE, var_name );
-  return fi.f;
+  int temp;
+  temp = syscall( UI_CVAR_VARIABLEVALUE, var_name );
+  return ( *( float* ) & temp );
 }
 
 void trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize )
@@ -470,14 +470,4 @@ void  trap_R_RemapShader( const char *oldShader, const char *newShader, const ch
 void trap_SetPbClStatus( int status )
 {
   syscall( UI_SET_PBCLSTATUS, status );
-}
-
-int trap_CrosshairPlayer( void )
-{
-  return syscall( UI_CROSSHAIR_PLAYER );
-}
-
-int trap_LastAttacker( void )
-{
-  return syscall( UI_LAST_ATTACKER );
 }

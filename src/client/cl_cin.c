@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -52,6 +52,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ZA_SOUND_STEREO		0x1021
 
 #define MAX_VIDEO_HANDLES	16
+
+extern glconfig_t glConfig;
 
 
 static void RoQ_init( void );
@@ -619,10 +621,7 @@ static void decodeCodeBook( byte *input, unsigned short roq_flags )
 	unsigned short	*aptr, *bptr, *cptr, *dptr;
 	long	y0,y1,y2,y3,cr,cb;
 	byte	*bbptr, *baptr, *bcptr, *bdptr;
-	union {
-		unsigned int *i;
-		unsigned short *s;
-	} iaptr, ibptr, icptr, idptr;
+	unsigned int *iaptr, *ibptr, *icptr, *idptr;
 
 	if (!roq_flags) {
 		two = four = 256;
@@ -665,7 +664,7 @@ static void decodeCodeBook( byte *input, unsigned short roq_flags )
 						VQ2TO4(aptr,bptr,cptr,dptr);
 				}
 			} else if (cinTable[currentHandle].samplesPerPixel==4) {
-				ibptr.s = bptr;
+				ibptr = (unsigned int *)bptr;
 				for(i=0;i<two;i++) {
 					y0 = (long)*input++;
 					y1 = (long)*input++;
@@ -673,22 +672,20 @@ static void decodeCodeBook( byte *input, unsigned short roq_flags )
 					y3 = (long)*input++;
 					cr = (long)*input++;
 					cb = (long)*input++;
-					*ibptr.i++ = yuv_to_rgb24( y0, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( y1, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( y2, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( y3, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y0, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y1, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y2, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y3, cr, cb );
 				}
 
-				icptr.s = vq4;
-				idptr.s = vq8;
+				icptr = (unsigned int *)vq4;
+				idptr = (unsigned int *)vq8;
 	
 				for(i=0;i<four;i++) {
-					iaptr.s = vq2;
-					iaptr.i += (*input++)*4;
-					ibptr.s = vq2;
-					ibptr.i += (*input++)*4;
+					iaptr = (unsigned int *)vq2 + (*input++)*4;
+					ibptr = (unsigned int *)vq2 + (*input++)*4;
 					for(j=0;j<2;j++) 
-						VQ2TO4(iaptr.i, ibptr.i, icptr.i, idptr.i);
+						VQ2TO4(iaptr, ibptr, icptr, idptr);
 				}
 			} else if (cinTable[currentHandle].samplesPerPixel==1) {
 				bbptr = (byte *)bptr;
@@ -743,7 +740,7 @@ static void decodeCodeBook( byte *input, unsigned short roq_flags )
 					}
 				}
 			} else if (cinTable[currentHandle].samplesPerPixel==4) {
-				ibptr.s = bptr;
+				ibptr = (unsigned int *)bptr;
 				for(i=0;i<two;i++) {
 					y0 = (long)*input++;
 					y1 = (long)*input++;
@@ -751,27 +748,25 @@ static void decodeCodeBook( byte *input, unsigned short roq_flags )
 					y3 = (long)*input++;
 					cr = (long)*input++;
 					cb = (long)*input++;
-					*ibptr.i++ = yuv_to_rgb24( y0, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( y1, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( ((y0*3)+y2)/4, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( ((y1*3)+y3)/4, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( (y0+(y2*3))/4, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( (y1+(y3*3))/4, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( y2, cr, cb );
-					*ibptr.i++ = yuv_to_rgb24( y3, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y0, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y1, cr, cb );
+					*ibptr++ = yuv_to_rgb24( ((y0*3)+y2)/4, cr, cb );
+					*ibptr++ = yuv_to_rgb24( ((y1*3)+y3)/4, cr, cb );
+					*ibptr++ = yuv_to_rgb24( (y0+(y2*3))/4, cr, cb );
+					*ibptr++ = yuv_to_rgb24( (y1+(y3*3))/4, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y2, cr, cb );
+					*ibptr++ = yuv_to_rgb24( y3, cr, cb );
 				}
 
-				icptr.s = vq4;
-				idptr.s = vq8;
+				icptr = (unsigned int *)vq4;
+				idptr = (unsigned int *)vq8;
 	
 				for(i=0;i<four;i++) {
-					iaptr.s = vq2;
-					iaptr.i += (*input++)*8;
-					ibptr.s = vq2;
-					ibptr.i += (*input++)*8;
+					iaptr = (unsigned int *)vq2 + (*input++)*8;
+					ibptr = (unsigned int *)vq2 + (*input++)*8;
 					for(j=0;j<2;j++) {
-						VQ2TO4(iaptr.i, ibptr.i, icptr.i, idptr.i);
-						VQ2TO4(iaptr.i, ibptr.i, icptr.i, idptr.i);
+						VQ2TO4(iaptr, ibptr, icptr, idptr);
+						VQ2TO4(iaptr, ibptr, icptr, idptr);
 					}
 				}
 			} else if (cinTable[currentHandle].samplesPerPixel==1) {
@@ -847,26 +842,24 @@ static void decodeCodeBook( byte *input, unsigned short roq_flags )
 				}
 			}			
 		} else if (cinTable[currentHandle].samplesPerPixel == 4) {
-			ibptr.s = bptr;
+			ibptr = (unsigned int *) bptr;
 			for(i=0;i<two;i++) {
 				y0 = (long)*input; input+=2;
 				y2 = (long)*input; input+=2;
 				cr = (long)*input++;
 				cb = (long)*input++;
-				*ibptr.i++ = yuv_to_rgb24( y0, cr, cb );
-				*ibptr.i++ = yuv_to_rgb24( y2, cr, cb );
+				*ibptr++ = yuv_to_rgb24( y0, cr, cb );
+				*ibptr++ = yuv_to_rgb24( y2, cr, cb );
 			}
 
-			icptr.s = vq4;
-			idptr.s = vq8;
+			icptr = (unsigned int *)vq4;
+			idptr = (unsigned int *)vq8;
 	
 			for(i=0;i<four;i++) {
-				iaptr.s = vq2;
-				iaptr.i += (*input++)*2;
-				ibptr.s = vq2 + (*input++)*2;
-				ibptr.i += (*input++)*2;
+				iaptr = (unsigned int *)vq2 + (*input++)*2;
+				ibptr = (unsigned int *)vq2 + (*input++)*2;
 				for(j=0;j<2;j++) { 
-					VQ2TO2(iaptr.i,ibptr.i,icptr.i,idptr.i);
+					VQ2TO2(iaptr,ibptr,icptr,idptr);
 				}
 			}
 		}
@@ -994,7 +987,7 @@ static void readQuadInfo( byte *qData )
         cinTable[currentHandle].drawY = cinTable[currentHandle].CIN_HEIGHT;
         
 	// rage pro is very slow at 512 wide textures, voodoo can't do it at all
-	if ( cls.glconfig.hardwareType == GLHW_RAGEPRO || cls.glconfig.maxTextureSize <= 256) {
+	if ( glConfig.hardwareType == GLHW_RAGEPRO || glConfig.maxTextureSize <= 256) {
                 if (cinTable[currentHandle].drawX>256) {
                         cinTable[currentHandle].drawX = 256;
                 }
@@ -1201,8 +1194,8 @@ redump:
 	cinTable[currentHandle].roq_id		 = framedata[0] + framedata[1]*256;
 	cinTable[currentHandle].RoQFrameSize = framedata[2] + framedata[3]*256 + framedata[4]*65536;
 	cinTable[currentHandle].roq_flags	 = framedata[6] + framedata[7]*256;
-	cinTable[currentHandle].roqF0		 = (signed char)framedata[7];
-	cinTable[currentHandle].roqF1		 = (signed char)framedata[6];
+	cinTable[currentHandle].roqF0		 = (char)framedata[7];
+	cinTable[currentHandle].roqF1		 = (char)framedata[6];
 
 	if (cinTable[currentHandle].RoQFrameSize>65536||cinTable[currentHandle].roq_id==0x1084) {
 		Com_DPrintf("roq_size>65536||roq_id==0x1084\n");

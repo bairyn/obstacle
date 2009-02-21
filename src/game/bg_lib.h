@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -79,20 +79,14 @@ typedef unsigned  long uint32_t;
 #define isxupper(c) (isdigit(c) || (c >= 'A' && c <= 'F')) 
 
 // Misc functions
+#define assert( expr )\
+    if( !( expr ) )\
+      Com_Error( ERR_DROP, "%s:%d: Assertion `%s' failed",\
+                 __FILE__, __LINE__, #expr )
 typedef int cmp_t( const void *, const void * );
 void        qsort( void *a, size_t n, size_t es, cmp_t *cmp );
 void        srand( unsigned seed );
 int         rand( void );
-// FIXME: NDEBUG isn't defined for compiling the QVMs
-#ifndef NDEBUG
-// these two are so that __LINE__ is expanded and *then* strung
-#define str2(x) #x
-#define str(x) str2(x)
-#define assert( x ) if( !( x ) ) Com_Error( ERR_DROP, \
-    __FILE__ ":" str(__LINE__) ": Assertion `" #x "' failed" );
-#else
-#define assert( x ) // nothing
-#endif
 
 // String functions
 size_t  strlen( const char *string );

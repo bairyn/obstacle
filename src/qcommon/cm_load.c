@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../bspc/l_qfiles.h"
 
-static void SetPlaneSignbits (cplane_t *out) {
+void SetPlaneSignbits (cplane_t *out) {
 	int	bits, j;
 
 	// for fast box on planeside test
@@ -88,7 +88,7 @@ void	CM_FloodAreaConnections (void);
 CMod_LoadShaders
 =================
 */
-static void CMod_LoadShaders( lump_t *l ) {
+void CMod_LoadShaders( lump_t *l ) {
 	dshader_t	*in, *out;
 	int			i, count;
 
@@ -119,7 +119,7 @@ static void CMod_LoadShaders( lump_t *l ) {
 CMod_LoadSubmodels
 =================
 */
-static void CMod_LoadSubmodels( lump_t *l ) {
+void CMod_LoadSubmodels( lump_t *l ) {
 	dmodel_t	*in;
 	cmodel_t	*out;
 	int			i, j, count;
@@ -177,7 +177,7 @@ CMod_LoadNodes
 
 =================
 */
-static void CMod_LoadNodes( lump_t *l ) {
+void CMod_LoadNodes( lump_t *l ) {
 	dnode_t		*in;
 	int			child;
 	cNode_t		*out;
@@ -185,7 +185,7 @@ static void CMod_LoadNodes( lump_t *l ) {
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadNodes: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
@@ -213,7 +213,7 @@ CM_BoundBrush
 
 =================
 */
-static void CM_BoundBrush( cbrush_t *b ) {
+void CM_BoundBrush( cbrush_t *b ) {
 	b->bounds[0][0] = -b->sides[0].plane->dist;
 	b->bounds[1][0] = b->sides[1].plane->dist;
 
@@ -231,14 +231,14 @@ CMod_LoadBrushes
 
 =================
 */
-static void CMod_LoadBrushes( lump_t *l ) {
+void CMod_LoadBrushes( lump_t *l ) {
 	dbrush_t	*in;
 	cbrush_t	*out;
 	int			i, count;
 
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in)) {
-		Com_Error (ERR_DROP, "MOD_LoadBrushes: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	}
 	count = l->filelen / sizeof(*in);
 
@@ -267,7 +267,7 @@ static void CMod_LoadBrushes( lump_t *l ) {
 CMod_LoadLeafs
 =================
 */
-static void CMod_LoadLeafs (lump_t *l)
+void CMod_LoadLeafs (lump_t *l)
 {
 	int			i;
 	cLeaf_t		*out;
@@ -276,7 +276,7 @@ static void CMod_LoadLeafs (lump_t *l)
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadLeafs: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
@@ -310,7 +310,7 @@ static void CMod_LoadLeafs (lump_t *l)
 CMod_LoadPlanes
 =================
 */
-static void CMod_LoadPlanes (lump_t *l)
+void CMod_LoadPlanes (lump_t *l)
 {
 	int			i, j;
 	cplane_t	*out;
@@ -320,7 +320,7 @@ static void CMod_LoadPlanes (lump_t *l)
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadPlanes: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	count = l->filelen / sizeof(*in);
 
 	if (count < 1)
@@ -351,7 +351,7 @@ static void CMod_LoadPlanes (lump_t *l)
 CMod_LoadLeafBrushes
 =================
 */
-static void CMod_LoadLeafBrushes (lump_t *l)
+void CMod_LoadLeafBrushes (lump_t *l)
 {
 	int			i;
 	int			*out;
@@ -360,7 +360,7 @@ static void CMod_LoadLeafBrushes (lump_t *l)
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadLeafBrushes: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	count = l->filelen / sizeof(*in);
 
 	cm.leafbrushes = Hunk_Alloc( (count + BOX_BRUSHES) * sizeof( *cm.leafbrushes ), h_high );
@@ -378,7 +378,7 @@ static void CMod_LoadLeafBrushes (lump_t *l)
 CMod_LoadLeafSurfaces
 =================
 */
-static void CMod_LoadLeafSurfaces( lump_t *l )
+void CMod_LoadLeafSurfaces( lump_t *l )
 {
 	int			i;
 	int			*out;
@@ -387,7 +387,7 @@ static void CMod_LoadLeafSurfaces( lump_t *l )
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadLeafSurfaces: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	count = l->filelen / sizeof(*in);
 
 	cm.leafsurfaces = Hunk_Alloc( count * sizeof( *cm.leafsurfaces ), h_high );
@@ -405,7 +405,7 @@ static void CMod_LoadLeafSurfaces( lump_t *l )
 CMod_LoadBrushSides
 =================
 */
-static void CMod_LoadBrushSides (lump_t *l)
+void CMod_LoadBrushSides (lump_t *l)
 {
 	int				i;
 	cbrushside_t	*out;
@@ -415,7 +415,7 @@ static void CMod_LoadBrushSides (lump_t *l)
 
 	in = (void *)(cmod_base + l->fileofs);
 	if ( l->filelen % sizeof(*in) ) {
-		Com_Error (ERR_DROP, "MOD_LoadBrushSides: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	}
 	count = l->filelen / sizeof(*in);
 
@@ -443,23 +443,6 @@ static void CMod_LoadBrushSides (lump_t *l)
 CMod_BrushEdgesAreTheSame
 =================
 */
-#if id386_sse >= 1
-static qboolean CMod_BrushEdgesAreTheSame_sse( v4f p0, v4f p1,
-					       v4f q0, v4f q1 )
-{
-	s4f epsilon = s4fInit( CM_EDGE_VERTEX_EPSILON );
-	
-	if( v4fVectorCompareEpsilon( p0, q0, epsilon ) &&
-	    v4fVectorCompareEpsilon( p1, q1, epsilon ) )
-		return qtrue;
-
-	if( v4fVectorCompareEpsilon( p1, q0, epsilon ) &&
-	    v4fVectorCompareEpsilon( p0, q1, epsilon ) )
-		return qtrue;
-
-	return qfalse;
-}
-#endif
 static qboolean CMod_BrushEdgesAreTheSame( const vec3_t p0, const vec3_t p1,
 		const vec3_t q0, const vec3_t q1 )
 {
@@ -479,30 +462,6 @@ static qboolean CMod_BrushEdgesAreTheSame( const vec3_t p0, const vec3_t p1,
 CMod_AddEdgeToBrush
 =================
 */
-#if id386_sse >= 1
-static qboolean CMod_AddEdgeToBrush_sse( v4f p0, v4f p1,
-					 cbrushedge_t *edges, int *numEdges )
-{
-	int i;
-
-	if( !edges || !numEdges )
-		return qfalse;
-
-	for( i = 0; i < *numEdges; i++ )
-	{
-		if( CMod_BrushEdgesAreTheSame_sse( p0, p1,
-						   vec3aLoad( edges[ i ].p0 ),
-						   vec3aLoad( edges[ i ].p1 ) ) )
-			return qfalse;
-	}
-
-	vec3aStore( edges[ *numEdges ].p0, p0 );
-	vec3aStore( edges[ *numEdges ].p1, p1 );
-	(*numEdges)++;
-
-	return qtrue;
-}
-#endif
 static qboolean CMod_AddEdgeToBrush( const vec3_t p0, const vec3_t p1,
 		cbrushedge_t *edges, int *numEdges )
 {
@@ -530,107 +489,6 @@ static qboolean CMod_AddEdgeToBrush( const vec3_t p0, const vec3_t p1,
 CMod_CreateBrushSideWindings
 =================
 */
-#if id386_sse >= 1
-static void CMod_CreateBrushSideWindings_sse( void )
-{
-	int		i, j, k;
-	winding_t	*w;
-	cbrushside_t	*side, *chopSide;
-	cplane_t	*plane;
-	cbrush_t	*brush;
-	char            *edgeBuffer;
-	cbrushedge_t	*tempEdges;
-	int		numEdges;
-	int		edgesAlloc;
-	int		totalEdgesAlloc = 0;
-	int		totalEdges = 0;
-	v4f             v4fPlane;
-	
-	for( i = 0; i < cm.numBrushes; i++ )
-	{
-		brush = &cm.brushes[ i ];
-		numEdges = 0;
-
-		// walk the list of brush sides
-		for( j = 0; j < brush->numsides; j++ )
-		{
-			// get side and plane
-			side = &brush->sides[ j ];
-			plane = side->plane;
-
-			v4fPlane = v4fLoadU( plane->normal );
-			w = BaseWindingForPlane_sse( v4fPlane );
-
-			// walk the list of brush sides
-			for( k = 0; k < brush->numsides && w != NULL; k++ )
-			{
-				chopSide = &brush->sides[ k ];
-
-				if( chopSide == side )
-					continue;
-
-				if( chopSide->planeNum == ( side->planeNum ^ 1 ) )
-					continue;		// back side clipaway
-
-				plane = &cm.planes[ chopSide->planeNum ^ 1 ];
-				
-				v4fPlane = v4fLoadU( plane->normal );
-				ChopWindingInPlace_sse( &w, v4fPlane, 0 );
-			}
-
-			if( w )
-				numEdges += w->numpoints;
-
-			// set side winding
-			side->winding = w;
-		}
-
-		// Allocate a temporary buffer of the maximal size
-		edgeBuffer = Z_Malloc( sizeof( cbrushedge_t ) * numEdges + 15 );
-		tempEdges = (cbrushedge_t *)(((size_t)edgeBuffer + 15) & -16);
-		brush->numEdges = 0;
-
-		// compose the points into edges
-		for( j = 0; j < brush->numsides; j++ )
-		{
-			side = &brush->sides[ j ];
-
-			if( side->winding )
-			{
-				for( k = 0; k < side->winding->numpoints - 1; k++ )
-				{
-					if( brush->numEdges == numEdges )
-						Com_Error( ERR_FATAL,
-								"Insufficient memory allocated for collision map edges" );
-
-					CMod_AddEdgeToBrush_sse( vec3Load( side->winding->p[ k ] ),
-								 vec3Load( side->winding->p[ k + 1 ] ),
-								 tempEdges, &brush->numEdges );
-				}
-
-				FreeWinding( side->winding );
-				side->winding = NULL;
-			}
-		}
-
-		// Allocate a buffer of the actual size
-		edgesAlloc = sizeof( cbrushedge_t ) * brush->numEdges;
-		totalEdgesAlloc += edgesAlloc;
-		brush->edges = (cbrushedge_t *)Hunk_Alloc( edgesAlloc, h_low );
-
-		// Copy temporary buffer to permanent buffer
-		Com_Memcpy( brush->edges, tempEdges, edgesAlloc );
-
-		// Free temporary buffer
-		Z_Free( edgeBuffer );
-
-		totalEdges += brush->numEdges;
-	}
-
-	Com_DPrintf( "Allocated %d bytes for %d collision map edges...\n",
-			totalEdgesAlloc, totalEdges );
-}
-#endif
 static void CMod_CreateBrushSideWindings( void )
 {
 	int						i, j, k;
@@ -729,7 +587,7 @@ static void CMod_CreateBrushSideWindings( void )
 CMod_LoadEntityString
 =================
 */
-static void CMod_LoadEntityString( lump_t *l ) {
+void CMod_LoadEntityString( lump_t *l ) {
 	cm.entityString = Hunk_Alloc( l->filelen, h_high );
 	cm.numEntityChars = l->filelen;
 	Com_Memcpy (cm.entityString, cmod_base + l->fileofs, l->filelen);
@@ -741,7 +599,7 @@ CMod_LoadVisibility
 =================
 */
 #define	VIS_HEADER	8
-static void CMod_LoadVisibility( lump_t *l ) {
+void CMod_LoadVisibility( lump_t *l ) {
 	int		len;
 	byte	*buf;
 
@@ -770,64 +628,7 @@ CMod_LoadPatches
 =================
 */
 #define	MAX_PATCH_VERTS		1024
-#if id386_sse >= 1
-static void CMod_LoadPatches_sse( lump_t *surfs, lump_t *verts ) {
-	drawVert_t	*dv, *dv_p;
-	dsurface_t	*in;
-	int		count;
-	int		i, j;
-	int		c;
-	cPatch_t	*patch;
-	vec3a_t		points[MAX_PATCH_VERTS];
-	int		width, height;
-	int		shaderNum;
-
-	in = (void *)(cmod_base + surfs->fileofs);
-	if (surfs->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadPatches: funny lump size");
-	cm.numSurfaces = count = surfs->filelen / sizeof(*in);
-	cm.surfaces = Hunk_Alloc( cm.numSurfaces * sizeof( cm.surfaces[0] ), h_high );
-
-	dv = (void *)(cmod_base + verts->fileofs);
-	if (verts->filelen % sizeof(*dv))
-		Com_Error (ERR_DROP, "MOD_LoadPatches: funny lump size");
-
-	// scan through all the surfaces, but only load patches,
-	// not planar faces
-	for ( i = 0 ; i < count ; i++, in++ ) {
-		if ( LittleLong( in->surfaceType ) != MST_PATCH ) {
-			continue;		// ignore other surfaces
-		}
-		// FIXME: check for non-colliding patches
-
-		cm.surfaces[ i ] = patch = Hunk_Alloc( sizeof( *patch ), h_high );
-
-		// load the full drawverts onto the stack
-		width = LittleLong( in->patchWidth );
-		height = LittleLong( in->patchHeight );
-		c = width * height;
-		if ( c > MAX_PATCH_VERTS ) {
-			Com_Error( ERR_DROP, "ParseMesh: MAX_PATCH_VERTS" );
-		}
-
-		dv_p = dv + LittleLong( in->firstVert );
-		for ( j = 0 ; j < c ; j++, dv_p++ ) {
-			points[j][0] = LittleFloat( dv_p->xyz[0] );
-			points[j][1] = LittleFloat( dv_p->xyz[1] );
-			points[j][2] = LittleFloat( dv_p->xyz[2] );
-			points[j][3] = 0.0f;
-		}
-
-		shaderNum = LittleLong( in->shaderNum );
-		patch->contents = cm.shaders[shaderNum].contentFlags;
-		patch->surfaceFlags = cm.shaders[shaderNum].surfaceFlags;
-
-		// create the internal facet structure
-		patch->pc = CM_GeneratePatchCollide_sse( width, height, points );
-	}
-}
-#endif
-static void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
+void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
 	drawVert_t	*dv, *dv_p;
 	dsurface_t	*in;
 	int			count;
@@ -840,13 +641,13 @@ static void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
 
 	in = (void *)(cmod_base + surfs->fileofs);
 	if (surfs->filelen % sizeof(*in))
-		Com_Error (ERR_DROP, "MOD_LoadPatches: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 	cm.numSurfaces = count = surfs->filelen / sizeof(*in);
 	cm.surfaces = Hunk_Alloc( cm.numSurfaces * sizeof( cm.surfaces[0] ), h_high );
 
 	dv = (void *)(cmod_base + verts->fileofs);
 	if (verts->filelen % sizeof(*dv))
-		Com_Error (ERR_DROP, "MOD_LoadPatches: funny lump size");
+		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 
 	// scan through all the surfaces, but only load patches,
 	// not planar faces
@@ -882,6 +683,29 @@ static void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
 	}
 }
 
+//==================================================================
+
+unsigned CM_LumpChecksum(lump_t *lump) {
+	return LittleLong (Com_BlockChecksum (cmod_base + lump->fileofs, lump->filelen));
+}
+
+unsigned CM_Checksum(dheader_t *header) {
+	unsigned checksums[16];
+	checksums[0] = CM_LumpChecksum(&header->lumps[LUMP_SHADERS]);
+	checksums[1] = CM_LumpChecksum(&header->lumps[LUMP_LEAFS]);
+	checksums[2] = CM_LumpChecksum(&header->lumps[LUMP_LEAFBRUSHES]);
+	checksums[3] = CM_LumpChecksum(&header->lumps[LUMP_LEAFSURFACES]);
+	checksums[4] = CM_LumpChecksum(&header->lumps[LUMP_PLANES]);
+	checksums[5] = CM_LumpChecksum(&header->lumps[LUMP_BRUSHSIDES]);
+	checksums[6] = CM_LumpChecksum(&header->lumps[LUMP_BRUSHES]);
+	checksums[7] = CM_LumpChecksum(&header->lumps[LUMP_MODELS]);
+	checksums[8] = CM_LumpChecksum(&header->lumps[LUMP_NODES]);
+	checksums[9] = CM_LumpChecksum(&header->lumps[LUMP_SURFACES]);
+	checksums[10] = CM_LumpChecksum(&header->lumps[LUMP_DRAWVERTS]);
+
+	return LittleLong(Com_BlockChecksum(checksums, 11 * 4));
+}
+
 /*
 ==================
 CM_LoadMap
@@ -890,10 +714,7 @@ Loads in the map and all submodels
 ==================
 */
 void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
-	union {
-		int				*i;
-		void			*v;
-	} buf;
+	int				*buf;
 	int				i;
 	dheader_t		header;
 	int				length;
@@ -932,19 +753,19 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 	// load the file
 	//
 #ifndef BSPC
-	length = FS_ReadFile( name, &buf.v );
+	length = FS_ReadFile( name, (void **)&buf );
 #else
-	length = LoadQuakeFile((quakefile_t *) name, &buf.v);
+	length = LoadQuakeFile((quakefile_t *) name, (void **)&buf);
 #endif
 
-	if ( !buf.i ) {
+	if ( !buf ) {
 		Com_Error (ERR_DROP, "Couldn't load %s", name);
 	}
 
-	last_checksum = LittleLong (Com_BlockChecksum (buf.i, length));
+	last_checksum = LittleLong (Com_BlockChecksum (buf, length));
 	*checksum = last_checksum;
 
-	header = *(dheader_t *)buf.i;
+	header = *(dheader_t *)buf;
 	for (i=0 ; i<sizeof(dheader_t)/4 ; i++) {
 		((int *)&header)[i] = LittleLong ( ((int *)&header)[i]);
 	}
@@ -954,7 +775,7 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 		, name, header.version, BSP_VERSION );
 	}
 
-	cmod_base = (byte *)buf.i;
+	cmod_base = (byte *)buf;
 
 	// load into heap
 	CMod_LoadShaders( &header.lumps[LUMP_SHADERS] );
@@ -968,25 +789,12 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 	CMod_LoadNodes (&header.lumps[LUMP_NODES]);
 	CMod_LoadEntityString (&header.lumps[LUMP_ENTITIES]);
 	CMod_LoadVisibility( &header.lumps[LUMP_VISIBILITY] );
+	CMod_LoadPatches( &header.lumps[LUMP_SURFACES], &header.lumps[LUMP_DRAWVERTS] );
 
-#if id386_sse >= 1
-
-	if( com_sse->integer >= 1 ) {
-		CMod_LoadPatches_sse( &header.lumps[LUMP_SURFACES], &header.lumps[LUMP_DRAWVERTS] );
-		CMod_CreateBrushSideWindings_sse( );
-	} else {
-
-#endif
-
-		CMod_LoadPatches( &header.lumps[LUMP_SURFACES], &header.lumps[LUMP_DRAWVERTS] );
-		CMod_CreateBrushSideWindings( );
-
-#if id386_sse >= 1
-	}
-#endif
+	CMod_CreateBrushSideWindings( );
 
 	// we are NOT freeing the file, because it is cached for the ref
-	FS_FreeFile (buf.v);
+	FS_FreeFile (buf);
 
 	CM_InitBoxHull ();
 
@@ -1127,7 +935,7 @@ void CM_InitBoxHull (void)
 		p->normal[i>>1] = -1;
 
 		SetPlaneSignbits( p );
-	}
+	}	
 }
 
 /*
@@ -1139,66 +947,6 @@ BSP trees instead of being compared directly.
 Capsules are handled differently though.
 ===================
 */
-#if id386_sse >= 1
-clipHandle_t CM_TempBoxModel_sse( v4f mins, v4f maxs, int capsule ) {
-	v4f minsNeg = v4fNeg( mins ), maxsNeg = v4fNeg( maxs );
-
-	vec3aStore( box_model.mins, mins );
-	vec3aStore( box_model.maxs, maxs );
-
-	if ( capsule ) {
-		return CAPSULE_MODEL_HANDLE;
-	}
-
-	box_planes[0].dist = s4fToFloat( v4fX( maxs ) );
-	box_planes[1].dist = s4fToFloat( v4fX( maxsNeg ) );
-	box_planes[2].dist = s4fToFloat( v4fX( mins ) );
-	box_planes[3].dist = s4fToFloat( v4fX( minsNeg ) );
-	box_planes[4].dist = s4fToFloat( v4fY( maxs ) );
-	box_planes[5].dist = s4fToFloat( v4fY( maxsNeg ) );
-	box_planes[6].dist = s4fToFloat( v4fY( mins ) );
-	box_planes[7].dist = s4fToFloat( v4fY( minsNeg ) );
-	box_planes[8].dist = s4fToFloat( v4fZ( maxs ) );
-	box_planes[9].dist = s4fToFloat( v4fZ( maxsNeg ) );
-	box_planes[10].dist = s4fToFloat( v4fZ( mins ) );
-	box_planes[11].dist = s4fToFloat( v4fZ( minsNeg ) );
-
-	// First side
-	vec3aStore( box_brush->edges[ 0 ].p0, v4fMix( mins, maxs, 0,0,0,0 ) );
-	vec3aStore( box_brush->edges[ 0 ].p1, v4fMix( mins, maxs, 0,1,0,0 ) );
-	vec3aStore( box_brush->edges[ 1 ].p0, v4fMix( mins, maxs, 0,1,0,0 ) );
-	vec3aStore( box_brush->edges[ 1 ].p1, v4fMix( mins, maxs, 0,1,1,0 ) );
-	vec3aStore( box_brush->edges[ 2 ].p0, v4fMix( mins, maxs, 0,1,1,0 ) );
-	vec3aStore( box_brush->edges[ 2 ].p1, v4fMix( mins, maxs, 0,0,1,0 ) );
-	vec3aStore( box_brush->edges[ 3 ].p0, v4fMix( mins, maxs, 0,0,1,0 ) );
-	vec3aStore( box_brush->edges[ 3 ].p1, v4fMix( mins, maxs, 0,0,0,0 ) );
-
-	// Opposite side
-	vec3aStore( box_brush->edges[ 4 ].p0, v4fMix( mins, maxs, 1,0,0,0 ) );
-	vec3aStore( box_brush->edges[ 4 ].p1, v4fMix( mins, maxs, 1,1,0,0 ) );
-	vec3aStore( box_brush->edges[ 5 ].p0, v4fMix( mins, maxs, 1,1,0,0 ) );
-	vec3aStore( box_brush->edges[ 5 ].p1, v4fMix( mins, maxs, 1,1,1,0 ) );
-	vec3aStore( box_brush->edges[ 6 ].p0, v4fMix( mins, maxs, 1,1,1,0 ) );
-	vec3aStore( box_brush->edges[ 6 ].p1, v4fMix( mins, maxs, 1,0,1,0 ) );
-	vec3aStore( box_brush->edges[ 7 ].p0, v4fMix( mins, maxs, 1,0,1,0 ) );
-	vec3aStore( box_brush->edges[ 7 ].p1, v4fMix( mins, maxs, 1,0,0,0 ) );
-
-	// Connecting edges
-	vec3aStore( box_brush->edges[ 8 ].p0, v4fMix( mins, maxs, 0,0,0,0 ) );
-	vec3aStore( box_brush->edges[ 8 ].p1, v4fMix( mins, maxs, 1,0,0,0 ) );
-	vec3aStore( box_brush->edges[ 9 ].p0, v4fMix( mins, maxs, 0,1,0,0 ) );
-	vec3aStore( box_brush->edges[ 9 ].p1, v4fMix( mins, maxs, 1,1,0,0 ) );
-	vec3aStore( box_brush->edges[ 10 ].p0, v4fMix( mins, maxs, 0,1,1,0 ) );
-	vec3aStore( box_brush->edges[ 10 ].p1, v4fMix( mins, maxs, 1,1,1,0 ) );
-	vec3aStore( box_brush->edges[ 11 ].p0, v4fMix( mins, maxs, 0,0,1,0 ) );
-	vec3aStore( box_brush->edges[ 11 ].p1, v4fMix( mins, maxs, 1,0,1,0 ) );
-
-	vec3aStore( box_brush->bounds[0], mins );
-	vec3aStore( box_brush->bounds[1], maxs );
-
-	return BOX_MODEL_HANDLE;
-}
-#endif
 clipHandle_t CM_TempBoxModel( const vec3_t mins, const vec3_t maxs, int capsule ) {
 
 	VectorCopy( mins, box_model.mins );

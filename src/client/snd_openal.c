@@ -4,20 +4,20 @@ Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2005 Stuart Dalton (badcdev@gmail.com)
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -43,7 +43,6 @@ cvar_t *s_alGraceDistance;
 cvar_t *s_alDriver;
 cvar_t *s_alDevice;
 cvar_t *s_alAvailableDevices;
-cvar_t *s_alSourcePitch;
 
 /*
 =================
@@ -98,22 +97,6 @@ static const char *S_AL_ErrorMsg(ALenum error)
 		default:
 			return "Unknown error";
 	}
-}
-
-/*
-=================
-S_AL_ClearError
-=================
-*/
-static void S_AL_ClearError( qboolean quiet )
-{
-	int error = qalGetError();
-
-	if( quiet )
-		return;
-	if(error != AL_NO_ERROR)
-		Com_Printf(S_COLOR_YELLOW "WARNING: unhandled AL error: %s\n",
-			S_AL_ErrorMsg(error));
 }
 
 
@@ -236,8 +219,7 @@ static void S_AL_BufferUnload(sfxHandle_t sfx)
 	if(!knownSfx[sfx].inMemory)
 		return;
 
-	// Delete it 
-	S_AL_ClearError( qfalse );
+	// Delete it
 	qalDeleteBuffers(1, &knownSfx[sfx].buffer);
 	if((error = qalGetError()) != AL_NO_ERROR)
 		Com_Printf( S_COLOR_RED "ERROR: Can't delete sound buffer for %s\n",
@@ -321,7 +303,6 @@ static void S_AL_BufferLoad(sfxHandle_t sfx)
 	format = S_AL_Format(info.width, info.channels);
 
 	// Create a buffer
-	S_AL_ClearError( qfalse );
 	qalGenBuffers(1, &knownSfx[sfx].buffer);
 	if((error = qalGetError()) != AL_NO_ERROR)
 	{
@@ -548,13 +529,13 @@ S_AL_SanitiseVector
 =================
 */
 #define S_AL_SanitiseVector(v) _S_AL_SanitiseVector(v,__LINE__)
-static void _S_AL_SanitiseVector( const vec3_t v, int line )
+static void _S_AL_SanitiseVector( vec3_t v, int line )
 {
 	if( Q_isnan( v[ 0 ] ) || Q_isnan( v[ 1 ] ) || Q_isnan( v[ 2 ] ) )
 	{
 		Com_DPrintf( S_COLOR_YELLOW "WARNING: vector with one or more NaN components "
 				"being passed to OpenAL at %s:%d -- zeroing\n", __FILE__, line );
-		VectorClear( (vec_t *)v );
+		VectorClear( v );
 	}
 }
 
@@ -655,8 +636,7 @@ qboolean S_AL_SrcInit( void )
 		limit = MAX_SRC;
 	else if(limit < 16)
 		limit = 16;
- 
-	S_AL_ClearError( qfalse );
+
 	// Allocate as many sources as possible
 	for(i = 0; i < limit; i++)
 	{
@@ -667,7 +647,7 @@ qboolean S_AL_SrcInit( void )
 	}
 
 	// All done. Print this for informational purposes
-	Com_DPrintf( "Allocated %d sources.\n", srcCount);
+	Com_Printf( "Allocated %d sources.\n", srcCount);
 	alSourcesInitialised = qtrue;
 	return qtrue;
 }
@@ -733,7 +713,7 @@ static void S_AL_SrcSetup(srcHandle_t src, sfxHandle_t sfx, alSrcPriority_t prio
 
 	// Set up OpenAL source
 	qalSourcei(curSource->alSource, AL_BUFFER, buffer);
-	qalSourcef(curSource->alSource, AL_PITCH, s_alSourcePitch->value);
+	qalSourcef(curSource->alSource, AL_PITCH, 1.0f);
 	qalSourcef(curSource->alSource, AL_GAIN, curSource->curGain);
 	qalSourcefv(curSource->alSource, AL_POSITION, vec3_origin);
 	qalSourcefv(curSource->alSource, AL_VELOCITY, vec3_origin);
@@ -1533,7 +1513,6 @@ S_AL_StopBackgroundTrack
 static
 void S_AL_StopBackgroundTrack( void )
 {
-	int num;
 	if(!musicPlaying)
 		return;
 
@@ -1541,9 +1520,6 @@ void S_AL_StopBackgroundTrack( void )
 	qalSourceStop(musicSource);
 
 	// De-queue the musicBuffers
-	qalGetSourcei(musicSource, AL_BUFFERS_PROCESSED, &num);
-	if(num < NUM_MUSIC_BUFFERS)
-		Com_Printf(S_COLOR_YELLOW "WARNING: fewer than NUM_MUSIC_BUFFERS buffers can be unqueued\n");
 	qalSourceUnqueueBuffers(musicSource, NUM_MUSIC_BUFFERS, musicBuffers);
 
 	// Destroy the musicBuffers
@@ -1571,8 +1547,6 @@ void S_AL_MusicProcess(ALuint b)
 	ALuint format;
 	snd_stream_t *curstream;
 
-	S_AL_ClearError( qfalse );
-
 	if(intro_stream)
 		curstream = intro_stream;
 	else
@@ -1586,7 +1560,22 @@ void S_AL_MusicProcess(ALuint b)
 	// Run out data to read, start at the beginning again
 	if(l == 0)
 	{
-		S_CodecLoopStream(curstream);
+		S_CodecCloseStream(curstream);
+
+		// the intro stream just finished playing so we don't need to reopen
+		// the music stream.
+		if(intro_stream)
+			intro_stream = NULL;
+		else
+			mus_stream = S_CodecOpenStream(s_backgroundLoop);
+		
+		curstream = mus_stream;
+
+		if(!curstream)
+		{
+			S_AL_StopBackgroundTrack();
+			return;
+		}
 
 		l = S_CodecReadStream(curstream, MUSIC_BUFFER_SIZE, decode_buffer);
 	}
@@ -1623,14 +1612,11 @@ void S_AL_StartBackgroundTrack( const char *intro, const char *loop )
 	int i;
 	qboolean issame;
 
-	if((!intro || !*intro) && (!loop || !*loop))
-		return;
-
-	if(!strncmp(s_backgroundLoop, intro, sizeof(s_backgroundLoop)))
-		return;
-
 	// Stop any existing music that might be playing
 	S_AL_StopBackgroundTrack();
+
+	if((!intro || !*intro) && (!loop || !*loop))
+		return;
 
 	// Allocate a musicSource
 	S_AL_MusicSourceGet();
@@ -1736,6 +1722,15 @@ static ALCcontext *alContext;
 #ifdef USE_VOIP
 static ALCdevice *alCaptureDevice;
 static cvar_t *s_alCapture;
+#endif
+
+#ifdef _WIN32
+#define ALDRIVER_DEFAULT "OpenAL32.dll"
+#define ALDEVICE_DEFAULT "Generic Software"
+#elif defined(MACOS_X)
+#define ALDRIVER_DEFAULT "/System/Library/Frameworks/OpenAL.framework/OpenAL"
+#else
+#define ALDRIVER_DEFAULT "libopenal.so.0"
 #endif
 
 /*
@@ -1926,7 +1921,7 @@ void S_AL_SoundInfo( void )
 	Com_Printf( "  Version:    %s\n", qalGetString( AL_VERSION ) );
 	Com_Printf( "  Renderer:   %s\n", qalGetString( AL_RENDERER ) );
 	Com_Printf( "  AL Extensions: %s\n", qalGetString( AL_EXTENSIONS ) );
-	Com_Printf( "  ALC Extensions: %s\n", qalcGetString( alDevice, ALC_EXTENSIONS ) );
+	Com_Printf( "  ALC Extensions: %s\n", qalcGetString( NULL, ALC_EXTENSIONS ) );
 	if(qalcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 	{
 		Com_Printf("  Device:     %s\n", qalcGetString(alDevice, ALC_DEVICE_SPECIFIER));
@@ -1958,7 +1953,7 @@ void S_AL_Shutdown( void )
 		qalcCaptureStop(alCaptureDevice);
 		qalcCaptureCloseDevice(alCaptureDevice);
 		alCaptureDevice = NULL;
-		Com_DPrintf( "OpenAL capture device closed.\n" );
+		Com_Printf( "OpenAL capture device closed.\n" );
 	}
 #endif
 
@@ -2005,7 +2000,6 @@ qboolean S_AL_Init( soundInterface_t *si )
 	s_alMaxDistance = Cvar_Get("s_alMaxDistance", "1024", CVAR_CHEAT);
 	s_alRolloff = Cvar_Get( "s_alRolloff", "2", CVAR_CHEAT);
 	s_alGraceDistance = Cvar_Get("s_alGraceDistance", "512", CVAR_CHEAT);
-	s_alSourcePitch = Cvar_Get("s_alSourcePitch", "1.0", CVAR_ARCHIVE);
 
 	s_alDriver = Cvar_Get( "s_alDriver", ALDRIVER_DEFAULT, CVAR_ARCHIVE );
 

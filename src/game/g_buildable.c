@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -336,7 +336,7 @@ int G_FindDCC( gentity_t *self )
       continue;
 
     //if entity is a dcc calculate the distance to it
-    if( ent->s.modelindex == BA_H_DCC && ent->spawned && ent->powered )
+    if( ent->s.modelindex == BA_H_DCC && ent->spawned )
     {
       VectorSubtract( self->s.origin, ent->s.origin, temp_v );
       distance = VectorLength( temp_v );
@@ -623,8 +623,7 @@ void AGeneric_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, i
   else
     self->nextthink = level.time; //blast immediately
 
-  if( attacker && attacker->client )
-    G_LogDestruction( self, attacker, mod );
+  G_LogDestruction( self, attacker, mod );
 }
 
 /*
@@ -1226,6 +1225,16 @@ qboolean AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideEx
                  VectorMaxComponent( hovelMaxs ) + 1.0f;
 
   VectorMA( hovel->s.origin, displacement, forward, origin );
+
+  VectorCopy( hovel->s.origin, start );
+  VectorCopy( origin, end );
+
+  // see if there's something between the hovel and its exit 
+  // (eg built right up against a wall)
+  trap_Trace( &tr, start, NULL, NULL, end, player->s.number, MASK_PLAYERSOLID );
+  if( tr.fraction < 1.0f )
+    return qtrue;
+
   vectoangles( forward, angles );
 
   VectorMA( origin, HOVEL_TRACE_DEPTH, normal, start );
@@ -1251,7 +1260,7 @@ qboolean AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideEx
     VectorCopy( origin, player->client->ps.origin );
     // nudge
     VectorMA( normal, 200.0f, forward, player->client->ps.velocity );
-    G_SetClientViewAngle( player, angles );
+    SetClientViewAngle( player, angles );
   }
 
   return qfalse;
@@ -1333,7 +1342,7 @@ void AHovel_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
 
       G_SetOrigin( activator, hovelOrigin );
       VectorCopy( hovelOrigin, activator->client->ps.origin );
-      G_SetClientViewAngle( activator, hovelAngles );
+      SetClientViewAngle( activator, hovelAngles );
     }
   }
 }
@@ -1391,7 +1400,7 @@ void AHovel_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
     G_SetOrigin( builder, newOrigin );
     VectorCopy( newOrigin, builder->client->ps.origin );
-    G_SetClientViewAngle( builder, newAngles );
+    SetClientViewAngle( builder, newAngles );
 
     //client leaves hovel
     builder->client->ps.stats[ STAT_STATE ] &= ~SS_HOVELING;
@@ -2107,42 +2116,21 @@ Think function for MG turret
 */
 void HMGTurret_Think( gentity_t *self )
 {
-  float temp;
   self->nextthink = level.time + 
                     BG_Buildable( self->s.modelindex )->nextthink;
 
   // Turn off client side muzzle flashes
   self->s.eFlags &= ~EF_FIRING;
 
-  // If not spawned don't do anything
+  // If not powered or spawned don't do anything
+  if( !( self->powered = G_FindPower( self ) ) )
+  {
+    self->nextthink = level.time + POWER_REFRESH_TIME;
+    return;
+  }
   if( !self->spawned )
     return;
 
-  // If not powered droop forward
-  if( !( self->powered = G_FindPower( self ) ) )
-  {
-    //unwind the turret pitch
-    temp = fabs(self->s.angles2[ PITCH ]);
-    if( temp > 180 )
-      temp -= 360;
-
-    //pitch down a little
-    if( temp < MGTURRET_VERTICALCAP )
-      temp += MGTURRET_DROOP_RATE;
-
-    //are we already aimed all the way down?
-    if( temp >= MGTURRET_VERTICALCAP )
-    {
-      //we are all the way down
-      self->s.angles2[ PITCH ] = MGTURRET_VERTICALCAP;
-      self->nextthink = level.time + POWER_REFRESH_TIME;
-    }
-    else
-    {
-      self->s.angles2[ PITCH ] = temp;
-    }
-    return;
-  }
   // If the current target is not valid find a new enemy
   if( !HMGTurret_CheckTarget( self, self->enemy, qtrue ) )
   {
@@ -2338,8 +2326,8 @@ void HSpawn_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     self->nextthink = level.time; //blast immediately
   }
 
-  if( attacker && attacker->client )
-    G_LogDestruction( self, attacker, mod );
+
+  G_LogDestruction( self, attacker, mod );
 }
 
 /*
@@ -2368,15 +2356,14 @@ void HSpawn_Think( gentity_t *self )
         // If it's part of the map, kill self. 
         if( ent->s.eType == ET_BUILDABLE )
         {
-          G_Damage( ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_SUICIDE );
+          G_Damage( ent, NULL, NULL, NULL, NULL, self->health, 0, MOD_SUICIDE );
           G_SetBuildableAnim( self, BANIM_SPAWN1, qtrue );
         }
         else if( ent->s.number == ENTITYNUM_WORLD || ent->s.eType == ET_MOVER )
         {
-          G_Damage( self, NULL, NULL, NULL, NULL, 10000, 0, MOD_SUICIDE );
+          G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_SUICIDE );
           return;
         }
-
         if( ent->s.eType == ET_CORPSE )
           G_FreeEntity( ent ); //quietly remove
       }
@@ -3081,7 +3068,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
       //this assumes the adv builder is the biggest thing that'll use the hovel
       BG_ClassBoundingBox( PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL );
 
-      if( APropHovel_Blocked( angles, origin, normal, ent ) )
+      if( APropHovel_Blocked( origin, angles, normal, ent ) )
         reason = IBE_HOVELEXIT;
     }
 

@@ -3,38 +3,28 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
 // bg_public.h -- definitions shared by both the server game and client game modules
 
-#ifndef _BG_PUBLIC_H
-#define _BG_PUBLIC_H
-
-#ifndef OC_BGAME
-#define OC_BGAME
-#endif /* ifndef OC_BGAME */
-
 //tremulous balance header
 #include "tremulous.h"
-
-//oc stuff
-#include "bg_oc.h"
 
 // because games can change separately from the main system version, we need a
 // second version that must match between game and cgame
@@ -278,6 +268,7 @@ typedef enum
 
   PERS_STATE,
   PERS_CREDIT,    // human credit
+  PERS_BANK,      // human credit in the bank
   PERS_QUEUEPOS,  // position in the spawn queue
   PERS_NEWWEAPON  // weapon to switch to
 } persEnum_t;
@@ -310,6 +301,16 @@ typedef enum
 #define EF_TEAMVOTED        0x00010000    // already cast a vote
 #define EF_BLOBLOCKED       0x00020000    // caught by a trapper
 #define EF_WARN_CHARGE      0x00040000    // Lucifer Cannon is about to overcharge
+
+typedef enum
+{
+  HI_NONE,
+
+  HI_TELEPORTER,
+  HI_MEDKIT,
+
+  HI_NUM_HOLDABLE
+} holdable_t;
 
 typedef enum
 {
@@ -360,18 +361,6 @@ typedef enum
 
   WP_NUM_WEAPONS
 } weapon_t;
-
-typedef enum
-{
-   AFEEDBACK_HIT,
-   AFEEDBACK_MISS,
-   AFEEDBACK_TEAMHIT,
-   AFEEDBACK_RANGED_HIT,
-   AFEEDBACK_RANGED_MISS,
-   AFEEDBACK_RANGED_TEAMHIT,
-
-   AFEEDBACK_NUM
-} alienFeedback_t;
 
 typedef enum
 {
@@ -432,6 +421,11 @@ typedef enum
 
 
 #define B_HEALTH_MASK 255
+
+// reward sounds (stored in ps->persistant[PERS_PLAYEREVENTS])
+#define PLAYEREVENT_DENIEDREWARD      0x0001
+#define PLAYEREVENT_GAUNTLETREWARD    0x0002
+#define PLAYEREVENT_HOLYSHIT          0x0004
 
 // entityState_t->event values
 // entity events are for effects that take place reletive
@@ -548,15 +542,6 @@ typedef enum
   EV_MGTURRET_SPINUP, // turret spinup sound should play
 
   EV_RPTUSE_SOUND,    // trigger a sound
-  
-  EV_ALIEN_HIT,       // Alien attack feedback hit enemy
-  EV_ALIEN_MISS,      // Alien attack feedback miss enemy
-  EV_ALIEN_TEAMHIT,   // Alien attack feedback hit teammate
-
-  EV_ALIENRANGED_HIT,       // Alien ranged attack feedback hit enemy
-  EV_ALIENRANGED_MISS,      // Alien ranged attack feedback miss enemy
-  EV_ALIENRANGED_TEAMHIT,   // Alien ranged attack feedback hit teammate
-  
   EV_LEV2_ZAP
 } entity_event_t;
 
@@ -925,7 +910,7 @@ typedef struct
 
   int       health;
   float     fallDamage;
-  int       regenRate;
+  float     regenRate;
 
   int       abilities;
 
@@ -1150,7 +1135,6 @@ int                         BG_ClassCanEvolveFromTo( class_t fclass,
                                                      int cost );
 
 void                        BG_InitClassConfigs( void );
-void                        BG_InitWeaponConfigs( void );
 
 const weaponAttributes_t    *BG_WeaponByName( const char *name );
 const weaponAttributes_t    *BG_Weapon( weapon_t weapon );
@@ -1318,5 +1302,3 @@ voiceTrack_t *BG_VoiceTrackFind( voiceTrack_t *head, team_t team,
 int BG_LoadEmoticons( char names[ ][ MAX_EMOTICON_NAME_LEN ], int widths[ ] );
 
 char *BG_TeamName( team_t team );
-
-#endif /* #ifndef _BG_PUBLIC_H */

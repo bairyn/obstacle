@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -255,72 +255,6 @@ static void LAN_GetServerAddressString( int source, int n, char *buf, int buflen
 }
 
 /*
-==================
-G_SanitiseHostName
-
-Remove non-alphanumeric characters, black characters, and leading spaces from a host name
-==================
-*/
-static void G_SanitiseHostName( char *string )
-{
-	qboolean firstChar  = qfalse;
-	qboolean isBlack    = qfalse;
-	qboolean isGoodChar = qtrue;
-	qboolean skipSpaces = qtrue;
-	
-	char *reader = string;
-	char *writer = string;
-	
-	char lastChar = '\0';
-	
-	while( *reader )
-	{
-		// Ignore leading spaces
-		if( *reader == ' ' && ( skipSpaces == qtrue || lastChar == ' ' ) )
-			isGoodChar = qfalse;
-		
-		// Ignore black coloured characters
-		if ( lastChar == '^' && ColorIndex(*reader) == 0 )
-			isBlack = qtrue;
-		
-		if ( isBlack && *reader != '^' )
-			isGoodChar = qfalse;
-		else if ( isBlack && *reader == '^' )
-			isBlack = isGoodChar = qfalse;
-		else
-			isBlack = qfalse;
-		
-		// Ignore non-alphanumeric characters
-		if ( !isprint( *reader ) )
-			isGoodChar = qfalse;
-		else
-			skipSpaces = qfalse;
-
-		// Determine the first visible character
-		if ( !firstChar && lastChar != '^' && *reader != '^' )
-		{
-			// Strip the first visible character if it's a space
-			if ( *reader == ' ' )
-				isGoodChar = qfalse;
-			else
-				firstChar = qtrue;
-		}
-		
-		if ( isGoodChar == qtrue )
-		{
-			*writer = *reader;
-			writer++;
-		}
-		
-		isGoodChar = qtrue;
-		lastChar = *reader;
-		reader++;
-	}
-	
-	*writer = '\0';
-}
-
-/*
 ====================
 LAN_GetServerInfo
 ====================
@@ -347,13 +281,8 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 			}
 			break;
 	}
-	
 	if (server && buf) {
 		buf[0] = '\0';
-		
-		if ( cl_cleanHostNames->integer )
-			G_SanitiseHostName( server->hostName );
-		
 		Info_SetValueForKey( info, "hostname", server->hostName);
 		Info_SetValueForKey( info, "mapname", server->mapName);
 		Info_SetValueForKey( info, "clients", va("%i",server->clients));
@@ -364,7 +293,7 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 		Info_SetValueForKey( info, "game", server->game);
 		Info_SetValueForKey( info, "gametype", va("%i",server->gameType));
 		Info_SetValueForKey( info, "nettype", va("%i",server->netType));
-		Info_SetValueForKey( info, "addr", NET_AdrToStringwPort(server->adr));
+		Info_SetValueForKey( info, "addr", NET_AdrToString(server->adr));
 		Q_strncpyz(buf, info, buflen);
 	} else {
 		if (buf) {
@@ -488,7 +417,6 @@ static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int
 			}
 			break;
 		case SORT_PING:
-		case 4: // Hack to make 1.1 ui work
 			if (server1->ping < server2->ping) {
 				res = -1;
 			}
@@ -703,9 +631,11 @@ FloatAsInt
 ====================
 */
 static int FloatAsInt( float f ) {
-	floatint_t fi;
-	fi.f = f;
-	return fi.i;
+	int		temp;
+
+	*(float *)&temp = f;
+
+	return temp;
 }
 
 /*
@@ -737,7 +667,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CVAR_SET:
-		Cvar_SetSafe( VMA(1), VMA(2) );
+		Cvar_Set( VMA(1), VMA(2) );
 		return 0;
 
 	case UI_CVAR_VARIABLEVALUE:
@@ -748,7 +678,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CVAR_SETVALUE:
-		Cvar_SetValueSafe( VMA(1), VMF(2) );
+		Cvar_SetValue( VMA(1), VMF(2) );
 		return 0;
 
 	case UI_CVAR_RESET:
@@ -776,7 +706,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		|| !strncmp(VMA(2), "vid_restart", 11)
 		|| !strncmp(VMA(2), "quit", 5)))
 		{
-			Com_DPrintf (S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n", (const char*)VMA(2));
+			Com_Printf (S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n", (const char*)VMA(2));
 			args[1] = EXEC_INSERT;
 		}
 		Cbuf_ExecuteText( args[1], VMA(2) );
@@ -978,12 +908,6 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_SET_PBCLSTATUS:
 		return 0;	
 
-	case UI_CROSSHAIR_PLAYER:
-		return VM_Call( cgvm, CG_CROSSHAIR_PLAYER );
-
-	case UI_LAST_ATTACKER:
-		return VM_Call( cgvm, CG_LAST_ATTACKER );
-
 	case UI_R_REGISTERFONT:
 		re.RegisterFont( VMA(1), args[2], VMA(3));
 		return 0;
@@ -1092,14 +1016,6 @@ CL_InitUI
 */
 #define UI_OLD_API_VERSION	4
 
-void Con_MessageMode_f(void);
-void Con_MessageMode2_f(void);
-void Con_MessageMode3_f(void);
-void Con_MessageMode4_f(void);
-void Con_MessageMode5_f(void);
-void Con_MessageMode6_f(void);
-void Con_Prompt_f(void);
-
 void CL_InitUI( void ) {
 	int		v;
 	vmInterpret_t		interpret;
@@ -1116,56 +1032,20 @@ void CL_InitUI( void ) {
 	if ( !uivm ) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );
 	}
-	
-	// Don't use ui messagemode unless it askes us to
-	Cvar_Set( "ui_useMessagemode", "0" );
 
 	// sanity check
 	v = VM_Call( uivm, UI_GETAPIVERSION );
-	if (v == UI_OLD_API_VERSION || v == UI_API_VERSION) {
+	if (v == UI_OLD_API_VERSION) {
 		// init for this gamestate
 		VM_Call( uivm, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE));
 	}
-	else {
+	else if (v != UI_API_VERSION) {
 		Com_Error( ERR_DROP, "User Interface is version %d, expected %d", v, UI_API_VERSION );
 		cls.uiStarted = qfalse;
 	}
-	
-	// See who gets control of messagemodes
-	if ( !Cvar_VariableIntegerValue( "ui_useMessagemode" ) )
-	{
-		// client messagemode commands
-		Cmd_RemoveCommand( "messagemode" );
-		Cmd_RemoveCommand( "messagemode2" );
-		Cmd_RemoveCommand( "messagemode3" );
-		Cmd_RemoveCommand( "messagemode4" );
-		Cmd_RemoveCommand( "messagemode5" );
-		Cmd_RemoveCommand( "messagemode6" );
-		Cmd_RemoveCommand( "prompt" );
-		Cmd_AddCommand( "messagemode", Con_MessageMode_f );
-		Cmd_AddCommand( "messagemode2", Con_MessageMode2_f );
-		Cmd_AddCommand( "messagemode3", Con_MessageMode3_f );
-		Cmd_AddCommand( "messagemode4", Con_MessageMode4_f );
-		Cmd_AddCommand( "messagemode5", Con_MessageMode5_f );
-		Cmd_AddCommand( "messagemode6", Con_MessageMode6_f );
-		Cmd_AddCommand( "prompt", Con_Prompt_f );
-	}
 	else {
-		// ui messagemode commands
-		Cmd_RemoveCommand( "messagemode" );
-		Cmd_RemoveCommand( "messagemode2" );
-		Cmd_RemoveCommand( "messagemode3" );
-		Cmd_RemoveCommand( "messagemode4" );
-		Cmd_RemoveCommand( "messagemode5" );
-		Cmd_RemoveCommand( "messagemode6" );
-		Cmd_RemoveCommand( "prompt" );
-		Cmd_AddCommand( "messagemode", NULL );
-		Cmd_AddCommand( "messagemode2", NULL );
-		Cmd_AddCommand( "messagemode3", NULL );
-		Cmd_AddCommand( "messagemode4", NULL );
-		Cmd_AddCommand( "messagemode5", NULL );
-		Cmd_AddCommand( "messagemode6", NULL );
-		Cmd_AddCommand( "prompt", NULL );
+		// init for this gamestate
+		VM_Call( uivm, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
 	}
 
 	// reset any CVAR_CHEAT cvars registered by ui

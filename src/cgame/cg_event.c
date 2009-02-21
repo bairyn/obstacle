@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -356,49 +356,6 @@ static void CG_Obituary( entityState_t *ent )
 
   // we don't know what it was
   CG_Printf( "%s died\n", targetName );
-}
-
-
-/*
-=============
-CG_TeamJoinMessage
-
-Prints messages when players change teams
-=============
-*/
-void CG_TeamJoinMessage( clientInfo_t *newInfo, clientInfo_t *ci )
-{
-  int           team;
-  int           oldteam;
-  char          *playerName;
-
-
-  // Collect info
-  team = newInfo->team;
-  oldteam = ci->team;
-
-  playerName = newInfo->name;
-
-  // If no change occurred, print nothing
-  if( team == oldteam )
-    return;
-
-  // Print the appropriate message
-  if( team == TEAM_NONE )
-  {
-    CG_Printf( "%s" S_COLOR_WHITE " left the %ss\n",
-      playerName, BG_TeamName( oldteam ) );
-  }
-  else if( oldteam == TEAM_NONE )
-  {
-    CG_Printf( "%s" S_COLOR_WHITE " joined the %ss\n",
-      playerName, BG_TeamName( team ) );
-  }
-  else
-  {
-    CG_Printf( "%s" S_COLOR_WHITE " left the %ss and joined the %ss\n",
-      playerName, BG_TeamName( oldteam ), BG_TeamName( team ) );
-  }
 }
 
 
@@ -769,29 +726,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
       CG_FireWeapon( cent, WPM_TERTIARY );
       break;
 
-    case EV_ALIEN_HIT:
-        CG_HandleAlienFeedback( cent, AFEEDBACK_HIT );
-        break;
-  	 
-    case EV_ALIEN_MISS:
-        CG_HandleAlienFeedback( cent, AFEEDBACK_MISS );
-        break;
-  	 
-    case EV_ALIEN_TEAMHIT:
-        CG_HandleAlienFeedback( cent, AFEEDBACK_TEAMHIT );
-        break;
-
-    case EV_ALIENRANGED_HIT:
-        CG_HandleAlienFeedback( cent, AFEEDBACK_RANGED_HIT );
-        break;
-  	 
-    case EV_ALIENRANGED_MISS:
-        CG_HandleAlienFeedback( cent, AFEEDBACK_RANGED_MISS );
-        break;
-  	 
-    case EV_ALIENRANGED_TEAMHIT:
-        CG_HandleAlienFeedback( cent, AFEEDBACK_RANGED_TEAMHIT );
-        break;
     //=================================================================
 
     //
@@ -829,7 +763,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
     //
     case EV_MISSILE_HIT:
       ByteToDir( es->eventParm, dir );
-      CG_MissileHitPlayer( es->weapon, es->generic1, position, dir, es->otherEntityNum, es->torsoAnim );
+      CG_MissileHitEntity( es->weapon, es->generic1, position, dir, es->otherEntityNum, es->torsoAnim );
       break;
 
     case EV_MISSILE_MISS:
@@ -888,12 +822,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
 
     case EV_SHOTGUN:
       CG_ShotgunFire( es );
-      break;
-
-    case EV_MASS_DRIVER:
-      ByteToDir( es->eventParm, dir );
-      CG_MissileHitWall( es->weapon, es->generic1, 0, position, dir, IMPACTSOUND_DEFAULT, 0 );
-      CG_MassDriverFire( es );
       break;
 
     case EV_GENERAL_SOUND:

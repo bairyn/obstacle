@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -291,7 +291,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     TR_GRAVITY,            //trType_t  traj;
     0.0,                   //float     bounce;
     HOVEL_BP,              //int       buildPoints;
-    ( 1 << S3 ),           //int  stages
+    0,  //can't build it   //int  stages
     HOVEL_HEALTH,          //int       health;
     HOVEL_REGEN,           //int       regenRate;
     HOVEL_SPLASHDAMAGE,    //int       splashDamage;
@@ -701,7 +701,7 @@ BG_ParseBuildableFile
 Parses a configuration file describing a buildable
 ======================
 */
-static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *bc, const char *buildableName )
+static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *bc )
 {
   char          *text_p;
   int           i;
@@ -838,25 +838,6 @@ static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *
       defined |= ZOFFSET;
       continue;
     }
-    // hack: redefine some constants
-    else if( !Q_stricmp( token, "bp" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->buildPoints = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "splashRadius" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->splashRadius = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "value" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->value = atoi( token );
-      continue;
-    }
 
 
     Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
@@ -895,8 +876,8 @@ void BG_InitBuildableConfigs( void )
     bc = BG_BuildableConfig( i );
     Com_Memset( bc, 0, sizeof( buildableConfig_t ) );
 
-    BG_ParseBuildableFile( va( "configs%s/buildables/%s.cfg",
-                               BG_OC_OCMode() ? "/oc" : "", BG_Buildable( i )->name ), bc, BG_Buildable( i )->name );
+    BG_ParseBuildableFile( va( "configs/buildables/%s.cfg",
+                               BG_Buildable( i )->name ), bc );
   }
 }
 
@@ -911,7 +892,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ),            //int  stages
     0,                                              //int     health;
     0.0f,                                           //float   fallDamage;
-    0,                                              //int     regenRate;
+    0.0f,                                           //float   regenRate;
     0,                                              //int     abilities;
     WP_NONE,                                        //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -938,7 +919,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ),            //int  stages
     ABUILDER_HEALTH,                                //int     health;
     0.2f,                                           //float   fallDamage;
-    ABUILDER_REGEN,                                 //int     regenRate;
+    ABUILDER_REGEN,                                 //float   regenRate;
     SCA_TAKESFALLDAMAGE|SCA_FOVWARPS|SCA_ALIENSENSE,//int     abilities;
     WP_ABUILD,                                      //weapon_t  startWeapon
     95.0f,                                          //float   buildDist;
@@ -966,7 +947,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S2 )|( 1 << S3 ),                        //int  stages
     ABUILDER_UPG_HEALTH,                            //int     health;
     0.2f,                                           //float   fallDamage;
-    ABUILDER_UPG_REGEN,                             //int     regenRate;
+    ABUILDER_UPG_REGEN,                             //float   regenRate;
     SCA_TAKESFALLDAMAGE|SCA_FOVWARPS|SCA_WALLCLIMBER|SCA_ALIENSENSE,    //int     abilities;
     WP_ABUILD2,                                     //weapon_t  startWeapon
     105.0f,                                         //float   buildDist;
@@ -993,7 +974,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ),            //int  stages
     LEVEL0_HEALTH,                                  //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL0_REGEN,                                   //int     regenRate;
+    LEVEL0_REGEN,                                   //float   regenRate;
     SCA_WALLCLIMBER|SCA_FOVWARPS|SCA_ALIENSENSE,    //int     abilities;
     WP_ALEVEL0,                                     //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1022,7 +1003,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ),            //int  stages
     LEVEL1_HEALTH,                                  //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL1_REGEN,                                   //int     regenRate;
+    LEVEL1_REGEN,                                   //float   regenRate;
     SCA_FOVWARPS|SCA_WALLCLIMBER|SCA_ALIENSENSE,    //int     abilities;
     WP_ALEVEL1,                                     //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1051,7 +1032,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S2 )|( 1 << S3 ),                        //int  stages
     LEVEL1_UPG_HEALTH,                              //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL1_UPG_REGEN,                               //int     regenRate;
+    LEVEL1_UPG_REGEN,                               //float   regenRate;
     SCA_FOVWARPS|SCA_WALLCLIMBER|SCA_ALIENSENSE,    //int     abilities;
     WP_ALEVEL1_UPG,                                 //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1078,7 +1059,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ),            //int  stages
     LEVEL2_HEALTH,                                  //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL2_REGEN,                                   //int     regenRate;
+    LEVEL2_REGEN,                                   //float   regenRate;
     SCA_WALLJUMPER|SCA_FOVWARPS|SCA_ALIENSENSE,     //int     abilities;
     WP_ALEVEL2,                                     //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1105,7 +1086,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S2 )|( 1 << S3 ),                        //int  stages
     LEVEL2_UPG_HEALTH,                              //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL2_UPG_REGEN,                               //int     regenRate;
+    LEVEL2_UPG_REGEN,                               //float   regenRate;
     SCA_WALLJUMPER|SCA_FOVWARPS|SCA_ALIENSENSE,     //int     abilities;
     WP_ALEVEL2_UPG,                                 //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1133,7 +1114,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ),            //int  stages
     LEVEL3_HEALTH,                                  //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL3_REGEN,                                   //int     regenRate;
+    LEVEL3_REGEN,                                   //float   regenRate;
     SCA_FOVWARPS|SCA_ALIENSENSE,                    //int     abilities;
     WP_ALEVEL3,                                     //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1161,7 +1142,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S2 )|( 1 << S3 ),                                    //int  stages
     LEVEL3_UPG_HEALTH,                              //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL3_UPG_REGEN,                               //int     regenRate;
+    LEVEL3_UPG_REGEN,                               //float   regenRate;
     SCA_FOVWARPS|SCA_ALIENSENSE,                    //int     abilities;
     WP_ALEVEL3_UPG,                                 //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1190,7 +1171,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S3 ),                                    //int  stages
     LEVEL4_HEALTH,                                  //int     health;
     0.0f,                                           //float   fallDamage;
-    LEVEL4_REGEN,                                   //int     regenRate;
+    LEVEL4_REGEN,                                   //float   regenRate;
     SCA_FOVWARPS|SCA_ALIENSENSE,                    //int     abilities;
     WP_ALEVEL4,                                     //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
@@ -1216,7 +1197,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ),            //int  stages
     100,                                            //int     health;
     1.0f,                                           //float   fallDamage;
-    0,                                              //int     regenRate;
+    0.0f,                                           //float   regenRate;
     SCA_TAKESFALLDAMAGE|SCA_CANUSELADDERS,          //int     abilities;
     WP_NONE, //special-cased in g_client.c          //weapon_t  startWeapon
     110.0f,                                         //float   buildDist;
@@ -1242,7 +1223,7 @@ static const classAttributes_t bg_classList[ ] =
     ( 1 << S3 ),                                    //int  stages
     100,                                            //int     health;
     1.0f,                                           //float   fallDamage;
-    0,                                              //int     regenRate;
+    0.0f,                                           //float   regenRate;
     SCA_TAKESFALLDAMAGE|
       SCA_CANUSELADDERS,                            //int     abilities;
     WP_NONE, //special-cased in g_client.c          //weapon_t  startWeapon
@@ -1437,7 +1418,7 @@ BG_ParseClassFile
 Parses a configuration file describing a class
 ======================
 */
-static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc, const char *className )
+static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc )
 {
   char          *text_p;
   int           i;
@@ -1671,37 +1652,6 @@ static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc, cons
       defined |= NAME;
       continue;
     }
-    // hack: redefine some constants
-    else if( !Q_stricmp( token, "health" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->health = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "value" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->value = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "regen" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->regenRate = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "speed" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->speed = atof( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "jump" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->jumpMagnitude = atof( token );
-      continue;
-    }
 
 
     Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
@@ -1748,8 +1698,8 @@ void BG_InitClassConfigs( void )
   {
     cc = BG_ClassConfig( i );
 
-    BG_ParseClassFile( va( "configs%s/classes/%s.cfg",
-                           BG_OC_OCMode() ? "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
+    BG_ParseClassFile( va( "configs/classes/%s.cfg",
+                           BG_Class( i )->name ), cc );
   }
 }
 
@@ -2472,121 +2422,6 @@ qboolean BG_WeaponAllowedInStage( weapon_t weapon, stage_t stage )
   return stages & ( 1 << stage );
 }
 
-/*
-==================
-BG_ParseWeaponFile
-
-Parses a configuration file describing an override for a weapon and redefines
-the weapon's constant data
-======================
-*/
-static qboolean BG_ParseWeaponFile( const char *filename, const char *weaponName )
-{
-  char          *text_p;
-  int           len;
-  char          *token;
-  char          text[ 20000 ];
-  char          name[ 666 ] = {""};
-  fileHandle_t  f;
-
-  len = trap_FS_FOpenFile( filename, &f, FS_READ );
-  if( len < 0 )
-    return qfalse;
-
-  if( len == 0 || len >= sizeof( text ) - 1 )
-  {
-    trap_FS_FCloseFile( f );
-    Com_Printf( S_COLOR_RED "ERROR: Class file %s is %s\n", filename,
-      len == 0 ? "empty" : "too long" );
-    return qfalse;
-  }
-
-  trap_FS_Read( text, len, f );
-  text[ len ] = 0;
-  trap_FS_FCloseFile( f );
-
-  // parse the text
-  text_p = text;
-
-  // read optional parameters
-  while( 1 )
-  {
-    token = COM_Parse( &text_p );
-
-    if( !token )
-      break;
-
-    if( !Q_stricmp( token, "" ) )
-      break;
-
-    if( !Q_stricmp( token, "name" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      Q_strncpyz( name, token, sizeof( name ) );
-
-      continue;
-    }
-    // hack: redefine some constants
-    else if( !Q_stricmp( token, "repeat" ) || !Q_stricmp( token, "repeat1" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate1 = atoi( token );
-
-      continue;
-    }
-    else if( !Q_stricmp( token, "repeat2" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate2 = atoi( token );
-
-      continue;
-    }
-    else if( !Q_stricmp( token, "repeat3" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate3 = atoi( token );
-
-      continue;
-    }
-
-
-    Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
-    return qfalse;
-  }
-
-  return qtrue;
-}
-
-/*
-===============
-BG_InitWeaponConfigs
-===============
-*/
-void BG_InitWeaponConfigs( void )
-{
-  int i;
-
-  if( BG_OC_OCMode() )
-  {
-    for( i = WP_NONE; i < WP_NUM_WEAPONS; i++ )
-    {
-      BG_ParseWeaponFile( va( "configs/oc/weapons/%s.cfg", BG_Weapon( i )->name ), BG_Weapon( i )->name );
-    }
-  }
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 static const upgradeAttributes_t bg_upgrades[ ] =
@@ -2921,6 +2756,7 @@ char *eventnames[ ] =
   "EV_BULLET_HIT_WALL",
 
   "EV_SHOTGUN",
+  "EV_MASS_DRIVER",
 
   "EV_MISSILE_HIT",
   "EV_MISSILE_MISS",
@@ -2964,18 +2800,9 @@ char *eventnames[ ] =
 
   "EV_DCC_ATTACK",      // dcc under attack
 
-  "EV_MGTURRET_SPINUP", // turret spinup sound should play
+  "EV_MGTURRET_SPINUP", // trigger a sound
 
   "EV_RPTUSE_SOUND",    // trigger a sound
-
-  "EV_ALIEN_HIT",       // Alien feedback for hitting an enemy
-  "EV_ALIEN_MISS",      // Alien feedback for missing a strike
-  "EV_ALIEN_TEAMHIT",   // Alien feedback for hitting a teammate
-
-  "EV_ALIENRANGED_HIT",       // Alien ranged attack feedback for hitting an enemy
-  "EV_ALIENRANGED_MISS",      // Alien ranged attack feedback for missing a strike
-  "EV_ALIENRANGED_TEAMHIT",   // Alien ranged attack feedback for hitting a teammate
-
   "EV_LEV2_ZAP"
 };
 

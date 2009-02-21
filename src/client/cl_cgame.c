@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -25,11 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 #include "libmumblelink.h"
-
-#if id386_sse >= 1
-#include "../qcommon/qsse.h"
-clipHandle_t CM_TempBoxModel_sse( v4f mins, v4f maxs, int capsule );
-#endif
 
 extern qboolean loadCamera(const char *name);
 extern void startCamera(int time);
@@ -342,8 +337,6 @@ rescan:
 		// the restart to the cgame
 		Con_ClearNotify();
 		Com_Memset( cl.cmds, 0, sizeof( cl.cmds ) );
-		// reparse the string, because Con_ClearNotify may have done another Cmd_TokenizeString()
-		Cmd_TokenizeString( s );
 		return qtrue;
 	}
 
@@ -404,9 +397,11 @@ void CL_ShutdownCGame( void ) {
 }
 
 static int	FloatAsInt( float f ) {
-	floatint_t fi;
-	fi.f = f;
-	return fi.i;
+	int		temp;
+
+	*(float *)&temp = f;
+
+	return temp;
 }
 
 /*
@@ -433,7 +428,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		Cvar_Update( VMA(1) );
 		return 0;
 	case CG_CVAR_SET:
-		Cvar_SetSafe( VMA(1), VMA(2) );
+		Cvar_Set( VMA(1), VMA(2) );
 		return 0;
 	case CG_CVAR_VARIABLESTRINGBUFFER:
 		Cvar_VariableStringBuffer( VMA(1), VMA(2), args[3] );
@@ -471,7 +466,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		CL_AddCgameCommand( VMA(1) );
 		return 0;
 	case CG_REMOVECOMMAND:
-		Cmd_RemoveCommandSafe( VMA(1) );
+		Cmd_RemoveCommand( VMA(1) );
 		return 0;
 	case CG_SENDCLIENTCOMMAND:
 		CL_AddReliableCommand( VMA(1) );
@@ -492,21 +487,9 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_CM_INLINEMODEL:
 		return CM_InlineModel( args[1] );
 	case CG_CM_TEMPBOXMODEL:
-#if id386_sse >= 1
-		if ( com_sse->integer >= 1 ) {
-			return CM_TempBoxModel_sse( vec3Load(VMA(1)), vec3Load(VMA(2)), /*int capsule*/ qfalse );
-		}
-#else
 		return CM_TempBoxModel( VMA(1), VMA(2), /*int capsule*/ qfalse );
-#endif
 	case CG_CM_TEMPCAPSULEMODEL:
-#if id386_sse >= 1
-		if ( com_sse->integer >= 1 ) {
-			return CM_TempBoxModel_sse( vec3Load(VMA(1)), vec3Load(VMA(2)), /*int capsule*/ qtrue );
-		}
-#else
 		return CM_TempBoxModel( VMA(1), VMA(2), /*int capsule*/ qtrue );
-#endif
 	case CG_CM_POINTCONTENTS:
 		return CM_PointContents( VMA(1), args[2] );
 	case CG_CM_TRANSFORMEDPOINTCONTENTS:
@@ -811,7 +794,7 @@ void CL_InitCGame( void ) {
 
 	t2 = Sys_Milliseconds();
 
-	Com_DPrintf( "CL_InitCGame: %5.2f seconds\n", (t2-t1)/1000.0 );
+	Com_Printf( "CL_InitCGame: %5.2f seconds\n", (t2-t1)/1000.0 );
 
 	// have the renderer touch all its images, so they are present
 	// on the card even if the driver does deferred loading
@@ -824,7 +807,6 @@ void CL_InitCGame( void ) {
 
 	// clear anything that got printed
 	Con_ClearNotify ();
-	CL_WriteClientLog( va("`~=-----------------=~`\n MAP: %s \n`~=-----------------=~`\n", mapname ) );
 }
 
 

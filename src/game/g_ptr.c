@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -61,7 +61,6 @@ void G_UpdatePTRConnection( gclient_t *client )
 {
   if( client && client->pers.connection )
   {
-    client->pers.connection->oldClient = client - level.clients;
     client->pers.connection->clientTeam = client->pers.teamSelection;
     if( client->pers.teamSelection == TEAM_NONE )
       client->pers.connection->clientCredit = client->pers.savedCredit;
@@ -112,6 +111,29 @@ connectionRecord_t *G_GenerateNewConnection( gclient_t *client )
 
 /*
 ===============
+G_VerifyPTRC
+
+Check a PTR code for validity
+===============
+*/
+qboolean G_VerifyPTRC( int code )
+{
+  int i;
+
+  if( code == 0 )
+    return qfalse;
+
+  for( i = 0; i < MAX_CLIENTS; i++ )
+  {
+    if( connections[ i ].ptrCode == code )
+      return qtrue;
+  }
+
+  return qfalse;
+}
+
+/*
+===============
 G_FindConnectionForCode
 
 Finds a connection for a given code
@@ -131,6 +153,19 @@ connectionRecord_t *G_FindConnectionForCode( int code )
   }
 
   return NULL;
+}
+
+/*
+===============
+G_DeletePTRConnection
+
+Finds a connection and deletes it
+===============
+*/
+void G_DeletePTRConnection( connectionRecord_t *connection )
+{
+  if( connection )
+    memset( connection, 0, sizeof( connectionRecord_t ) );
 }
 
 /*

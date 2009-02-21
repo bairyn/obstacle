@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -840,7 +840,6 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   vec3_t          mins, maxs;
   entityState_t   *hit;
   int             anim;
-  float           transparency=1.0f;
 
   if( BG_Buildable( es->modelindex )->team == TEAM_ALIENS )
     bs = &cgs.alienBuildStat;
@@ -927,24 +926,6 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
       visible = qfalse;
   }
 
-  health = (unsigned char)es->generic1;
-  healthScale = (float)health / B_HEALTH_MASK;
-
-  if( healthScale < 0.0f )
-    healthScale = 0.0f;
-  else if( healthScale > 1.0f )
-    healthScale = 1.0f;
-
-  powered = es->eFlags & EF_B_POWERED;
-  marked = es->eFlags & EF_B_MARKED;
-
-  if( cg_hideHealthyBuildableStatus.integer &&
-      healthScale == 1.0f &&
-      powered &&
-      !marked )
-  {
-    visible = qfalse;
-  }
   if( !visible && cent->buildableStatus.visible )
   {
     cent->buildableStatus.visible   = qfalse;
@@ -956,23 +937,29 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
     cent->buildableStatus.lastTime  = cg.time;
   }
 
-  color[ 3 ] = transparency;
   // Fade up
   if( cent->buildableStatus.visible )
   {
     if( cent->buildableStatus.lastTime + STATUS_FADE_TIME > cg.time )
-      color[ 3 ] = transparency*(float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME;
+      color[ 3 ] = (float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME;
   }
 
   // Fade down
   if( !cent->buildableStatus.visible )
   {
     if( cent->buildableStatus.lastTime + STATUS_FADE_TIME > cg.time )
-      color[ 3 ] = transparency*(1.0f - (float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME);
+      color[ 3 ] = 1.0f - (float)( cg.time - cent->buildableStatus.lastTime ) / STATUS_FADE_TIME;
     else
       return;
   }
 
+  health = (unsigned char)es->generic1;
+  healthScale = (float)health / B_HEALTH_MASK;
+
+  if( healthScale < 0.0f )
+    healthScale = 0.0f;
+  else if( healthScale > 1.0f )
+    healthScale = 1.0f;
 
   if( CG_WorldToScreen( origin, &x, &y ) )
   {
@@ -987,7 +974,8 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
     // this is fudged to get the width/height in the cfg to be more realistic
     scale = ( picH / d ) * 3;
 
-
+    powered = es->eFlags & EF_B_POWERED;
+    marked = es->eFlags & EF_B_MARKED;
 
     picH *= scale;
     picW *= scale;
@@ -1177,14 +1165,7 @@ void CG_DrawBuildableStatus( void )
     cent  = &cg_entities[ cg.snap->entities[ i ].number ];
     es    = &cent->currentState;
 
-    if( es->eType == ET_BUILDABLE &&
-        ( CG_PlayerIsBuilder( es->modelindex ) ||
-          ( cg_drawBuildableStatus.integer &&
-             BG_Buildable( es->modelindex )->team ==
-             BG_Weapon( cg.predictedPlayerState.weapon )->team
-          )
-        )
-      )
+    if( es->eType == ET_BUILDABLE && CG_PlayerIsBuilder( es->modelindex ) )
       buildableList[ buildables++ ] = cg.snap->entities[ i ].number;
   }
 
@@ -1439,25 +1420,9 @@ void CG_Buildable( centity_t *cent )
       {
         int i = rand( ) % 4;
         trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.humanBuildableDamage[ i ] );
-        if( cent->lastBuildableHealthScale - healthScale > 99) {
-          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.humanBuildableHitLargePS );
-        } else {
-          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.humanBuildableHitSmallPS );
-        }
       }
-      else if( team == TEAM_ALIENS ) {
+      else if( team == TEAM_ALIENS )
         trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.alienBuildableDamage );
-        if( cent->lastBuildableHealthScale - healthScale > 30) {
-          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.alienBuildableHitLargePS );
-        } else {
-          cent->buildableHitPS = CG_SpawnNewParticleSystem( cgs.media.alienBuildableHitSmallPS );
-        }
-      }
-      if( CG_IsParticleSystemValid( &cent->buildableHitPS ) )
-      {
-        CG_SetAttachmentCent( &cent->buildableHitPS->attachment, cent );
-        CG_AttachToCent( &cent->buildableHitPS->attachment );
-      }
 
       cent->lastBuildableDamageSoundTime = cg.time;
     }

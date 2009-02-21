@@ -408,11 +408,10 @@ static void HandleGetMotd( const char* msg, const struct sockaddr_in* addr )
 	const size_t	headersize = strlen (packetheader);
 	char					packet[ MAX_PACKET_SIZE ];
 	char					challenge[ MAX_PACKET_SIZE ];
-	const char		*motd = "^2Latest version ^7of ^4Trem^3Fusion ^7is ^1" VERSION;
+	const char		*motd = ""; //FIXME
 	size_t				packetind;
 	char					*value;
 	char		version[ 1024 ], renderer[ 1024 ];
-	int			havelatest = 1;
 
 	MsgPrint( MSG_DEBUG, "%s ---> getmotd\n", peer_address );
 
@@ -447,28 +446,6 @@ static void HandleGetMotd( const char* msg, const struct sockaddr_in* addr )
   RecordClientStat( peer_address, version, renderer );
 #endif
 
-	// Get the client version
-	value = version;
-	while ( *value && *value != ' ' )
-		value++;
-	if ( *value )
-	{
-		*value++ = '\0';
-		if ( strcmp( version, "tremfusion" ) )
-			havelatest = 0;
-		else
-		{
-			char *end = value;
-			while ( *end && *end != ' ' && *end != '_' )
-				end++;
-			*end = '\0';
-			if ( strcmp( value, VERSION ) )
-				havelatest = 0;
-		}
-	}
-	else
-		havelatest = 0;
-
 	// Initialize the packet contents with the header
 	packetind = headersize;
 	memcpy( packet, packetheader, headersize );
@@ -483,11 +460,8 @@ static void HandleGetMotd( const char* msg, const struct sockaddr_in* addr )
 	strncpy( &packet[ packetind ], MOTD_KEY, MAX_PACKET_SIZE - packetind - 2 );
 	packetind += strlen( MOTD_KEY );
 
-	if ( !havelatest )
-	{
-		strncpy( &packet[ packetind ], motd, MAX_PACKET_SIZE - packetind - 2 );
-		packetind += strlen( motd );
-	}
+	strncpy( &packet[ packetind ], motd, MAX_PACKET_SIZE - packetind - 2 );
+	packetind += strlen( motd );
 
 	if (packetind > MAX_PACKET_SIZE - 2)
 		packetind = MAX_PACKET_SIZE - 2;

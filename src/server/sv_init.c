@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -238,6 +238,26 @@ void SV_CreateBaseline( void ) {
 
 /*
 ===============
+SV_BoundMaxClients
+
+===============
+*/
+void SV_BoundMaxClients( int minimum ) {
+	// get the current maxclients value
+	Cvar_Get( "sv_maxclients", "8", 0 );
+
+	sv_maxclients->modified = qfalse;
+
+	if ( sv_maxclients->integer < minimum ) {
+		Cvar_Set( "sv_maxclients", va("%i", minimum) );
+	} else if ( sv_maxclients->integer > MAX_CLIENTS ) {
+		Cvar_Set( "sv_maxclients", va("%i", MAX_CLIENTS) );
+	}
+}
+
+
+/*
+===============
 SV_Startup
 
 Called when a host starts a map when it wasn't running
@@ -250,8 +270,15 @@ void SV_Startup( void ) {
 	if ( svs.initialized ) {
 		Com_Error( ERR_FATAL, "SV_Startup: svs.initialized" );
 	}
+	SV_BoundMaxClients( 1 );
 
-	SV_ChangeMaxClients();
+	svs.clients = Z_Malloc (sizeof(client_t) * sv_maxclients->integer );
+	if ( com_dedicated->integer ) {
+		svs.numSnapshotEntities = sv_maxclients->integer * PACKET_BACKUP * 64;
+	} else {
+		// we don't need nearly as many when playing locally
+		svs.numSnapshotEntities = sv_maxclients->integer * 4 * 64;
+	}
 	svs.initialized = qtrue;
 
 	// Don't respect sv_killserver unless a server is actually running
@@ -273,74 +300,56 @@ SV_ChangeMaxClients
 */
 void SV_ChangeMaxClients( void ) {
 	int		oldMaxClients;
-	int		i, j;
-	client_t	*oldClients = NULL;
-	int		count = 0;
-	qboolean firstTime = svs.clients == NULL;
+	int		i;
+	client_t	*oldClients;
+	int		count;
 
-	if ( !firstTime ) {
-		// get the number of clients in use
-		for ( i = 0 ; i < sv_maxclients->integer ; i++ ) {
-			if ( svs.clients[i].state >= CS_CONNECTED ) {
-				count++;
-			}
+	// get the highest client number in use
+	count = 0;
+	for ( i = 0 ; i < sv_maxclients->integer ; i++ ) {
+		if ( svs.clients[i].state >= CS_CONNECTED ) {
+			if (i > count)
+				count = i;
 		}
 	}
+	count++;
 
 	oldMaxClients = sv_maxclients->integer;
-	// update the cvars
-	Cvar_Get( "sv_maxclients", "8", 0 );
-	Cvar_Get( "sv_democlients", "0", 0 );
-	// make sure we have enough room for all clients
-	if ( sv_democlients->integer + count > MAX_CLIENTS )
-		Cvar_SetValue( "sv_democlients", MAX_CLIENTS - count );
-	if ( sv_maxclients->integer < sv_democlients->integer + count ) {
-		Cvar_SetValue( "sv_maxclients", sv_democlients->integer + count );
-	}
-	sv_maxclients->modified = qfalse;
-	sv_democlients->modified = qfalse;
+	// never go below the highest client number in use
+	SV_BoundMaxClients( count );
 	// if still the same
-	if ( !firstTime && sv_maxclients->integer == oldMaxClients ) {
-		// move people who are below sv_democlients up
-		for ( i = 0; i < sv_democlients->integer; i++ ) {
-			if ( svs.clients[i].state >= CS_CONNECTED ) {
-				for ( j = sv_democlients->integer; j < sv_maxclients->integer; j++ ) {
-					if ( svs.clients[j].state < CS_CONNECTED ) {
-						svs.clients[j] = svs.clients[i];
-						break;
-					}
-				}
-				Com_Memset( svs.clients + i, 0, sizeof(client_t) );
-			}
-		}
+	if ( sv_maxclients->integer == oldMaxClients ) {
 		return;
 	}
 
-	if ( !firstTime ) {
-		// copy the clients to hunk memory
-		oldClients = Hunk_AllocateTempMemory( count * sizeof(client_t) );
-		for ( i = 0, j = 0 ; i < oldMaxClients ; i++ ) {
-			if ( svs.clients[i].state >= CS_CONNECTED ) {
-				oldClients[j++] = svs.clients[i];
-			}
+	oldClients = Hunk_AllocateTempMemory( count * sizeof(client_t) );
+	// copy the clients to hunk memory
+	for ( i = 0 ; i < count ; i++ ) {
+		if ( svs.clients[i].state >= CS_CONNECTED ) {
+			oldClients[i] = svs.clients[i];
 		}
-
-		// free old clients arrays
-		Z_Free( svs.clients );
+		else {
+			Com_Memset(&oldClients[i], 0, sizeof(client_t));
+		}
 	}
+
+	// free old clients arrays
+	Z_Free( svs.clients );
 
 	// allocate new clients
-	svs.clients = Z_Malloc( sv_maxclients->integer * sizeof(client_t) );
+	svs.clients = Z_Malloc ( sv_maxclients->integer * sizeof(client_t) );
 	Com_Memset( svs.clients, 0, sv_maxclients->integer * sizeof(client_t) );
 
-	if ( !firstTime ) {
-		// copy the clients over
-		Com_Memcpy( svs.clients + sv_democlients->integer, oldClients, count * sizeof(client_t) );
-
-		// free the old clients on the hunk
-		Hunk_FreeTempMemory( oldClients );
+	// copy the clients over
+	for ( i = 0 ; i < count ; i++ ) {
+		if ( oldClients[i].state >= CS_CONNECTED ) {
+			svs.clients[i] = oldClients[i];
+		}
 	}
 
+	// free the old clients on the hunk
+	Hunk_FreeTempMemory( oldClients );
+	
 	// allocate new snapshot entities
 	if ( com_dedicated->integer ) {
 		svs.numSnapshotEntities = sv_maxclients->integer * PACKET_BACKUP * 64;
@@ -375,8 +384,10 @@ SV_TouchCGame
 */
 void SV_TouchCGame(void) {
 	fileHandle_t	f;
+	char filename[MAX_QPATH];
 
-	FS_FOpenFileRead( "vm/cgame.qvm", &f, qfalse );
+	Com_sprintf( filename, sizeof(filename), "vm/%s.qvm", "cgame" );
+	FS_FOpenFileRead( filename, &f, qfalse );
 	if ( f ) {
 		FS_FCloseFile( f );
 	}
@@ -425,8 +436,8 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 	if ( !Cvar_VariableValue("sv_running") ) {
 		SV_Startup();
 	} else {
-		// check for maxclients or democlients change
-		if ( sv_maxclients->modified || sv_democlients->modified ) {
+		// check for maxclients change
+		if ( sv_maxclients->modified ) {
 			SV_ChangeMaxClients();
 		}
 	}
@@ -522,17 +533,27 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 	sv.time += 100;
 	svs.time += 100;
 
-	// if a dedicated server we need to touch the cgame because it could be in a
-	// seperate pk3 file and the client will need to load the latest cgame.qvm
-	if ( com_dedicated->integer ) {
-		SV_TouchCGame();
+	if ( sv_pure->integer ) {
+		// the server sends these to the clients so they will only
+		// load pk3s also loaded at the server
+		p = FS_LoadedPakChecksums();
+		Cvar_Set( "sv_paks", p );
+		if (strlen(p) == 0) {
+			Com_Printf( "WARNING: sv_pure set but no PK3 files loaded\n" );
+		}
+		p = FS_LoadedPakNames();
+		Cvar_Set( "sv_pakNames", p );
+
+		// if a dedicated pure server we need to touch the cgame because it could be in a
+		// seperate pk3 file and the client will need to load the latest cgame.qvm
+		if ( com_dedicated->integer ) {
+			SV_TouchCGame();
+		}
 	}
-
-	// the server sends these to the clients so they will only
-	// load pk3s also loaded at the server
-	Cvar_Set( "sv_paks", FS_LoadedPakChecksums() );
-	Cvar_Set( "sv_pakNames", FS_LoadedPakNames() );
-
+	else {
+		Cvar_Set( "sv_paks", "" );
+		Cvar_Set( "sv_pakNames", "" );
+	}
 	// the server sends these to the clients so they can figure
 	// out which pk3s should be auto-downloaded
 	p = FS_ReferencedPakChecksums();
@@ -559,20 +580,6 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 	Hunk_SetMark();
 
 	Com_Printf ("-----------------------------------\n");
-
-	// start recording a demo
-	if ( sv_autoDemo->integer ) {
-		qtime_t	now;
-		Com_RealTime( &now );
-		Cbuf_AddText( va( "demo_record %04d%02d%02d%02d%02d%02d-%s\n",
-			1900 + now.tm_year,
-			1 + now.tm_mon,
-			now.tm_mday,
-			now.tm_hour,
-			now.tm_min,
-			now.tm_sec,
-			server ) );
-	}
 }
 
 /*
@@ -593,34 +600,33 @@ void SV_Init (void) {
 	sv_privateClients = Cvar_Get ("sv_privateClients", "0", CVAR_SERVERINFO);
 	sv_hostname = Cvar_Get ("sv_hostname", "noname", CVAR_SERVERINFO | CVAR_ARCHIVE );
 	sv_maxclients = Cvar_Get ("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH);
-	sv_democlients = Cvar_Get ("sv_democlients", "0", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE);
 
 	sv_minRate = Cvar_Get ("sv_minRate", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
 	sv_maxRate = Cvar_Get ("sv_maxRate", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
+	sv_minPing = Cvar_Get ("sv_minPing", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
 	sv_maxPing = Cvar_Get ("sv_maxPing", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
 
 	// systeminfo
 	Cvar_Get ("sv_cheats", "1", CVAR_SYSTEMINFO | CVAR_ROM );
-	sv_pure = Cvar_Get ("sv_pure", "0", CVAR_SYSTEMINFO );
 	sv_serverid = Cvar_Get ("sv_serverid", "0", CVAR_SYSTEMINFO | CVAR_ROM );
+	sv_pure = Cvar_Get ("sv_pure", "1", CVAR_SYSTEMINFO );
 #ifdef USE_VOIP
 	sv_voip = Cvar_Get ("sv_voip", "1", CVAR_SYSTEMINFO | CVAR_LATCH);
 	Cvar_CheckRange( sv_voip, 0, 1, qtrue );
 #endif
 	Cvar_Get ("sv_paks", "", CVAR_SYSTEMINFO | CVAR_ROM );
-	Cvar_Get ("sv_pakNames", "", CVAR_SERVER_CREATED | CVAR_ROM );
+	Cvar_Get ("sv_pakNames", "", CVAR_SYSTEMINFO | CVAR_ROM );
 	Cvar_Get ("sv_referencedPaks", "", CVAR_SYSTEMINFO | CVAR_ROM );
 	Cvar_Get ("sv_referencedPakNames", "", CVAR_SYSTEMINFO | CVAR_ROM );
 
 	// server vars
 	sv_rconPassword = Cvar_Get ("rconPassword", "", CVAR_TEMP );
-	sv_rconLog = Cvar_Get ("sv_rconLog", "", CVAR_ARCHIVE );
 	sv_privatePassword = Cvar_Get ("sv_privatePassword", "", CVAR_TEMP );
 	sv_fps = Cvar_Get ("sv_fps", "20", CVAR_TEMP );
 	sv_timeout = Cvar_Get ("sv_timeout", "200", CVAR_TEMP );
 	sv_zombietime = Cvar_Get ("sv_zombietime", "2", CVAR_TEMP );
 
-	sv_allowDownload = Cvar_Get ("sv_allowDownload", "1", CVAR_SERVERINFO | CVAR_ARCHIVE);
+	sv_allowDownload = Cvar_Get ("sv_allowDownload", "0", CVAR_SERVERINFO);
 	Cvar_Get ("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE);
 	Cvar_Get ("sv_wwwDownload", "1", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
 	Cvar_Get ("sv_wwwBaseURL", "", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
@@ -636,9 +642,6 @@ void SV_Init (void) {
 	sv_mapChecksum = Cvar_Get ("sv_mapChecksum", "", CVAR_ROM);
 	sv_lanForceRate = Cvar_Get ("sv_lanForceRate", "1", CVAR_ARCHIVE );
 	sv_dequeuePeriod = Cvar_Get ("sv_dequeuePeriod", "500", CVAR_ARCHIVE );
-	sv_demoState = Cvar_Get ("sv_demoState", "0", CVAR_ROM );
-	sv_autoDemo = Cvar_Get ("sv_autoDemo", "0", CVAR_ARCHIVE );	
-	sv_minPing = Cvar_Get ("sv_minPing", "0", CVAR_ARCHIVE );
 }
 
 
@@ -695,14 +698,9 @@ void SV_Shutdown( char *finalmsg ) {
 		SV_FinalMessage( finalmsg );
 	}
 
+	SV_RemoveOperatorCommands();
 	SV_MasterShutdown();
 	SV_ShutdownGameProgs();
-
-	// stop any demos
-	if (sv.demoState == DS_RECORDING)
-		SV_DemoStopRecord();
-	if (sv.demoState == DS_PLAYBACK)
-		SV_DemoStopPlayback();
 
 	// free current level
 	SV_ClearServer();

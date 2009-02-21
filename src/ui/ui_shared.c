@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
  
-This file is part of Tremfusion.
+This file is part of Tremulous.
  
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
  
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -85,7 +85,6 @@ itemDef_t *Menu_SetPrevCursorItem( menuDef_t *menu );
 itemDef_t *Menu_SetNextCursorItem( menuDef_t *menu );
 static qboolean Menu_OverActiveItem( menuDef_t *menu, float x, float y );
 
-void trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 /*
 ===============
 UI_InstallCaptureFunc
@@ -122,20 +121,6 @@ void UI_RemoveCaptureFunc( void )
 
 static char   UI_memoryPool[MEM_POOL_SIZE];
 static int    allocPoint, outOfMemory;
-// Hacked new memory pool for hud
-static char   UI_hudmemoryPool[MEM_POOL_SIZE];
-static int    hudallocPoint, hudoutOfMemory;
-
-/*
-===============
-UI_ResetHUDMemory
-===============
-*/
-void UI_ResetHUDMemory( void )
-{
-  hudallocPoint = 0;
-  hudoutOfMemory = qfalse;
-}
 
 /*
 ===============
@@ -152,6 +137,7 @@ void *UI_Alloc( int size )
 
     if( DC->Print )
       DC->Print( "UI_Alloc: Failure. Out of memory!\n" );
+
     //DC->trap_Print(S_COLOR_YELLOW"WARNING: UI Out of Memory!\n");
     return NULL;
   }
@@ -165,29 +151,6 @@ void *UI_Alloc( int size )
 
 /*
 ===============
-UI_HUDAlloc
-===============
-*/
-void *UI_HUDAlloc( int size )
-{
-  char  *p;
-
-  if( hudallocPoint + size > MEM_POOL_SIZE )
-  {
-  DC->Print( "UI_HUDAlloc: Out of memory! Reinititing hud Memory!!\n" );
-    hudoutOfMemory = qtrue;
-    UI_ResetHUDMemory();
-  }
-
-  p = &UI_hudmemoryPool[ hudallocPoint ];
-
-  hudallocPoint += ( size + 15 ) & ~15;
-
-  return p;
-}
-
-/*
-===============
 UI_InitMemory
 ===============
 */
@@ -195,8 +158,6 @@ void UI_InitMemory( void )
 {
   allocPoint = 0;
   outOfMemory = qfalse;
-  hudallocPoint = 0;
-  hudoutOfMemory = qfalse;
 }
 
 qboolean UI_OutOfMemory( )
@@ -1082,8 +1043,6 @@ static void Window_Paint( Window *w, float fadeAmount, float fadeClamp, float fa
       DC->drawHandlePic( fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->background );
       DC->setColor( NULL );
     }
-    else if( w->border == WINDOW_BORDER_ROUNDED )
-      DC->fillRoundedRect( fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->borderSize, w->backColor );
     else
       DC->fillRect( fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->backColor );
   }
@@ -1150,11 +1109,6 @@ static void Border_Paint( Window *w )
     GradientBar_Paint( &r, w->borderColor );
     r.y = w->rect.y + w->rect.h - 1;
     GradientBar_Paint( &r, w->borderColor );
-  }
-  else if( w->border == WINDOW_BORDER_ROUNDED )
-  {
-    // full rounded
-    DC->drawRoundedRect( w->rect.x, w->rect.y, w->rect.w, w->rect.h, w->borderSize, w->borderColor );
   }
 }
 
@@ -1970,7 +1924,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
 
     while( s && *s && count < len )
     {
-      glyph = &font->glyphs[( unsigned char )*s];
+      glyph = &font->glyphs[( int )*s];
 
       if( Q_IsColorString( s ) )
       {
@@ -2034,7 +1988,7 @@ float UI_Text_Height( const char *text, float scale, int limit )
       }
       else
       {
-        glyph = &font->glyphs[( unsigned char )*s];
+        glyph = &font->glyphs[( int )*s];
 
         if( max < glyph->height )
           max = glyph->height;
@@ -2128,7 +2082,7 @@ void UI_Text_Paint_Limit( float *maxX, float x, float y, float scale,
     {
       float width, height, skip, yadj;
 
-      glyph = &font->glyphs[ ( unsigned char )*s ];
+      glyph = &font->glyphs[ ( int )*s ];
       width = glyph->imageWidth * DC->aspectScale;
       height = glyph->imageHeight;
       skip = glyph->xSkip * DC->aspectScale;
@@ -2225,7 +2179,7 @@ void UI_Text_Paint( float x, float y, float scale, vec4_t color, const char *tex
     {
       float width, height, skip, yadj;
 
-      glyph = &font->glyphs[( unsigned char )*s];
+      glyph = &font->glyphs[( int )*s];
       width = glyph->imageWidth * DC->aspectScale;
       height = glyph->imageHeight;
       skip = glyph->xSkip * DC->aspectScale;
@@ -2380,7 +2334,7 @@ void UI_Text_PaintWithCursor( float x, float y, float scale, vec4_t color, const
       len = limit;
 
     count = 0;
-    glyph2 = &font->glyphs[ ( unsigned char ) cursor];
+    glyph2 = &font->glyphs[ ( int ) cursor];
     width2 = glyph2->imageWidth * DC->aspectScale;
     height2 = glyph2->imageHeight;
     skip2 = glyph2->xSkip * DC->aspectScale;
@@ -2388,19 +2342,12 @@ void UI_Text_PaintWithCursor( float x, float y, float scale, vec4_t color, const
     while( s && *s && count < len )
     {
       float width, height, skip;
-      glyph = &font->glyphs[( unsigned char )*s];
+      glyph = &font->glyphs[( int )*s];
       width = glyph->imageWidth * DC->aspectScale;
       height = glyph->imageHeight;
       skip = glyph->xSkip * DC->aspectScale;
 
       yadj = useScale * glyph->top;
-
-      if( Q_IsColorString( s ) )
-      {
-        memcpy( newColor, g_color_table[ColorIndex( *( s+1 ) )], sizeof( newColor ) );
-        newColor[3] = color[3];
-        DC->setColor( newColor );
-      }
 
       if( style == ITEM_TEXTSTYLE_SHADOWED || style == ITEM_TEXTSTYLE_SHADOWEDMORE )
       {
@@ -2548,7 +2495,7 @@ commandDef_t commandList[] =
     {"exec", &Script_Exec},           // group/name
     {"play", &Script_Play},           // group/name
     {"playlooped", &Script_playLooped},           // group/name
-    {"orbit", &Script_Orbit},                      // group/name
+    {"orbit", &Script_Orbit}                      // group/name
   };
 
 int scriptCommandCount = sizeof( commandList ) / sizeof( commandDef_t );
@@ -3650,7 +3597,7 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
 
         DC->setCVar( item->cvar, buff );
       }
-      else if( ( key < 32 && key >= 0 ) || !item->cvar )
+      else if( key < 32 || !item->cvar )
       {
         // Ignore any non printable chars
         releaseFocus = qfalse;
@@ -4307,13 +4254,6 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
   itemDef_t *item = NULL;
   qboolean inHandler = qfalse;
 
-  // KTW: Draggable Windows
-  if (key == K_MOUSE1 && down && Rect_ContainsPoint(&menu->window.rect, DC->cursorx, DC->cursory) &&
-        menu->window.style && menu->window.border) 
-      menu->window.flags |= WINDOW_DRAG;
-  else
-      menu->window.flags &= ~WINDOW_DRAG;
-
   inHandler = qtrue;
 
   if( g_waitingForKey && down )
@@ -4392,8 +4332,10 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
   // default handling
   switch( key )
   {
-    case K_F11:
-      DC->executeText( EXEC_APPEND, "screenshotJPEG\n" );
+    case K_F12:
+      if( DC->getCVarValue( "developer" ) )
+        DC->executeText( EXEC_APPEND, "screenshot\n" );
+
       break;
 
     case K_KP_UPARROW:
@@ -4604,149 +4546,100 @@ void Item_TextColor( itemDef_t *item, vec4_t *newColor )
 
 static const char *Item_Text_Wrap( const char *text, float scale, float width )
 {
-  static char   out[ 8192 ] = "";
-  char          *paint = out;
-  char          c[ 3 ] = "^7";
-  const char    *p = text;
-  const char    *eol;
-  const char    *q = NULL, *qMinus1 = NULL;
-  unsigned int  testLength;
-  unsigned int  i;
-  int           emoticonLen;
-  qboolean      emoticonEscaped;
+  static char   out[ 8192 ] = { 0 };
+  char          c[ 2 ] = { 0 };
+  const char    *thisline = text;
+  size_t        outlen = 0, testlen;
+  int           eol;
 
   if( strlen( text ) >= sizeof( out ) )
     return NULL;
 
-  *paint = '\0';
-
-  while( *p )
+  while( *thisline )
   {
-    // Skip leading whitespace
-
-    while( *p )
+    // strip leading space and collapse colours
+    while( *thisline )
     {
-      if( Q_IsColorString( p ) )
+      while( isspace( *thisline ) && *thisline != '\n' )
+        thisline++;
+      if( Q_IsColorString( thisline ) )
       {
-        c[ 0 ] = p[ 0 ];
-        c[ 1 ] = p[ 1 ];
-        p += 2;
+        Com_Memcpy( c, thisline, 2 );
+        thisline += 2;
       }
-      else if( *p != '\n' && isspace( *p ) )
-        p++;
       else
         break;
     }
-
-    if( !*p )
+    if( !*thisline || outlen + 1 >= sizeof( out ) )
       break;
 
-    Q_strcat( paint, out + sizeof( out ) - paint, c );
-
-    testLength = 1;
-
-    eol = p;
-
-    q = p + 1;
-
-    while( Q_IsColorString( q ) )
+    if( c[ 0 ] && outlen < sizeof( out ) - 3 )
     {
-      c[ 0 ] = q[ 0 ];
-      c[ 1 ] = q[ 1 ];
-      q += 2;
+      Com_Memcpy( &out[ outlen ], c, 2 );
+      outlen += 2;
     }
 
-    while( UI_Text_Width( p, scale, testLength ) < width )
+    for( testlen = 1, eol = 0; thisline[ testlen ] &&
+        outlen + testlen + 2 < sizeof( out ) &&
+        UI_Text_Width( thisline, scale, testlen ) < width; testlen++ )
     {
-      if( testLength >= strlen( p ) )
+      // set an eol marker in the last whitespace
+      if( isspace( thisline[ testlen ] ) )
       {
-        eol = p + strlen( p );
-        break;
+        if( thisline[ eol = testlen ] == '\n' )
+          break;
+        // place the eol at the first whitespace, not spaces that follow
+        // erm, why did I do this
+        // while( isspace( thisline[ testlen ] ) && thisline[ testlen ] != '\n' )
+        //  testlen++;
       }
-
-      // Point q at the end of the current testLength
-      q = p;
-
-      for( i = 0; i < testLength; )
+      // save colour codes for restoration next line
+      if( Q_IsColorString( &thisline[ testlen ] ) )
       {
-        // Skip color escapes
-        while( Q_IsColorString( q ) )
-        {
-          c[ 0 ] = q[ 0 ];
-          c[ 1 ] = q[ 1 ];
-          q += 2;
-        }
-        while( UI_Text_Emoticon( q, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
-        {
-          if( emoticonEscaped )
-            q++;
-          else
-            q += emoticonLen;
-        }
-
-        qMinus1 = q;
-        q++;
-        i++;
+        Com_Memcpy( c, &thisline[ testlen ], 2 );
+        testlen++;
+        continue;
       }
-
-      // Some color escapes might still be present
-      while( Q_IsColorString( q ) )
-      {
-        c[ 0 ] = q[ 0 ];
-        c[ 1 ] = q[ 1 ];
-        q += 2;
-      }
-      while( UI_Text_Emoticon( q, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
-      {
-        if( emoticonEscaped )
-          q++;
-        else
-          q += emoticonLen;
-      }
-
-      // Manual line break
-      if( *q == '\n' )
-      {
-        eol = q + 1;
-        break;
-      }
-
-      if( !isspace( *qMinus1 ) && isspace( *q ) )
-        eol = q;
-
-      testLength++;
     }
-
-    // No split has taken place, so just split mid-word
-    if( eol == p )
-      eol = q;
-
-    paint = out + strlen( out );
-
-    // Copy text
-    strncpy( paint, p, eol - p );
-
-    paint[ eol - p ] = '\0';
-
-    // Add a \n if it's not there already
-    if( out[ strlen( out ) - 1 ] != '\n' )
+    // if we couldn't place a whitespace eol then just put it at the end
+    if( eol == 0 )
+      eol = testlen;
+    // copy up the the line break
+    Com_Memcpy( &out[ outlen ], thisline, eol );
+    outlen += eol;
+    if( outlen + 1 < sizeof( out ) )
+      out[ outlen++ ] = '\n';
+    // if there is another line, continue colour codes
+    // if it is a wrapped line then add a space to prevent it masquerading as
+    // another server message
+    if( thisline[ eol ] && thisline[ eol + 1 ] && 
+        outlen + 1 < sizeof( out ) )
     {
-      Q_strcat( out, sizeof( out ), "\n " );
-      Q_strcat( out, sizeof( out ), c );
+      if( thisline[ eol ] != '\n' && outlen + 2 < sizeof( out ) )
+        out[ outlen++ ] = ' ';
+      if( c[ 0 ] && outlen + 3 < sizeof( out ) )
+      { 
+        Com_Memcpy( &out[ outlen ], c, 2 );
+        outlen += 2;
+      }
     }
     else
-      c[ 0 ] = '\0';
-
-    paint = out + strlen( out );
-
-    p = eol;
+      break;
+    thisline += eol;
+    if( *thisline == '\n' )
+      thisline++;
   }
+  // definitely put a newline on the end
+  assert( out[ outlen - 1 ] == '\n' );
+  if( out[ outlen - 1 ] != '\n' )
+    out[ outlen++ ] = '\n';
+  out[ outlen ] = '\0';
 
   return out;
 }
 
 #define MAX_WRAP_CACHE  16
-#define MAX_WRAP_LINES  128
+#define MAX_WRAP_LINES  32
 #define MAX_WRAP_TEXT   512
 
 typedef struct
@@ -4888,7 +4781,7 @@ void Item_Text_Wrapped_Paint( itemDef_t *item )
   }
   else
   {
-    char        buff[ 4096 ];
+    char        buff[ 1024 ];
     float       fontHeight    = UI_Text_EmHeight( item->textscale );
     const float lineSpacing   = fontHeight * 0.4f;
     float       lineHeight    = fontHeight + lineSpacing;
@@ -5286,14 +5179,10 @@ static bind_t g_bindings[] =
     { "teamvote no",  K_F4,          -1, -1, -1 },
     { "scoresUp",      K_KP_PGUP,    -1, -1, -1 },
     { "scoresDown",    K_KP_PGDN,    -1, -1, -1 },
-    { "messagemode",  -1,            -1, -1, -1 },
-    { "messagemode2", -1,            -1, -1, -1 },
+    { "ui_messagemode",  -1,            -1, -1, -1 },
+    { "ui_messagemode2", -1,            -1, -1, -1 },
     { "messagemode3", -1,            -1, -1, -1 },
     { "messagemode4", -1,            -1, -1, -1 },
-    { "messagemode5", -1,            -1, -1, -1 },
-    { "messagemode6", -1,            -1, -1, -1 },
-    { "prompt",       -1,            -1, -1, -1 },
-    { "squadmark",    'k',           -1, -1, -1 },
   };
 
 
@@ -5663,18 +5552,8 @@ void Item_Model_Paint( itemDef_t *item )
   vec3_t      angles;
   modelDef_t *modelPtr = ( modelDef_t* )item->typeData;
 
-  qhandle_t hModel;
-  int backLerpWhole;
-//  vec3_t axis[3];
-
   if( modelPtr == NULL )
     return;
-
-  if(!item->asset)
-    return;
-
-  hModel = item->asset;
-
 
   // setup the refdef
   memset( &refdef, 0, sizeof( refdef ) );
@@ -5695,7 +5574,7 @@ void Item_Model_Paint( itemDef_t *item )
   refdef.width = w;
   refdef.height = h;
 
-  DC->modelBounds( hModel, mins, maxs );
+  DC->modelBounds( item->asset, mins, maxs );
 
   origin[2] = -0.5 * ( mins[2] + maxs[2] );
   origin[1] = 0.5 * ( mins[1] + maxs[1] );
@@ -5741,65 +5620,16 @@ void Item_Model_Paint( itemDef_t *item )
     }
   }
 
-  if(VectorLengthSquared(modelPtr->axis))
-  {
-    VectorNormalize(modelPtr->axis);
-    angles[0] = AngleNormalize360(modelPtr->axis[0]*modelPtr->angle);
-    angles[1] = AngleNormalize360(modelPtr->axis[1]*modelPtr->angle);
-    angles[2] = AngleNormalize360(modelPtr->axis[2]*modelPtr->angle);
-    AnglesToAxis( angles, ent.axis );
-  }
-  else
-  {
-    VectorSet( angles, 0, modelPtr->angle, 0 );
-    AnglesToAxis( angles, ent.axis );
-  }
+  VectorSet( angles, 0, modelPtr->angle, 0 );
+  AnglesToAxis( angles, ent.axis );
 
-  ent.hModel = hModel;
-
-
-  if(modelPtr->frameTime)	// don't advance on the first frame
-    modelPtr->backlerp+=( ((DC->realTime - modelPtr->frameTime)/1000.0f) * (float)modelPtr->fps );
-
-  if(modelPtr->backlerp > 1)
-  {
-    backLerpWhole = floor(modelPtr->backlerp);
-
-    modelPtr->frame+=(backLerpWhole);
-    if((modelPtr->frame - modelPtr->startframe) > modelPtr->numframes)
-      modelPtr->frame = modelPtr->startframe + modelPtr->frame % modelPtr->numframes;	// todo: ignoring loopframes
-
-    modelPtr->oldframe+=(backLerpWhole);
-    if((modelPtr->oldframe - modelPtr->startframe) > modelPtr->numframes)
-      modelPtr->oldframe = modelPtr->startframe + modelPtr->oldframe % modelPtr->numframes;	// todo: ignoring loopframes
-
-    modelPtr->backlerp = modelPtr->backlerp - backLerpWhole;
-  }
-
-  modelPtr->frameTime = DC->realTime;
-
-  ent.frame		= modelPtr->frame;
-  ent.oldframe	= modelPtr->oldframe;
-  ent.backlerp	= 1.0f - modelPtr->backlerp;
-
+  ent.hModel = item->asset;
   VectorCopy( origin, ent.origin );
   VectorCopy( origin, ent.lightingOrigin );
   ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
   VectorCopy( ent.origin, ent.oldorigin );
 
   DC->addRefEntityToScene( &ent );
-
-  // add an accent light
-  origin[0] -= 100;	// + = behind, - = in front
-  origin[1] += 100;	// + = left, - = right
-  origin[2] += 100;	// + = above, - = below
-  trap_R_AddLightToScene( origin, 500, 1.0, 1.0, 1.0 );
-
-  origin[0] -= 100;
-  origin[1] -= 100;
-  origin[2] -= 100;
-  trap_R_AddLightToScene( origin, 500, 1.0, 0.0, 0.0 );
-
   DC->renderScene( &refdef );
 
 }
@@ -6583,28 +6413,6 @@ void Menu_HandleMouseMove( menuDef_t *menu, float x, float y )
   if( g_waitingForKey || g_editingField )
     return;
 
-  // KTW: Draggable windows
-  if ( (menu->window.flags & WINDOW_HASFOCUS) && (menu->window.flags & WINDOW_DRAG))
-  {
-    menu->window.rect.x +=  DC->cursordx;
-    menu->window.rect.y +=  DC->cursordy;
-
-    if (menu->window.rect.x < 0)
-      menu->window.rect.x = 0;
-    if (menu->window.rect.x + menu->window.rect.w > SCREEN_WIDTH)
-      menu->window.rect.x = SCREEN_WIDTH-menu->window.rect.w;
-
-    if (menu->window.rect.y < 0)
-      menu->window.rect.y = 0;
-    if (menu->window.rect.y + menu->window.rect.h > SCREEN_HEIGHT)
-      menu->window.rect.y = SCREEN_HEIGHT-menu->window.rect.h;
-
-    Menu_UpdatePosition(menu);
-
-    for (i = 0; i < menu->itemCount; i++)
-      Item_UpdatePosition(menu->items[i]);
-  }
-
   // FIXME: this is the whole issue of focus vs. mouse over..
   // need a better overall solution as i don't like going through everything twice
   for( pass = 0; pass < 2; pass++ )
@@ -6667,9 +6475,7 @@ void Menu_HandleMouseMove( menuDef_t *menu, float x, float y )
 void Menu_Paint( menuDef_t *menu, qboolean forcePaint )
 {
   int i;
-  itemDef_t item;
-  char listened_text[1024];
-  
+
   if( menu == NULL )
     return;
 
@@ -6681,18 +6487,6 @@ void Menu_Paint( menuDef_t *menu, qboolean forcePaint )
 
   if( forcePaint )
     menu->window.flags |= WINDOW_FORCED;
-
-  //Executes the text stored in the listened cvar as an UIscript
-  if( menu->listenCvar && menu->listenCvar[0] )
-  {
-    DC->getCVarString( menu->listenCvar, listened_text, sizeof(listened_text) );
-    if( listened_text[0] )
-    {
-      item.parent = menu;
-      Item_RunScript( &item, listened_text );
-      DC->setCVar( menu->listenCvar, "" );
-    }
-  }
 
   // draw the background if necessary
   if( menu->fullScreen )
@@ -6970,38 +6764,6 @@ qboolean ItemParse_model_angle( itemDef_t *item, int handle )
   return qtrue;
 }
 
-// model_axis <number> <number> <number> //:://
-qboolean ItemParse_model_axis( itemDef_t *item, int handle ) {
-  modelDef_t *modelPtr;
-  Item_ValidateTypeData(item);
-  modelPtr = (modelDef_t*)item->typeData;
-
-  if (!PC_Float_Parse(handle, &modelPtr->axis[0])) return qfalse;
-  if (!PC_Float_Parse(handle, &modelPtr->axis[1])) return qfalse;
-  if (!PC_Float_Parse(handle, &modelPtr->axis[2])) return qfalse;
-
-  return qtrue;
-}
-
-// model_animplay <int(startframe)> <int(numframes)> <int(fps)>
-qboolean ItemParse_model_animplay(itemDef_t *item, int handle ) {
-  modelDef_t *modelPtr;
-  Item_ValidateTypeData(item);
-  modelPtr = (modelDef_t*)item->typeData;
-
-  modelPtr->animated = 1;
-
-  if (!PC_Int_Parse(handle, &modelPtr->startframe))	return qfalse;
-  if (!PC_Int_Parse(handle, &modelPtr->numframes))	return qfalse;
-  if (!PC_Int_Parse(handle, &modelPtr->fps))			return qfalse;
-
-  modelPtr->frame		= modelPtr->startframe + 1;
-  modelPtr->oldframe	= modelPtr->startframe;
-  modelPtr->backlerp	= 0.0f;
-  modelPtr->frameTime = DC->realTime;
-  return qtrue;
-}
-
 // rect <rectangle>
 qboolean ItemParse_rect( itemDef_t *item, int handle )
 {
@@ -7210,7 +6972,6 @@ qboolean ItemParse_visible( itemDef_t *item, int handle )
   if( !PC_Int_Parse( handle, &i ) )
     return qfalse;
 
-  item->window.flags &= ~WINDOW_VISIBLE;
   if( i )
     item->window.flags |= WINDOW_VISIBLE;
 
@@ -7755,8 +7516,6 @@ keywordHash_t itemParseKeywords[] = {
   {"model_fovy", ItemParse_model_fovy, NULL},
   {"model_rotation", ItemParse_model_rotation, NULL},
   {"model_angle", ItemParse_model_angle, NULL},
-  {"model_axis", ItemParse_model_axis, NULL},
-  {"model_animplay", ItemParse_model_animplay, NULL},
   {"rect", ItemParse_rect, NULL},
   {"aspectBias", ItemParse_aspectBias, NULL},
   {"style", ItemParse_style, NULL},
@@ -7937,15 +7696,10 @@ qboolean MenuParse_name( itemDef_t *item, int handle )
 qboolean MenuParse_fullscreen( itemDef_t *item, int handle )
 {
   menuDef_t *menu = ( menuDef_t* )item;
-  union
-  {
-    qboolean b;
-    int i;
-  } fullScreen;
 
-  if( !PC_Int_Parse( handle, &fullScreen.i ) )
+  if( !PC_Int_Parse( handle, ( int* ) & menu->fullScreen ) )
     return qfalse;
-  menu->fullScreen = fullScreen.b;
+
   return qtrue;
 }
 
@@ -8228,16 +7982,6 @@ qboolean MenuParse_soundLoop( itemDef_t *item, int handle )
   return qtrue;
 }
 
-qboolean MenuParse_listenTo( itemDef_t *item, int handle )
-{
-  menuDef_t *menu = ( menuDef_t* )item;
-
-  if( !PC_String_Parse( handle, &menu->listenCvar ) )
-    return qfalse;
-
-  return qtrue;
-}
-
 qboolean MenuParse_fadeClamp( itemDef_t *item, int handle )
 {
   menuDef_t *menu = ( menuDef_t* )item;
@@ -8276,10 +8020,7 @@ qboolean MenuParse_itemDef( itemDef_t *item, int handle )
 
   if( menu->itemCount < MAX_MENUITEMS )
   {
-    if(DC->hudloading)
-      menu->items[menu->itemCount] = UI_HUDAlloc(sizeof(itemDef_t));
-    else
-      menu->items[menu->itemCount] = UI_Alloc(sizeof(itemDef_t));
+    menu->items[menu->itemCount] = UI_Alloc( sizeof( itemDef_t ) );
     Item_Init( menu->items[menu->itemCount] );
 
     if( !Item_Parse( handle, menu->items[menu->itemCount] ) )
@@ -8317,7 +8058,6 @@ keywordHash_t menuParseKeywords[] = {
   {"ownerdrawFlag", MenuParse_ownerdrawFlag, NULL},
   {"outOfBoundsClick", MenuParse_outOfBounds, NULL},
   {"soundLoop", MenuParse_soundLoop, NULL},
-  {"listento", MenuParse_listenTo, NULL},
   {"itemDef", MenuParse_itemDef, NULL},
   {"cinematic", MenuParse_cinematic, NULL},
   {"popup", MenuParse_popup, NULL},
@@ -8434,8 +8174,8 @@ void Menu_PaintAll( void )
       captureFunc( captureData );
   }
 
-  for( i = 0; i < openMenuCount; i++ )
-    Menu_Paint( menuStack[i], qfalse );
+  for( i = 0; i < Menu_Count(); i++ )
+    Menu_Paint( &Menus[i], qfalse );
 
   if( DC->getCVarValue( "ui_developer" ) )
   {

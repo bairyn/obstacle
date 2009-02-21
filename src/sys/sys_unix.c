@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -44,7 +44,7 @@ static char homePath[ MAX_OSPATH ] = { 0 };
 Sys_DefaultHomePath
 ==================
 */
-char *Sys_DefaultHomePath(char **path2)
+char *Sys_DefaultHomePath(void)
 {
 	char *p;
 
@@ -54,50 +54,22 @@ char *Sys_DefaultHomePath(char **path2)
 		{
 			Q_strncpyz( homePath, p, sizeof( homePath ) );
 #ifdef MACOS_X
-#if USE_OLD_HOMEPATH
 			Q_strcat( homePath, sizeof( homePath ), "/Library/Application Support/Tremulous" );
 #else
-			Q_strcat( homePath, sizeof( homePath ), "/Library/Application Support/Tremfusion" );
-#endif
-#else
-#if USE_OLD_HOMEPATH
 			Q_strcat( homePath, sizeof( homePath ), "/.tremulous" );
-#else
-			Q_strcat( homePath, sizeof( homePath ), "/.tremfusion" );
 #endif
-#endif
+			if( mkdir( homePath, 0777 ) )
+			{
+				if( errno != EEXIST )
+				{
+					Sys_Error( "Unable to create directory \"%s\", error is %s(%d)\n",
+							homePath, strerror( errno ), errno );
+				}
+			}
 		}
 	}
 
-	*path2 = NULL;
 	return homePath;
-}
-
-/*
-=================
-Sys_ResolveLink
-
-This resolves any symlinks to the binary. It's disabled for debug
-builds because there are situations where you are likely to want
-to symlink to binaries and /not/ have the links resolved.
-=================
-*/
-char *Sys_ResolveLink( char *arg0 )
-{
-#if NDEBUG && ( _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200112L )
-	static char dst[ PATH_MAX ];
-	int n = readlink( arg0, dst, PATH_MAX - 1 );
-
-	if( n >= 0 && n < PATH_MAX )
-	{
-		dst[ n ] = '\0';
-		return dst;
-	}
-	else
-		return arg0;
-#else
-	return arg0;
-#endif
 }
 
 /*
@@ -259,10 +231,7 @@ char *Sys_Cwd( void )
 {
 	static char cwd[MAX_OSPATH];
 
-	char *result = getcwd( cwd, sizeof( cwd ) - 1 );
-	if( result != cwd )
-		return NULL;
-
+	getcwd( cwd, sizeof( cwd ) - 1 );
 	cwd[MAX_OSPATH-1] = 0;
 
 	return cwd;

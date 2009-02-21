@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -84,10 +84,7 @@ asked for again.
 */
 qhandle_t RE_RegisterModel( const char *name ) {
 	model_t		*mod;
-	union {
-		unsigned *u;
-		void *v;
-	} buf;
+	unsigned	*buf;
 	int			lod;
 	int			ident;
 	qboolean	loaded = qfalse;
@@ -155,19 +152,19 @@ qhandle_t RE_RegisterModel( const char *name ) {
 	{
 		int filesize;
 		
-		filesize = ri.FS_ReadFile(name, (void **) &buf.v);
-		if(!buf.u)
+		filesize = ri.FS_ReadFile(name, (void **) &buf);
+		if(!buf)
 		{
 			ri.Printf (PRINT_WARNING,"RE_RegisterModel: couldn't load %s\n", name);
 			mod->type = MOD_BAD;
 			return 0;
 		}
 		
-		ident = LittleLong(*(unsigned *)buf.u);
+		ident = LittleLong(*(unsigned *)buf);
 		if(ident == MDR_IDENT)
-			loaded = R_LoadMDR(mod, buf.u, filesize, name);
+			loaded = R_LoadMDR(mod, buf, filesize, name);
 
-		ri.FS_FreeFile (buf.v);
+		ri.FS_FreeFile (buf);
 		
 		if(!loaded)
 		{
@@ -188,26 +185,26 @@ qhandle_t RE_RegisterModel( const char *name ) {
 		else
 			Com_sprintf(namebuf, sizeof(namebuf), "%s.%s", filename, fext);
 
-		ri.FS_ReadFile( namebuf, &buf.v );
-		if ( !buf.u ) {
+		ri.FS_ReadFile( namebuf, (void **)&buf );
+		if ( !buf ) {
 			continue;
 		}
 		
 		loadmodel = mod;
 		
-		ident = LittleLong(*(unsigned *)buf.u);
+		ident = LittleLong(*(unsigned *)buf);
 		if ( ident == MD4_IDENT ) {
-			loaded = R_LoadMD4( mod, buf.u, name );
+			loaded = R_LoadMD4( mod, buf, name );
 		} else {
 			if ( ident != MD3_IDENT ) {
 				ri.Printf (PRINT_WARNING,"RE_RegisterModel: unknown fileid for %s\n", name);
 				goto fail;
 			}
 
-			loaded = R_LoadMD3( mod, lod, buf.u, name );
+			loaded = R_LoadMD3( mod, lod, buf, name );
 		}
 		
-		ri.FS_FreeFile (buf.v);
+		ri.FS_FreeFile (buf);
 
 		if ( !loaded ) {
 			if ( lod == 0 ) {

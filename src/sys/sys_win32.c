@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -39,32 +39,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // Used to determine where to store user-specific files
 static char homePath[ MAX_OSPATH ] = { 0 };
-static char homePathOld[ MAX_OSPATH ] = { 0 };
-
-/*
-==================
-CON_CtrlHandler
-
-The Windows Console doesn't use signals for terminating the application
-with Ctrl-C, logging off, window closing, etc.  Instead it uses a special
-handler routine.  Fortunately, the values for Ctrl signals don't seem to
-overlap with true signal codes that Windows provides, so calling
-Sys_SigHandler() with those numbers should be safe for generating unique
-shutdown messages.
-==================
-*/
-static BOOL WINAPI CON_CtrlHandler( DWORD sig )
-{
-	Sys_SigHandler( sig );
-	return TRUE;
-}
 
 /*
 ================
 Sys_DefaultHomePath
 ================
 */
-char *Sys_DefaultHomePath( char **path2 )
+char *Sys_DefaultHomePath( void )
 {
 	TCHAR szPath[MAX_PATH];
 	FARPROC qSHGetFolderPath;
@@ -86,52 +67,27 @@ char *Sys_DefaultHomePath( char **path2 )
 			return NULL;
 		}
 
-#if USE_OLD_HOMEPATH
 		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_APPDATA,
 						NULL, 0, szPath ) ) )
-#else
-		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_PERSONAL,
-						NULL, 0, szPath ) ) )
-#endif
 		{
-#if USE_OLD_HOMEPATH
-			Com_Printf("Unable to find CSIDL_APPDATA\n");
-#else
-			Com_Printf("Unable to find CSIDL_PERSONAL\n");
-#endif
+			Com_Printf("Unable to detect CSIDL_APPDATA\n");
 			FreeLibrary(shfolder);
 			return NULL;
 		}
 		Q_strncpyz( homePath, szPath, sizeof( homePath ) );
-#if USE_OLD_HOMEPATH
 		Q_strcat( homePath, sizeof( homePath ), "\\Tremulous" );
-#else
-		Q_strcat( homePath, sizeof( homePath ), "\\My Games\\Tremfusion" );
-#endif
-
-#if USE_OLD_HOMEPATH
-		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_LOCAL_APPDATA,
-						NULL, 0, szPath ) ) )
-		{
-			Com_Printf("Unable to detect CSIDL_LOCAL_APPDATA\n");
-			FreeLibrary(shfolder);
-			return NULL;
-		}
-		Q_strncpyz( homePathOld, szPath, sizeof( homePath ) );
-		Q_strcat( homePathOld, sizeof( homePathOld ), "\\Tremulous" );
-		*path2 = homePathOld;
-#else
-		*path2 = NULL;
-#endif
 		FreeLibrary(shfolder);
+		if( !CreateDirectory( homePath, NULL ) )
+		{
+			if( GetLastError() != ERROR_ALREADY_EXISTS )
+			{
+				Com_Printf("Unable to create directory \"%s\"\n", homePath );
+				return NULL;
+			}
+		}
 	}
 
 	return homePath;
-}
-
-char *Sys_ResolveLink( char *arg0 )
-{
-	return arg0;
 }
 
 /*
@@ -676,10 +632,4 @@ void Sys_PlatformInit( void )
 	else
 		SDL_VIDEODRIVER_externallySet = qfalse;
 #endif
-
-	// Set the console title
-	SetConsoleTitle( "Tremfusion Console" );
-
-	// Handle Ctrl-C or other console termination
-	SetConsoleCtrlHandler( CON_CtrlHandler, TRUE );
 }

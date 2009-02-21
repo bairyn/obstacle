@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -761,6 +761,45 @@ void CL_WritePacket( void ) {
 
 #ifdef USE_VOIP
 	if (clc.voipOutgoingDataSize > 0) {  // only send if data.
+		// Move cl_voipSendTarget from a string to the bitmasks if needed.
+		if (cl_voipSendTarget->modified) {
+			char buffer[32];
+			const char *target = cl_voipSendTarget->string;
+
+			if (Q_stricmp(target, "attacker") == 0) {
+				int player = VM_Call( cgvm, CG_LAST_ATTACKER );
+				Com_sprintf(buffer, sizeof (buffer), "%d", player);
+				target = buffer;
+			} else if (Q_stricmp(target, "crosshair") == 0) {
+				int player = VM_Call( cgvm, CG_CROSSHAIR_PLAYER );
+				Com_sprintf(buffer, sizeof (buffer), "%d", player);
+				target = buffer;
+			}
+
+			if ((*target == '\0') || (Q_stricmp(target, "all") == 0)) {
+				const int all = 0x7FFFFFFF;
+				clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = all;
+			} else if (Q_stricmp(target, "none") == 0) {
+				clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0;
+			} else {
+				clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0;
+				const char *ptr = target;
+				do {
+					if ((*ptr == ',') || (*ptr == '\0')) {
+						const int val = atoi(target);
+						target = ptr + 1;
+						if ((val >= 0) && (val < 31)) {
+							clc.voipTarget1 |= (1 << (val-0));
+						} else if ((val >= 31) && (val < 62)) {
+							clc.voipTarget2 |= (1 << (val-31));
+						} else if ((val >= 62) && (val < 93)) {
+							clc.voipTarget3 |= (1 << (val-62));
+						}
+					}
+				} while (*(ptr++));
+			}
+			cl_voipSendTarget->modified = qfalse;
+		}
 
 		MSG_WriteByte (&buf, clc_EOF);  // placate legacy servers.
 		MSG_WriteByte (&buf, clc_extension);

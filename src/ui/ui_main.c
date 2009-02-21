@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
  
-This file is part of Tremfusion.
+This file is part of Tremulous.
  
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
  
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -32,9 +32,6 @@ USER INTERFACE MAIN
 #include "ui_local.h"
 
 uiInfo_t uiInfo;
-
-static char screenshots[ 1024 ][ MAX_QPATH ];
-static int current_screen = 0, maxscreens = 0;
 
 static const char *MonthAbbrev[ ] =
 {
@@ -98,9 +95,6 @@ vmCvar_t  ui_findPlayer;
 vmCvar_t  ui_serverStatusTimeOut;
 vmCvar_t  ui_textWrapCache;
 vmCvar_t  ui_developer;
-vmCvar_t  ui_screen;
-vmCvar_t  ui_screens;
-vmCvar_t  ui_screenname;
 
 vmCvar_t  ui_winner;
 
@@ -129,9 +123,6 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_textWrapCache, "ui_textWrapCache", "1", CVAR_ARCHIVE },
   { &ui_developer, "ui_developer", "0", CVAR_ARCHIVE | CVAR_CHEAT },
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
-  { &ui_screen, "ui_screen", "0", CVAR_ROM },
-  { &ui_screens, "ui_screens", "0", CVAR_ROM },
-  { &ui_screenname, "ui_screenname", "", CVAR_ROM },
 };
 
 static int    cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -148,11 +139,11 @@ void UI_Init( qboolean );
 void UI_Shutdown( void );
 void UI_KeyEvent( int key, qboolean down );
 void UI_MouseEvent( int dx, int dy );
+int UI_MousePosition( void );
+void UI_SetMousePosition( int x, int y );
 void UI_Refresh( int realtime );
 qboolean UI_IsFullscreen( void );
 void UI_SetActiveMenu( uiMenuCommand_t menu );
-int UI_MousePosition( void );
-void UI_SetMousePosition( int x, int y );
 intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
                  int arg4, int arg5, int arg6, int arg7,
                  int arg8, int arg9, int arg10, int arg11  )
@@ -195,13 +186,6 @@ intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
     case UI_DRAW_CONNECT_SCREEN:
       UI_DrawConnectScreen( arg0 );
       return 0;
-
-    case UI_MOUSE_POSITION:
-      return UI_MousePosition( );
-
-    case UI_SET_MOUSE_POSITION:
-      UI_SetMousePosition( arg0, arg1 );
-      return 0;
   }
 
   return -1;
@@ -222,8 +206,6 @@ void AssetCache( void )
   uiInfo.uiDC.Assets.scrollBarThumb = trap_R_RegisterShaderNoMip( ASSET_SCROLL_THUMB );
   uiInfo.uiDC.Assets.sliderBar = trap_R_RegisterShaderNoMip( ASSET_SLIDER_BAR );
   uiInfo.uiDC.Assets.sliderThumb = trap_R_RegisterShaderNoMip( ASSET_SLIDER_THUMB );
-  uiInfo.uiDC.Assets.cornerIn = trap_R_RegisterShaderNoMip( ASSET_CORNERIN );
-  uiInfo.uiDC.Assets.cornerOut = trap_R_RegisterShaderNoMip( ASSET_CORNEROUT );
 
   if( ui_emoticons.integer ) 
   {
@@ -258,19 +240,6 @@ void UI_DrawTopBottom( float x, float y, float w, float h, float size )
   trap_R_DrawStretchPic( x, y + h - size, w, size, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
 }
 
-static void UI_DrawCorners( float x, float y, float w, float h, float size, qhandle_t pic )
-{
-  float hs, vs;
-  UI_AdjustFrom640( &x, &y, &w, &h );
-  hs = size * uiInfo.uiDC.xscale;
-  vs = size * uiInfo.uiDC.yscale;
-
-  trap_R_DrawStretchPic( x, y, hs, vs, 0, 0, 0.5, 0.5, pic );
-  trap_R_DrawStretchPic( x, y + h - vs, hs, vs, 0, 0.5, 0.5, 1, pic );
-  trap_R_DrawStretchPic( x + w - hs, y, hs, vs, 0.5, 0, 1, 0.5, pic );
-  trap_R_DrawStretchPic( x + w - hs, y + h - vs, hs, vs, 0.5, 0.5, 1, 1, pic );
-}
-
 /*
 ================
 UI_DrawRect
@@ -284,60 +253,6 @@ void UI_DrawRect( float x, float y, float width, float height, float size, const
 
   UI_DrawTopBottom( x, y, width, height, size );
   UI_DrawSides( x, y, width, height, size );
-
-  trap_R_SetColor( NULL );
-}
-
-/*
-================
-UI_DrawRoundedRect
- 
-Coordinates are 640*480 virtual values
-=================
-*/
-void UI_DrawRoundedRect( float x, float y, float width, float height, float size, const float *color )
-{
-  trap_R_SetColor( color );
-
-  UI_DrawTopBottom( x + size * 4, y, width - size * 8, height, size );
-  UI_DrawSides( x, y + size * 4, width, height - size * 8, size );
-  UI_DrawCorners( x, y, width, height, size * 4, uiInfo.uiDC.Assets.cornerOut );
-
-  trap_R_SetColor( NULL );
-}
-
-/*
-================
-UI_FillRect
- 
-Coordinates are 640*480 virtual values
-=================
-*/
-void UI_FillRect( float x, float y, float width, float height, const float *color )
-{
-  trap_R_SetColor( color );
-
-  UI_AdjustFrom640( &x, &y, &width, &height );
-  trap_R_DrawStretchPic( x, y, width, height, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
-
-  trap_R_SetColor( NULL );
-}
-
-/*
-================
-UI_FillRoundedRect
- 
-Coordinates are 640*480 virtual values
-=================
-*/
-void UI_FillRoundedRect( float x, float y, float width, float height, float size, const float *color )
-{
-  UI_FillRect( x, y + size * 3, width, height - size * 6, color );
-
-  trap_R_SetColor( color );
-
-  UI_DrawTopBottom( x + size * 3, y, width - size * 6, height, size * 3 );
-  UI_DrawCorners( x - size, y - size, width + size * 2, height + size * 2, size * 4, uiInfo.uiDC.Assets.cornerIn );
 
   trap_R_SetColor( NULL );
 }
@@ -1017,16 +932,16 @@ static void UI_StopServerRefresh( void )
   }
 
   uiInfo.serverStatus.refreshActive = qfalse;
-  /*Com_Printf( "%d servers listed in browser with %d players.\n",
+  Com_Printf( "%d servers listed in browser with %d players.\n",
               uiInfo.serverStatus.numDisplayServers,
-              uiInfo.serverStatus.numPlayersOnServers );*/
+              uiInfo.serverStatus.numPlayersOnServers );
   count = trap_LAN_GetServerCount( ui_netSource.integer );
 
   if( count - uiInfo.serverStatus.numDisplayServers > 0 )
   {
-    /*Com_Printf( "%d servers not listed due to packet loss or pings higher than %d\n",
+    Com_Printf( "%d servers not listed due to packet loss or pings higher than %d\n",
                 count - uiInfo.serverStatus.numDisplayServers,
-                ( int ) trap_Cvar_VariableValue( "cl_maxPing" ) );*/
+                ( int ) trap_Cvar_VariableValue( "cl_maxPing" ) );
   }
 
 }
@@ -1509,7 +1424,7 @@ void UI_LoadMenus( const char *menuFile, qboolean reset )
     }
   }
 
-  //Com_Printf( "UI menu file '%s' loaded in %d msec\n", menuFile, trap_Milliseconds() - start );
+  Com_Printf( "UI menu file '%s' loaded in %d msec\n", menuFile, trap_Milliseconds() - start );
 
   trap_Parse_FreeSource( handle );
 }
@@ -1569,8 +1484,8 @@ void UI_LoadHelp( const char *helpFile )
 
   trap_Parse_FreeSource( handle );
 
-  /*Com_Printf( "UI help file '%s' loaded in %d msec (%d infopanes)\n",
-              helpFile, trap_Milliseconds() - start, uiInfo.helpCount );*/
+  Com_Printf( "UI help file '%s' loaded in %d msec (%d infopanes)\n",
+              helpFile, trap_Milliseconds() - start, uiInfo.helpCount );                   
 }
 
 void UI_Load( void )
@@ -1594,16 +1509,32 @@ void UI_Load( void )
 
 /*
 ===============
-UI_GetCurrentStage
+UI_GetCurrentAlienStage
 ===============
 */
-static stage_t UI_GetCurrentStage( void )
+static stage_t UI_GetCurrentAlienStage( void )
 {
   char    buffer[ MAX_TOKEN_CHARS ];
-  stage_t stage;
+  stage_t stage, dummy;
 
-  trap_Cvar_VariableStringBuffer( "ui_stage", buffer, sizeof( buffer ) );
-  sscanf( buffer, "%d", ( int * ) & stage );
+  trap_Cvar_VariableStringBuffer( "ui_stages", buffer, sizeof( buffer ) );
+  sscanf( buffer, "%d %d", ( int * ) & stage , ( int * ) & dummy );
+
+  return stage;
+}
+
+/*
+===============
+UI_GetCurrentHumanStage
+===============
+*/
+static stage_t UI_GetCurrentHumanStage( void )
+{
+  char    buffer[ MAX_TOKEN_CHARS ];
+  stage_t stage, dummy;
+
+  trap_Cvar_VariableStringBuffer( "ui_stages", buffer, sizeof( buffer ) );
+  sscanf( buffer, "%d %d", ( int * ) & dummy, ( int * ) & stage );
 
   return stage;
 }
@@ -1635,7 +1566,7 @@ static void UI_DrawInfoPane( menuItem_t *item, rectDef_t *rect, float text_x, fl
 
     case INFOTYPE_CLASS:
       value = ( BG_ClassCanEvolveFromTo( class, item->v.pclass, credits,
-                                         UI_GetCurrentStage(), 0 ) +
+                                         UI_GetCurrentAlienStage(), 0 ) +
                 ALIEN_CREDITS_PER_FRAG - 1 ) / ALIEN_CREDITS_PER_FRAG;
 
       if( value < 1 )
@@ -1945,81 +1876,6 @@ static void UI_DrawGLInfo( rectDef_t *rect, float scale, int textalign, int text
                     textalign, textvalign, textStyle, buffer );
 }
 
-static void UI_DrawCredits( rectDef_t *rect, float scale, int textalign, int textvalign,
-                           vec4_t color, int textStyle, float text_x, float text_y )
-{
-  UI_DrawTextBlock( rect, text_x, text_y, color, scale, textalign, textvalign, textStyle,
-  "^2~~=[ ^4Tremfusion Core Development Team ^2]=~~\n\n"
-  "^1Amanieu d'Antras\n^3- Programmer: Game and engine enhancements\n\n"
-  "^1Eli Ribble \"Ender\"\n^3- Programmer: Bots, Xreal renderer porting\n\n"
-  "^1John Black \"Champion\"\n^3- Programmer: Bots, Python scripting, Wii Port\n\n"
-  "^1Maurice Doison \"Azreal07\"\n^3- Programmer: Lua scripting, Game scripting engine\n\n"
-  "^1Thomas Brethome \"Madtree\"\n^3- Programmer: Code optimisations, Renderer enhancements\n\n"
-  "^1Griffon Bowman\n^3- Programmer: NCurses Console, IRIX port\n\n"
-  "^1Pierre Fersing \"PierreF\"\n^3- Server Administration, Hosting\n\n"
-  "^1Corentin Wallez \"Kangounator\"\n^3- UI Designer\n\n"
-  "^1Jonathan Itschner \"Chessguy\"\n^3- 2D Artist\n\n"
-  "\n"
-  "^2~~=[ ^4External Contributors ^2]=~~\n\n"
-  "We thank the many people who have contributed to this project to make it what it is today:\n\n"
-  "^1Ian Weller: ^3Website design\n"
-  "^1Raoni: ^33D Modelling\n"
-  "^1CeRRa: ^3Artwork\n"
-  "^1Haptism: ^3Helped the Mac port\n"
-  "^1Daniel Dunwody \"WireDDD\": ^3Programming\n"
-  "^1f0rqu3: ^3Programming\n"
-  "^1/dev/humancontroller: ^3Programming\n"
-  "^1Troy: ^3Programming\n"
-  "^1Gewgle/Mercury: ^3Programming\n"
-  "^1SlackerLinux: ^3Programming\n"
-  "^1Critux/Snapser: ^3Programming\n"
-  "^1Evan Goers \"Odin\"/\"megatog615\": ^3Programming\n"
-  "^1Rezyn: ^3Programming\n"
-  "^1David Serverwright \"DavidSev\": ^3Programming\n"
-  "^1Ben Millwood \"benmachine\": ^3Programming\n"
-  "^1Chris Schwarz \"Lakitu7\": ^3Programming\n"
-  "^1Roman Tetelman \"kevlarman\": ^3Programming\n"
-  "\n"
-  "We would like to thank the Tremulous development team for creating a great game:\n\n"
-  "^1Asa Kravets \"Norfenstein\"\n"
-  "^1Ben Millwood \"benmachine\"\n"
-  "^1Ben Scholzen \"DASPRiD\"\n"
-  "^1Catalyc\n"
-  "^1Chris McCarthy \"Dolby\"\n"
-  "^1Chris Schwarz \"Lakitu7\"\n"
-  "^1Gordon Miller \"Godmil\"\n"
-  "^1Jan van der Weg \"Stannum\"\n"
-  "^1Khalsa\n"
-  "^1M. Kristall \"Undeference\"\n"
-  "^1Mike Mcinnerney \"Vedacon\"\n"
-  "^1Nick Jansens \"Jex\"\n"
-  "^1Paul Greveson \"Mop\"\n"
-  "^1Robin Marshall \"OverFlow\"\n"
-  "^1Tim Angus \"Timbo\"\n"
-  "^1Tony White \"tjw\"\n"
-  "^1Who-[Soup]\n"
-  "\n"
-  "We would also like to thank the ioquake3 maintainers for their great engine:\n\n"
-  "^1Ludwig Nussel\n"
-  "^1Thilo Schulz\n"
-  "^1Tim Angus\n"
-  "^1Tony J. White\n"
-  "^1Zachary J. Slater\n" );
-}
-
-static void UI_DrawScreen( rectDef_t *rect, int modifier )
-{
-  int shotNumber;
-
-  shotNumber = current_screen + modifier;
-
-  if ( shotNumber < 0 || shotNumber >= maxscreens )
-    return;
-
-  UI_DrawHandlePic( rect->x, rect->y, rect->w, rect->h,
-                    trap_R_RegisterShaderNoMip( va( "screenshots/%s", screenshots[ shotNumber ] ) ) );
-}
-
 // FIXME: table drive
 //
 static void UI_OwnerDraw( float x, float y, float w, float h,
@@ -2097,14 +1953,6 @@ static void UI_OwnerDraw( float x, float y, float w, float h,
 
     case UI_GLINFO:
       UI_DrawGLInfo( &rect, scale, textalign, textvalign, foreColor, textStyle, text_x, text_y );
-      break;
-
-    case UI_CREDITS:
-      UI_DrawCredits( &rect, scale, textalign, textvalign, foreColor, textStyle, text_x, text_y );
-      break;
-
-    case UI_SCREEN:
-      UI_DrawScreen( &rect, special );
       break;
 
     default:
@@ -2366,7 +2214,7 @@ static void UI_LoadAlienClasses( void )
     UI_AddClass( PCL_ALIEN_LEVEL0 );
 
   if( BG_ClassIsAllowed( PCL_ALIEN_BUILDER0_UPG ) &&
-      BG_ClassAllowedInStage( PCL_ALIEN_BUILDER0_UPG, UI_GetCurrentStage( ) ) )
+      BG_ClassAllowedInStage( PCL_ALIEN_BUILDER0_UPG, UI_GetCurrentAlienStage( ) ) )
     UI_AddClass( PCL_ALIEN_BUILDER0_UPG );
   else if( BG_ClassIsAllowed( PCL_ALIEN_BUILDER0 ) )
     UI_AddClass( PCL_ALIEN_BUILDER0 );
@@ -2411,11 +2259,53 @@ UI_ParseCarriageList
 */
 static void UI_ParseCarriageList( void )
 {
-  char buffer[ MAX_CVAR_VALUE_STRING ];
+  int  i;
+  char carriageCvar[ MAX_TOKEN_CHARS ];
+  char *iterator;
+  char buffer[ MAX_TOKEN_CHARS ];
+  char *bufPointer;
 
-  trap_Cvar_VariableStringBuffer( "ui_carriage", buffer, sizeof( buffer ) );
+  trap_Cvar_VariableStringBuffer( "ui_carriage", carriageCvar, sizeof( carriageCvar ) );
+  iterator = carriageCvar;
 
-  sscanf( buffer, "%d %d %d", &uiInfo.weapon, &uiInfo.upgrades, &uiInfo.credits );
+  uiInfo.weapons = 0;
+  uiInfo.upgrades = 0;
+
+  //simple parser to give rise to weapon/upgrade list
+
+  while( iterator && iterator[ 0 ] != '$' )
+  {
+    bufPointer = buffer;
+
+    if( iterator[ 0 ] == 'W' )
+    {
+      iterator++;
+
+      while( iterator[ 0 ] != ' ' )
+        *bufPointer++ = *iterator++;
+
+      *bufPointer++ = '\n';
+
+      i = atoi( buffer );
+
+      uiInfo.weapons |= ( 1 << i );
+    }
+    else if( iterator[ 0 ] == 'U' )
+    {
+      iterator++;
+
+      while( iterator[ 0 ] != ' ' )
+        *bufPointer++ = *iterator++;
+
+      *bufPointer++ = '\n';
+
+      i = atoi( buffer );
+
+      uiInfo.upgrades |= ( 1 << i );
+    }
+
+    iterator++;
+  }
 }
 
 /*
@@ -2425,11 +2315,17 @@ UI_LoadHumanArmouryBuys
 */
 static void UI_LoadHumanArmouryBuys( void )
 {
-  int i, i2, j = 0;
-  stage_t stage = UI_GetCurrentStage( );
+  int i, j = 0;
+  stage_t stage = UI_GetCurrentHumanStage( );
   int slots = 0;
 
   UI_ParseCarriageList( );
+
+  for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
+  {
+    if( uiInfo.weapons & ( 1 << i ) )
+      slots |= BG_Weapon( i )->slots;
+  }
 
   for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
   {
@@ -2445,19 +2341,13 @@ static void UI_LoadHumanArmouryBuys( void )
         BG_Weapon( i )->purchasable &&
         BG_WeaponAllowedInStage( i, stage ) &&
         BG_WeaponIsAllowed( i ) &&
-        i != uiInfo.weapon )
+        !( BG_Weapon( i )->slots & slots ) &&
+        !( uiInfo.weapons & ( 1 << i ) ) )
     {
-      char buffer[ MAX_STRING_CHARS ] = "";
-      int price = BG_Weapon( i )->price;
-      if( uiInfo.weapon != WP_NONE && uiInfo.weapon != WP_BLASTER )
-      {
-        Com_sprintf( buffer, sizeof( buffer ), "cmd sell %s;", BG_Weapon( uiInfo.weapon )->name );
-        price -= BG_Weapon( uiInfo.weapon )->price;
-      }
-      uiInfo.humanArmouryBuyList[ j ].text = String_Alloc( price <= uiInfo.credits ?
-        BG_Weapon( i )->humanName : va( "^1%s", BG_Weapon( i )->humanName ) );
-      Com_sprintf( buffer, sizeof( buffer ), "%scmd buy %s\n", buffer, BG_Weapon( i )->name );
-      uiInfo.humanArmouryBuyList[ j ].cmd = String_Alloc( buffer );
+      uiInfo.humanArmouryBuyList[ j ].text =
+        String_Alloc( BG_Weapon( i )->humanName );
+      uiInfo.humanArmouryBuyList[ j ].cmd =
+        String_Alloc( va( "cmd buy %s\n", BG_Weapon( i )->name ) );
       uiInfo.humanArmouryBuyList[ j ].type = INFOTYPE_WEAPON;
       uiInfo.humanArmouryBuyList[ j ].v.weapon = i;
 
@@ -2473,23 +2363,13 @@ static void UI_LoadHumanArmouryBuys( void )
         BG_Upgrade( i )->purchasable &&
         BG_UpgradeAllowedInStage( i, stage ) &&
         BG_UpgradeIsAllowed( i ) &&
+        !( BG_Upgrade( i )->slots & slots ) &&
         !( uiInfo.upgrades & ( 1 << i ) ) )
     {
-      char buffer[ MAX_STRING_CHARS ] = "";
-      int price = BG_Upgrade( i )->price;
-      for( i2 = UP_NONE + 1; i2 < UP_NUM_UPGRADES; i2++ )
-      {
-        if( ( uiInfo.upgrades & ( 1 << i2 ) ) &&
-            ( BG_Upgrade( i2 )->slots & BG_Upgrade( i )->slots ) )
-        {
-          Com_sprintf( buffer, sizeof( buffer ), "%scmd sell %s;", buffer, BG_Upgrade( i2 )->name );
-          price -= BG_Upgrade( i2 )->price;
-        }
-      }
-      uiInfo.humanArmouryBuyList[ j ].text = String_Alloc( price <= uiInfo.credits ?
-        BG_Upgrade( i )->humanName : va( "^1%s", BG_Upgrade( i )->humanName ) );
-      Com_sprintf( buffer, sizeof( buffer ), "%scmd buy %s\n", buffer, BG_Upgrade( i )->name );
-      uiInfo.humanArmouryBuyList[ j ].cmd = String_Alloc( buffer );
+      uiInfo.humanArmouryBuyList[ j ].text =
+        String_Alloc( BG_Upgrade( i )->humanName );
+      uiInfo.humanArmouryBuyList[ j ].cmd =
+        String_Alloc( va( "cmd buy %s\n", BG_Upgrade( i )->name ) );
       uiInfo.humanArmouryBuyList[ j ].type = INFOTYPE_UPGRADE;
       uiInfo.humanArmouryBuyList[ j ].v.upgrade = i;
 
@@ -2512,17 +2392,20 @@ static void UI_LoadHumanArmourySells( void )
   uiInfo.humanArmourySellCount = 0;
   UI_ParseCarriageList( );
 
-  if( uiInfo.weapon != WP_NONE )
+  for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
   {
-    uiInfo.humanArmourySellList[ j ].text = String_Alloc( BG_Weapon( uiInfo.weapon )->humanName );
-    uiInfo.humanArmourySellList[ j ].cmd =
-      String_Alloc( va( "cmd sell %s\n", BG_Weapon( uiInfo.weapon )->name ) );
-    uiInfo.humanArmourySellList[ j ].type = INFOTYPE_WEAPON;
-    uiInfo.humanArmourySellList[ j ].v.weapon = uiInfo.weapon;
+    if( uiInfo.weapons & ( 1 << i ) )
+    {
+      uiInfo.humanArmourySellList[ j ].text = String_Alloc( BG_Weapon( i )->humanName );
+      uiInfo.humanArmourySellList[ j ].cmd =
+        String_Alloc( va( "cmd sell %s\n", BG_Weapon( i )->name ) );
+      uiInfo.humanArmourySellList[ j ].type = INFOTYPE_WEAPON;
+      uiInfo.humanArmourySellList[ j ].v.weapon = i;
 
-    j++;
+      j++;
 
-    uiInfo.humanArmourySellCount++;
+      uiInfo.humanArmourySellCount++;
+    }
   }
 
   for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
@@ -2549,12 +2432,12 @@ UI_ArmouryRefreshCb
 */
 static void UI_ArmouryRefreshCb( void *data )
 {
-  int oldWeapon  = uiInfo.weapon;
+  int oldWeapons  = uiInfo.weapons;
   int oldUpgrades = uiInfo.upgrades;
 
   UI_ParseCarriageList( );
 
-  if( uiInfo.weapon != oldWeapon || uiInfo.upgrades != oldUpgrades )
+  if( uiInfo.weapons != oldWeapons || uiInfo.upgrades != oldUpgrades )
   {
     UI_LoadHumanArmouryBuys( );
     UI_LoadHumanArmourySells( );
@@ -2573,7 +2456,7 @@ static void UI_LoadAlienUpgrades( void )
 
   int     class, credits;
   char    ui_currentClass[ MAX_STRING_CHARS ];
-  stage_t stage = UI_GetCurrentStage( );
+  stage_t stage = UI_GetCurrentAlienStage( );
 
   trap_Cvar_VariableStringBuffer( "ui_currentClass", ui_currentClass, MAX_STRING_CHARS );
 
@@ -2609,14 +2492,14 @@ static void UI_LoadAlienBuilds( void )
   stage_t stage;
 
   UI_ParseCarriageList( );
-  stage = UI_GetCurrentStage( );
+  stage = UI_GetCurrentAlienStage( );
 
   uiInfo.alienBuildCount = 0;
 
   for( i = BA_NONE + 1; i < BA_NUM_BUILDABLES; i++ )
   {
     if( BG_Buildable( i )->team == TEAM_ALIENS &&
-        ( BG_Buildable( i )->buildWeapon & ( 1 << uiInfo.weapon ) ) &&
+        BG_Buildable( i )->buildWeapon & uiInfo.weapons &&
         BG_BuildableAllowedInStage( i, stage ) &&
         BG_BuildableIsAllowed( i ) )
     {
@@ -2645,14 +2528,14 @@ static void UI_LoadHumanBuilds( void )
   stage_t stage;
 
   UI_ParseCarriageList( );
-  stage = UI_GetCurrentStage( );
+  stage = UI_GetCurrentHumanStage( );
 
   uiInfo.humanBuildCount = 0;
 
   for( i = BA_NONE + 1; i < BA_NUM_BUILDABLES; i++ )
   {
     if( BG_Buildable( i )->team == TEAM_HUMANS &&
-        ( BG_Buildable( i )->buildWeapon & ( 1 << uiInfo.weapon ) ) &&
+        BG_Buildable( i )->buildWeapon & uiInfo.weapons &&
         BG_BuildableAllowedInStage( i, stage ) &&
         BG_BuildableIsAllowed( i ) )
     {
@@ -2773,6 +2656,7 @@ static void UI_LoadDemos( void )
       if( !Q_stricmp( demoname +  len - strlen( demoExt ), demoExt ) )
         demoname[len-strlen( demoExt )] = '\0';
 
+      Q_strupr( demoname );
       uiInfo.demoList[i] = String_Alloc( demoname );
       demoname += len + 1;
     }
@@ -2922,82 +2806,6 @@ static void UI_Update( const char *name )
   }
 }
 
-void UI_ScreenChange( char **args )
-{
-  static int saved_index = 0;
-  const char *string;
-  int i, modifier;
-  char buffer[ 8192 ];
-
-  // Reload the screenshots list
-  maxscreens = trap_FS_GetFileList( "screenshots", ".jpg", buffer, sizeof( buffer ));
-  if ( maxscreens > 1024 )
-    maxscreens = 1024;
-  string = buffer;
-  for (i = 0; i < maxscreens; i++)
-  {
-    Q_strncpyz( screenshots[ i ], string, sizeof( screenshots[ i ] ) );
-    string += strlen( string ) + 1;
-  }
-
-  // Also load TGAs
-  maxscreens += trap_FS_GetFileList( "screenshots", ".tga", buffer, sizeof( buffer ));
-  if ( maxscreens > 1024 )
-    maxscreens = 1024;
-  trap_Cvar_SetValue( "ui_screens", maxscreens );
-  string = buffer;
-  for (; i < maxscreens; i++)
-  {
-    Q_strncpyz( screenshots[ i ], string, sizeof( screenshots[ i ] ) );
-    string += strlen( string ) + 1;
-  }
-
-  // Sort the list
-  qsort(screenshots, maxscreens, MAX_QPATH, (int(*)(const void *, const void *))strcmp);
-
-  // Get the modifier & find the screen index
-  if( String_Parse( args, &string ) )
-  {
-    if( string[0] == '+' )
-    {
-      if( Int_Parse( args, &modifier ) )
-        current_screen += modifier;
-    }
-    else if( string[0] == '-' )
-    {
-      if( Int_Parse( args, &modifier ) )
-        current_screen -= modifier;
-    }
-    else if( string[0] == '=' )
-    {
-      if( Int_Parse( args, &modifier ) )
-        current_screen = modifier;
-    }
-    // Hack for saving the index when switching from multiview to detail view
-    else if( string[0] == '?' )
-      saved_index = current_screen;
-    else if( string[0] == '!' )
-      current_screen = saved_index;
-  }
-
-  // We don't want it to go below 0 or above the max number of screens
-  if( current_screen >= maxscreens )
-  {
-    current_screen -= modifier;
-    if( current_screen >= maxscreens )
-      current_screen = maxscreens - 1;
-  }
-  else if( current_screen < 0 )
-  {
-    current_screen += modifier;
-    if( current_screen < 0 )
-      current_screen = 0;
-  }
-
-  trap_Cvar_SetValue( "ui_screen", current_screen );
-  trap_Cvar_Set( "ui_screenname", screenshots[ current_screen ] );
-}
-
 //FIXME: lookup table
 static void UI_RunMenuScript( char **args )
 {
@@ -3034,12 +2842,6 @@ static void UI_RunMenuScript( char **args )
       Controls_GetConfig();
     else if( Q_stricmp( name, "clearError" ) == 0 )
       trap_Cvar_Set( "com_errorMessage", "" );
-    else if (Q_stricmp(name, "downloadIgnore") == 0)
-      trap_Cvar_Set( "cl_downloadPrompt", va( "%d", DLP_IGNORE ) );
-    else if (Q_stricmp(name, "downloadCURL") == 0)
-      trap_Cvar_Set( "cl_downloadPrompt", va( "%d", DLP_CURL ) );
-    else if (Q_stricmp(name, "downloadUDP") == 0)
-      trap_Cvar_Set( "cl_downloadPrompt", va( "%d", DLP_UDP ) );
     else if( Q_stricmp( name, "RefreshServers" ) == 0 )
     {
       UI_StartServerRefresh( qtrue );
@@ -3182,20 +2984,6 @@ static void UI_RunMenuScript( char **args )
         trap_Cmd_ExecuteText( EXEC_APPEND, va( "tell %i \"%s\"\n", uiInfo.chatTargetClientNum, buffer  ) );
       else if( uiInfo.chatTeam )
         trap_Cmd_ExecuteText( EXEC_APPEND, va( "say_team \"%s\"\n", buffer ) );
-      else if( uiInfo.chatAdmins )
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "say_admins \"%s\"\n", buffer ) );
-      else if( uiInfo.chatClan )
-      {
-        char clantagDecolored[ 32 ];
-        trap_Cvar_VariableStringBuffer( "cl_clantag", clantagDecolored, sizeof( clantagDecolored ) );
-        Q_CleanStr( clantagDecolored );
-        if( strlen(clantagDecolored) > 2 && strlen(clantagDecolored) < 11 )
-          trap_Cmd_ExecuteText( EXEC_APPEND, va( "m \"%s\" \"%s\"\n", clantagDecolored, buffer ) );
-        else
-          Com_Printf( "^3Error: Your clantag has to be between 3 and 10 chars long. Current value is:^7 %s^7\n", clantagDecolored );
-      }
-      else if( uiInfo.chatPrompt )
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "vstr \"%s\"\n", uiInfo.chatPromptCallback ) );
       else
         trap_Cmd_ExecuteText( EXEC_APPEND, va( "say \"%s\"\n", buffer ) );
     }
@@ -3524,10 +3312,6 @@ static void UI_RunMenuScript( char **args )
         }
       }
     }
-    else if( Q_stricmp( name, "ScreenChange" ) == 0 )
-    {
-      UI_ScreenChange( args );
-    }
     else
       Com_Printf( "unknown UI script %s\n", name );
   }
@@ -3819,41 +3603,21 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
   }
   else if( feederID == FEEDER_RESOLUTIONS )
   {
-    if ( uiInfo.oldResolutions )
-    {
-      int mode = trap_Cvar_VariableValue( "r_mode" );
-      if ( mode < 0 || mode >= uiInfo.numResolutions )
-      {
-        Com_sprintf( resolution, sizeof( resolution ), "Custom (%dx%d)",
-                     (int)trap_Cvar_VariableValue( "r_customWidth" ),
-                     (int)trap_Cvar_VariableValue( "r_customHeight" ) );
-      }
-      else
-      {
-        Com_sprintf( resolution, sizeof( resolution ), "%dx%d",
-                     uiInfo.resolutions[ mode ].w,
-                     uiInfo.resolutions[ mode ].h );
-      }
-      return resolution;
-    }
-    else
-    {
-      int i;
-      int w = trap_Cvar_VariableValue( "r_width" );
-      int h = trap_Cvar_VariableValue( "r_height" );
+    int i;
+    int w = trap_Cvar_VariableValue( "r_width" );
+    int h = trap_Cvar_VariableValue( "r_height" );
 
-      for( i = 0; i < uiInfo.numResolutions; i++ )
+    for( i = 0; i < uiInfo.numResolutions; i++ )
+    {
+      if( w == uiInfo.resolutions[ i ].w && h == uiInfo.resolutions[ i ].h )
       {
-        if( w == uiInfo.resolutions[ i ].w && h == uiInfo.resolutions[ i ].h )
-        {
-          Com_sprintf( resolution, sizeof( resolution ), "%dx%d", w, h );
-          return resolution;
-        }
+        Com_sprintf( resolution, sizeof( resolution ), "%dx%d", w, h );
+        return resolution;
       }
-
-      Com_sprintf( resolution, sizeof( resolution ), "Custom (%dx%d)", w, h );
-      return resolution;
     }
+
+    Com_sprintf( resolution, sizeof( resolution ), "Custom (%dx%d)", w, h );
+    return resolution;
   }
 
   return "";
@@ -3983,13 +3747,8 @@ static void UI_FeederSelection( float feederID, int index )
     uiInfo.humanBuildIndex = index;
   else if( feederID == FEEDER_RESOLUTIONS )
   {
-    if ( uiInfo.oldResolutions )
-      trap_Cvar_Set( "r_mode", va( "%d", index ) );
-    else
-    {
-      trap_Cvar_Set( "r_width", va( "%d", uiInfo.resolutions[ index ].w ) );
-      trap_Cvar_Set( "r_height", va( "%d", uiInfo.resolutions[ index ].h ) );
-    }
+    trap_Cvar_Set( "r_width", va( "%d", uiInfo.resolutions[ index ].w ) );
+    trap_Cvar_Set( "r_height", va( "%d", uiInfo.resolutions[ index ].h ) );
   }
 }
 
@@ -3997,19 +3756,14 @@ static int UI_FeederInitialise( float feederID )
 {
   if( feederID == FEEDER_RESOLUTIONS )
   {
-    if ( uiInfo.oldResolutions )
-      return trap_Cvar_VariableValue( "r_mode" );
-    else
-    {
-      int i;
-      int w = trap_Cvar_VariableValue( "r_width" );
-      int h = trap_Cvar_VariableValue( "r_height" );
+    int i;
+    int w = trap_Cvar_VariableValue( "r_width" );
+    int h = trap_Cvar_VariableValue( "r_height" );
 
-      for( i = 0; i < uiInfo.numResolutions; i++ )
-      {
-        if( w == uiInfo.resolutions[ i ].w && h == uiInfo.resolutions[ i ].h )
-          return i;
-      }
+    for( i = 0; i < uiInfo.numResolutions; i++ )
+    {
+      if( w == uiInfo.resolutions[ i ].w && h == uiInfo.resolutions[ i ].h )
+        return i;
     }
   }
 
@@ -4087,16 +3841,7 @@ void UI_ParseResolutions( void )
   char        *s = NULL;
 
   trap_Cvar_VariableStringBuffer( "r_availableModes", buf, sizeof( buf ) );
-  if ( buf[0] )
-  {
-    p = buf;
-    uiInfo.oldResolutions = qfalse;
-  }
-  else
-  {
-    p = "320x240 400x300 512x384 640x480 800x600 960x720 1024x768 1152x864 1280x1024 1600x1200 2048x1536 856x480";
-    uiInfo.oldResolutions = qtrue;
-  }
+  p = buf;
   uiInfo.numResolutions = 0;
 
   while( String_Parse( &p, &out ) )
@@ -4151,8 +3896,6 @@ void UI_Init( qboolean inGameLoad )
   uiInfo.uiDC.modelBounds = &trap_R_ModelBounds;
   uiInfo.uiDC.fillRect = &UI_FillRect;
   uiInfo.uiDC.drawRect = &UI_DrawRect;
-  uiInfo.uiDC.fillRoundedRect = &UI_FillRoundedRect;
-  uiInfo.uiDC.drawRoundedRect = &UI_DrawRoundedRect;
   uiInfo.uiDC.drawSides = &UI_DrawSides;
   uiInfo.uiDC.drawTopBottom = &UI_DrawTopBottom;
   uiInfo.uiDC.clearScene = &trap_R_ClearScene;
@@ -4192,7 +3935,6 @@ void UI_Init( qboolean inGameLoad )
   uiInfo.uiDC.stopCinematic = &UI_StopCinematic;
   uiInfo.uiDC.drawCinematic = &UI_DrawCinematic;
   uiInfo.uiDC.runCinematicFrame = &UI_RunCinematicFrame;
-  uiInfo.uiDC.getFileList = &trap_FS_GetFileList;
 
   Init_Display( &uiInfo.uiDC );
 
@@ -4274,9 +4016,6 @@ void UI_MouseEvent( int dx, int dy )
   else if( uiInfo.uiDC.cursory > SCREEN_HEIGHT )
     uiInfo.uiDC.cursory = SCREEN_HEIGHT;
 
-  uiInfo.uiDC.cursordx = dx * uiInfo.uiDC.aspectScale;
-  uiInfo.uiDC.cursordy = dy;
-
   if( Menu_Count( ) > 0 )
     Display_MouseMove( NULL, uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory );
 }
@@ -4299,8 +4038,6 @@ UI_SetMousePosition
 */
 void UI_SetMousePosition( int x, int y )
 {
-  uiInfo.uiDC.cursordx = x - uiInfo.uiDC.cursorx;
-  uiInfo.uiDC.cursordy = y - uiInfo.uiDC.cursory;
   uiInfo.uiDC.cursorx = x;
   uiInfo.uiDC.cursory = y;
 
@@ -4641,15 +4378,6 @@ void UI_DrawConnectScreen( qboolean overlay )
     case CA_CONNECTED:
       {
         char downloadName[MAX_INFO_VALUE];
-        int prompt = trap_Cvar_VariableValue( "cl_downloadPrompt" );
-  
-        if( prompt & DLP_SHOW )
-        {
-          Com_Printf( "Opening download prompt...\n" );
-          trap_Key_SetCatcher( KEYCATCH_UI );
-          Menus_ActivateByName( "download_popmenu" );
-          trap_Cvar_Set( "cl_downloadPrompt", "0" );
-        }
 
         trap_Cvar_VariableStringBuffer( "cl_downloadName", downloadName, sizeof( downloadName ) );
 
@@ -4692,9 +4420,6 @@ void UI_RegisterCvars( void )
 
   for( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ )
     trap_Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
-
-  // use ui messagemode
-  trap_Cvar_Set( "ui_useMessagemode", "1" );
 }
 
 /*

@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -69,7 +69,7 @@ static void CL_Netchan_Encode( msg_t *msg ) {
 		// modify the key with the last received now acknowledged server command
 		if (!string[index])
 			index = 0;
-		if (string[index] > 127 || string[index] == '%') {
+		if (string[index] > 127) {
 			key ^= '.' << (i & 1);
 		}
 		else {
@@ -115,7 +115,7 @@ static void CL_Netchan_Decode( msg_t *msg ) {
 		// modify the key with the last sent and with this message acknowledged client command
 		if (!string[index])
 			index = 0;
-		if (string[index] > 127 || string[index] == '%') {
+		if (string[index] > 127) {
 			key ^= '.' << (i & 1);
 		}
 		else {
@@ -133,7 +133,7 @@ CL_Netchan_TransmitNextFragment
 =================
 */
 void CL_Netchan_TransmitNextFragment( netchan_t *chan ) {
-	Netchan_TransmitNextFragment( chan, 0 );
+	Netchan_TransmitNextFragment( chan );
 }
 
 /*
@@ -145,7 +145,7 @@ void CL_Netchan_Transmit( netchan_t *chan, msg_t* msg ) {
 	MSG_WriteByte( msg, clc_EOF );
 
 	CL_Netchan_Encode( msg );
-	Netchan_Transmit( chan, msg->cursize, msg->data, 0 );
+	Netchan_Transmit( chan, msg->cursize, msg->data );
 }
 
 extern 	int oldsize;

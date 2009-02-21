@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -227,7 +227,6 @@ static void NetadrToSockadr( netadr_t *a, struct sockaddr *s ) {
 		((struct sockaddr_in6 *)s)->sin6_family = AF_INET6;
 		((struct sockaddr_in6 *)s)->sin6_addr = * ((struct in6_addr *) &a->ip6);
 		((struct sockaddr_in6 *)s)->sin6_port = a->port;
-		((struct sockaddr_in6 *)s)->sin6_scope_id = a->scope_id;
 	}
 	else if(a->type == NA_MULTICAST6)
 	{
@@ -249,7 +248,6 @@ static void SockadrToNetadr( struct sockaddr *s, netadr_t *a ) {
 		a->type = NA_IP6;
 		memcpy(a->ip6, &((struct sockaddr_in6 *)s)->sin6_addr, sizeof(a->ip6));
 		a->port = ((struct sockaddr_in6 *)s)->sin6_port;
-		a->scope_id = ((struct sockaddr_in6 *)s)->sin6_scope_id;
 	}
 }
 
@@ -281,11 +279,14 @@ static qboolean Sys_StringToSockaddr(const char *s, struct sockaddr *sadr, int s
 	memset(sadr, '\0', sizeof(*sadr));
 	memset(&hints, '\0', sizeof(hints));
 
-	hintsp = &hints;
-	hintsp->ai_family = family;
-	hintsp->ai_socktype = SOCK_DGRAM;
-	// FIXME: we should set "->ai_flags" to AI_PASSIVE if we intend
-	//        to use this structure for a bind() - instead of a sendto()
+	// workaround for buggy MacOSX getaddrinfo implementation that doesn't handle AF_UNSPEC in hints correctly.
+	if(family == AF_UNSPEC)
+		hintsp = NULL;
+	else
+	{
+		hintsp = &hints;
+		hintsp->ai_family = family;
+	}
 	
 	retval = getaddrinfo(s, NULL, hintsp, &res);
 
@@ -339,15 +340,8 @@ static qboolean Sys_StringToSockaddr(const char *s, struct sockaddr *sadr, int s
 Sys_SockaddrToString
 =============
 */
-static void Sys_SockaddrToString(char *dest, int destlen, struct sockaddr *input)
+static void Sys_SockaddrToString(char *dest, int destlen, struct sockaddr *input, int inputlen)
 {
-	socklen_t inputlen;
-
-	if (input->sa_family == AF_INET6)
-		inputlen = sizeof(struct sockaddr_in6);
-	else
-		inputlen = sizeof(struct sockaddr_in);
-
 	getnameinfo(input, inputlen, dest, destlen, NULL, 0, NI_NUMERICHOST);
 }
 
@@ -405,7 +399,7 @@ qboolean	NET_CompareBaseAdr (netadr_t a, netadr_t b)
 	
 	if (a.type == NA_IP6)
 	{
-		if(!memcmp(a.ip6, b.ip6, sizeof(a.ip6)) && a.scope_id == b.scope_id)
+		if(!memcmp(a.ip6, b.ip6, sizeof(a.ip6)))
 				  return qtrue;
 		
 		return qfalse;
@@ -429,7 +423,7 @@ const char	*NET_AdrToString (netadr_t a)
 	
 		memset(&sadr, 0, sizeof(sadr));
 		NetadrToSockadr(&a, (struct sockaddr *) &sadr);
-		Sys_SockaddrToString(s, sizeof(s), (struct sockaddr *) &sadr);
+		Sys_SockaddrToString(s, sizeof(s), (struct sockaddr *) &sadr, sizeof(sadr));
 	}
 
 	return s;
@@ -724,8 +718,6 @@ qboolean Sys_IsLANAddress( netadr_t adr ) {
 			}
 			else
 			{
-				// TODO? should we check the scope_id here?
-
 				compareip = (byte *) &((struct sockaddr_in6 *) &localIP[index].addr)->sin6_addr;
 				comparemask = (byte *) &((struct sockaddr_in6 *) &localIP[index].netmask)->sin6_addr;
 				compareadr = adr.ip6;
@@ -763,7 +755,7 @@ void Sys_ShowIP(void) {
 
 	for(i = 0; i < numIP; i++)
 	{
-		Sys_SockaddrToString(addrbuf, sizeof(addrbuf), (struct sockaddr *) &localIP[i].addr);
+		Sys_SockaddrToString(addrbuf, sizeof(addrbuf), (struct sockaddr *) &localIP[i].addr, sizeof((*localIP).addr));
 
 		if(localIP[i].type == NA_IP)
 			Com_Printf( "IP: %s\n", addrbuf);
@@ -784,7 +776,7 @@ NET_IPSocket
 int NET_IPSocket( char *net_interface, int port, int *err ) {
 	SOCKET				newsocket;
 	struct sockaddr_in	address;
-	u_long				_true = 1;
+	qboolean			_true = qtrue;
 	int					i = 1;
 
 	*err = 0;
@@ -802,7 +794,7 @@ int NET_IPSocket( char *net_interface, int port, int *err ) {
 		return newsocket;
 	}
 	// make it non-blocking
-	if( ioctlsocket( newsocket, FIONBIO, &_true ) == SOCKET_ERROR ) {
+	if( ioctlsocket( newsocket, FIONBIO, (u_long *)&_true ) == SOCKET_ERROR ) {
 		Com_Printf( "WARNING: NET_IPSocket: ioctl FIONBIO: %s\n", NET_ErrorString() );
 		*err = socketError;
 		closesocket(newsocket);
@@ -855,7 +847,7 @@ NET_IP6Socket
 int NET_IP6Socket( char *net_interface, int port, struct sockaddr_in6 *bindto, int *err ) {
 	SOCKET				newsocket;
 	struct sockaddr_in6	address;
-	u_long				_true = 1;
+	qboolean			_true = qtrue;
 
 	*err = 0;
 
@@ -877,7 +869,7 @@ int NET_IP6Socket( char *net_interface, int port, struct sockaddr_in6 *bindto, i
 	}
 
 	// make it non-blocking
-	if( ioctlsocket( newsocket, FIONBIO, &_true ) == SOCKET_ERROR ) {
+	if( ioctlsocket( newsocket, FIONBIO, (u_long *)&_true ) == SOCKET_ERROR ) {
 		Com_Printf( "WARNING: NET_IP6Socket: ioctl FIONBIO: %s\n", NET_ErrorString() );
 		*err = socketError;
 		closesocket(newsocket);
@@ -1500,7 +1492,6 @@ void NET_Config( qboolean enableNetworking ) {
 	}
 
 	if( stop ) {
-
 		if ( ip_socket != INVALID_SOCKET ) {
 			closesocket( ip_socket );
 			ip_socket = INVALID_SOCKET;
@@ -1589,7 +1580,6 @@ NET_Sleep
 Sleeps msec or until something happens on the network
 ====================
 */
-
 void NET_Sleep( int msec ) {
 	struct timeval timeout;
 	fd_set	fdset;
@@ -1625,6 +1615,7 @@ void NET_Sleep( int msec ) {
 	timeout.tv_usec = (msec%1000)*1000;
 	select(ip_socket+1, &fdset, NULL, NULL, &timeout);
 }
+
 
 /*
 ====================

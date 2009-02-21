@@ -1,106 +1,96 @@
 gfx/2d/crosshair-alien_s
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-alien.tga
 		blendfunc blend
-		rgbgen const ( 1.0 0.0 0.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }
 
 gfx/2d/crosshair-rifle_s
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-rifle.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }
 
 gfx/2d/crosshair-prifle_s
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-prifle.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }
 
 gfx/2d/crosshair-chaingun_s
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-chaingun.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }
 
 gfx/2d/crosshair-mdriver_s
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-mdriver.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }
 
 gfx/2d/crosshair-lcannon_s
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-lcannon.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }
 
 gfx/2d/crosshair-lgun_s
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-lgun.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }
 
 gfx/2d/crosshair-flamer_s
 {
-	noPicMip
+	nopicmip
 	{
 		clampmap gfx/2d/crosshair-flamer1.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.15
 		tcmod rotate 5
+		rgbGen vertex
 	}
 	{
 		clampmap gfx/2d/crosshair-flamer1.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.15
 		tcmod rotate -5
+		rgbGen vertex
 	}
 }
 
-gfx/2d/crosshair-psaw_s
+gfx/2d/crosshair-psaw
 {
-	noPicMip
+	nopicmip
 	{
 		map gfx/2d/crosshair-psaw.tga
 		blendfunc blend
-		rgbgen const ( 0.0 0.8 1.0 )
-		alphagen const 0.35
+		rgbGen vertex
 	}
 }

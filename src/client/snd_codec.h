@@ -4,20 +4,20 @@ Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2005 Stuart Dalton (badcdev@gmail.com)
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -55,7 +55,6 @@ typedef void *(*CODEC_LOAD)(const char *filename, snd_info_t *info);
 typedef snd_stream_t *(*CODEC_OPEN)(const char *filename);
 typedef int (*CODEC_READ)(snd_stream_t *stream, int bytes, void *buffer);
 typedef void (*CODEC_CLOSE)(snd_stream_t *stream);
-typedef void (*CODEC_LOOP)(snd_stream_t *stream);
 
 // Codec data structure
 struct snd_codec_s
@@ -65,7 +64,6 @@ struct snd_codec_s
 	CODEC_OPEN open;
 	CODEC_READ read;
 	CODEC_CLOSE close;
-	CODEC_LOOP loop;
 	snd_codec_t *next;
 };
 
@@ -76,7 +74,6 @@ void S_CodecRegister(snd_codec_t *codec);
 void *S_CodecLoad(const char *filename, snd_info_t *info);
 snd_stream_t *S_CodecOpenStream(const char *filename);
 void S_CodecCloseStream(snd_stream_t *stream);
-void S_CodecLoopStream(snd_stream_t *stream);
 int S_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer);
 
 // Util functions (used by codecs)
@@ -88,7 +85,6 @@ extern snd_codec_t wav_codec;
 void *S_WAV_CodecLoad(const char *filename, snd_info_t *info);
 snd_stream_t *S_WAV_CodecOpenStream(const char *filename);
 void S_WAV_CodecCloseStream(snd_stream_t *stream);
-void S_WAV_CodecLoopStream(snd_stream_t *stream);
 int S_WAV_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer);
 
 // Ogg Vorbis codec
@@ -97,7 +93,6 @@ extern snd_codec_t ogg_codec;
 void *S_OGG_CodecLoad(const char *filename, snd_info_t *info);
 snd_stream_t *S_OGG_CodecOpenStream(const char *filename);
 void S_OGG_CodecCloseStream(snd_stream_t *stream);
-void S_OGG_CodecLoopStream(snd_stream_t *stream);
 int S_OGG_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer);
 #endif // USE_CODEC_VORBIS
 

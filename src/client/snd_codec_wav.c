@@ -4,20 +4,20 @@ Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2005 Stuart Dalton (badcdev@gmail.com)
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -189,7 +189,6 @@ snd_codec_t wav_codec =
 	S_WAV_CodecOpenStream,
 	S_WAV_CodecReadStream,
 	S_WAV_CodecCloseStream,
-	S_WAV_CodecLoopStream,
 	NULL
 };
 
@@ -272,18 +271,6 @@ S_WAV_CodecCloseStream
 void S_WAV_CodecCloseStream(snd_stream_t *stream)
 {
 	S_CodecUtilClose(&stream);
-}
-
-/*
-=================
-S_WAV_CodecLoopStream
-=================
-*/
-void S_WAV_CodecLoopStream(snd_stream_t *stream)
-{
-	FS_Seek(stream->file, 0, FS_SEEK_SET);
-	stream->pos = 0;
-	S_ReadRIFFHeader(stream->file, &stream->info);
 }
 
 /*

@@ -91,9 +91,7 @@ typedef uint32_t	Uint32;
 
 #ifdef SDL_HAS_64BIT_TYPE
 typedef int64_t		Sint64;
-#ifndef SYMBIAN32_GCCE
 typedef uint64_t	Uint64;
-#endif
 #else
 /* This is really just a hack to prevent the compiler from complaining */
 typedef struct {
@@ -129,9 +127,7 @@ typedef enum {
 	DUMMY_ENUM_VALUE
 } SDL_DUMMY_ENUM;
 
-#ifndef __NDS__
 SDL_COMPILE_TIME_ASSERT(enum, sizeof(SDL_DUMMY_ENUM) == sizeof(int));
-#endif
 
 
 #include "begin_code.h"
@@ -174,8 +170,6 @@ extern DECLSPEC void SDLCALL SDL_free(void *mem);
 #  define alloca _alloca
 # elif defined(__WATCOMC__)
 #  include <malloc.h>
-# elif defined(__BORLANDC__)
-#  include <malloc.h>
 # elif defined(__DMC__)
 #  include <stdlib.h>
 # elif defined(__AIX__)
@@ -187,10 +181,10 @@ extern DECLSPEC void SDLCALL SDL_free(void *mem);
 # endif
 #endif
 #ifdef HAVE_ALLOCA
-#define SDL_stack_alloc(type, count)    (type*)alloca(sizeof(type)*(count))
+#define SDL_stack_alloc(type, count)    (type*)alloca(sizeof(type)*count)
 #define SDL_stack_free(data)
 #else
-#define SDL_stack_alloc(type, count)    (type*)SDL_malloc(sizeof(type)*(count))
+#define SDL_stack_alloc(type, count)    (type*)SDL_malloc(sizeof(type)*count)
 #define SDL_stack_free(data)            SDL_free(data)
 #endif
 
@@ -269,10 +263,7 @@ do {						\
 } while(0)
 #endif
 
-/* We can count on memcpy existing on Mac OS X and being well-tuned. */
-#if defined(__MACH__) && defined(__APPLE__)
-#define SDL_memcpy(dst, src, len) memcpy(dst, src, len)
-#elif defined(__GNUC__) && defined(i386)
+#if defined(__GNUC__) && defined(i386)
 #define SDL_memcpy(dst, src, len)					  \
 do {									  \
 	int u0, u1, u2;						  	  \
@@ -301,10 +292,7 @@ extern DECLSPEC void * SDLCALL SDL_memcpy(void *dst, const void *src, size_t len
 #endif
 #endif
 
-/* We can count on memcpy existing on Mac OS X and being well-tuned. */
-#if defined(__MACH__) && defined(__APPLE__)
-#define SDL_memcpy4(dst, src, len) memcpy(dst, src, (len)*4)
-#elif defined(__GNUC__) && defined(i386)
+#if defined(__GNUC__) && defined(i386)
 #define SDL_memcpy4(dst, src, len)				\
 do {								\
 	int ecx, edi, esi;					\
@@ -331,7 +319,6 @@ do {							\
 	__asm__ __volatile__ (				\
 		"std\n\t"				\
 		"rep ; movsl\n\t"			\
-		"cld\n\t"				\
 		: "=&c" (u0), "=&D" (u1), "=&S" (u2)	\
 		: "0" (n >> 2),				\
 		  "1" (dstp+(n-4)), "2" (srcp+(n-4))	\
@@ -574,17 +561,19 @@ extern DECLSPEC int SDLCALL SDL_vsnprintf(char *text, size_t maxlen, const char 
 #define SDL_iconv_t     iconv_t
 #define SDL_iconv_open  iconv_open
 #define SDL_iconv_close iconv_close
+extern DECLSPEC size_t SDLCALL SDL_iconv(SDL_iconv_t cd, char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
 #else
 typedef struct _SDL_iconv_t *SDL_iconv_t;
 extern DECLSPEC SDL_iconv_t SDLCALL SDL_iconv_open(const char *tocode, const char *fromcode);
 extern DECLSPEC int SDLCALL SDL_iconv_close(SDL_iconv_t cd);
+extern DECLSPEC size_t SDLCALL SDL_iconv(SDL_iconv_t cd, char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
 #endif
-extern DECLSPEC size_t SDLCALL SDL_iconv(SDL_iconv_t cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
 /* This function converts a string between encodings in one pass, returning a
    string that must be freed with SDL_free() or NULL on error.
 */
-extern DECLSPEC char * SDLCALL SDL_iconv_string(const char *tocode, const char *fromcode, const char *inbuf, size_t inbytesleft);
-#define SDL_iconv_utf8_locale(S)	SDL_iconv_string("", "UTF-8", S, SDL_strlen(S)+1)
+extern DECLSPEC char * SDLCALL SDL_iconv_string(const char *tocode, const char *fromcode, char *inbuf, size_t inbytesleft);
+#define SDL_iconv_utf8_ascii(S)		SDL_iconv_string("ASCII", "UTF-8", S, SDL_strlen(S)+1)
+#define SDL_iconv_utf8_latin1(S)	SDL_iconv_string("LATIN1", "UTF-8", S, SDL_strlen(S)+1)
 #define SDL_iconv_utf8_ucs2(S)		(Uint16 *)SDL_iconv_string("UCS-2", "UTF-8", S, SDL_strlen(S)+1)
 #define SDL_iconv_utf8_ucs4(S)		(Uint32 *)SDL_iconv_string("UCS-4", "UTF-8", S, SDL_strlen(S)+1)
 

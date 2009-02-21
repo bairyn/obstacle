@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -86,15 +86,6 @@ typedef struct {
 	sharedEntity_t	*gentities;
 	int				gentitySize;
 	int				num_entities;		// current number, <= MAX_GENTITIES
-
-	// demo recording
-	fileHandle_t	demoFile;
-	demoState_t		demoState;
-	char			demoName[MAX_QPATH];
-
-	// previous frame for delta compression
-	sharedEntity_t	demoEntities[MAX_GENTITIES];
-	playerState_t	demoPlayerStates[MAX_CLIENTS];
 
 	playerState_t	*gameClients;
 	int				gameClientSize;		// will be > sizeof(playerState_t) due to game private data
@@ -177,10 +168,10 @@ typedef struct client_s {
 	int				timeoutCount;		// must timeout a few frames in a row so debugging doesn't break
 	clientSnapshot_t	frames[PACKET_BACKUP];	// updates can be delta'd from here
 	int				ping;
-	int				delayRate;
-	int				lastCheck;
 	int				rate;				// bytes / second
 	int				snapshotMsec;		// requests a snapshot every snapshotMsec unless rate choked
+	int				pureAuthentic;
+	qboolean  gotCP; // TTimo - additional flag to distinguish between a bad pure checksum, and no cp command at all
 	netchan_t		netchan;
 	// TTimo
 	// queuing outgoing fragmented messages to send them properly, without udp packet bursts
@@ -214,8 +205,9 @@ typedef struct client_s {
 typedef struct {
 	netadr_t	adr;
 	int			challenge;
-	int			time;				// time the first challenge response was sent to client
-	int			pingTime;			// time the last challenge response was sent to client
+	int			time;				// time the last packet was sent to the autherize server
+	int			pingTime;			// time the challenge response was sent to client
+	int			firstTime;			// time the adr was first used, for authorize timeout checks
 	qboolean	connected;
 } challenge_t;
 
@@ -254,11 +246,9 @@ extern	cvar_t	*sv_fps;
 extern	cvar_t	*sv_timeout;
 extern	cvar_t	*sv_zombietime;
 extern	cvar_t	*sv_rconPassword;
-extern	cvar_t	*sv_rconLog;
 extern	cvar_t	*sv_privatePassword;
 extern	cvar_t	*sv_allowDownload;
 extern	cvar_t	*sv_maxclients;
-extern	cvar_t	*sv_democlients;
 
 extern	cvar_t	*sv_privateClients;
 extern	cvar_t	*sv_hostname;
@@ -272,14 +262,12 @@ extern	cvar_t	*sv_mapChecksum;
 extern	cvar_t	*sv_serverid;
 extern	cvar_t	*sv_minRate;
 extern	cvar_t	*sv_maxRate;
+extern	cvar_t	*sv_minPing;
 extern	cvar_t	*sv_maxPing;
+extern	cvar_t	*sv_pure;
 extern	cvar_t	*sv_lanForceRate;
 extern	cvar_t	*sv_dequeuePeriod;
-extern	cvar_t	*sv_demoState;
-extern	cvar_t	*sv_autoDemo;
-extern	cvar_t	*sv_pure;
 
-extern	cvar_t	*sv_minPing;
 #ifdef USE_VOIP
 extern	cvar_t	*sv_voip;
 #endif
@@ -295,6 +283,7 @@ void QDECL SV_SendServerCommand( client_t *cl, const char *fmt, ...);
 
 
 void SV_AddOperatorCommands (void);
+void SV_RemoveOperatorCommands (void);
 
 
 void SV_MasterHeartbeat (void);
@@ -356,18 +345,6 @@ void SV_WriteFrameToClient (client_t *client, msg_t *msg);
 void SV_SendMessageToClient( msg_t *msg, client_t *client );
 void SV_SendClientMessages( void );
 void SV_SendClientSnapshot( client_t *client );
-
-//
-// sv_demo.c
-//
-void SV_DemoStartRecord(void);
-void SV_DemoStopRecord(void);
-void SV_DemoStartPlayback(void);
-void SV_DemoStopPlayback(void);
-void SV_DemoReadFrame(void);
-void SV_DemoWriteFrame(void);
-void SV_DemoWriteServerCommand(const char *str);
-void SV_DemoWriteGameCommand(int cmd, const char *str);
 
 //
 // sv_game.c

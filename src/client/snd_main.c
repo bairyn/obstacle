@@ -4,14 +4,14 @@ Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2005 Stuart Dalton (badcdev@gmail.com)
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -32,7 +32,6 @@ cvar_t *s_musicVolume;
 cvar_t *s_doppler;
 cvar_t *s_backend;
 cvar_t *s_muteWhenMinimized;
-cvar_t *s_muteWhenUnfocused;
 
 static soundInterface_t si;
 
@@ -231,8 +230,7 @@ S_Update
 */
 void S_Update( void )
 {
-	if( ( s_muteWhenMinimized->integer && com_minimized->integer ) || 
-		( s_muteWhenUnfocused->integer && com_unfocused->integer ) ) {
+	if( s_muteWhenMinimized->integer && com_minimized->integer ) {
 		S_StopAllSounds( );
 		return;
 	}
@@ -468,7 +466,6 @@ void S_Init( void )
 	s_doppler = Cvar_Get( "s_doppler", "1", CVAR_ARCHIVE );
 	s_backend = Cvar_Get( "s_backend", "", CVAR_ROM );
 	s_muteWhenMinimized = Cvar_Get( "s_muteWhenMinimized", "0", CVAR_ARCHIVE );
-	s_muteWhenUnfocused = Cvar_Get( "s_muteWhenUnfocused", "0", CVAR_ARCHIVE );
 
 	cv = Cvar_Get( "s_initsound", "1", 0 );
 	if( !cv->integer ) {
@@ -500,14 +497,14 @@ void S_Init( void )
 				Com_Error( ERR_FATAL, "Sound interface invalid." );
 			}
 
-			//S_SoundInfo( );
-			Com_DPrintf( "Sound initialization successful.\n" );
+			S_SoundInfo( );
+			Com_Printf( "Sound initialization successful.\n" );
 		} else {
-			Com_DPrintf( "Sound initialization failed.\n" );
+			Com_Printf( "Sound initialization failed.\n" );
 		}
 	}
 
-	Com_DPrintf( "--------------------------------\n");
+	Com_Printf( "--------------------------------\n");
 }
 
 /*

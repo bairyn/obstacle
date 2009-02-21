@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 2006 Tony J. White (tjw@tjw.org)
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -218,7 +218,7 @@ static int CL_cURL_CallbackProgress( void *dummy, double dltotal, double dlnow,
 	return 0;
 }
 
-static size_t CL_cURL_CallbackWrite(void *buffer, size_t size, size_t nmemb,
+static int CL_cURL_CallbackWrite(void *buffer, size_t size, size_t nmemb,
 	void *stream)
 {
 	FS_Write( buffer, size*nmemb, ((fileHandle_t*)stream)[0] );
@@ -227,9 +227,6 @@ static size_t CL_cURL_CallbackWrite(void *buffer, size_t size, size_t nmemb,
 
 void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
 {
-	static char referer[1024];
-	static char useragent[1024];
-
 	clc.cURLUsed = qtrue;
 	Com_Printf("URL: %s\n", remoteURL);
 	Com_DPrintf("***** CL_cURL_BeginDownload *****\n"
@@ -268,10 +265,10 @@ void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
 		qcurl_easy_setopt(clc.downloadCURL, CURLOPT_VERBOSE, 1);
 	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_URL, clc.downloadURL);
 	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_TRANSFERTEXT, 0);
-	Com_sprintf(referer, sizeof(referer), "ioQ3://%s", NET_AdrToString(clc.serverAddress));
-	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_REFERER, referer);
-	Com_sprintf(useragent, sizeof(useragent), "%s %s", Q3_VERSION, qcurl_version());
-	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_USERAGENT, useragent);
+	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_REFERER, va("ioQ3://%s",
+		NET_AdrToString(clc.serverAddress)));
+	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_USERAGENT, va("%s %s",
+		Q3_VERSION, qcurl_version()));
 	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_WRITEFUNCTION,
 		CL_cURL_CallbackWrite);
 	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_WRITEDATA, &clc.download);

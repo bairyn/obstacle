@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -303,10 +303,22 @@ void CG_OffsetThirdPersonView( void )
 
   // If player is dead, we want the player to be between us and the killer
   // so pretend that the player was looking at the killer, then place cam behind them.
-  // FIXME: This still fails to see killer when killer is above/below or killer moves 
-  // out of view (relative to the dead player).
   if( cg.predictedPlayerState.stats[ STAT_HEALTH ] <= 0 )
-    cg.refdefViewAngles[ YAW ] = cg.predictedPlayerState.stats[ STAT_VIEWLOCK ];
+  {
+    int killerEntNum;
+    vec3_t killerPos;
+
+    killerEntNum = cg.predictedPlayerState.stats[ STAT_VIEWLOCK ];
+    
+    // already looking at ourself
+    if( killerEntNum != cg.snap->ps.clientNum )
+    {
+      VectorCopy( cg_entities[ killerEntNum ].lerpOrigin, killerPos );
+
+      VectorSubtract( killerPos, cg.refdef.vieworg, killerPos );
+      vectoangles( killerPos, cg.refdefViewAngles );
+    }
+  }
 
   // get and rangecheck cg_thirdPersonRange
   range = cg_thirdPersonRange.value;
@@ -540,10 +552,12 @@ void CG_OffsetShoulderView( void )
 
   // Handle pitch.
   rotationAngles[ PITCH ] = mousePitch;
+
   // Ignore following pitch; it's too jerky otherwise.
   if( cg_thirdPersonPitchFollow.integer ) 
     mousePitch += cg.refdefViewAngles[ PITCH ];
-  AngleNormalize180( rotationAngles[ PITCH ] );
+
+  rotationAngles[ PITCH ] = AngleNormalize180( rotationAngles[ PITCH ] );
   if( rotationAngles [ PITCH ] < -90 ) rotationAngles [ PITCH ] = -90;
   if( rotationAngles [ PITCH ] > 90 ) rotationAngles [ PITCH ] = 90;
 
@@ -558,9 +572,6 @@ void CG_OffsetShoulderView( void )
                       cg.snap->ps.eFlags & EF_WALLCLIMBCEILING ) )
     AxisCopy( axis, rotaxis );
   AxisToAngles( rotaxis, rotationAngles );
-
-  for( i = 0; i < 3; i++ )
-    AngleNormalize180( rotationAngles[ i ] );
 
   // Actually set the viewangles.
   for( i = 0; i < 3; i++ )
@@ -990,8 +1001,7 @@ static int CG_CalcFov( void )
         if( !( cmd.buttons & BUTTON_ATTACK2 ) )
         {
           cg.zoomed   = qfalse;
-          cg.zoomTime = MIN( cg.time, 
-              cg.time + cg.time - cg.zoomTime - ZOOM_TIME );
+          cg.zoomTime = cg.time;
         }
       }
       else
@@ -1007,8 +1017,7 @@ static int CG_CalcFov( void )
         if( cmd.buttons & BUTTON_ATTACK2 )
         {
           cg.zoomed   = qtrue;
-          cg.zoomTime = MIN( cg.time, 
-              cg.time + cg.time - cg.zoomTime - ZOOM_TIME );
+          cg.zoomTime = cg.time;
         }
       }
     }

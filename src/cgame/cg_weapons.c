@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -785,7 +785,6 @@ void CG_InitWeapons( void )
     CG_RegisterWeapon( i );
 
   cgs.media.level2ZapTS = CG_RegisterTrailSystem( "models/weapons/lev2zap/lightning" );
-  cgs.media.massDriverTS = CG_RegisterTrailSystem( "models/weapons/mdriver/fireTS" );
 }
 
 
@@ -1730,26 +1729,7 @@ void CG_FireWeapon( centity_t *cent, weaponMode_t weaponMode )
       trap_S_StartSound( NULL, es->number, CHAN_WEAPON, wi->wim[ weaponMode ].flashSound[ c ] );
   }
 }
-/*
-=================
-CG_HandleAlienFeedback
 
-Caused by an EV_ALIEN_HIT, EV_ALIEN_MISS, or EV_ALIEN_TEAMHIT event. Used to cause a ui feedback
-effect for visual information about a hit
-=================
-*/
-void CG_HandleAlienFeedback( centity_t *cent, alienFeedback_t feedbackType )
-{
-        entityState_t     *es;
-
-        es = &cent->currentState;
-
-        // show the alien feedback, if the entity matches this player
-        if(es->number == cg.predictedPlayerState.clientNum) {
-                cg.feedbackAnimation = 1;
-                cg.feedbackAnimationType = feedbackType;
-        }
-}
 
 /*
 =================
@@ -1831,10 +1811,10 @@ void CG_MissileHitWall( weapon_t weaponNum, weaponMode_t weaponMode, int clientN
 
 /*
 =================
-CG_MissileHitPlayer
+CG_MissileHitEntity
 =================
 */
-void CG_MissileHitPlayer( weapon_t weaponNum, weaponMode_t weaponMode,
+void CG_MissileHitEntity( weapon_t weaponNum, weaponMode_t weaponMode,
     vec3_t origin, vec3_t dir, int entityNum, int charge )
 {
   vec3_t        normal;
@@ -1859,43 +1839,6 @@ void CG_MissileHitPlayer( weapon_t weaponNum, weaponMode_t weaponMode,
           
     CG_MissileHitWall( weaponNum, weaponMode, 0, origin, dir, sound, charge );
   }
-}
-
-/*
-==============
-CG_MassDriverFire
-
-Draws the mass driver trail
-==============
-*/
-
-#define MDRIVER_MUZZLE_OFFSET 48.f
-
-void CG_MassDriverFire( entityState_t *es )
-{
-  vec3_t front, frontToBack;
-  trailSystem_t *ts;
-  float length;
-
-  ts = CG_SpawnNewTrailSystem( cgs.media.massDriverTS );
-  if( !CG_IsTrailSystemValid( &ts ) )
-    return;
-
-  // trail front attaches to the player, needs to be pushed forward a bit
-  // so that it doesn't look like it shot out of the wrong location
-  VectorCopy( es->origin2, front );
-  VectorSubtract( es->pos.trBase, front, frontToBack );
-  length = VectorLength( frontToBack );
-  if( length - MDRIVER_MUZZLE_OFFSET < 0.f )
-    return;
-  VectorScale( frontToBack, 1 / length, frontToBack );
-  VectorMA( front, MDRIVER_MUZZLE_OFFSET, frontToBack, front );
-  CG_SetAttachmentPoint( &ts->frontAttachment, front );
-  CG_AttachToPoint( &ts->frontAttachment );
-
-  // trail back attaches to the impact point
-  CG_SetAttachmentPoint( &ts->backAttachment, es->pos.trBase );
-  CG_AttachToPoint( &ts->backAttachment );
 }
 
 
@@ -2103,8 +2046,9 @@ static void CG_ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, int othe
 
     if( !( tr.surfaceFlags & SURF_NOIMPACT ) )
     {
-      if( cg_entities[ tr.entityNum ].currentState.eType == ET_PLAYER )
-        CG_MissileHitPlayer( WP_SHOTGUN, WPM_PRIMARY, tr.endpos, tr.plane.normal, tr.entityNum, 0 );
+      if( cg_entities[ tr.entityNum ].currentState.eType == ET_PLAYER ||
+          cg_entities[ tr.entityNum ].currentState.eType == ET_BUILDABLE )
+        CG_MissileHitEntity( WP_SHOTGUN, WPM_PRIMARY, tr.endpos, tr.plane.normal, tr.entityNum, 0 );
       else if( tr.surfaceFlags & SURF_METALSTEPS )
         CG_MissileHitWall( WP_SHOTGUN, WPM_PRIMARY, 0, tr.endpos, tr.plane.normal, IMPACTSOUND_METAL, 0 );
       else
@@ -2128,5 +2072,57 @@ void CG_ShotgunFire( entityState_t *es )
   VectorAdd( es->pos.trBase, v, v );
 
   CG_ShotgunPattern( es->pos.trBase, es->origin2, es->eventParm, es->otherEntityNum );
+}
+
+/*
+=================
+CG_Bleed
+
+This is the spurt of blood when a character gets hit
+=================
+*/
+void CG_Bleed( vec3_t origin, vec3_t normal, int entityNum )
+{
+  team_t            team;
+  qhandle_t         bleedPS;
+  particleSystem_t  *ps;
+
+  if( !cg_blood.integer )
+    return;
+
+  if( cg_entities[ entityNum ].currentState.eType == ET_PLAYER )
+  {
+    team = cgs.clientinfo[ entityNum ].team;
+    if( team == TEAM_ALIENS )
+      bleedPS = cgs.media.alienBleedPS;
+    else if( team == TEAM_HUMANS )
+      bleedPS = cgs.media.humanBleedPS;
+    else
+      return;
+  }
+  else if( cg_entities[ entityNum ].currentState.eType == ET_BUILDABLE )
+  {
+    //ew
+    team = BG_Buildable( cg_entities[ entityNum ].currentState.modelindex )->team;
+    if( team == TEAM_ALIENS )
+      bleedPS = cgs.media.alienBuildableBleedPS;
+    else if( team == TEAM_HUMANS )
+      bleedPS = cgs.media.humanBuildableBleedPS;
+    else
+      return;
+  }
+  else
+    return;
+
+  ps = CG_SpawnNewParticleSystem( bleedPS );
+
+  if( CG_IsParticleSystemValid( &ps ) )
+  {
+    CG_SetAttachmentPoint( &ps->attachment, origin );
+    CG_SetAttachmentCent( &ps->attachment, &cg_entities[ entityNum ] );
+    CG_AttachToPoint( &ps->attachment );
+
+    CG_SetParticleSystemNormal( ps, normal );
+  }
 }
 

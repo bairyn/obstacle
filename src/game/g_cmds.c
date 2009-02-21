@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -364,7 +364,14 @@ void Cmd_Give_f( gentity_t *ent )
 
   if( give_all || Q_stricmpn( name, "funds", 5 ) == 0 )
   {
-    int credits = give_all ? ALIEN_MAX_CREDITS : atoi( name + 6 );
+    int credits = atoi( name + 6 );
+
+    if( ent->client->pers.teamSelection == TEAM_ALIENS )
+      credits *= ALIEN_CREDITS_PER_FRAG;
+
+    if( give_all )
+      credits = ALIEN_MAX_CREDITS;
+
     G_AddCreditToClient( ent->client, credits, qtrue );
   }
 
@@ -613,7 +620,7 @@ void Cmd_Team_f( gentity_t *ent )
 
     default:
       trap_SendServerCommand( ent-g_entities,
-      va( "print \"Unknown team: %s\n\"", s ) );
+        va( "print \"Unknown team: %s\n\"", s ) );
       return;
   }
 
@@ -717,7 +724,6 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
       Com_sprintf( name, sizeof( name ), "%s%s" S_COLOR_WHITE ": ", prefix,
                    ent->client->pers.netname );
       color = COLOR_GREEN;
-      G_DemoCommand( DC_SERVER_COMMAND, va( "chat \"%s^2%s\"", name, chatText ) );
       break;
 
     case SAY_TEAM:
@@ -729,7 +735,6 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
         Com_sprintf( name, sizeof( name ), "(%s" S_COLOR_WHITE "): ",
           ent->client->pers.netname );
       color = COLOR_CYAN;
-      G_DemoCommand( DC_SERVER_COMMAND, va( "tchat \"%s^5%s\"", name, chatText ) );
       break;
 
     case SAY_TELL:
@@ -995,12 +1000,12 @@ void Cmd_VSay_f( gentity_t *ent )
     case VOICE_CHAN_LOCAL:
       trap_SendServerCommand( -1, va(
         "voice %d %d %d %d \"%s\"\n",
-        (int)(ent-g_entities), vchan, cmdNum, trackNum, arg ) );
+        ent-g_entities, vchan, cmdNum, trackNum, arg ) );
       break;
     case VOICE_CHAN_TEAM:
       G_TeamCommand( ent->client->pers.teamSelection, va(
         "voice %d %d %d %d \"%s\"\n",
-        (int)(ent-g_entities), vchan, cmdNum, trackNum, arg ) );
+        ent-g_entities, vchan, cmdNum, trackNum, arg ) );
       break;
     default:
       break;
@@ -1126,7 +1131,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     if( level.clients[ clientNum ].pers.localClient )
     {
       trap_SendServerCommand( ent-g_entities,
-        "print \"callvote: host is immute from vote kick\n\"" );
+        "print \"callvote: host is immune from vote kick\n\"" );
       return;
     }
 
@@ -2579,7 +2584,7 @@ void G_StopFollowing( gentity_t *ent )
       G_SelectHumanLockSpawnPoint( spawn_origin, spawn_angles );
     G_SetOrigin( ent, spawn_origin );
     VectorCopy( spawn_origin, ent->client->ps.origin );
-    G_SetClientViewAngle( ent, spawn_angles );
+    SetClientViewAngle( ent, spawn_angles );
   }
   ent->client->sess.spectatorClient = -1;
   ent->client->ps.pm_flags &= ~PMF_FOLLOW;
@@ -2624,7 +2629,7 @@ void G_FollowLockView( gentity_t *ent )
     G_SelectHumanLockSpawnPoint( spawn_origin, spawn_angles );
   G_SetOrigin( ent, spawn_origin );
   VectorCopy( spawn_origin, ent->client->ps.origin );
-  G_SetClientViewAngle( ent, spawn_angles );
+  SetClientViewAngle( ent, spawn_angles );
 }
 
 /*
@@ -2676,13 +2681,11 @@ qboolean G_FollowNewClient( gentity_t *ent, int dir )
       continue; //effectively break;
 
     // can only follow connected clients
-    if( level.clients[ clientnum ].pers.connected != CON_CONNECTED &&
-        !level.clients[ clientnum ].pers.demoClient )
+    if( level.clients[ clientnum ].pers.connected != CON_CONNECTED )
       continue;
 
     // can't follow a spectator
-    if( level.clients[ clientnum ].pers.teamSelection == TEAM_NONE &&
-        !level.clients[ clientnum ].pers.demoClient )
+    if( level.clients[ clientnum ].pers.teamSelection == TEAM_NONE )
       continue;
     
     // if stickyspec is disabled, can't follow someone in queue either
@@ -2812,9 +2815,6 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
   char                s[ MAX_TOKEN_CHARS ] = { 0 };
   int                 code;
 
-  if( ent->client->pers.connection )
-    return;
-
   trap_Argv( 1, s, sizeof( s ) );
 
   if( !s[ 0 ] )
@@ -2822,16 +2822,16 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
 
   code = atoi( s );
 
-  connection = G_FindConnectionForCode( code );
-  if( connection )
+  if( G_VerifyPTRC( code ) )
   {
+    connection = G_FindConnectionForCode( code );
+
     // valid code
     if( connection->clientTeam != TEAM_NONE )
       trap_SendServerCommand( ent->client->ps.clientNum, "ptrcconfirm" );
 
     // restore mapping
     ent->client->pers.connection = connection;
-    connection->clientNum = ent->client->ps.clientNum;
   }
   else
   {
@@ -2859,13 +2859,6 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
   int                 code;
   connectionRecord_t  *connection;
 
-  if( ent->client->pers.joinedATeam )
-  {
-    trap_SendServerCommand( ent - g_entities,
-      "print \"You cannot use a PTR code after joining a team\n\"" );
-    return;
-  }
-
   trap_Argv( 1, s, sizeof( s ) );
 
   if( !s[ 0 ] )
@@ -2873,18 +2866,28 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
 
   code = atoi( s );
 
-  connection = ent->client->pers.connection;
-  if( connection && connection->ptrCode == code )
+  if( G_VerifyPTRC( code ) )
   {
-    // set the correct team
-    G_ChangeTeam( ent, connection->clientTeam );
+    if( ent->client->pers.joinedATeam )
+    {
+      trap_SendServerCommand( ent - g_entities,
+        "print \"You cannot use a PTR code after joining a team\n\"" );
+    }
+    else
+    {
+      // valid code
+      connection = G_FindConnectionForCode( code );
 
-    // set the correct credit
-    ent->client->ps.persistant[ PERS_CREDIT ] = 0;
-    G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
-    if ( connection->oldClient != ent - g_entities )
-        G_AddCreditToClient( &level.clients[ connection->oldClient ], -connection->clientCredit, qtrue );
-    connection->oldClient = ent - g_entities;
+      if( connection )
+      {
+        // set the correct team
+        G_ChangeTeam( ent, connection->clientTeam );
+
+        // set the correct credit
+        ent->client->ps.persistant[ PERS_CREDIT ] = 0;
+        G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
+      }
+    }
   }
   else
   {
@@ -2973,7 +2976,7 @@ static void Cmd_Test_f( gentity_t *ent )
   trap_SendServerCommand( ent - g_entities, va( "print \""
     "  pointcontents = %x\n  r.contents = %x\n  targeted = %d\n\"", 
     trap_PointContents( ent->s.origin, ent - g_entities ),
-    ent->r.contents, ( ent->targeted ) ? (int)(ent->targeted - g_entities) : 0 ) );
+    ent->r.contents, ( ent->targeted ) ? ent->targeted - g_entities : 0 ) );
 }
 
 /*
@@ -3068,7 +3071,7 @@ commands_t cmds[ ] = {
   { "say_team", CMD_MESSAGE|CMD_INTERMISSION, Cmd_Say_f },
   { "vsay", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
   { "vsay_team", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
-  { "vsay_local", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
+  { "vsay_local", CMD_MESSAGE|CMD_INTERMISSION },
   { "m", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
   { "mt", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
   { "a", CMD_MESSAGE|CMD_INTERMISSION, Cmd_AdminMessage_f },
@@ -3085,6 +3088,8 @@ commands_t cmds[ ] = {
   { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
   { "test", CMD_CHEAT, Cmd_Test_f },
   { "damage", CMD_CHEAT|CMD_LIVING, Cmd_Damage_f },
+
+  { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
   { "where", 0, Cmd_Where_f },
 
   // game commands
@@ -3387,12 +3392,12 @@ void Cmd_PrivateMessage_f( gentity_t *ent )
       ( matches == 1 ) ? "" : "s",
       color,
       msg,
-      ent ? (int)(ent-g_entities) : -1 ) );
+      ent ? ent-g_entities : -1 ) );
     if( ent )
     {
       trap_SendServerCommand( pids[ i ], va(
         "print \">> to reply, say: /m %d [your message] <<\n\"",
-        (int)( ent - g_entities ) ) );
+        ( ent - g_entities ) ) );
     }
     trap_SendServerCommand( pids[ i ], va(
       "cp \"^%cprivate message from ^7%s^7\"", color,

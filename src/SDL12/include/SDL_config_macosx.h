@@ -25,9 +25,6 @@
 
 #include "SDL_platform.h"
 
-/* This gets us MAC_OS_X_VERSION_MIN_REQUIRED... */
-#include <AvailabilityMacros.h>
-
 /* This is a set of defines to configure the SDL features */
 
 #define SDL_HAS_64BIT_TYPE	1
@@ -117,7 +114,7 @@
 
 /* Enable various video drivers */
 #define SDL_VIDEO_DRIVER_DUMMY	1
-#if ((defined TARGET_API_MAC_CARBON) && (TARGET_API_MAC_CARBON))
+#if TARGET_API_MAC_CARBON
 #define SDL_VIDEO_DRIVER_TOOLBOX	1
 #else
 #define SDL_VIDEO_DRIVER_QUARTZ	1
@@ -125,9 +122,6 @@
 
 /* Enable OpenGL support */
 #define SDL_VIDEO_OPENGL	1
-
-/* Disable screensaver */
-#define SDL_VIDEO_DISABLE_SCREENSAVER	1
 
 /* Enable assembly routines */
 #define SDL_ASSEMBLY_ROUTINES	1

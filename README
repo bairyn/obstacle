@@ -1,5 +1,54 @@
-TremFusion
+MG Development
 
-TremFusion is maintained by the TremFusion Development Team - http://tremfusion.tremforges.net/
-You can find us on IRC at #tremfusion on freenode
+MGDev is where the balance changes planned for Tremulous 1.2 are tested.
+The project operates under the direction Norfenstein and is maintained by
+Mercenaries Guild - http://www.mercenariesguild.net
 
+Contacting Us
+
+Our preferred medium for bug reports, feature requests, or other issues, is at
+our online tracker:
+
+http://projects.mercenariesguild.net/projects/show/mgdev
+
+You'll have to register before you can post new issues, however, so if you'd
+rather not have the bother then you can find us on IRC at #mercenariesguild
+on freenode, or contact mgdev@mercenariesguild.net.
+
+If you just want to chat about what you've seen or request the presence of an
+administrator, IRC is usually the best place to go. More in-depth discussion
+can go on the forum - http://www.mercenariesguild.net/forum - if you prefer.
+
+Getting the source
+
+In every distributed pk3 should be a patch with a matching name. In order to
+establish against which revision of Tremulous svn it was taken, read it: the 
+header should contain lines something like these:
+
+--- tremulous-r1140/Makefile
++++ mgdev-5dc8c5735c0e55097fe256b006823751dcc02d54/Makefile
+
+which means that the patch was taken between revision 1140 of Tremulous SVN and
+an mgdev git revision with the given hash (which you probably won't care about)
+When applying the patch, you'll need to use something like:
+patch -p1 < mgdev-200812272100.patch
+
+The patch is large and bloated: if you want a cleaner and more convenient way
+of getting the source, try our Git server:
+
+git clone git://git.mercenariesguild.net/mgdev.git
+
+You can also see a webview of the repository at:
+
+http://projects.mercenariesguild.net/repositories/show/mgdev
+
+Credits
+
+Evan "Odin" Goers
+Asa "Norfenstein" Kravets
+Michael "Risujin" Levin
+Ben Millwood "benmachine"
+Chris "Lakitu7" Schwarz
+Roman "kevlarman" Tetelman
+Andrei "Garoth" Thorpe
+Tony J. White "tjw"

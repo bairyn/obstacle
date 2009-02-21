@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -38,13 +38,16 @@ typedef struct
 gentity_t   g_entities[ MAX_GENTITIES ];
 gclient_t   g_clients[ MAX_CLIENTS ];
 
+vmCvar_t  g_fraglimit;
 vmCvar_t  g_timelimit;
 vmCvar_t  g_suddenDeathTime;
 vmCvar_t  g_suddenDeath;
+vmCvar_t  g_capturelimit;
 vmCvar_t  g_friendlyFire;
 vmCvar_t  g_friendlyFireAliens;
 vmCvar_t  g_friendlyFireHumans;
 vmCvar_t  g_friendlyBuildableFire;
+vmCvar_t  g_dretchPunt;
 vmCvar_t  g_password;
 vmCvar_t  g_needpass;
 vmCvar_t  g_maxclients;
@@ -53,8 +56,8 @@ vmCvar_t  g_dedicated;
 vmCvar_t  g_speed;
 vmCvar_t  g_gravity;
 vmCvar_t  g_cheats;
-vmCvar_t  g_demoState;
 vmCvar_t  g_knockback;
+vmCvar_t  g_quadfactor;
 vmCvar_t  g_inactivity;
 vmCvar_t  g_debugMove;
 vmCvar_t  g_debugDamage;
@@ -67,6 +70,9 @@ vmCvar_t  g_doWarmup;
 vmCvar_t  g_restarted;
 vmCvar_t  g_logFile;
 vmCvar_t  g_logFileSync;
+vmCvar_t  g_blood;
+vmCvar_t  g_podiumDist;
+vmCvar_t  g_podiumDrop;
 vmCvar_t  g_allowVote;
 vmCvar_t  g_voteLimit;
 vmCvar_t  g_suddenDeathVotePercent;
@@ -76,6 +82,7 @@ vmCvar_t  g_teamForceBalance;
 vmCvar_t  g_smoothClients;
 vmCvar_t  pmove_fixed;
 vmCvar_t  pmove_msec;
+vmCvar_t  g_rankings;
 vmCvar_t  g_listEntity;
 vmCvar_t  g_minCommandPeriod;
 vmCvar_t  g_minNameChangePeriod;
@@ -88,15 +95,13 @@ vmCvar_t  g_alienBuildQueueTime;
 vmCvar_t  g_humanStage;
 vmCvar_t  g_humanCredits;
 vmCvar_t  g_humanMaxStage;
-vmCvar_t  g_humanMaxReachedStage;
-vmCvar_t  g_humanStageThreshold;
-
+vmCvar_t  g_humanStage2Threshold;
+vmCvar_t  g_humanStage3Threshold;
 vmCvar_t  g_alienStage;
 vmCvar_t  g_alienCredits;
 vmCvar_t  g_alienMaxStage;
-vmCvar_t  g_alienMaxReachedStage;
-vmCvar_t  g_alienStageThreshold;
-vmCvar_t  g_allowStageDowns;
+vmCvar_t  g_alienStage2Threshold;
+vmCvar_t  g_alienStage3Threshold;
 
 vmCvar_t  g_unlagged;
 
@@ -146,9 +151,6 @@ static cvarTable_t   gameCvarTable[ ] =
   // don't override the cheat state set by the system
   { &g_cheats, "sv_cheats", "", 0, 0, qfalse },
 
-  // demo state
-  { &g_demoState, "sv_demoState", "", 0, 0, qfalse },
-
   // noset vars
   { NULL, "gamename", GAME_VERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
@@ -174,6 +176,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_friendlyFireAliens, "g_friendlyFireAliens", "0", CVAR_ARCHIVE, 0, qtrue  },
   { &g_friendlyFireHumans, "g_friendlyFireHumans", "0", CVAR_ARCHIVE, 0, qtrue  },
   { &g_friendlyBuildableFire, "g_friendlyBuildableFire", "0", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_dretchPunt, "g_dretchPunt", "0", CVAR_ARCHIVE, 0, qtrue  },
 
   { &g_teamAutoJoin, "g_teamAutoJoin", "0", CVAR_ARCHIVE  },
   { &g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE  },
@@ -192,12 +195,17 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_speed, "g_speed", "320", 0, 0, qtrue  },
   { &g_gravity, "g_gravity", "800", 0, 0, qtrue  },
   { &g_knockback, "g_knockback", "1000", 0, 0, qtrue  },
+  { &g_quadfactor, "g_quadfactor", "3", 0, 0, qtrue  },
   { &g_weaponRespawn, "g_weaponrespawn", "5", 0, 0, qtrue  },
   { &g_weaponTeamRespawn, "g_weaponTeamRespawn", "30", 0, 0, qtrue },
   { &g_inactivity, "g_inactivity", "0", 0, 0, qtrue },
   { &g_debugMove, "g_debugMove", "0", 0, 0, qfalse },
   { &g_debugDamage, "g_debugDamage", "0", 0, 0, qfalse },
   { &g_motd, "g_motd", "", 0, 0, qfalse },
+  { &g_blood, "com_blood", "1", 0, 0, qfalse },
+
+  { &g_podiumDist, "g_podiumDist", "80", 0, 0, qfalse },
+  { &g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse },
 
   { &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_voteLimit, "g_voteLimit", "5", CVAR_ARCHIVE, 0, qfalse },
@@ -219,13 +227,13 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_humanStage, "g_humanStage", "0", 0, 0, qfalse  },
   { &g_humanCredits, "g_humanCredits", "0", 0, 0, qfalse  },
   { &g_humanMaxStage, "g_humanMaxStage", DEFAULT_HUMAN_MAX_STAGE, 0, 0, qfalse  },
-  { &g_humanMaxReachedStage, "g_humanMaxReachedStage", "0", 0, 0, qfalse },
-  { &g_humanStageThreshold, "g_humanStageThreshold", DEFAULT_HUMAN_STAGE_THRESH, 0, 0, qfalse  },
+  { &g_humanStage2Threshold, "g_humanStage2Threshold", DEFAULT_HUMAN_STAGE2_THRESH, 0, 0, qfalse  },
+  { &g_humanStage3Threshold, "g_humanStage3Threshold", DEFAULT_HUMAN_STAGE3_THRESH, 0, 0, qfalse  },
   { &g_alienStage, "g_alienStage", "0", 0, 0, qfalse  },
   { &g_alienCredits, "g_alienCredits", "0", 0, 0, qfalse  },
   { &g_alienMaxStage, "g_alienMaxStage", DEFAULT_ALIEN_MAX_STAGE, 0, 0, qfalse  },
-  { &g_alienMaxReachedStage, "g_alienMaxReachedStage", "0", 0, 0, qfalse },
-  { &g_alienStageThreshold, "g_alienStageThreshold", DEFAULT_ALIEN_STAGE_THRESH, 0, 0, qfalse  },
+  { &g_alienStage2Threshold, "g_alienStage2Threshold", DEFAULT_ALIEN_STAGE2_THRESH, 0, 0, qfalse  },
+  { &g_alienStage3Threshold, "g_alienStage3Threshold", DEFAULT_ALIEN_STAGE3_THRESH, 0, 0, qfalse  },
 
   { &g_unlagged, "g_unlagged", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse  },
 
@@ -267,7 +275,9 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_privateMessages, "g_privateMessages", "1", CVAR_ARCHIVE, 0, qfalse  },
   { &g_publicAdminMessages, "g_publicAdminMessages", "1", CVAR_ARCHIVE, 0, qfalse  },
 
-  { &g_tag, "g_tag", "main", CVAR_INIT, 0, qfalse }
+  { &g_tag, "g_tag", "main", CVAR_INIT, 0, qfalse },
+
+  { &g_rankings, "g_rankings", "0", 0, 0, qfalse}
 };
 
 static int gameCvarTableSize = sizeof( gameCvarTable ) / sizeof( gameCvarTable[ 0 ] );
@@ -277,9 +287,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart );
 void G_RunFrame( int levelTime );
 void G_ShutdownGame( int restart );
 void CheckExitRules( void );
-void G_DemoSetClient( void );
-void G_DemoRemoveClient( void );
-void G_DemoSetStage( void );
 
 void G_CountSpawns( void );
 void G_CalculateBuildPoints( void );
@@ -335,21 +342,6 @@ intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4,
 
     case GAME_CONSOLE_COMMAND:
       return ConsoleCommand( );
-
-    case GAME_DEMO_COMMAND:
-      switch ( arg0 )
-      {
-      case DC_CLIENT_SET:
-        G_DemoSetClient( );
-        break;
-      case DC_CLIENT_REMOVE:
-        G_DemoRemoveClient( );
-        break;
-      case DC_SET_STAGE:
-        G_DemoSetStage( );
-        break;
-      }
-      return 0;
   }
 
   return -1;
@@ -535,8 +527,6 @@ G_InitGame
 void G_InitGame( int levelTime, int randomSeed, int restart )
 {
   int i;
-  char buffer[ MAX_CVAR_VALUE_STRING ];
-  int a, b;
 
   srand( randomSeed );
 
@@ -554,12 +544,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   level.startTime = levelTime;
   level.alienStage2Time = level.alienStage3Time =
     level.humanStage2Time = level.humanStage3Time = level.startTime;
-  level.alienStagedownCredits = level.humanStagedownCredits = -1;
-  trap_Cvar_VariableStringBuffer( "session", buffer, sizeof( buffer ) );
-  sscanf( buffer, "%i %i", &a, &b );
-  if ( a != trap_Cvar_VariableIntegerValue( "sv_maxclients" ) ||
-       b != trap_Cvar_VariableIntegerValue( "sv_democlients" ) )
-    level.newSession = qtrue;
 
   level.snd_fry = G_SoundIndex( "sound/misc/fry.wav" ); // FIXME standing in lava / slime
 
@@ -662,8 +646,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   //reset stages
   trap_Cvar_Set( "g_alienStage", va( "%d", S1 ) );
   trap_Cvar_Set( "g_humanStage", va( "%d", S1 ) );
-  trap_Cvar_Set( "g_humanMaxReachedStage", va( "%d", S1 ) );
-  trap_Cvar_Set( "g_alienMaxReachedStage", va( "%d", S1 ) );
   trap_Cvar_Set( "g_alienCredits", 0 );
   trap_Cvar_Set( "g_humanCredits", 0 );
   trap_Cvar_Set( "g_suddenDeath", 0 );
@@ -701,8 +683,6 @@ G_ShutdownGame
 */
 void G_ShutdownGame( int restart )
 {
-  int i, clients;
-
   // in case of a map_restart
   G_ClearVotes( );
 
@@ -724,11 +704,6 @@ void G_ShutdownGame( int restart )
   level.restarted = qfalse;
   level.surrenderTeam = TEAM_NONE;
   trap_SetConfigstring( CS_WINNER, "" );
-
-  // clear all demo clients
-  clients = trap_Cvar_VariableIntegerValue( "sv_democlients" );
-  for( i = 0; i < clients; i++ )
-    trap_SetConfigstring( CS_PLAYERS + i, NULL );
 }
 
 
@@ -819,7 +794,13 @@ int G_GetSpawnQueueLength( spawnQueue_t *sq )
 {
   int length = sq->back - sq->front + 1;
 
-  return length % MAX_CLIENTS;
+  while( length < 0 )
+    length += MAX_CLIENTS;
+
+  while( length >= MAX_CLIENTS )
+    length -= MAX_CLIENTS;
+
+  return length;
 }
 
 /*
@@ -1243,18 +1224,17 @@ void G_CalculateBuildPoints( void )
     if( humanPlayerCountMod < 0.1f )
       humanPlayerCountMod = 0.1f;
 
-    if( g_alienStage.integer < g_alienMaxStage.integer )
-      alienNextStageThreshold = (int)( ceil( (float)g_alienStageThreshold.integer * (g_alienStage.integer + 1) * alienPlayerCountMod ) );
-    else if( g_humanStage.integer > S1 )
-      alienNextStageThreshold = (int)( ceil( (float)level.alienStagedownCredits + g_alienStageThreshold.integer * alienPlayerCountMod ) );
+    if( g_alienStage.integer == S1 && g_alienMaxStage.integer > S1 )
+      alienNextStageThreshold = (int)( ceil( (float)g_alienStage2Threshold.integer * alienPlayerCountMod ) );
+    else if( g_alienStage.integer == S2 && g_alienMaxStage.integer > S2 )
+      alienNextStageThreshold = (int)( ceil( (float)g_alienStage3Threshold.integer * alienPlayerCountMod ) );
     else
       alienNextStageThreshold = -1;
 
-
-    if( g_humanStage.integer < g_humanMaxStage.integer )
-      humanNextStageThreshold = (int)( ceil( (float)g_humanStageThreshold.integer * (g_humanStage.integer + 1) * humanPlayerCountMod ) );
-    else if( g_alienStage.integer > S1 )
-      humanNextStageThreshold = (int)( ceil( (float)level.humanStagedownCredits + g_humanStageThreshold.integer * humanPlayerCountMod ) );
+    if( g_humanStage.integer == S1 && g_humanMaxStage.integer > S1 )
+      humanNextStageThreshold = (int)( ceil( (float)g_humanStage2Threshold.integer * humanPlayerCountMod ) );
+    else if( g_humanStage.integer == S2 && g_humanMaxStage.integer > S2 )
+      humanNextStageThreshold = (int)( ceil( (float)g_humanStage3Threshold.integer * humanPlayerCountMod ) );
     else
       humanNextStageThreshold = -1;
 
@@ -1282,9 +1262,6 @@ void G_CalculateStages( void )
   float         humanPlayerCountMod     = level.averageNumHumanClients / PLAYER_COUNT_MOD;
   static int    lastAlienStageModCount  = 1;
   static int    lastHumanStageModCount  = 1;
-  static int    lastAlienStage  = -1;
-  static int    lastHumanStage  = -1;
-
 
   if( alienPlayerCountMod < 0.1f )
     alienPlayerCountMod = 0.1f;
@@ -1293,174 +1270,63 @@ void G_CalculateStages( void )
     humanPlayerCountMod = 0.1f;
 
   if( g_alienCredits.integer >=
-      (int)( ceil( (float)g_alienStageThreshold.integer * S2 * alienPlayerCountMod ) ) &&
+      (int)( ceil( (float)g_alienStage2Threshold.integer * alienPlayerCountMod ) ) &&
       g_alienStage.integer == S1 && g_alienMaxStage.integer > S1 )
   {
     trap_Cvar_Set( "g_alienStage", va( "%d", S2 ) );
     level.alienStage2Time = level.time;
-    lastAlienStageModCount = g_alienMaxReachedStage.modificationCount;
-    if( g_humanStage.integer == S3 )
-      level.humanStagedownCredits = g_humanCredits.integer;
-    G_LogPrintf( "stagedownlog: aliens s2, humans s%d; %d %d %d %d\n", 
-                 g_humanStage.integer + 1,
-                 g_humanCredits.integer,
-                 level.humanStagedownCredits,
-                 g_alienCredits.integer,
-                 level.alienStagedownCredits );
+    lastAlienStageModCount = g_alienStage.modificationCount;
   }
 
   if( g_alienCredits.integer >=
-      (int)( ceil( (float)g_alienStageThreshold.integer * S3 * alienPlayerCountMod ) ) &&
+      (int)( ceil( (float)g_alienStage3Threshold.integer * alienPlayerCountMod ) ) &&
       g_alienStage.integer == S2 && g_alienMaxStage.integer > S2 )
   {
     trap_Cvar_Set( "g_alienStage", va( "%d", S3 ) );
     level.alienStage3Time = level.time;
-    lastAlienStageModCount = g_alienMaxReachedStage.modificationCount;
-    if( g_humanStage.integer > S1 )
-      level.alienStagedownCredits = g_alienCredits.integer;
-    G_LogPrintf( "stagedownlog: aliens s3, humans s%d; %d %d %d %d\n", 
-                 g_humanStage.integer + 1,
-                 g_humanCredits.integer,
-                 level.humanStagedownCredits,
-                 g_alienCredits.integer,
-                 level.alienStagedownCredits );
+    lastAlienStageModCount = g_alienStage.modificationCount;
   }
 
   if( g_humanCredits.integer >=
-      (int)( ceil( (float)g_humanStageThreshold.integer * S2 * humanPlayerCountMod ) ) &&
+      (int)( ceil( (float)g_humanStage2Threshold.integer * humanPlayerCountMod ) ) &&
       g_humanStage.integer == S1 && g_humanMaxStage.integer > S1 )
   {
     trap_Cvar_Set( "g_humanStage", va( "%d", S2 ) );
-
     level.humanStage2Time = level.time;
-    lastHumanStageModCount = g_humanMaxReachedStage.modificationCount;
-    if( g_alienStage.integer == S3 )
-      level.alienStagedownCredits = g_alienCredits.integer;
-        G_LogPrintf( "stagedownlog: humans s2, aliens s%d; %d %d %d %d\n", 
-                 g_alienStage.integer + 1,
-                 g_humanCredits.integer,
-                 level.humanStagedownCredits,
-                 g_alienCredits.integer,
-                 level.alienStagedownCredits );
+    lastHumanStageModCount = g_humanStage.modificationCount;
   }
 
-
-
   if( g_humanCredits.integer >=
-      (int)( ceil( (float)g_humanStageThreshold.integer * S3 * humanPlayerCountMod ) ) &&
+      (int)( ceil( (float)g_humanStage3Threshold.integer * humanPlayerCountMod ) ) &&
       g_humanStage.integer == S2 && g_humanMaxStage.integer > S2 )
   {
     trap_Cvar_Set( "g_humanStage", va( "%d", S3 ) );
     level.humanStage3Time = level.time;
-    lastHumanStageModCount = g_humanMaxReachedStage.modificationCount;
-    if( g_alienStage.integer > S1 )
-      level.humanStagedownCredits = g_humanCredits.integer;
-    G_LogPrintf( "stagedownlog: humans s3, aliens s%d; %d %d %d %d\n", 
-                 g_alienStage.integer + 1,
-                 g_humanCredits.integer,
-                 level.humanStagedownCredits,
-                 g_alienCredits.integer,
-                 level.alienStagedownCredits );
-  }
-  if( g_alienStage.integer > S1 &&
-      g_humanStage.integer == S3 &&
-      g_humanCredits.integer - level.humanStagedownCredits >= 
-      (int) ceil( g_humanStageThreshold.integer * humanPlayerCountMod ) )
-  {
-    G_LogPrintf( "stagedownlog: aliens staging down\n"
-                 "stagedownlog: before: %d %d %d %d %d %d\n",
-                 g_humanStage.integer,
-                 g_humanCredits.integer,
-                 level.humanStagedownCredits,
-                 g_alienStage.integer,
-                 g_alienCredits.integer,
-                 level.alienStagedownCredits);
-                 
-    if( g_alienStage.integer == S3 )
-      level.alienStage3Time = level.startTime;
-    if( g_alienStage.integer == S2 )
-    level.alienStage2Time = level.startTime;
-    lastAlienStageModCount = g_alienStage.modificationCount;
-    trap_Cvar_Set( "g_alienStage", va( "%d", g_alienStage.integer - 1 ) );
-    trap_Cvar_Set( "g_alienCredits", va( "%d", (int)ceil(g_alienCredits.integer - g_alienStageThreshold.integer * alienPlayerCountMod) ) );
-    trap_Cvar_Set( "g_humanCredits", va( "%d", (int)ceil(g_humanCredits.integer - g_humanStageThreshold.integer * humanPlayerCountMod) ) );
-    G_LogPrintf( "stagedownlog: after: %d %d %d %d %d %d\n",
-                 trap_Cvar_VariableIntegerValue( "g_humanStage" ),
-                 trap_Cvar_VariableIntegerValue( "g_humanCredits" ),
-                 level.humanStagedownCredits,
-                 trap_Cvar_VariableIntegerValue( "g_alienStage" ),
-                 trap_Cvar_VariableIntegerValue( "g_alienCredits" ),
-                 level.alienStagedownCredits);
-    trap_Cvar_Update( &g_humanCredits );
-    trap_Cvar_Update( &g_alienCredits );
-    trap_Cvar_Update( &g_humanStage );
-
-  }
-  if( g_humanStage.integer > S1 &&
-      g_alienStage.integer == S3 &&
-      g_alienCredits.integer - level.alienStagedownCredits >= 
-      (int) ceil( g_alienStageThreshold.integer * alienPlayerCountMod ) )
-  {
-    G_LogPrintf( "stagedownlog: humans staging down\n"
-                 "stagedownlog: before: %d %d %d %d %d %d\n",
-                 g_humanStage.integer,
-                 g_humanCredits.integer,
-                 level.humanStagedownCredits,
-                 g_alienStage.integer,
-                 g_alienCredits.integer,
-                 level.alienStagedownCredits);
-
-    if( g_humanStage.integer == S3 )
-      level.humanStage3Time = level.startTime;
-    if( g_humanStage.integer == S2 )
-      level.humanStage2Time = level.startTime;
     lastHumanStageModCount = g_humanStage.modificationCount;
-    trap_Cvar_Set( "g_humanStage", va( "%d", g_humanStage.integer - 1 ) );    
-    trap_Cvar_Set( "g_humanCredits", va( "%d", (int)ceil(g_humanCredits.integer - g_humanStageThreshold.integer * humanPlayerCountMod) ) );
-    trap_Cvar_Set( "g_alienCredits", va( "%d", (int)ceil(g_alienCredits.integer - g_alienStageThreshold.integer * alienPlayerCountMod) ) );
-    G_LogPrintf( "stagedownlog: after: %d %d %d %d %d %d\n",
-                 trap_Cvar_VariableIntegerValue( "g_humanStage" ),
-                 trap_Cvar_VariableIntegerValue( "g_humanCredits" ),
-                 level.humanStagedownCredits,
-                 trap_Cvar_VariableIntegerValue( "g_alienStage" ),
-                 trap_Cvar_VariableIntegerValue( "g_alienCredits" ),
-                 level.alienStagedownCredits);
-    trap_Cvar_Update( &g_humanCredits );
-    trap_Cvar_Update( &g_alienCredits );
-    trap_Cvar_Update( &g_humanStage );
   }
-  
-  if( g_alienMaxReachedStage.modificationCount > lastAlienStageModCount )
+
+  if( g_alienStage.modificationCount > lastAlienStageModCount )
   {
-    G_Checktrigger_stages( TEAM_ALIENS, g_alienMaxReachedStage.integer );
+    G_Checktrigger_stages( TEAM_ALIENS, g_alienStage.integer );
 
     if( g_alienStage.integer == S2 )
       level.alienStage2Time = level.time;
     else if( g_alienStage.integer == S3 )
       level.alienStage3Time = level.time;
 
-    lastAlienStageModCount = g_alienMaxReachedStage.modificationCount;
+    lastAlienStageModCount = g_alienStage.modificationCount;
   }
 
-  if( g_humanMaxReachedStage.modificationCount > lastHumanStageModCount )
+  if( g_humanStage.modificationCount > lastHumanStageModCount )
   {
-    G_Checktrigger_stages( TEAM_HUMANS, g_humanMaxReachedStage.integer );
+    G_Checktrigger_stages( TEAM_HUMANS, g_humanStage.integer );
 
     if( g_humanStage.integer == S2 )
       level.humanStage2Time = level.time;
     else if( g_humanStage.integer == S3 )
       level.humanStage3Time = level.time;
 
-    lastHumanStageModCount = g_humanMaxReachedStage.modificationCount;
-  }
-
-  if ( level.demoState == DS_RECORDING &&
-       ( trap_Cvar_VariableIntegerValue( "g_alienStage" ) != lastAlienStage ||
-         trap_Cvar_VariableIntegerValue( "g_humanStage" ) != lastHumanStage ) )
-  {
-    lastAlienStage = trap_Cvar_VariableIntegerValue( "g_alienStage" );
-    lastHumanStage = trap_Cvar_VariableIntegerValue( "g_humanStage" );
-    G_DemoCommand( DC_SET_STAGE, va( "%d %d", lastHumanStage, lastAlienStage ) );
+    lastHumanStageModCount = g_humanStage.modificationCount;
   }
 }
 
@@ -1528,15 +1394,13 @@ void CalculateRanks( void )
   for( i = 0; i < level.maxclients; i++ )
   {
     P[ i ] = '-';
-    if ( level.clients[ i ].pers.connected != CON_DISCONNECTED ||
-         level.clients[ i ].pers.demoClient )
+    if ( level.clients[ i ].pers.connected != CON_DISCONNECTED )
     {
       level.sortedClients[ level.numConnectedClients ] = i;
       level.numConnectedClients++;
       P[ i ] = (char)'0' + level.clients[ i ].pers.teamSelection;
 
-      if( level.clients[ i ].pers.connected != CON_CONNECTED &&
-         !level.clients[ i ].pers.demoClient )
+      if( level.clients[ i ].pers.connected != CON_CONNECTED )
         continue;
 
       level.numVotingClients++;
@@ -1585,84 +1449,6 @@ void CalculateRanks( void )
   // if we are at the intermission, send the new info to everyone
   if( level.intermissiontime )
     SendScoreboardMessageToAllClients( );
-}
-
-/*
-============
-G_DemoCommand
-
-Store a demo command to a demo if we are recording
-============
-*/
-void G_DemoCommand( demoCommand_t cmd, const char *string )
-{
-  if( level.demoState == DS_RECORDING )
-    trap_DemoCommand( cmd, string );
-}
-
-/*
-============
-G_DemoSetClient
-
-Mark a client as a demo client and load info into it
-============
-*/
-void G_DemoSetClient( void )
-{
-  char buffer[ MAX_INFO_STRING ];
-  int clientNum;
-  gclient_t *client;
-  char *s;
-
-  trap_Argv( 0, buffer, sizeof( buffer ) );
-  clientNum = atoi( buffer );
-  client = level.clients + clientNum;
-  client->pers.demoClient = qtrue;
-
-  trap_Argv( 1, buffer, sizeof( buffer ) );
-  s = Info_ValueForKey( buffer, "n" );
-  if( *s )
-    Q_strncpyz( client->pers.netname, s, sizeof( client->pers.netname ) );
-  s = Info_ValueForKey( buffer, "t" );
-  if( *s )
-    client->pers.teamSelection = atoi( s );
-  client->sess.spectatorState = SPECTATOR_NOT;
-  trap_SetConfigstring( CS_PLAYERS + clientNum, buffer );
-}
-
-/*
-============
-G_DemoRemoveClient
-
-Unmark a client as a demo client
-============
-*/
-void G_DemoRemoveClient( void )
-{
-  char buffer[ 3 ];
-  int clientNum;
-
-  trap_Argv( 0, buffer, sizeof( buffer ) );
-  clientNum = atoi( buffer );
-  level.clients[clientNum].pers.demoClient = qfalse;
-  trap_SetConfigstring( CS_PLAYERS + clientNum, NULL );
-}
-
-/*
-============
-G_DemoSetStage
-
-Set the stages in a demo
-============
-*/
-void G_DemoSetStage( void )
-{
-  char buffer[ 2 ];
-
-  trap_Argv( 0, buffer, sizeof( buffer ) );
-  trap_Cvar_Set( "g_humanStage", buffer );
-  trap_Argv( 1, buffer, sizeof( buffer ) );
-  trap_Cvar_Set( "g_alienStage", buffer );
 }
 
 
@@ -1844,6 +1630,7 @@ void ExitLevel( void )
     if( level.clients[ i ].pers.connected == CON_CONNECTED )
       level.clients[ i ].pers.connected = CON_CONNECTING;
   }
+
 }
 
 /*
@@ -2083,12 +1870,11 @@ void CheckIntermissionExit( void )
   int       ready, notReady;
   int       i;
   gclient_t *cl;
-  byte      readyMasks[ ( MAX_CLIENTS + 7 ) / 8 ];\
-  // each byte in readyMasks will become two characters 00 - ff in the string
-  char      readyString[ 2 * sizeof( readyMasks ) + 1 ];
+  byte      readyMasks[ ( MAX_CLIENTS + 7 ) / 8 ];
+  char      readyString[ 2 * sizeof( readyMasks ) + 1 ]; // a byte is 00 - ff
 
   //if no clients are connected, just exit
-  if( level.numConnectedClients == 0 )
+  if( !level.numConnectedClients )
   {
     ExitLevel( );
     return;
@@ -2138,14 +1924,14 @@ void CheckIntermissionExit( void )
   }
 
   // if nobody wants to go, clear timer
-  if( ready == 0 && notReady > 0 )
+  if( !ready && notReady )
   {
     level.readyToExit = qfalse;
     return;
   }
 
   // if everyone wants to go, go now
-  if( notReady == 0 )
+  if( !notReady )
   {
     ExitLevel( );
     return;
@@ -2195,10 +1981,6 @@ can see the last frag.
 */
 void CheckExitRules( void )
 {
-  // don't exit in demos
-  if( level.demoState == DS_PLAYBACK )
-    return;
-
   // if at the intermission, wait for all non-bots to
   // signal ready, then go to next level
   if( level.intermissiontime )
@@ -2561,54 +2343,6 @@ void CheckCvars( void )
 }
 
 /*
-==================
-CheckDemo
-==================
-*/
-void CheckDemo( void )
-{
-  int i;
-
-  // Don't do anything if no change
-  if( g_demoState.integer == level.demoState )
-    return;
-  level.demoState = g_demoState.integer;
-
-  // log all connected clients
-  if( g_demoState.integer == DS_RECORDING )
-  {
-    for( i = 0; i < level.maxclients; i++ )
-    {
-      if( level.clients[ i ].pers.connected != CON_DISCONNECTED )
-      {
-        char userinfo[ MAX_INFO_STRING ];
-        trap_GetConfigstring( CS_PLAYERS + i, userinfo, sizeof(userinfo) );
-        G_DemoCommand( DC_CLIENT_SET, va( "%d %s", i, userinfo ) );
-      }
-    }
-  }
-
-  // empty teams and display a message
-  else if( g_demoState.integer == DS_PLAYBACK )
-  {
-    trap_SendServerCommand( -1, "print \"A demo has been started on the server.\n\"" );
-    for( i = 0; i < level.maxclients; i++ )
-    {
-      if( level.clients[ i ].pers.teamSelection != TEAM_NONE )
-        G_ChangeTeam( g_entities + i, TEAM_NONE );
-    }
-  }
-
-  // clear all demo clients
-  if( g_demoState.integer == DS_NONE || g_demoState.integer == DS_PLAYBACK )
-  {
-    int clients = trap_Cvar_VariableIntegerValue( "sv_democlients" );
-    for( i = 0; i < clients; i++ )
-      trap_SetConfigstring( CS_PLAYERS + i, NULL );
-  }
-}
-
-/*
 =============
 G_RunThink
 
@@ -2684,16 +2418,13 @@ void G_RunFrame( int levelTime )
   // get any cvar changes
   G_UpdateCvars( );
 
-  // check demo state
-  CheckDemo( );
-
   //
   // go through all allocated objects
   //
   start = trap_Milliseconds( );
   ent = &g_entities[ 0 ];
 
-  for( i = 0; i < ( level.demoState == DS_PLAYBACK ? g_maxclients.integer : level.num_entities ); i++, ent++ )
+  for( i = 0; i < level.num_entities; i++, ent++ )
   {
     if( !ent->inuse )
       continue;

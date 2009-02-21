@@ -18,7 +18,6 @@ endif
 CC=gcc
 RELEASE_CFLAGS=-Wall -O2
 DEBUG_CFLAGS=-g
-CFLAGS+=-DVERSION=\\\"$(VERSION)\\\"
 OBJECTS= \
 	$(BD)/master.o \
 	$(BD)/messages.o \

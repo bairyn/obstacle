@@ -39,7 +39,6 @@
 #define WINDOW_BORDER_HORZ                2     // horizontal borders only
 #define WINDOW_BORDER_VERT                3     // vertical borders only
 #define WINDOW_BORDER_KCGRADIENT          4     // horizontal border using the gradient bars
-#define WINDOW_BORDER_ROUNDED             5     // full round borders
 
 #define WINDOW_STYLE_EMPTY                0     // no background
 #define WINDOW_STYLE_FILLED               1     // filled with background color
@@ -104,7 +103,9 @@
 #define CG_PLAYER_CLIPS_STACK             5
 #define CG_PLAYER_BUILD_TIMER             6
 #define CG_PLAYER_CREDITS_VALUE           7
+#define CG_PLAYER_BANK_VALUE              8
 #define CG_PLAYER_CREDITS_VALUE_NOPAD     9
+#define CG_PLAYER_BANK_VALUE_NOPAD        10
 #define CG_PLAYER_STAMINA                 11
 #define CG_PLAYER_STAMINA_1               12
 #define CG_PLAYER_STAMINA_2               13
@@ -182,12 +183,4 @@
 #define CG_PLAYER_CHARGE_BAR              77
 #define CG_PLAYER_CROSSHAIR               78
 #define CG_PLAYER_LOCATION                79
-#define CG_SQUAD_MARKERS                  80
-#define CG_SPEED                          81
-
-#define CG_PLAYER_ATTACK_FEEDBACK         82
-
-#define UI_CREDITS                        83
-#define UI_SCREEN                         84
-
 #endif

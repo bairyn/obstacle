@@ -2,7 +2,7 @@
 ===========================================================================
 Copyright (C) 2004-2006 Tony J. White
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
 This shrubbot implementation is the original work of Tony J. White.
 
@@ -14,18 +14,18 @@ inactive project shrubet (http://www.etstats.com/shrubet/index.php?ver=2)
 by Ryan Mannion.   However, shrubet was a closed-source project and
 none of it's code has been copied, only it's functionality.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -1958,11 +1958,6 @@ qboolean G_admin_putteam( gentity_t *ent, int skiparg )
   }
   if( vic->client->pers.teamSelection == teamnum )
     return qfalse;
-  if( level.demoState == DS_PLAYBACK )
-  {
-    ADMP( "^3!putteam: ^7cannot join a team while a demo is playing\n" );
-    return qfalse;
-  }
   G_ChangeTeam( vic, teamnum );
 
   AP( va( "print \"^3!putteam: ^7%s^7 put %s^7 on to the %s team\n\"",
@@ -2344,7 +2339,6 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
                      g_admin_levels[ j ]->name );
         break;
       }
-
     }
 
     if( G_admin_permission( ent, ADMF_SEESFULLLISTPLAYERS ) )

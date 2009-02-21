@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -42,7 +42,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // file full of random crap that gets used to create cl_guid
 #define QKEY_FILE "qkey"
-#define QKEY_FILE_FALLBACK "base/qkey"
 #define QKEY_SIZE 2048
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
@@ -302,6 +301,8 @@ typedef struct {
 typedef struct {
 	connstate_t	state;				// connection status
 
+	qboolean	cddialog;			// bring up the cd needed dialog next frame
+
 	char		servername[MAX_OSPATH];		// name of server from original connect (used by reconnect)
 
 	// when the server clears the hunk, all of these must be restarted
@@ -316,8 +317,6 @@ typedef struct {
 
 	int			realtime;			// ignores pause
 	int			realFrametime;		// ignoring pause, so console always works
-	int			voipTime;
-	int			voipSender;
 
 	int			numlocalservers;
 	serverInfo_t	localServers[MAX_OTHER_SERVERS];
@@ -345,9 +344,6 @@ typedef struct {
 	qhandle_t	charSetShader;
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
-
-    qboolean useLegacyConsoleFont;
-    fontInfo_t  consoleFont; 
 } clientStatic_t;
 
 extern	clientStatic_t		cls;
@@ -373,8 +369,6 @@ extern	cvar_t	*cl_showSend;
 extern	cvar_t	*cl_timeNudge;
 extern	cvar_t	*cl_showTimeDelta;
 extern	cvar_t	*cl_freezeDemo;
-
-extern	cvar_t	*cl_cleanHostNames;
 
 extern	cvar_t	*cl_yawspeed;
 extern	cvar_t	*cl_pitchspeed;
@@ -406,30 +400,8 @@ extern	cvar_t	*cl_inGameVideo;
 
 extern	cvar_t	*cl_lanForcePackets;
 extern	cvar_t	*cl_autoRecordDemo;
-extern	cvar_t	*cl_altTab;
-
-extern  cvar_t  *cl_dlURLOverride;
-
-extern  cvar_t  *cl_demoConfig;
-extern  cvar_t  *cl_humanConfig;
-extern  cvar_t  *cl_alienConfig;
-extern  cvar_t  *cl_spectatorConfig;
-
-extern  cvar_t  *cl_defaultUI;
-
-extern  cvar_t  *cl_clantag;
-
-extern  cvar_t  *cl_persistantConsole;
-
-extern	cvar_t	*cl_logs;
 
 extern	cvar_t	*cl_consoleKeys;
-
-extern  cvar_t  *cl_consoleFont;
-extern  cvar_t  *cl_consoleFontSize;
-extern  cvar_t  *cl_consoleFontKerning;
-
-extern  cvar_t  *cl_consolePrompt;
 
 #ifdef USE_MUMBLE
 extern	cvar_t	*cl_useMumble;
@@ -447,9 +419,7 @@ extern	cvar_t	*cl_voipSendTarget;
 extern	cvar_t	*cl_voipGainDuringCapture;
 extern	cvar_t	*cl_voipCaptureMult;
 extern	cvar_t	*cl_voipShowMeter;
-extern	cvar_t	*cl_voipShowSender;
 extern	cvar_t	*cl_voip;
-extern	cvar_t	*cl_voipDefaultGain;
 #endif
 
 //=================================================
@@ -459,7 +429,7 @@ extern	cvar_t	*cl_voipDefaultGain;
 //
 
 void CL_Init (void);
-void CL_FlushMemory(qboolean defaultUI);
+void CL_FlushMemory(void);
 void CL_ShutdownAll(void);
 void CL_AddReliableCommand( const char *cmd );
 
@@ -490,8 +460,6 @@ void CL_InitRef( void );
 int CL_ServerStatus( char *serverAddress, char *serverStatusString, int maxLen );
 
 qboolean CL_CheckPaused(void);
-
-void CL_CheckTeamChange( void );
 
 //
 // cl_input
@@ -592,10 +560,6 @@ void	SCR_DrawBigString( int x, int y, const char *s, float alpha, qboolean noCol
 void	SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color, qboolean noColorEscape );	// ignores embedded color control characters
 void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor, qboolean noColorEscape );
 void	SCR_DrawSmallChar( int x, int y, int ch );
-void    SCR_DrawConsoleFontChar( float x, float y, int ch );
-float   SCR_ConsoleFontCharWidth( int ch );
-float   SCR_ConsoleFontCharHeight ( void );
-float   SCR_ConsoleFontStringWidth( const char *s, int len );
 
 
 //
@@ -660,10 +624,3 @@ qboolean CL_VideoRecording( void );
 //
 void CL_WriteDemoMessage ( msg_t *msg, int headerBytes );
 
-//
-// cl_logs.c
-//
-void CL_OpenClientLog(void);
-void CL_CloseClientLog(void);
-void CL_WriteClientLog( char *text );
-void CL_WriteClientChatLog( char *text );

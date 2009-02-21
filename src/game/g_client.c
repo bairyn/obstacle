@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -731,11 +731,11 @@ void SpawnCorpse( gentity_t *ent )
 
 /*
 ==================
-G_SetClientViewAngle
+SetClientViewAngle
 
 ==================
 */
-void G_SetClientViewAngle( gentity_t *ent, vec3_t angle )
+void SetClientViewAngle( gentity_t *ent, vec3_t angle )
 {
   int     i;
 
@@ -997,7 +997,6 @@ void ClientUserinfoChanged( int clientNum )
   gentity_t *ent;
   int       health;
   char      *s;
-  char      *s2;
   char      model[ MAX_QPATH ];
   char      buffer[ MAX_QPATH ];
   char      filename[ MAX_QPATH ];
@@ -1156,9 +1155,8 @@ void ClientUserinfoChanged( int clientNum )
 
   // teamInfo
   s = Info_ValueForKey( userinfo, "teamoverlay" );
-  s2 = Info_ValueForKey( userinfo, "cg_drawTeamStatus" );
 
-  if( atoi( s ) != 0 || atoi( s2 ) != 0)
+  if( atoi( s ) != 0 )
     client->pers.teamInfo = qtrue;
   else
     client->pers.teamInfo = qfalse;
@@ -1187,9 +1185,6 @@ void ClientUserinfoChanged( int clientNum )
     client->pers.voice );
 
   trap_SetConfigstring( CS_PLAYERS + clientNum, userinfo );
-
-  // log to demo
-  G_DemoCommand( DC_CLIENT_SET, va( "%d %s", clientNum, userinfo ) );
 
   /*G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, userinfo );*/
 }
@@ -1228,7 +1223,6 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   client = &level.clients[ clientNum ];
   ent->client = client;
   memset( client, 0, sizeof( *client ) );
-
   trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 
   value = Info_ValueForKey( userinfo, "cl_guid" );
@@ -1240,12 +1234,21 @@ char *ClientConnect( int clientNum, qboolean firstTime )
     return va( "%s", reason );
   }
 
+
+  // IP filtering
+  // https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=500
+  // recommanding PB based IP / GUID banning, the builtin system is pretty limited
+  // check to see if they are on the banned IP list
+  value = Info_ValueForKey( userinfo, "ip" );
+  Q_strncpyz( client->pers.ip, value, sizeof( client->pers.ip ) );
+
   // check for a password
   value = Info_ValueForKey( userinfo, "password" );
 
   if( g_password.string[ 0 ] && Q_stricmp( g_password.string, "none" ) &&
       strcmp( g_password.string, value ) != 0 )
     return "Invalid password";
+
 
   // add guid to session so we don't have to keep parsing userinfo everywhere
   if( !guid[0] )
@@ -1257,14 +1260,9 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   {
     Q_strncpyz( client->pers.guid, guid, sizeof( client->pers.guid ) );
   }
-
-  // save ip
-  value = Info_ValueForKey( userinfo, "ip" );
-  Q_strncpyz( client->pers.ip, value, sizeof( client->pers.ip ) );
-
   // check for local client
   if( !strcmp( client->pers.ip, "localhost" ) )
-    client->pers.localClient = qtrue;
+     client->pers.localClient = qtrue;
   client->pers.adminLevel = G_admin_level( ent );
 
   client->pers.connected = CON_CONNECTING;
@@ -1303,18 +1301,7 @@ void ClientBegin( int clientNum )
 {
   gentity_t *ent;
   gclient_t *client;
-  char      userinfo[ MAX_INFO_STRING ];
   int       flags;
-
-  trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
-
-  if ( Q_stricmp( Info_ValueForKey( userinfo, "cg_version" ), PRODUCT_NAME ) ) {
-    trap_SendServerCommand( clientNum, "disconnect \"Your client is missing files.\n\n"
-      "To enjoy our games in full colour and detail you need to enable autodownload (cl_allowDownload 1).\n"
-      "For a client with fast http-download visit tremfusion.tremforges.net\n\n"
-      "Open your console and enter: /cl_allowDownload 1\n\"" );
-    return;
-  }
 
   ent = g_entities + clientNum;
 
@@ -1330,7 +1317,6 @@ void ClientBegin( int clientNum )
 
   client->pers.connected = CON_CONNECTED;
   client->pers.enterTime = level.time;
-  client->pers.classSelection = PCL_NONE;
 
   // save eflags around this, because changing teams will
   // cause this to happen with a valid entity, and we
@@ -1355,10 +1341,6 @@ void ClientBegin( int clientNum )
   trap_SendServerCommand( ent - g_entities, "ptrcrequest" );
 
   G_LogPrintf( "ClientBegin: %i\n", clientNum );
-
-  // log to demo
-  trap_GetConfigstring( CS_PLAYERS + clientNum, userinfo, sizeof(userinfo) );
-  G_DemoCommand( DC_CLIENT_SET, va( "%d %s", clientNum, userinfo ) );
 
   // count current clients and rank for scoreboard
   CalculateRanks( );
@@ -1605,7 +1587,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   client->ps.pm_flags |= PMF_RESPAWNED;
 
   trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );
-  G_SetClientViewAngle( ent, spawn_angles );
+  SetClientViewAngle( ent, spawn_angles );
 
   if( client->sess.spectatorState == SPECTATOR_NOT )
   {
@@ -1735,8 +1717,6 @@ void ClientDisconnect( int clientNum )
       ent->client->ps.persistant[ PERS_SPECSTATE ] = SPECTATOR_NOT;
 
   trap_SetConfigstring( CS_PLAYERS + clientNum, "");
-
-  G_DemoCommand( DC_CLIENT_REMOVE, va( "%d", clientNum ) );
 
   CalculateRanks( );
 }

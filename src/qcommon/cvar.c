@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -29,7 +29,7 @@ cvar_t		*cvar_vars;
 cvar_t		*cvar_cheats;
 int			cvar_modifiedFlags;
 
-#define	MAX_CVARS	4096
+#define	MAX_CVARS	1024
 cvar_t		cvar_indexes[MAX_CVARS];
 int			cvar_numIndexes;
 
@@ -328,7 +328,8 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 
 		// if the C code is now specifying a variable that the user already
 		// set a value for, take the new value as the reset value
-		if ( ( var->flags & CVAR_USER_CREATED ) && var_value[0] ) {
+		if ( ( var->flags & CVAR_USER_CREATED ) && !( flags & CVAR_USER_CREATED )
+			&& var_value[0] ) {
 			var->flags &= ~CVAR_USER_CREATED;
 			Z_Free( var->resetString );
 			var->resetString = CopyString( var_value );
@@ -349,9 +350,6 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 			cvar_modifiedFlags |= flags;
 		}
 
-		// mark vars that are created by qvms
-		if ((var->flags & CVAR_VM_CREATED) && !(flags & CVAR_VM_CREATED))
-			flags &= ~CVAR_VM_CREATED;
 		var->flags |= flags;
 		// only allow one non-empty reset string without a warning
 		if ( !var->resetString[0] ) {
@@ -455,14 +453,6 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 		var_value = "BADVALUE";
 	}
 #endif
-
-	// legacy mode cvar support hacks 
-	if( !Q_stricmp(var_name, "r_customheight" ) )
-		var_name = "r_height";
-	if( !Q_stricmp(var_name, "r_customwidth" ) )
-		var_name = "r_width";
-	if( !Q_stricmp(var_name, "r_custompixelAspect" ) )
-		var_name = "r_pixelAspect";
 
 	var = Cvar_FindVar (var_name);
 	if (!var) {
@@ -570,28 +560,6 @@ void Cvar_Set( const char *var_name, const char *value) {
 
 /*
 ============
-Cvar_SetSafe
-============
-*/
-void Cvar_SetSafe( const char *var_name, const char *value )
-{
-	int flags = Cvar_Flags( var_name );
-
-	if( flags != CVAR_NONEXISTENT && flags & CVAR_PROTECTED )
-	{
-		if( value )
-			Com_Error( ERR_DROP, "Untrusted source tried to set protected cvar "
-				"\"%s\" to \"%s\"\n", var_name, value );
-		else
-			Com_Error( ERR_DROP, "Untrusted source tried to modify protected cvar "
-				"\"%s\"\n", var_name );
-		return;
-	}
-	Cvar_Set( var_name, value );
-}
-
-/*
-============
 Cvar_SetLatched
 ============
 */
@@ -615,21 +583,7 @@ void Cvar_SetValue( const char *var_name, float value) {
 	Cvar_Set (var_name, val);
 }
 
-/*
-============
-Cvar_SetValueLatched
-============
-*/
-void Cvar_SetValueLatched( const char *var_name, float value) {
-	char	val[32];
 
-	if ( value == (int)value ) {
-		Com_sprintf (val, sizeof(val), "%i",(int)value);
-	} else {
-		Com_sprintf (val, sizeof(val), "%f",value);
-	}
-	Cvar_Set2 (var_name, val,qfalse);
-}
 /*
 ============
 Cvar_Reset
@@ -685,17 +639,9 @@ Handles variable inspection and changing from the console
 */
 qboolean Cvar_Command( void ) {
 	cvar_t	*v;
-	char	*cvarname = Cmd_Argv(0);
-
-	if ( !Q_stricmp( cvarname, "r_customheight" ) )
-		cvarname = "r_height";
-	if ( !Q_stricmp( cvarname, "r_customwidth" ) )
-		cvarname = "r_width";
-	if ( !Q_stricmp( cvarname, "r_custompixelAspect" ) )
-		cvarname = "r_pixelAspect";
 
 	// check variables
-	v = Cvar_FindVar (cvarname);
+	v = Cvar_FindVar (Cmd_Argv(0));
 	if (!v) {
 		return qfalse;
 	}
@@ -707,25 +653,10 @@ qboolean Cvar_Command( void ) {
 	}
 
 	// set the value if forcing isn't required
-	Cvar_Set2 (v->name, Cmd_Args(), qfalse);
+	Cvar_Set2 (v->name, Cmd_Argv(1), qfalse);
 	return qtrue;
 }
 
-/*
-============
-Cvar_SetValueSafe
-============
-*/
-void Cvar_SetValueSafe( const char *var_name, float value )
-{
-	char val[32];
-
-	if( Q_isintegral( value ) )
-		Com_sprintf( val, sizeof(val), "%i", (int)value );
-	else
-		Com_sprintf( val, sizeof(val), "%f", value );
-	Cvar_SetSafe( var_name, val );
-}
 
 /*
 ============
@@ -760,44 +691,21 @@ void Cvar_Print_f(void)
 ============
 Cvar_Toggle_f
 
-Toggles a cvar for easy single key binding, optionally through a list of
-given values
+Toggles a cvar for easy single key binding
 ============
 */
 void Cvar_Toggle_f( void ) {
-	int		i, c = Cmd_Argc();
-	char		*curval;
+	int		v;
 
-	if(c < 2) {
-		Com_Printf("usage: toggle <variable> [value1, value2, ...]\n");
+	if ( Cmd_Argc() != 2 ) {
+		Com_Printf ("usage: toggle <variable>\n");
 		return;
 	}
 
-	if(c == 2) {
-		Cvar_Set2(Cmd_Argv(1), va("%d", 
-			!Cvar_VariableValue(Cmd_Argv(1))), 
-			qfalse);
-		return;
-	}
+	v = Cvar_VariableValue( Cmd_Argv( 1 ) );
+	v = !v;
 
-	if(c == 3) {
-		Com_Printf("toggle: nothing to toggle to\n");
-		return;
-	}
-
-	curval = Cvar_VariableString(Cmd_Argv(1));
-
-	// don't bother checking the last arg for a match since the desired
-	// behaviour is the same as no match (set to the first argument)
-	for(i = 2; i + 1 < c; i++) {
-		if(strcmp(curval, Cmd_Argv(i)) == 0) {
-			Cvar_Set2(Cmd_Argv(1), Cmd_Argv(i + 1), qfalse);
-			return;
-		}
-	}
-
-	// fallback
-	Cvar_Set2(Cmd_Argv(1), Cmd_Argv(2), qfalse);
+	Cvar_Set2 (Cmd_Argv(1), va("%i", v), qfalse);
 }
 
 /*
@@ -809,12 +717,12 @@ weren't declared in C code.
 ============
 */
 void Cvar_Set_f( void ) {
-	int		c, flag;
-	char	*cmd;
+	int		i, c, l, len;
+	char	cmd[5], combined[MAX_STRING_TOKENS];
 	cvar_t *v;
 
 	c = Cmd_Argc();
-	cmd = Cmd_Argv(0);
+	Q_strncpyz( cmd, Cmd_Argv(0), sizeof( cmd ) );
 
 	if ( c < 2 ) {
 		Com_Printf ("usage: %s <variable> <value>\n", cmd);
@@ -825,32 +733,37 @@ void Cvar_Set_f( void ) {
 		return;
 	}
 
-	v = Cvar_Set2 (Cmd_Argv(1), Cmd_ArgsFrom(2), qfalse);
+	combined[0] = 0;
+	l = 0;
+	for ( i = 2 ; i < c ; i++ ) {
+		len = strlen ( Cmd_Argv( i ) + 1 );
+		if ( l + len >= MAX_STRING_TOKENS - 2 ) {
+			break;
+		}
+		strcat( combined, Cmd_Argv( i ) );
+		if ( i != c-1 ) {
+			strcat( combined, " " );
+		}
+		l += len;
+	}
+	v = Cvar_Set2 (Cmd_Argv(1), combined, qfalse);
 	if( !v ) {
 		return;
 	}
-
-	// don't make these old vars archive even if the client's old autogen told us to
-	if( !Q_stricmp( Cmd_Argv(1), "r_mode" ) || !Q_stricmp( Cmd_Argv(1), "r_customheight" ) ||
-	    !Q_stricmp( Cmd_Argv(1), "r_customwidth" ) || !Q_stricmp( Cmd_Argv(1), "r_custompixelAspect" ) ) 
-		return;
-
 	switch( cmd[3] ) {
 		default:
-			return;
+		case '\0':
+			break;
 		case 'u':
-			flag = CVAR_USERINFO;
+			v->flags |= CVAR_USERINFO;
 			break;
 		case 's':
-			flag = CVAR_SERVERINFO;
+			v->flags |= CVAR_SERVERINFO;
 			break;
 		case 'a':
-		case '\0':
-			flag = CVAR_ARCHIVE;
+			v->flags |= CVAR_ARCHIVE;
 			break;
 	}
-	v->flags |= flag;
-	cvar_modifiedFlags |= flag;
 }
 
 /*
@@ -874,12 +787,12 @@ Appends lines containing "set variable value" for all variables
 with the archive flag set to qtrue.
 ============
 */
-void Cvar_WriteVariables( fileHandle_t f, qboolean vmCvars ) {
+void Cvar_WriteVariables( fileHandle_t f ) {
 	cvar_t	*var;
 	char	buffer[1024];
 
 	for (var = cvar_vars ; var ; var = var->next) {
-		if( ( var->flags & CVAR_ARCHIVE ) && ( ( var->flags & (CVAR_VM_CREATED|CVAR_USER_CREATED) ) != 0 ) == vmCvars ) {
+		if( var->flags & CVAR_ARCHIVE ) {
 			// write the latched value, even if it hasn't taken effect yet
 			if ( var->latchedString ) {
 				if( strlen( var->name ) + strlen( var->latchedString ) + 10 > sizeof( buffer ) ) {
@@ -887,14 +800,14 @@ void Cvar_WriteVariables( fileHandle_t f, qboolean vmCvars ) {
 							"\"%s\" too long to write to file\n", var->name );
 					continue;
 				}
-				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, Cmd_EscapeString(var->latchedString));
+				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->latchedString);
 			} else {
 				if( strlen( var->name ) + strlen( var->string ) + 10 > sizeof( buffer ) ) {
 					Com_Printf( S_COLOR_YELLOW "WARNING: value of variable "
 							"\"%s\" too long to write to file\n", var->name );
 					continue;
 				}
-				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, Cmd_EscapeString(var->string));
+				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string);
 			}
 			FS_Write( buffer, strlen( buffer ), f );
 		}
@@ -1096,7 +1009,7 @@ basically a slightly modified Cvar_Get for the interpreted modules
 void	Cvar_Register( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, int flags ) {
 	cvar_t	*cv;
 
-	cv = Cvar_Get( varName, defaultValue, flags | CVAR_VM_CREATED );
+	cv = Cvar_Get( varName, defaultValue, flags );
 	if ( !vmCvar ) {
 		return;
 	}
@@ -1140,22 +1053,6 @@ void	Cvar_Update( vmCvar_t *vmCvar ) {
 	vmCvar->integer = cv->integer;
 }
 
-/*
-==================
-Cvar_CompleteCvarName
-==================
-*/
-void Cvar_CompleteCvarName( char *args, int argNum )
-{
-	if( argNum == 2 )
-	{
-		// Skip "<cmd> "
-		char *p = Com_SkipTokens( args, 1, " " );
-
-		if( p > args )
-			Field_CompleteCommand( p, qfalse, qtrue );
-	}
-}
 
 /*
 ============
@@ -1168,19 +1065,12 @@ void Cvar_Init (void) {
 	cvar_cheats = Cvar_Get("sv_cheats", "1", CVAR_ROM | CVAR_SYSTEMINFO );
 
 	Cmd_AddCommand ("print", Cvar_Print_f);
-	Cmd_SetCommandCompletionFunc( "print", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
-	Cmd_SetCommandCompletionFunc( "toggle", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("set", Cvar_Set_f);
-	Cmd_SetCommandCompletionFunc( "set", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("sets", Cvar_Set_f);
-	Cmd_SetCommandCompletionFunc( "sets", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("setu", Cvar_Set_f);
-	Cmd_SetCommandCompletionFunc( "setu", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("seta", Cvar_Set_f);
-	Cmd_SetCommandCompletionFunc( "seta", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("reset", Cvar_Reset_f);
-	Cmd_SetCommandCompletionFunc( "reset", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("cvarlist", Cvar_List_f);
 	Cmd_AddCommand ("cvar_restart", Cvar_Restart_f);
 }

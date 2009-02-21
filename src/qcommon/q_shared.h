@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -27,20 +27,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
 
-#define PRODUCT_NAME            "tremfusion"
+#define PRODUCT_NAME            "tremulous"
 
 #ifdef _MSC_VER
-# define PRODUCT_VERSION          "0.9"
+# define PRODUCT_VERSION          "1.1.0"
 #endif
 
-#define CLIENT_WINDOW_TITLE       "Tremfusion " PRODUCT_VERSION
-#define CLIENT_WINDOW_MIN_TITLE   "Tremfusion"
+#define CLIENT_WINDOW_TITLE       "Tremulous " PRODUCT_VERSION
+#define CLIENT_WINDOW_MIN_TITLE   "Tremulous"
 #define Q3_VERSION                 PRODUCT_NAME " " PRODUCT_VERSION
 
 #define MAX_TEAMNAME 32
-
-#define GAMENAME BASEGAME
-#define GAMENAME_FOR_MASTER GAMENAME
 
 #ifdef _MSC_VER
 
@@ -145,12 +142,6 @@ typedef unsigned char 		byte;
 
 typedef enum {qfalse, qtrue}	qboolean;
 
-typedef union {
-	float f;
-	int i;
-	unsigned int ui;
-} floatint_t;
-
 typedef int		qhandle_t;
 typedef int		sfxHandle_t;
 typedef int		fileHandle_t;
@@ -159,9 +150,9 @@ typedef int		clipHandle_t;
 #define PAD(x,y) (((x)+(y)-1) & ~((y)-1))
 
 #ifdef __GNUC__
-#define ALIGNED(x) __attribute__((aligned(x)))
+#define ALIGN(x) __attribute__((aligned(x)))
 #else
-#define ALIGNED(x)
+#define ALIGN(x)
 #endif
 
 #ifndef NULL
@@ -238,6 +229,7 @@ typedef enum {
 	ERR_DROP,					// print to console and disconnect from game
 	ERR_SERVERDISCONNECT,		// don't kill server
 	ERR_DISCONNECT,				// client disconnected from the server
+	ERR_NEED_CD					// pop up the need-cd dialog
 } errorParm_t;
 
 
@@ -301,15 +293,6 @@ MATHLIB
 typedef float vec_t;
 typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
-typedef vec_t vec3a_t[4] ALIGNED(16);
-typedef vec_t quat_t[4] ALIGNED(16);
-typedef vec_t matrix_t[16] ALIGNED(16);
-#if id386_sse >= 1
-#define vec3aLoad(vec3a)       v4fLoadA(vec3a)
-#define vec3Load(vec3)         vec3_to_v4f(vec3)
-#define vec3aStore(vec3a, v4f) v4fStoreA(vec3a, v4f)
-#define vec3Store(vec3, v4f)   v4f_to_vec3(vec3, v4f)
-#endif
 typedef vec_t vec4_t[4];
 typedef vec_t vec5_t[5];
 
@@ -362,8 +345,7 @@ extern	vec4_t		colorMdGrey;
 extern	vec4_t		colorDkGrey;
 
 #define Q_COLOR_ESCAPE	'^'
-#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && isprint(*((p)+1)) && \
-                              *((p)+1) != Q_COLOR_ESCAPE && !isspace(*((p)+1)) )
+#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && isalnum(*((p)+1)) ) // ^[0-9a-zA-Z]
 
 #define COLOR_BLACK		'0'
 #define COLOR_RED		'1'
@@ -484,10 +466,9 @@ typedef struct {
   (r)[2]=(s)[2]+(f)*((e)[2]-(s)[2]),\
   (r)[3]=(s)[3]+(f)*((e)[3]-(s)[3]))
 
-// always snap downwards
-#define Floor(fl) ( (fl) >= 0 ? (int)(fl) : -(int)(-(fl)) )
-#define SnapVector(v) ( (v)[0] = Floor( (v)[0] ), (v)[1] = Floor( (v)[1] ), \
-			(v)[2]=Floor((v)[2]))
+#define SnapVector(v) ( (v)[0] = (int)(v)[0],\
+                        (v)[1] = (int)(v)[1],\
+                        (v)[2] = (int)(v)[2] )
 
 // just in case you do't want to use the macros
 vec_t _DotProduct( const vec3_t v1, const vec3_t v2 );
@@ -679,10 +660,6 @@ vec_t DistanceBetweenLineSegments(
 #define MIN(x,y) ((x)<(y)?(x):(y))
 #endif
 
-#ifdef _MSC_VER
-float rint( float v );
-#endif
-
 //=============================================
 
 float Com_Clamp( float min, float max, float value );
@@ -731,7 +708,6 @@ void SkipRestOfLine ( char **data );
 void Parse1DMatrix (char **buf_p, int x, float *m);
 void Parse2DMatrix (char **buf_p, int y, int x, float *m);
 void Parse3DMatrix (char **buf_p, int z, int y, int x, float *m);
-int Com_HexStrToInt( const char *str );
 
 void	QDECL Com_sprintf (char *dest, int size, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
 
@@ -866,8 +842,6 @@ default values.
 #define CVAR_NORESTART		1024	// do not clear when a cvar_restart is issued
 
 #define CVAR_SERVER_CREATED	2048	// cvar was created by a server the client connected to.
-#define CVAR_VM_CREATED		4096	// cvar was created by a qvm
-#define CVAR_PROTECTED		8192	// prevent modifying this var from VMs or the server
 #define CVAR_NONEXISTENT	0xFFFFFFFF	// Cvar doesn't exist.
 
 // nothing outside the Cvar_*() functions should modify these fields!
@@ -986,7 +960,6 @@ typedef struct {
 // if none of the catchers are active, bound key strings will be executed
 #define KEYCATCH_CONSOLE		0x0001
 #define	KEYCATCH_UI					0x0002
-#define	KEYCATCH_MESSAGE		0x0004
 #define	KEYCATCH_CGAME			0x0008
 
 
@@ -1023,8 +996,7 @@ typedef enum {
 //
 // per-level limits
 //
-#define CLIENTNUM_BITS		6
-#define	MAX_CLIENTS			(1<<CLIENTNUM_BITS)		// absolute limit
+#define	MAX_CLIENTS			64		// absolute limit
 #define MAX_LOCATIONS		64
 
 #define	GENTITYNUM_BITS		10		// don't need to send any more
@@ -1066,6 +1038,7 @@ typedef struct {
 #define	MAX_STATS				16
 #define	MAX_PERSISTANT			16
 #define	MAX_MISC    			16
+#define	MAX_WEAPONS				16		
 
 #define	MAX_PS_EVENTS			2
 
@@ -1371,14 +1344,5 @@ typedef enum {
 
 #define MAX_EMOTICON_NAME_LEN 16
 #define MAX_EMOTICONS 64
-
-// flags for cl_downloadPrompt
-#define DLP_TYPE_MASK 0x0f
-#define DLP_IGNORE    0x01 // don't download anything
-#define DLP_CURL      0x02 // download via HTTP redirect
-#define DLP_UDP       0x04 // download from server
-#define DLP_SHOW      0x10 // prompt needs to be shown
-#define DLP_PROMPTED  0x20 // prompt has been processed by client
-#define DLP_STALE     0x40 // prompt is not being shown by UI VM
 
 #endif	// __Q_SHARED_H

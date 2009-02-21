@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -35,11 +35,9 @@ cvar_t	*sv_fps;				// time rate for running non-clients
 cvar_t	*sv_timeout;			// seconds without any message
 cvar_t	*sv_zombietime;			// seconds to sink messages after disconnect
 cvar_t	*sv_rconPassword;		// password for remote server commands
-cvar_t	*sv_rconLog;			// log file for remote server commands
 cvar_t	*sv_privatePassword;	// password for the privateClient slots
 cvar_t	*sv_allowDownload;
 cvar_t	*sv_maxclients;
-cvar_t	*sv_democlients;		// number of slots reserved for playing a demo
 
 cvar_t	*sv_privateClients;		// number of clients reserved for password
 cvar_t	*sv_hostname;
@@ -53,14 +51,12 @@ cvar_t	*sv_mapChecksum;
 cvar_t	*sv_serverid;
 cvar_t	*sv_minRate;
 cvar_t	*sv_maxRate;
+cvar_t	*sv_minPing;
 cvar_t	*sv_maxPing;
+cvar_t	*sv_pure;
 cvar_t	*sv_lanForceRate; // dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
 cvar_t	*sv_dequeuePeriod;
-cvar_t	*sv_demoState;
-cvar_t	*sv_autoDemo;
-cvar_t	*sv_pure;
 
-cvar_t	*sv_minPing;
 /*
 =============================================================================
 
@@ -147,11 +143,11 @@ void SV_AddServerCommand( client_t *client, const char *cmd ) {
 	// we check == instead of >= so a broadcast print added by SV_DropClient()
 	// doesn't cause a recursive drop client
 	if ( client->reliableSequence - client->reliableAcknowledge == MAX_RELIABLE_COMMANDS + 1 ) {
-		Com_DPrintf( "===== pending server commands =====\n" );
+		Com_Printf( "===== pending server commands =====\n" );
 		for ( i = client->reliableAcknowledge + 1 ; i <= client->reliableSequence ; i++ ) {
-			Com_DPrintf( "cmd %5d: %s\n", i, client->reliableCommands[ i & (MAX_RELIABLE_COMMANDS-1) ] );
+			Com_Printf( "cmd %5d: %s\n", i, client->reliableCommands[ i & (MAX_RELIABLE_COMMANDS-1) ] );
 		}
-		Com_DPrintf( "cmd %5d: %s\n", i, cmd );
+		Com_Printf( "cmd %5d: %s\n", i, cmd );
 		SV_DropClient( client, "Server command overflow" );
 		return;
 	}
@@ -196,10 +192,6 @@ void QDECL SV_SendServerCommand(client_t *cl, const char *fmt, ...) {
 		Com_Printf ("broadcast: %s\n", SV_ExpandNewlines((char *)message) );
 	}
 
-	// save broadcasts to demo
-	if ( sv.demoState == DS_RECORDING )
-		SV_DemoWriteServerCommand( (char *)message );
-
 	// send the data to all relevent clients
 	for (j = 0, client = svs.clients; j < sv_maxclients->integer ; j++, client++) {
 		SV_AddServerCommand( client, (char *)message );
@@ -231,7 +223,6 @@ but not on every player enter or exit.
 void SV_MasterHeartbeat( void ) {
 	static netadr_t	adr[MAX_MASTER_SERVERS];
 	int			i;
-	int			res;
 
 	// "dedicated 1" is for lan play, "dedicated 2" is for inet public play
 	if ( !com_dedicated || com_dedicated->integer != 2 ) {
@@ -258,13 +249,11 @@ void SV_MasterHeartbeat( void ) {
 			sv_master[i]->modified = qfalse;
 	
 			Com_Printf( "Resolving %s\n", sv_master[i]->string );
-			res = NET_StringToAdr( sv_master[i]->string, &adr[i], NA_UNSPEC );
-			if ( !res ) {
+			if ( !NET_StringToAdr( sv_master[i]->string, &adr[i], NA_UNSPEC ) ) {
 				Com_Printf( "Couldn't resolve address: %s\n", sv_master[i]->string );
 				continue;
 			}
-			if ( res == 2 ) {
-				// if no port was specified, use the default master port
+			if ( !strchr( sv_master[i]->string, ':' ) ) {
 				adr[i].port = BigShort( PORT_MASTER );
 			}
 			Com_Printf( "%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(adr[i]));
@@ -425,9 +414,8 @@ void SVC_Info( netadr_t from ) {
 	Info_SetValueForKey( infostring, "mapname", sv_mapname->string );
 	Info_SetValueForKey( infostring, "clients", va("%i", count) );
 	Info_SetValueForKey( infostring, "sv_maxclients", 
-		va("%i", sv_maxclients->integer - sv_privateClients->integer - sv_democlients->integer ) );
-	Info_SetValueForKey( infostring, "pure", sv_pure->string );
-	Info_SetValueForKey( infostring, "unlagged", Cvar_VariableString( "g_unlagged" ) );
+		va("%i", sv_maxclients->integer - sv_privateClients->integer ) );
+	Info_SetValueForKey( infostring, "pure", va("%i", sv_pure->integer ) );
 
 #ifdef USE_VOIP
 	if (sv_voip->integer) {
@@ -435,6 +423,9 @@ void SVC_Info( netadr_t from ) {
 	}
 #endif
 
+	if( sv_minPing->integer ) {
+		Info_SetValueForKey( infostring, "minPing", va("%i", sv_minPing->integer) );
+	}
 	if( sv_maxPing->integer ) {
 		Info_SetValueForKey( infostring, "maxPing", va("%i", sv_maxPing->integer) );
 	}
@@ -475,7 +466,6 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	char		sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 	static unsigned int lasttime = 0;
 	char *cmd_aux;
-	fileHandle_t rconLog = 0;
 
 	// TTimo - https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=534
 	time = Com_Milliseconds();
@@ -484,34 +474,15 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	}
 	lasttime = time;
 
-	if(strlen(sv_rconLog->string)) {
-		rconLog = FS_FOpenFileAppend(sv_rconLog->string);
-		if (!rconLog) {
-			Com_Printf("Warning: Unable to open sv_rconLog: \"%s\"", sv_rconLog->string);
-			Cvar_Set ("sv_rconLog", "");
-		}
-	}
-	
-	const char *message = "";
 	if ( !strlen( sv_rconPassword->string ) ||
 		strcmp (Cmd_Argv(1), sv_rconPassword->string) ) {
 		valid = qfalse;
-		message = va("Bad rcon from %s: %s\n", NET_AdrToString (from), Cmd_ArgsFrom(2));
+		Com_Printf ("Bad rcon from %s:\n%s\n", NET_AdrToString (from), Cmd_Argv(2) );
 	} else {
 		valid = qtrue;
-		message = va("Rcon from %s: %s\n", NET_AdrToString (from), Cmd_ArgsFrom(2));
+		Com_Printf ("Rcon from %s:\n%s\n", NET_AdrToString (from), Cmd_Argv(2) );
 	}
-	
-	Com_Printf ("%s", message);
-	if (rconLog) {
-		qtime_t qt;
-		Com_RealTime(&qt);
-		char *timestamp = va( "%02i/%02i/%02i %02i:%02i:%02i  ", qt.tm_mday, qt.tm_mon, qt.tm_year-100, qt.tm_hour, qt.tm_min, qt.tm_sec );
-		FS_Write(timestamp, strlen(timestamp), rconLog);
-		FS_Write(message, strlen(message), rconLog);
-		FS_FCloseFile(rconLog);
-	}
-	
+
 	// start redirecting all print outputs to the packet
 	svs.redirectAddress = from;
 	Com_BeginRedirect (sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect);
@@ -896,10 +867,6 @@ void SV_Frame( int msec ) {
 
 		// let everything in the world think and move
 		VM_Call (gvm, GAME_RUN_FRAME, sv.time);
-		if (sv.demoState == DS_RECORDING)
-			SV_DemoWriteFrame();
-		else if (sv.demoState == DS_PLAYBACK)
-			SV_DemoReadFrame();
 	}
 
 	if ( com_speeds->integer ) {

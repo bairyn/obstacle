@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremfusion.
+This file is part of Quake III Arena source code.
 
-Tremfusion is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -50,10 +50,7 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 	int		row, column;
 	byte	*buf_p;
 	byte	*end;
-	union {
-		byte *b;
-		void *v;
-	} buffer;
+	byte	*buffer = NULL;
 	int		length;
 	BMPHeader_t bmpHeader;
 	byte		*bmpRGBA;
@@ -69,8 +66,8 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 	//
 	// load the file
 	//
-	length = ri.FS_ReadFile( ( char * ) name, &buffer.v);
-	if (!buffer.b || length < 0) {
+	length = ri.FS_ReadFile( ( char * ) name, (void **)&buffer);
+	if (!buffer || length < 0) {
 		return;
 	}
 
@@ -79,8 +76,8 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 		ri.Error( ERR_DROP, "LoadBMP: header too short (%s)\n", name );
 	}
 
-	buf_p = buffer.b;
-	end = buffer.b + length;
+	buf_p = buffer;
+	end = buffer + length;
 
 	bmpHeader.id[0] = *buf_p++;
 	bmpHeader.id[1] = *buf_p++;
@@ -122,12 +119,12 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 		buf_p += sizeof(bmpHeader.palette);
 	}
 
-	if (buffer.b + bmpHeader.bitmapDataOffset > end)
+	if (buffer + bmpHeader.bitmapDataOffset > end)
 	{
 		ri.Error( ERR_DROP, "LoadBMP: invalid offset value in header (%s)\n", name );
 	}
 
-	buf_p = buffer.b + bmpHeader.bitmapDataOffset;
+	buf_p = buffer + bmpHeader.bitmapDataOffset;
 
 	if ( bmpHeader.id[0] != 'B' && bmpHeader.id[1] != 'M' ) 
 	{
@@ -234,6 +231,6 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 		}
 	}
 
-	ri.FS_FreeFile( buffer.v );
+	ri.FS_FreeFile( buffer );
 
 }

@@ -3,20 +3,20 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremfusion.
+This file is part of Tremulous.
 
-Tremfusion is free software; you can redistribute it
+Tremulous is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremfusion is distributed in the hope that it will be
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremfusion; if not, write to the Free Software
+along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -36,9 +36,9 @@ void dllEntry( intptr_t (QDECL *syscallptr)( intptr_t arg,... ) )
 
 int PASSFLOAT( float x )
 {
-  floatint_t fi;
-  fi.f = x;
-  return fi.i;
+  float floatTemp;
+  floatTemp = x;
+  return *(int *)&floatTemp;
 }
 
 void  trap_Print( const char *fmt )
@@ -254,12 +254,6 @@ void trap_SnapVector( float *v )
 void trap_SendGameStat( const char *data )
 {
   syscall( G_SEND_GAMESTAT, data );
-  return;
-}
-
-void trap_DemoCommand( demoCommand_t cmd, const char *string )
-{
-  syscall( G_DEMO_COMMAND, cmd, string );
   return;
 }
 
