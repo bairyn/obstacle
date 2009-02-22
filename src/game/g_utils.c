@@ -856,3 +856,83 @@ void G_CloseMenus( int clientNum )
   Com_sprintf( buffer, 32, "serverclosemenus" );
   trap_SendServerCommand( clientNum, buffer );
 }
+
+/*
+===============
+G_StrToLower
+
+Lower-case all uppercase characters in some string
+===============
+*/
+void G_StrToLower( char * )
+{
+    if(!s)
+        return;
+
+    while(*s)
+    {
+        if(*s >= 'A' && *s <= 'Z')
+        {
+            *s -= 'A' - 'a';
+        }
+
+        s++;
+    }
+}
+
+/*
+===============
+G_MinorFormatNumber
+
+Strip all trailing and leading 0's.  eg 0043.500000 will be 43.5
+The first non-numeric character and everything past will be ignored
+===============
+*/
+void G_MinorFormatNumber(char *s)
+{
+    char *str = s;
+    qboolean dot = qfalse;
+
+    // strip zeros and dot
+    while(*str)
+    {
+        if(*str == '.')
+        {
+            if(dot)
+                return;
+            dot++;
+        }
+        else if(*str > '9')
+        {
+            return;
+        }
+        else if(*str < '0')
+        {
+            return;
+        }
+
+        str++;
+    }
+
+    str--;
+    if(dot)
+    {
+        while(*str == '0')
+        {
+            *str-- = 0;
+        }
+        if(*str == '.')
+        {
+            *str-- = 0;
+        }
+    }
+
+    // strip leading zeros
+    str = s;
+    while(*str == '0' && *(str + 1))
+    {
+        memmove(str + 1, str, strlen(str) - 1);
+        *(str + strlen(str) - 1) = 0;
+        str++;
+    }
+}

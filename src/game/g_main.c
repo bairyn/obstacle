@@ -74,6 +74,7 @@ vmCvar_t  g_blood;
 vmCvar_t  g_podiumDist;
 vmCvar_t  g_podiumDrop;
 vmCvar_t  g_allowVote;
+vmCvar_t  g_majorityVotes;
 vmCvar_t  g_voteLimit;
 vmCvar_t  g_suddenDeathVotePercent;
 vmCvar_t  g_suddenDeathVoteDelay;
@@ -208,6 +209,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse },
 
   { &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
+  { &g_allowVote, "g_majorityVotes", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_voteLimit, "g_voteLimit", "5", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVotePercent, "g_suddenDeathVotePercent", "74", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVoteDelay, "g_suddenDeathVoteDelay", "180", CVAR_ARCHIVE, 0, qfalse },

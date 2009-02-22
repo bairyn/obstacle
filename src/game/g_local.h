@@ -798,6 +798,9 @@ void        G_CloseMenus( int clientNum );
 qboolean    G_Visible( gentity_t *ent1, gentity_t *ent2, int contents );
 gentity_t   *G_ClosestEnt( vec3_t origin, gentity_t **entities, int numEntities );
 
+void        G_MinorFormatNumber( char *s );
+void        G_StrToLower( char *s );
+
 //
 // g_combat.c
 //
@@ -1116,6 +1119,7 @@ extern  vmCvar_t  g_warmup;
 extern  vmCvar_t  g_doWarmup;
 extern  vmCvar_t  g_blood;
 extern  vmCvar_t  g_allowVote;
+extern  vmCvar_t  g_majorityVotes;
 extern  vmCvar_t  g_voteLimit;
 extern  vmCvar_t  g_suddenDeathVotePercent;
 extern  vmCvar_t  g_suddenDeathVoteDelay;
