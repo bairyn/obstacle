@@ -1768,6 +1768,11 @@ static void PM_CrashLand( void )
   delta = vel + t * acc;
   delta = delta*delta * 0.0001;
 
+  if(BG_OC_PMNeedCrashLand())
+  {
+    BG_OC_PMCrashLand();
+  }
+
   // never take falling damage if completely underwater
   if( pm->waterlevel == 3 )
     return;

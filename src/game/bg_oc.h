@@ -62,6 +62,7 @@ extern int oc_heightNeverLost;
 
 	// pmove
 
+	#define BG_OC_PMNeedCrashLand() (BG_OC_OCMode())
 	#define BG_OC_PMOCDodge() (BG_OC_OCMode())
 	#define BG_OC_PMOCWallJump() (BG_OC_OCMode())
 	#define BG_OC_PMOCGroundTraceWallJump() (BG_OC_OCMode())
@@ -71,6 +72,15 @@ extern int oc_heightNeverLost;
 	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((oc_heightNeverLost) ? (1) : (0)) : (1))
 
 	#define BG_OC_PMNoDodge() BG_OC_OCMode()
+
+	#define BG_OC_PMCrashLand() \
+	{ \
+		/* ducking while falling doubles damage */ \
+		if( pm->ps->pm_flags & PMF_DUCKED ) \
+		{ \
+			delta *= 2; \
+		} \
+	}
 
 	#define BG_OC_PMCheckDodge() \
 	{ \
