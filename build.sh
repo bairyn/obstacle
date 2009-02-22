@@ -102,8 +102,8 @@ if ! cp ./build/release-linux-x86/base/vm/ui.qvm ./pak_tmp/vm/; then
 	exit
 fi
 
-if [ -e ${1}.pk3 ]; then
-	if ! rm ${1}.pk3; then
+if [ -e ${build_pakname}.pk3 ]; then
+	if ! rm ${build_pakname}.pk3; then
 		exit
 	fi
 fi
@@ -112,7 +112,7 @@ if ! cd pak_tmp/; then
 	exit
 fi
 
-if ! zip -9r ../${1}.pk3 vm/cgame.qvm vm/ui.qvm ui configs scripts sound models emoticons gfx armour fonts GPL; then
+if ! zip -9r ../${build_pakname}.pk3 vm/cgame.qvm vm/ui.qvm ui configs scripts sound models emoticons gfx armour fonts GPL; then
 	exit
 fi
 
