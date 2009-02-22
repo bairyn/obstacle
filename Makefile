@@ -4,6 +4,9 @@
 # GNU Make required
 #
 
+GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
+OCFLAGS=-DGAMESUM=$(GAMESUM)
+
 COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]')
 
 COMPILE_ARCH=$(shell uname -m | sed -e s/i.86/x86/)
@@ -900,14 +903,14 @@ default: release
 all: debug release
 
 debug:
-	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) $(OCFLAGS) $(DEPEND_CFLAGS) \
 		$(DEBUG_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) debug
 endif
 
 release:
-	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) $(OCFLAGS) $(DEPEND_CFLAGS) \
 		$(RELEASE_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) release
@@ -1480,6 +1483,7 @@ CGOBJ_ = \
   $(B)/base/cgame/cg_ptr.o \
   $(B)/base/cgame/cg_tutorial.o \
   $(B)/base/ui/ui_shared.o \
+  $(B)/base/game/bg_oc.o \
   \
   $(B)/base/qcommon/q_math.o \
   $(B)/base/qcommon/q_shared.o
@@ -1529,6 +1533,7 @@ GOBJ_ = \
   $(B)/base/game/g_ptr.o \
   $(B)/base/game/g_weapon.o \
   $(B)/base/game/g_admin.o \
+  $(B)/base/game/bg_oc.o \
   \
   $(B)/base/qcommon/q_math.o \
   $(B)/base/qcommon/q_shared.o
@@ -1556,6 +1561,7 @@ UIOBJ_ = \
   $(B)/base/ui/ui_shared.o \
   $(B)/base/ui/ui_gameinfo.o \
   \
+  $(B)/base/game/bg_oc.o \
   $(B)/base/ui/bg_misc.o \
   $(B)/base/ui/bg_lib.o \
   $(B)/base/qcommon/q_math.o \

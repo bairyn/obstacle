@@ -23,6 +23,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // bg_public.h -- definitions shared by both the server game and client game modules
 
+#ifndef _BG_PUBLIC_H
+#define _BG_PUBLIC_H
+
+#define OC_BGAME
+#include "bg_oc.h"
+
 //tremulous balance header
 #include "tremulous.h"
 
@@ -1141,6 +1147,8 @@ const weaponAttributes_t    *BG_Weapon( weapon_t weapon );
 qboolean                    BG_WeaponAllowedInStage( weapon_t weapon,
                                                      stage_t stage );
 
+void                        BG_InitWeaponConfigs( void );
+
 const upgradeAttributes_t   *BG_UpgradeByName( const char *name );
 const upgradeAttributes_t   *BG_Upgrade( upgrade_t upgrade );
 qboolean                    BG_UpgradeAllowedInStage( upgrade_t upgrade,
@@ -1302,3 +1310,5 @@ voiceTrack_t *BG_VoiceTrackFind( voiceTrack_t *head, team_t team,
 int BG_LoadEmoticons( char names[ ][ MAX_EMOTICON_NAME_LEN ], int widths[ ] );
 
 char *BG_TeamName( team_t team );
+
+#endif /* #ifndef _BG_PUBLIC_H */
