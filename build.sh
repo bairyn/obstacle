@@ -130,11 +130,11 @@ if ! cp build/debug-linux-x86/base/gamex86.so ${build_serverdir}/; then
 	exit
 fi
 
-if ! cp ${1}.pk3 ${build_webdir}/; then
+if ! cp ${build_pakname}.pk3 ${build_webdir}/; then
 	exit
 fi
 
-if ! cp ${1}.pk3 ${build_serverdir}/; then
+if ! cp ${build_pakname}.pk3 ${build_serverdir}/; then
 	exit
 fi
 
