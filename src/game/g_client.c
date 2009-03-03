@@ -148,6 +148,11 @@ qboolean SpotWouldTelefrag( gentity_t *spot )
   gentity_t *hit;
   vec3_t    mins, maxs;
 
+  if( G_OC_SpotNeverTelefrags() )
+  {
+    return qfalse;
+  }
+
   VectorAdd( spot->s.origin, playerMins, mins );
   VectorAdd( spot->s.origin, playerMaxs, maxs );
   num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
@@ -323,7 +328,7 @@ G_SelectAlienSpawnPoint
 go to a random point that doesn't telefrag
 ================
 */
-gentity_t *G_SelectAlienSpawnPoint( vec3_t preference )
+gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not )
 {
   gentity_t *spot;
   int       count;
@@ -334,6 +339,8 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference )
 
   count = 0;
   spot = NULL;
+
+  BG_OC_SelectAlienSpawnPoint();
 
   while( ( spot = G_Find( spot, FOFS( classname ),
     BG_Buildable( BA_A_SPAWN )->entityName ) ) != NULL )
@@ -348,6 +355,12 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference )
       continue;
 
     if( spot->clientSpawnTime > 0 )
+      continue;
+
+    if( spot->groupID != groupID )
+      continue;
+
+    if( spot == not )
       continue;
 
     if( G_CheckSpawnPoint( spot->s.number, spot->s.origin,
@@ -372,7 +385,7 @@ G_SelectHumanSpawnPoint
 go to a random point that doesn't telefrag
 ================
 */
-gentity_t *G_SelectHumanSpawnPoint( vec3_t preference )
+gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not )
 {
   gentity_t *spot;
   int       count;
@@ -383,6 +396,8 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference )
 
   count = 0;
   spot = NULL;
+
+  BG_OC_SelectHumanSpawnPoint();
 
   while( ( spot = G_Find( spot, FOFS( classname ),
     BG_Buildable( BA_H_SPAWN )->entityName ) ) != NULL )
@@ -397,6 +412,12 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference )
       continue;
 
     if( spot->clientSpawnTime > 0 )
+      continue;
+
+    if( spot->groupID != groupID )
+      continue;
+
+    if( spot == not )
       continue;
 
     if( G_CheckSpawnPoint( spot->s.number, spot->s.origin,
@@ -447,10 +468,14 @@ gentity_t *G_SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t o
   if( !spot )
     return NULL;
 
+#if 1
+  G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, origin );  // no need for checks for both teams
+#else
   if( team == TEAM_ALIENS )
-    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, BA_A_SPAWN, origin );
+    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, origin );
   else if( team == TEAM_HUMANS )
-    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, BA_H_SPAWN, origin );
+    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, origin );
+#endif
 
   VectorCopy( spot->s.angles, angles );
   angles[ ROLL ] = 0;
@@ -1332,6 +1357,19 @@ void ClientBegin( int clientNum )
 
   ClientSpawn( ent, NULL, NULL, NULL );
 
+  G_OC_ClientBegin();
+
+  if( g_connectMessage.string[ 0 ] )
+  {
+    char buf[ MAX_STRING_CHARS ], *buf_p;
+    Q_strncpyz( buf, g_connectMessage.string, sizeof( buf ) );
+    buf_p = &buf[ 0 ];
+    while(*buf_p )
+      if( *buf_p++ == '|' )
+        *--buf_p = '\n';
+    G_ClientPrint(ent, buf, CLIENT_SPECTATORS);
+  }
+
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname ) );
 
   // name can change between ClientConnect() and ClientBegin()
@@ -1657,6 +1695,8 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
 
   // clear entity state values
   BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
+
+  G_OC_PLAYERSPAWN(ent);
 }
 
 
@@ -1683,11 +1723,15 @@ void ClientDisconnect( int clientNum )
   if( !ent->client )
     return;
 
+  G_OC_ClientDisconnect();
+
   G_admin_namelog_update( ent->client, qtrue );
   G_LeaveTeam( ent );
   G_Vote( ent, qfalse );
 
   // stop any following clients
+  G_StopFromFollowing( ent, 1 );
+
   for( i = 0; i < level.maxclients; i++ )
   {
     // remove any /ignore settings for this clientNum

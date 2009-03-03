@@ -2228,7 +2228,7 @@ static void PM_GroundTrace( void )
   vec3_t      refNormal = { 0.0f, 0.0f, 1.0f };
   trace_t     trace;
 
-  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) )
+  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) && !BG_OC_GetNoWallWalk( ) )
   {
     if( pm->ps->persistant[ PERS_STATE ] & PS_WALLCLIMBINGTOGGLE )
     {
@@ -2548,7 +2548,7 @@ static void PM_Footsteps( void )
   // calculate speed and cycle to be used for
   // all cyclic walking effects
   //
-  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) && ( pml.groundPlane ) )
+  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) && ( pml.groundPlane ) && !BG_OC_GetNoWallWalk( ) )
   {
     // FIXME: yes yes i know this is wrong
     pm->xyspeed = sqrt( pm->ps->velocity[ 0 ] * pm->ps->velocity[ 0 ]
@@ -3740,7 +3740,7 @@ void PmoveSingle( pmove_t *pmove )
     PM_LadderMove( );
   else if( pml.walking )
   {
-    if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) &&
+    if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER && !BG_OC_GetNoWallWalk( ) ) &&
         ( pm->ps->stats[ STAT_STATE ] & SS_WALLCLIMBING ) )
       PM_ClimbMove( ); // walking on any surface
     else

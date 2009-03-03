@@ -37,6 +37,29 @@ typedef struct gclient_s gclient_t;
 
 //==================================================================
 
+#define MSEC(t) ( ( t ) - ( ( ( t ) / 1000 ) * 1000 ) )
+#define SECS(t) ( ( ( t ) - ( ( ( t ) / 60000 ) * 60000 ) ) / 1000 )
+#define MINS(t) ( ( t ) / 60000 )
+
+#define SUFN(x) ( ( ( x ) < 11 && ( x ) > 13 ) ? ( ( ( x ) % 10 == 1 ) ? ( "st" ) : ( ( ( x ) % 10 == 2 ) ? ( "nd" ) : ( ( ( x ) % 10 == 3 ) ? ( "rd" ) : ( "th" ) ) ) ) : ( "th" ) )
+
+#define EXCOLOR(s) \
+{ \
+    int i; \
+ \
+    for(i = 0; i < sizeof((s)); i++) \
+    { \
+        if(((s)[i]) == '^' && i + 3 < sizeof((s))) \
+        { \
+            memmove( (&(s)[i]) + 2, (&(s)[i]), strlen((s)) + 1); \
+            (s)[++i] = '^'; \
+            (s)[++i] = '7'; \
+        } \
+    } \
+}
+
+//==================================================================
+
 #define INFINITE      1000000
 
 #define FRAMETIME     100         // msec
@@ -255,6 +278,12 @@ struct gentity_s
   qboolean          ownerClear;                     // used for missle tracking
 
   qboolean          pointAgainstWorld;              // don't use the bbox for map collisions
+
+  int               groupID;  // extended buildable information
+  int               spawnGroup;  // extended buildable information
+  float             reserved2;  // extended buildable information
+
+  G_OC_ENTITY_STRUCT_DEFS
 };
 
 typedef enum
@@ -290,8 +319,34 @@ typedef struct connectionRecord_s
   team_t    clientTeam;
   int       clientCredit;
 
+  G_OC_CONNECTIONRECORD
+
   int       ptrCode;
 } connectionRecord_t;
+
+#define MAX_CP 20
+
+#define CP_FRAME_TIME     50
+#define CP_TIME           3000
+#define CP_MODE_ENABLED   0
+#define CP_MODE_PRINT     1
+#define CP_MODE_DISABLED  2
+
+//client flags
+#define CLIENT_NULL         0x00
+#define CLIENT_SPECTATORS   0x01  // send to players _directly_ spectating target
+#define CLIENT_SCRIMTEAM    0x02  // send to players on the same team as target
+                                  // (CLIENT_SCRIMTEAM is leftover from a mod)
+#define CLIENT_ALLBUT       0x04  // inverse send, excluding all below.  Anything
+                                  // above is only accounted for if ent is not
+                                  // null
+#define CLIENT_NOTARGET     0x08  // regardless of who it gets sent to, never
+                                  // send to target
+#define CLIENT_NOTEAM       0x10  // regardless of who it gets sent to, never
+                                  // send to anybody on a team
+#define CLIENT_ONLYTEAM     0x20  // regardless of who it gets sent to, never
+                                  // send to anybody not on a team
+#define CLIENT_NEVERREPLACE 0x40  // never replace the CP
 
 // client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
@@ -339,9 +394,16 @@ typedef struct
   char                ip[ 40 ];
   qboolean            muted;
   qboolean            denyBuild;
+  qboolean            override;
   int                 adminLevel;
   char                voice[ MAX_VOICE_NAME_LEN ];
   qboolean            useUnlagged;  
+
+  // misc
+  mix_cp_t            clientCP[ MAX_CP ];
+  int                 crashTime;
+  int                 CPMode;
+  int                 autoAngleDisabled;  // are angles reset when teleporters are used?  Default 0: angles by default do get reset
 } clientPersistant_t;
 
 #define MAX_UNLAGGED_MARKERS 10
@@ -369,6 +431,7 @@ struct gclient_s
   qboolean            readyToExit;    // wishes to leave the intermission
 
   qboolean            noclip;
+  qboolean            speed;
 
   int                 lastCmdTime;    // level.time of last usercmd_t, for EF_CONNECTION
                                       // we can't just use pers.lastCommand.time, because
@@ -537,7 +600,7 @@ typedef struct
   char              voteString[MAX_STRING_CHARS];
   char              voteDisplayString[MAX_STRING_CHARS];
   int               voteTime;                     // level.time vote was called
-  int               votePassThreshold;            // need at least this percent to pass
+  float             votePassThreshold;            // need at least this percent to pass
   int               voteExecuteTime;              // time the vote is executed
   int               voteYes;
   int               voteNo;
@@ -626,6 +689,8 @@ typedef struct
   qboolean          uncondHumanWin;
   qboolean          alienTeamLocked;
   qboolean          humanTeamLocked;
+  qboolean          paused;
+  int               pausedTime;
 
   int unlaggedIndex;
   int unlaggedTimes[ MAX_UNLAGGED_MARKERS ];
@@ -638,17 +703,22 @@ typedef struct
 
   char              emoticons[ MAX_EMOTICONS ][ MAX_EMOTICON_NAME_LEN ];
   int               emoticonCount;
+
+  int               nextCPTime;
+
+  G_OC_LEVEL_LOCALS
 } level_locals_t;
 
-#define CMD_CHEAT         0x0001
-#define CMD_CHEAT_TEAM    0x0002 // is a cheat when used on a team
-#define CMD_MESSAGE       0x0004 // sends message to others (skip when muted)
-#define CMD_TEAM          0x0008 // must be on a team
-#define CMD_SPEC          0x0010 // must be a spectator
-#define CMD_ALIEN         0x0020
-#define CMD_HUMAN         0x0040
-#define CMD_LIVING        0x0080
-#define CMD_INTERMISSION  0x0100 // valid during intermission
+#define CMD_CHEAT         0x00000001
+#define CMD_CHEAT_TEAM    0x00000002 // is a cheat when used on a team
+#define CMD_MESSAGE       0x00000004 // sends message to others (skip when muted)
+#define CMD_TEAM          0x00000008 // must be on a team
+#define CMD_SPEC          0x00000010 // must be a spectator
+#define CMD_ALIEN         0x00000020
+#define CMD_HUMAN         0x00000040
+#define CMD_LIVING        0x00000080
+#define CMD_INTERMISSION  0x00000100 // valid during intermission
+#define CMD_STEALTH       0x00000200
 
 typedef struct
 {
@@ -671,7 +741,7 @@ char      *G_NewString( const char *string );
 //
 // g_cmds.c
 //
-void      G_StopFromFollowing( gentity_t *ent );
+void      G_StopFromFollowing( gentity_t *ent, int force );
 void      G_StopFollowing( gentity_t *ent );
 void      G_FollowLockView( gentity_t *ent );
 qboolean  G_FollowNewClient( gentity_t *ent, int dir );
@@ -687,6 +757,8 @@ void      G_SanitiseString( char *in, char *out, int len );
 void      Cmd_PrivateMessage_f( gentity_t *ent );
 void      Cmd_AdminMessage_f( gentity_t *ent );
 int       G_FloodLimited( gentity_t *ent );
+gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not );
+gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not );
 
 //
 // g_physics.c
@@ -738,7 +810,7 @@ qboolean          G_FindOvermind( gentity_t *self );
 qboolean          G_FindCreep( gentity_t *self );
 
 void              G_BuildableThink( gentity_t *ent, int msec );
-qboolean          G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
+gentity_t         *G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
 itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin );
 qboolean          G_BuildIfValid( gentity_t *ent, buildable_t buildable );
 void              G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qboolean force );
@@ -800,6 +872,9 @@ gentity_t   *G_ClosestEnt( vec3_t origin, gentity_t **entities, int numEntities 
 
 void        G_MinorFormatNumber( char *s );
 void        G_StrToLower( char *s );
+
+void        G_UpdateCPs( void );
+void        G_ClientCP( gentity_t *ent, char *message, char *find, int mode );
 
 //
 // g_combat.c
@@ -1121,6 +1196,7 @@ extern  vmCvar_t  g_blood;
 extern  vmCvar_t  g_allowVote;
 extern  vmCvar_t  g_majorityVotes;
 extern  vmCvar_t  g_voteLimit;
+extern  vmCvar_t  g_mapVotePercent;
 extern  vmCvar_t  g_suddenDeathVotePercent;
 extern  vmCvar_t  g_suddenDeathVoteDelay;
 extern  vmCvar_t  g_teamAutoJoin;
@@ -1171,6 +1247,8 @@ extern  vmCvar_t  g_floodMinTime;
 
 extern  vmCvar_t  g_shove;
 
+extern  vmCvar_t  g_connectMessage;
+
 extern  vmCvar_t  g_mapConfigs;
 
 extern  vmCvar_t  g_layouts;
@@ -1188,6 +1266,10 @@ extern  vmCvar_t  g_dretchPunt;
 
 extern  vmCvar_t  g_privateMessages;
 extern  vmCvar_t  g_publicAdminMessages;
+
+extern  vmCvar_t  g_disableCPMixes;
+
+G_OC_EXTERNCVARS
 
 void      trap_Print( const char *fmt );
 void      trap_Error( const char *fmt );

@@ -1031,6 +1031,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       return;
   }
 
+  G_OC_Damage();
+
   // add to the attacker's hit counter
   if( attacker->client && targ != attacker && targ->health > 0
       && targ->s.eType != ET_MISSILE

@@ -101,7 +101,7 @@ void G_LeaveTeam( gentity_t *self )
   }
 
   // stop any following clients
-  G_StopFromFollowing( self );
+  G_StopFromFollowing( self, 0 );
 
   G_TeamVote( self, qfalse );
   self->suicideTime = 0;

@@ -67,6 +67,8 @@ void G_UpdatePTRConnection( gclient_t *client )
     else
       client->pers.connection->clientCredit =
           client->ps.persistant[ PERS_CREDIT ];
+
+    G_OC_PTRCUpdate();
   }
 }
 

@@ -1471,7 +1471,7 @@ void ClientThink_real( gentity_t *ent )
   }
 
   // set speed
-  if( client->ps.pm_type == PM_NOCLIP )
+  if( client->ps.pm_type == PM_NOCLIP || client->pers.speed )
     client->ps.speed = client->pers.flySpeed;
   else
     client->ps.speed = g_speed.value *
@@ -1491,7 +1491,7 @@ void ClientThink_real( gentity_t *ent )
     }
 
     //switch jetpack off if no reactor
-    if( !level.reactorPresent )
+    if( !level.reactorPresent && !G_OC_NeverUnpowerJetpack() )
       BG_DeactivateUpgrade( UP_JETPACK, client->ps.stats );
   }
 
@@ -1499,6 +1499,8 @@ void ClientThink_real( gentity_t *ent )
   oldEventSequence = client->ps.eventSequence;
 
   memset( &pm, 0, sizeof( pm ) );
+
+  G_OC_ClientThink();
 
   if( ent->flags & FL_FORCE_GESTURE )
   {
@@ -1681,9 +1683,9 @@ void ClientThink_real( gentity_t *ent )
 
       traceEnt = &g_entities[ trace.entityNum ];
 
-      if( traceEnt && traceEnt->buildableTeam == client->ps.stats[ STAT_TEAM ] && traceEnt->use )
+      if( traceEnt && ( traceEnt->buildableTeam == client->ps.stats[ STAT_TEAM ] || G_OC_CanBuildableBeUsedOnOtherTeam() ) && traceEnt->use )
         traceEnt->use( traceEnt, ent, ent ); //other and activator are the same in this context
-      else
+      else if( G_OC_CanUseBuildableInArea() )
       {
         //no entity in front of player - do a small area search
 
@@ -1722,9 +1724,9 @@ void ClientThink_real( gentity_t *ent )
   }
 
   // Give clients some credit periodically
-  if( ent->client->lastKillTime + FREEKILL_PERIOD < level.time )
+  if( ent->client->lastKillTime + FREEKILL_PERIOD < level.time && G_OC_NeedFreeCash() )
   {
-    if( G_TimeTilSuddenDeath( ) <= 0 )
+    if( G_TimeTilSuddenDeath( ) <= 0 && !G_OC_NoSuddenDeath() )
     {
       //gotta love logic like this eh?
     }

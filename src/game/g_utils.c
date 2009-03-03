@@ -518,6 +518,8 @@ void G_FreeEntity( gentity_t *ent )
   if( ent->neverFree )
     return;
 
+  G_OC_BuildableDestroyed( ent );
+
   memset( ent, 0, sizeof( *ent ) );
   ent->classname = "freent";
   ent->freetime = level.time;
@@ -934,5 +936,257 @@ void G_MinorFormatNumber(char *s)
         memmove(str + 1, str, strlen(str) - 1);
         *(str + strlen(str) - 1) = 0;
         str++;
+    }
+}
+
+/*
+===============
+G_UpdateCP
+
+Update all CP's and send proper output
+===============
+*/
+void G_UpdateCPs( void )
+{
+    gentity_t *i;
+    mix_cp_t  *j;
+
+    if(g_disableCPMixes.integer)
+        return;
+
+    if(level.time < level.nextCPTime)
+        return;
+
+    level.nextCPTime += CP_FRAME_TIME;
+
+    for( i = &g_entities[ 0 ]; i < g_entities + level.maxclients; i++ )
+    {
+        buf[0] = 0;
+
+        if( i->client->pers.connected == CON_CONNECTED && i->client->pers.clientCP )
+        {
+            for( j = i->client->pers.clientCP; j < i->client->pers.clientCP + MAX_CP; j++ )
+            {
+                if(j->active)
+                {
+                    if(level.time > j->start + CP_TIME)
+                    {
+                        j->start = j->active = 0;
+                    }
+                    else
+                    {
+                        if(!buf[0])
+                            Q_strncpyz(buf, "cp \"", sizeof(buf));
+                        else
+                            Q_strcat(buf, sizeof(buf), "\n");
+                        Q_strcat(buf, sizeof(buf), j->message);
+                        Q_strcat(buf, sizeof(buf), "^7");
+                    }
+                }
+            }
+
+            if(buf[0])
+            {
+                Q_strcat(buf, sizeof(buf), "\"");
+                trap_SendServerCommand(i - g_entities, buf);
+            }
+        }
+    }
+}
+
+#ifdef _G_OC_H  // leftover from a mod; the mod requires this
+#define UTIL_SCRIMTEAM(x) x->client->pers.scrimTeam
+#else
+#define UTIL_SCRIMTEAM(x) 0
+#endif /* #ifdef _G_OC_H */
+
+/*
+===============
+G_ClientCP
+
+If ent is NULL, broadcast to everybody.  If find is null message is used.
+===============
+*/
+void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
+{
+    gentity_t *i;
+    mix_cp_t  *j;
+    mix_cp_t  *p;
+    qboolean target;
+
+    if(ent && !ent->client)
+        return;
+
+    // is cp mixing disabled?
+    if(g_disableCPMixes.integer)
+    {
+        if(ent)  // ent->client does need to exist but checking here is unnecessary because it was already checked above
+            trap_SendServerCommand( ent - g_entities, va( "cp \"%s\n\"", message ) );
+        return;
+    }
+
+    Q_strncpyz(buf, message, sizeof(buf));
+
+    // iterate for each client
+    for( i = &g_entities[ 0 ]; i < g_entities + level.maxclients; i++ )
+    {
+        // unnecessary sanity check
+        if(!i->client)
+        {
+            G_LogPrintf( "Sanity check failed!\nan entity up to level.maxclients was not a client\n\n" );
+            continue;  // this should never happen
+        }
+        if(i->client->pers.connected != CON_CONNECTED)
+        {
+            continue;
+        }
+
+        // reset target boolean
+        target = qfalse;
+
+        // is this client one of the targets?
+        if((i == ent) ||
+           (!ent) ||
+           (mode & CLIENT_SPECTATORS && i->client->sess.spectatorState == SPECTATOR_FOLLOW && i->client->sess.spectatorClient == ent - g_entities) ||
+           (mode & CLIENT_SCRIMTEAM && UTIL_SCRIMTEAM(i) == UTIL_SCRIMTEAM(ent)))
+        {
+            target = qtrue;
+        }
+        if(mode & CLIENT_ALLBUT)
+        {
+            target = !target;
+        }
+        if(mode & CLIENT_NOTARGET && i == ent)
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_NOTEAM && UTIL_SCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_ONLYTEAM && !UTIL_SCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+
+        if(target)
+        {
+            switch(i->client->pers.CPMode)
+            {
+                case CP_MODE_PRINT:
+                    G_ClientPrint(i, message, mode);
+                case CP_MODE_DISABLED:
+                    return;
+                default:
+                    break;
+            }
+
+            // now fragmented
+//            // stop if the client has already reached his max cp's
+//            if(i->client->pers.clientCP[MAX_CP - 1].active)
+//            {
+//                G_LogPrintf( "^3Warning: ^7'%p^7' remove CP for overflow - called with '%p', '%s', '%s', '%d'\n", ent, message, find, mode );
+//                return;
+//            }
+
+            p = NULL;
+
+            // iterate over each cp and remove any finds.  The first find gets the position of
+            for( j = i->client->pers.clientCP; j < i->client->pers.clientCP + MAX_CP; j++ )
+            {
+                if(j->active)
+                {
+                    if((!strcmp(j->message, buf) || (find && strstr(j->message, find))) && !(mode & CLIENT_NEVERREPLACE))
+                    {
+                        j->active = 0;
+                        if(!p)
+                            p = j;
+                    }
+                }
+            }
+
+            if(!p)  // if nothing was replaced...
+            {
+                // ...then find the first empty spot
+                for( j = i->client->pers.clientCP; j < i->client->pers.clientCP + MAX_CP; j++ )
+                {
+                    // iterate again
+                    if(!j->active)
+                    {
+                        p = j;
+                        break;
+                    }
+                }
+            }
+
+            if(!p)
+            {
+                G_LogPrintf( "^3Warning: no room for CP (max %d) - called with '%p', '%s', '%s', '%d'\n", MAX_CP, ent, message, find, mode );
+                return;
+            }
+
+            Q_strncpyz(p->message, buf, sizeof(p->message));
+            p->start = level.time;
+            p->active = 1;
+        }
+    }
+}
+
+void G_ClientPrint( gentity_t *ent, char *message, int mode )
+{
+    gentity_t *i;
+    qboolean target;
+
+    if(ent && !ent->client)
+        return;
+
+    // iterate for each client
+    for( i = &g_entities[ 0 ]; i < g_entities + level.maxclients; i++ )
+    {
+        // unnecessary sanity check
+        if(!i->client)
+        {
+            G_LogPrintf( "Sanity check failed!\nan entity up to level.maxclients was not a client\n\n" );
+            continue;  // this should never happen
+        }
+        if(i->client->pers.connected != CON_CONNECTED)
+        {
+            continue;
+        }
+
+        // reset target boolean
+        target = qfalse;
+
+        // is this client one of the targets?
+        if((i == ent) ||
+           (!ent) ||
+           (mode & CLIENT_SPECTATORS && i->client->sess.spectatorState == SPECTATOR_FOLLOW && i->client->sess.spectatorClient == ent - g_entities) ||
+           (mode & CLIENT_SCRIMTEAM && UTIL_SCRIMTEAM(i) == UTIL_SCRIMTEAM(ent)))
+        {
+            target = qtrue;
+        }
+        if(mode & CLIENT_ALLBUT)
+        {
+            target = !target;
+        }
+        if(mode & CLIENT_NOTARGET && i == ent)
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_NOTEAM && UTIL_SCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_ONLYTEAM && !UTIL_SCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+
+        if(target)
+        {
+            buf[0] = 0;
+            Com_sprintf(buf, sizeof(buf), "print \"%s\n\"", message);
+            trap_SendServerCommand(i - g_entities, buf);
+        }
     }
 }

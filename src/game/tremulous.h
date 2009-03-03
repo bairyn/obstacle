@@ -355,7 +355,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ALIEN_POISON_DMG            5
 #define ALIEN_POISON_DIVIDER        (1.0f/1.32f) //about 1.0/(time`th root of damage)
 
-#define ALIEN_SPAWN_REPEAT_TIME     10000
+#define ALIEN_SPAWN_REPEAT_TIME     TREMULOUS_VALUE(10000, 0)
 
 #define ALIEN_REGEN_DAMAGE_TIME     2000 //msec since damage that regen starts again
 #define ALIEN_REGEN_NOCREEP_MOD     TREMULOUS_VALUE((1.0f/3.0f), (1.0f)) //regen off creep
@@ -647,12 +647,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define STAMINA_STOP_RESTORE        25
 #define STAMINA_WALK_RESTORE        15
 #define STAMINA_MEDISTAT_RESTORE    30 // stacked on STOP or WALK
-#define STAMINA_SPRINT_TAKE         8
-#define STAMINA_JUMP_TAKE           250
-#define STAMINA_DODGE_TAKE          250
+#define STAMINA_SPRINT_TAKE         TREMULOUS_VALUE(8, 0)
+#define STAMINA_JUMP_TAKE           TREMULOUS_VALUE(250, 0)
+#define STAMINA_DODGE_TAKE          TREMULOUS_VALUE(250, 0)
 #define STAMINA_BREATHING_LEVEL     0
 
-#define HUMAN_SPAWN_REPEAT_TIME     10000
+#define HUMAN_SPAWN_REPEAT_TIME     TREMULOUS_VALUE(10000, 0)
 #define HUMAN_REGEN_DAMAGE_TIME     2000 //msec since damage before dcc repairs
 
 #define HUMAN_MAX_CREDITS           2000

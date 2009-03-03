@@ -591,6 +591,8 @@ void flamerFire( gentity_t *ent )
   // Correct muzzle so that the missile fires from the player's hand
   VectorMA( origin, 4.5f, right, origin );
 
+  G_OC_CloseRangeWeaponFired( ent );
+
   fire_flamer( ent, origin, forward );
 }
 
@@ -605,6 +607,8 @@ GRENADE
 void throwGrenade( gentity_t *ent )
 {
   gentity_t *m;
+
+  G_OC_CloseRangeWeaponFired( ent );
 
   m = launch_grenade( ent, muzzle, forward );
 }
@@ -675,6 +679,8 @@ void painSawFire( gentity_t *ent )
   trace_t   tr;
   vec3_t    temp;
   gentity_t *tent, *traceEnt;
+
+  G_OC_CloseRangeWeaponFired( ent );
 
   G_WideTrace( &tr, ent, PAINSAW_RANGE, PAINSAW_WIDTH, PAINSAW_HEIGHT,
                &traceEnt );
@@ -866,7 +872,7 @@ void buildFire( gentity_t *ent, dynMenu_t menu )
 
     if( G_BuildIfValid( ent, buildable ) )
     {
-      if( !g_cheats.integer )
+      if( !g_cheats.integer && !G_OC_NoBuildTimer() )
         ent->client->ps.stats[ STAT_MISC ] +=
           BG_Buildable( buildable )->buildTime;
       ent->client->ps.stats[ STAT_BUILDABLE ] = BA_NONE;
@@ -930,12 +936,19 @@ qboolean CheckVenomAttack( gentity_t *ent )
     return qfalse;
 
   // only allow bites to work against buildings as they are constructing
-  if( traceEnt->s.eType == ET_BUILDABLE )
+  if(!G_OC_NeedAlternateVenomAttackCheck())
   {
-    if( traceEnt->spawned )
-      return qfalse;
-    if( traceEnt->buildableTeam == TEAM_ALIENS )
-      return qfalse;
+    if( traceEnt->s.eType == ET_BUILDABLE )
+    {
+      if( traceEnt->spawned )
+        return qfalse;
+      if( traceEnt->buildableTeam == TEAM_ALIENS )
+        return qfalse;
+    }
+  }
+  else
+  {
+    G_OC_AlternateVenomAttackCheck();
   }
 
   if( traceEnt->client )
@@ -1401,6 +1414,8 @@ FireWeapon3
 */
 void FireWeapon3( gentity_t *ent )
 {
+  G_OC_FireWeapon3();
+
   if( ent->client )
   {
     // set aiming directions
@@ -1436,6 +1451,8 @@ FireWeapon2
 */
 void FireWeapon2( gentity_t *ent )
 {
+  G_OC_FireWeapon2();
+
   if( ent->client )
   {
     // set aiming directions
