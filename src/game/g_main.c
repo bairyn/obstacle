@@ -23,11 +23,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-#define MCONCAT(x, y) x ## y
+#define MCONCAT(x, y) x # y
 #define MTOSTRING(x) MCONCAT("", x)
 
 #define VERSION "BobsOC-2.0-dev"
-#define BUILDID MTOSTRING(GAMESUM)
+//#define BUILDID MTOSTRING(GAMESUM)  // this doesn't work with QVM's
+#define BUILDID GAMESUM
 
 level_locals_t  level;
 
@@ -1048,7 +1049,7 @@ void G_SpawnClients( team_t team )
 
     if( ( spawn = G_SelectTremulousSpawnPoint( team,
             ent->client->pers.lastDeathLocation,
-            spawn_origin, spawn_angles ) ) )
+            spawn_origin, spawn_angles, ent ) ) )
     {
       clientNum = G_PopSpawnQueue( sq );
 
@@ -2066,11 +2067,11 @@ void CheckExitRules( void )
     }
   }
 
-  if( level.uncondHumanWin ||
+  if( ( level.uncondHumanWin ||
       ( ( level.time > level.startTime + 1000 ) &&
         ( level.numAlienSpawns == 0 ) &&
-        ( level.numLiveAlienClients == 0 ) ) &&
-        ( G_OC_NeedEndGameTeamWin() ) )
+        ( level.numLiveAlienClients == 0 ) ) ) &&
+      ( G_OC_NeedEndGameTeamWin() ) )
   {
     //humans win
     level.lastWin = TEAM_HUMANS;
@@ -2254,7 +2255,7 @@ void CheckVote( void )
             // execute the command, then remove the vote
             trap_SendServerCommand( -1, va( "print \"Vote passed (%d - %d)\n\"", voteYes, voteNo ) );
             G_LogPrintf("Vote passed\n");
-            level.voteExecuteTime = level.time + g_voteExecuteTime.integer;
+            level.voteExecuteTime = level.time + VOTE_TIME;
         }
         else
         {
@@ -2263,13 +2264,13 @@ void CheckVote( void )
           G_LogPrintf("Vote failed\n");
         }
     }
-    else if( g_majority.integer )
+    else if( g_majorityVotes.integer )
     {
         if( voteYes > (int)((double)level.numConnectedClients * ((double)votePassThreshold/100.0)) )
         {
             // execute the command, then remove the vote
             trap_SendServerCommand( -1, va( "print \"Vote passed (majority) (%d - %d)\n\"", voteYes, voteNo ) );
-            level.voteExecuteTime = level.time + g_voteExecuteTime.integer;
+            level.voteExecuteTime = level.time + VOTE_TIME;
         }
         else if( voteNo > (int)((double)level.numConnectedClients * ((double)(100.0-votePassThreshold)/100.0)) )
         {

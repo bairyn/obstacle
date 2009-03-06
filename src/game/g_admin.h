@@ -206,7 +206,7 @@ qboolean G_admin_ban_check( char *userinfo, char *reason, int rlen );
 qboolean G_admin_cmd_check( gentity_t *ent, qboolean say );
 qboolean G_admin_readconfig( gentity_t *ent, int skiparg );
 qboolean G_admin_permission( gentity_t *ent, char *flag );
-qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len, int testUnnamed );
+qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len );
 void G_admin_namelog_update( gclient_t *ent, qboolean disconnect );
 int G_admin_level( gentity_t *ent );
 
@@ -245,7 +245,7 @@ qboolean G_admin_lock( gentity_t *ent, int skiparg );
 qboolean G_admin_unlock( gentity_t *ent, int skiparg );
 qboolean G_admin_pause( gentity_t *ent, int skiparg );
 qboolean G_admin_putmespec( gentity_t *ent, int skiparg );
-qboolean G_admin_designate( gentity_t *ent, int skiparg );
+//qboolean G_admin_designate( gentity_t *ent, int skiparg );
 qboolean G_admin_hbp( gentity_t *ent, int skiparg );
 qboolean G_admin_abp( gentity_t *ent, int skiparg );
 qboolean G_admin_hs( gentity_t *ent, int skiparg );

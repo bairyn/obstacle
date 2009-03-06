@@ -5,7 +5,8 @@
 #
 
 GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
-OCFLAGS=-DGAMESUM=$(GAMESUM)
+#OCFLAGS=-DGAMESUM=\\\"$(GAMESUM)\\\"
+OCFLAGS=-DGAMESUM=\\\"$(GAMESUM)\\\"
 
 COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]')
 

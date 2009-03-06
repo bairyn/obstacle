@@ -582,6 +582,9 @@ void G_KillBox( gentity_t *ent )
   gentity_t *hit;
   vec3_t    mins, maxs;
 
+  if( !G_OC_SpotNeverTelefrags() )
+    return;
+
   VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
   VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
   num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
@@ -866,7 +869,7 @@ G_StrToLower
 Lower-case all uppercase characters in some string
 ===============
 */
-void G_StrToLower( char * )
+void G_StrToLower( char *s )
 {
     if(!s)
         return;
@@ -938,6 +941,9 @@ void G_MinorFormatNumber(char *s)
         str++;
     }
 }
+
+// big buffer for the CP functions
+static char buf[ MAX_STRING_CHARS ];
 
 /*
 ===============

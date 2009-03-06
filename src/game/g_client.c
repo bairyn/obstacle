@@ -340,7 +340,7 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
   count = 0;
   spot = NULL;
 
-  BG_OC_SelectAlienSpawnPoint();
+  G_OC_SelectAlienSpawnPoint();
 
   while( ( spot = G_Find( spot, FOFS( classname ),
     BG_Buildable( BA_A_SPAWN )->entityName ) ) != NULL )
@@ -397,7 +397,7 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
   count = 0;
   spot = NULL;
 
-  BG_OC_SelectHumanSpawnPoint();
+  G_OC_SelectHumanSpawnPoint();
 
   while( ( spot = G_Find( spot, FOFS( classname ),
     BG_Buildable( BA_H_SPAWN )->entityName ) ) != NULL )
@@ -455,14 +455,14 @@ G_SelectTremulousSpawnPoint
 Chooses a player start, deathmatch start, etc
 ============
 */
-gentity_t *G_SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t origin, vec3_t angles )
+gentity_t *G_SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t origin, vec3_t angles, gentity_t *ent )
 {
   gentity_t *spot = NULL;
 
   if( team == TEAM_ALIENS )
-    spot = G_SelectAlienSpawnPoint( preference );
+    spot = G_SelectAlienSpawnPoint( preference, ent, GROUP_SPAWN, NULL );
   else if( team == TEAM_HUMANS )
-    spot = G_SelectHumanSpawnPoint( preference );
+    spot = G_SelectHumanSpawnPoint( preference, ent, GROUP_SPAWN, NULL );
 
   //no available spots
   if( !spot )

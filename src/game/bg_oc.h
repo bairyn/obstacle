@@ -53,11 +53,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 extern int oc_gameMode;
 
+// typedef struct gentity_s gentity_t;  // gentity_t might not be typedef'd here yet
+// typedef int weapon_t;  // ditto
+
+#define gentity_t struct gentity_s
+#define weapon_t int
+
 //<+===============================================+><+===============================================+>
 // game only stuff
 //<+===============================================+><+===============================================+>
 
 #ifdef OC_GAME
+	#include "../qcommon/q_shared.h"
+
 	//<+===============================================+>
 	// scrims and votes
 	//<+===============================================+>
@@ -65,7 +73,7 @@ extern int oc_gameMode;
 	typedef struct
 	{
 		int       active;
-		char      name[MAX_NAME_LENGTH];
+		char      name[50];  // MAX_NAME_LENGTH isn't here
 		int       time;
 		gentity_t **arms;
 		gentity_t **medis;
@@ -74,11 +82,12 @@ extern int oc_gameMode;
 		int       flags;
 		#define G_OC_SCRIMFLAG_EQUIPMENT     0x0001
 		#define G_OC_SCRIMFLAG_NOTSINGLETEAM 0x0002  // set when a player joins a team that already has another player in it (and never unset while the team exists)
-	//	struct oc_scrimTeam_t *next;
+	//	struct g_oc_scrimTeam_t *next;
 	} g_oc_scrimTeam_t;
 
 	#define G_OC_MAX_SCRIM_TEAMS ((G_OC_MAX_SCRIM_TEAMS_REAL) + (1))
 	#define G_OC_MAX_SCRIM_TEAMS_REAL 63
+	#define G_OC_MIN_SCRIM_TEAMS 2
 
 	/*
 	#define G_OC_GETTEAM(d, s, n) \
@@ -109,18 +118,19 @@ extern int oc_gameMode;
 	#define G_OC_MODE_MEDI 1
 	#define G_OC_MODE_ARM  2
 
-	#define G_OC_NeedOtherCheckVote() ((BG_OC_OCMode) ? (level.ocScrimVote) ? (1) : (0)) : (0))
-	#define G_OC_OtherCheckVote() \
+	#define G_OC_NeedOtherVoteCheck() ((BG_OC_OCMode()) ? ((level.ocScrimVote) ? (1) : (0)) : (0))
+	#define G_OC_OtherVoteCheck() \
+	do \
 	{ \
 		int i; \
 		int scrimClients = 0; \
-		gentity_t *ent; \
+		gentity_t *client; \
  \
 		for(i = 0; i < MAX_CLIENTS; i++) \
 		{ \
 			client = g_entities + i; \
  \
-			if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.ocTeam) \
+			if(client->client && client->client->pers.connected == CON_CONNECTED && client->client->pers.scrimTeam) \
 			{ \
 				scrimClients++; \
 			} \
@@ -128,12 +138,12 @@ extern int oc_gameMode;
  \
 		if(level.time - level.voteTime >= VOTE_TIME || (voteYes + voteNo == scrimClients)) \
 		{ \
-			if(voteYesPercent >= votePercentToPass || voteNo == 0) \
+			if(voteYesPercent >= votePassThreshold || voteNo == 0) \
 			{ \
 				/* execute the command, then remove the vote */ \
 				trap_SendServerCommand(-1, va("print \"Vote passed (%d - %d)\n\"", voteYes, voteNo)); \
 				G_LogPrintf("Vote passed\n"); \
-				level.voteExecuteTime = level.time + g_voteExecuteTime.integer; \
+				level.voteExecuteTime = level.time + VOTE_TIME; \
 			} \
 			else \
 			{ \
@@ -142,15 +152,15 @@ extern int oc_gameMode;
 				G_LogPrintf("Vote failed\n"); \
 			} \
 		} \
-		else if(g_majority.integer) \
+		else if(g_majorityVotes.integer) \
 		{ \
-			if(voteYes > (int)((double)level.numConnectedClients * ((double)votePercentToPass/100.0))) \
+			if(voteYes > (int)((double)level.numConnectedClients * ((double)votePassThreshold/100.0))) \
 			{ \
 				/* execute the command, then remove the vote */ \
 				trap_SendServerCommand(-1, va("print \"Vote passed (majority) (%d - %d)\n\"", voteYes, voteNo)); \
-				level.voteExecuteTime = level.time + g_voteExecuteTime.integer; \
+				level.voteExecuteTime = level.time + VOTE_TIME; \
 			} \
-			else if(voteNo > (int)((double)level.numConnectedClients * ((double)(100.0-votePercentToPass)/100.0))) \
+			else if(voteNo > (int)((double)level.numConnectedClients * ((double)(100.0-votePassThreshold)/100.0))) \
 			{ \
 				/* same behavior as a timeout */ \
 				trap_SendServerCommand(-1, va("print \"Vote failed (majority) (%d - %d)\n\"", voteYes, voteNo)); \
@@ -161,7 +171,7 @@ extern int oc_gameMode;
 				return; \
 			} \
 		} \
-	}
+	} while(0);
 
 	#define G_OC_PostCheckVote() level.ocScrimVote = 0;
 
@@ -187,7 +197,7 @@ extern int oc_gameMode;
 	 * the case, especially if the developer deconstructs a lot of structures).
 	*/
 	#define G_OC_MAX_LAYOUT_BUILDABLES 4096
-	// TODO: keep G_Alloc from crashing server when (and only when) trying different memory sizes it can't handle.
+	// TODO: keep BG_Alloc from crashing server when (and only when) trying different memory sizes it can't handle.
 	// until then, both these are somewhat low
 	#define G_OC_MIN_LAYOUT_BUILDABLES 512
 
@@ -213,13 +223,14 @@ extern int oc_gameMode;
 	int       totalArmouries; \
 	int       lastAliveTime; \
 	int       aliveTime; \
-	int       hasCheated; \
+	int       hasCheated;
 
 	#define G_OC_CLIENTDATA \
 	int       hasCheated; \
 	int       cheated; \
 	int       scrimTeam; \
 	int       nextCheckpointTime; \
+	int       nextValidEvolveTime;  \
 	gentity_t *checkpoint; \
 	gentity_t **medis; \
 	gentity_t **medisLastCheckpoint; \
@@ -233,6 +244,8 @@ extern int oc_gameMode;
 	int       aliveTime; \
 	int       lastAliveTime; \
 	int       noAuO;  /* TODO: <------- ? */ \
+	int       mediTime;  /* recorded time for medis */ \
+	int       winTime;  /* recorded time for win */ \
 	/* frame checking to ease CPU usage */ \
 	int       nextWeaponCheckTime; \
 	int       nextOverrideCheckTime;
@@ -257,7 +270,7 @@ extern int oc_gameMode;
 	vmCvar_t g_startScrimVotePercent; \
 	vmCvar_t g_endScrimVotePercent;
 
-	#defien G_OC_EXTERNCVARS \
+	#define G_OC_EXTERNCVARS \
 	extern vmCvar_t g_ocOnly; \
 	extern vmCvar_t g_ocWarmup; \
 	extern vmCvar_t g_statsEnabled; \
@@ -291,7 +304,7 @@ extern int oc_gameMode;
 	int totalMedistations; \
 	int totalArmouries; \
 	int numNodes; \
-	oc_scrimTeam_t scrimTeam[MAX_SCRIM_TEAMS];  /* scrimTeam[0] is always NULL */ \
+	g_oc_scrimTeam_t scrimTeam[G_OC_MAX_SCRIM_TEAMS];  /* scrimTeam[0] is always NULL */ \
 	int ocLoadTime; \
 	int ocLoadDelayedByTrigger; \
 	int ocScrimMode; \
@@ -323,10 +336,10 @@ extern int oc_gameMode;
 		trap_Cvar_Set("g_alienBuildPoints", va("%d", INFINITE)); \
 		trap_Cvar_Set("g_alienStage", va("%d", S3)); \
 		trap_Cvar_Set("g_humanStage", va("%d", S3)); \
-		triggers += G_Checktrigger_stages(PTE_ALIENS, S2); \
-		triggers += G_Checktrigger_stages(PTE_HUMANS, S2); \
-		triggers += G_Checktrigger_stages(PTE_ALIENS, S3); \
-		triggers += G_Checktrigger_stages(PTE_HUMANS, S3); \
+		triggers += G_Checktrigger_stages(TEAM_ALIENS, S2); \
+		triggers += G_Checktrigger_stages(TEAM_HUMANS, S2); \
+		triggers += G_Checktrigger_stages(TEAM_ALIENS, S3); \
+		triggers += G_Checktrigger_stages(TEAM_HUMANS, S3); \
 		G_OC_LoadRatings(); \
 		level.ocLoadTime = level.time + OC_PREP_TIME; \
 		if(triggers) \
@@ -352,14 +365,17 @@ extern int oc_gameMode;
 	// game and balance stuff
 	//<+===============================================+>
 
+	char *G_OC_MediStats(gentity_t *ent, int count, int time);
+	char *G_OC_WinStats(gentity_t *ent, int count, int time);
+
 	#define G_OC_Damage() \
 	do \
 	{ \
-		if(!BG_OC_OCMode) \
+		if(!BG_OC_OCMode()) \
 			break; \
  \
 		/* test and process checkpoints */ \
-		G_OC_PlayerCheckpoint(targ, attacker); \
+		G_OC_Checkpoint(targ, attacker); \
  \
 		/* no damage to a buildable and no damage from a client */ \
 		if(attacker->client) \
@@ -382,15 +398,15 @@ extern int oc_gameMode;
 			{ \
 				spot = level.scrimTeam[ent->client->pers.scrimTeam].checkpoint; \
  \
-				if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, CLIENT_NULL) == NULL) \
+				if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL) == NULL) \
 					return spot; \
 			} \
 		} \
 		else if(ent->client->pers.checkpoint) \
 		{ \
-			spot = ent->client->pers.checkpoint \
+			spot = ent->client->pers.checkpoint; \
  \
-			if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL, CLIENT_NULL) == NULL) \
+			if(spot && G_CheckSpawnPoint(spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, NULL) == NULL) \
 				return spot; \
 		} \
 	} while(0)
@@ -434,14 +450,14 @@ extern int oc_gameMode;
  \
 			if(!client->pers.connection->medisLastCheckpoint) \
 			{ \
-				client->pers.connection->medisLastCheckpoint = G_Alloc((level.totalMedistations) * sizeof(gentity_t *)); \
+				client->pers.connection->medisLastCheckpoint = BG_Alloc((level.totalMedistations) * sizeof(gentity_t *)); \
 			} \
  \
-			memcpy(client->pers.connection->medisLastChcekpoint, client->pers.medisLastCheckpoint, level.totalMedistations + 1); \
+			memcpy(client->pers.connection->medisLastCheckpoint, client->pers.medisLastCheckpoint, level.totalMedistations + 1); \
 		} \
 		else if(client->pers.connection->medisLastCheckpoint) \
 		{ \
-			G_Free(client->pers.connection->medisLastCheckpoint); \
+			BG_Free(client->pers.connection->medisLastCheckpoint); \
 			client->pers.connection->medisLastCheckpoint = NULL; \
 		} \
  \
@@ -452,14 +468,14 @@ extern int oc_gameMode;
  \
 			if(!client->pers.connection->armsLastCheckpoint) \
 			{ \
-				client->pers.connection->armsLastCheckpoint = G_Alloc((level.totalArmouries) * sizeof(gentity_t *)); \
+				client->pers.connection->armsLastCheckpoint = BG_Alloc((level.totalArmouries) * sizeof(gentity_t *)); \
 			} \
  \
-			memcpy(client->pers.connection->armsLastChcekpoint, client->pers.armsLastCheckpoint, level.totalArmouries + 1); \
+			memcpy(client->pers.connection->armsLastCheckpoint, client->pers.armsLastCheckpoint, level.totalArmouries + 1); \
 		} \
 		else if(client->pers.connection->armsLastCheckpoint) \
 		{ \
-			G_Free(client->pers.connection->armsLastCheckpoint); \
+			BG_Free(client->pers.connection->armsLastCheckpoint); \
 			client->pers.connection->armsLastCheckpoint = NULL; \
 		} \
  \
@@ -469,11 +485,11 @@ extern int oc_gameMode;
 		client->pers.connection->hasCheated = client->pers.hasCheated; \
 		if(client->pers.scrimTeam) \
 		{ \
-			client->pers.connection->checkpoint = NULL;
+			client->pers.connection->checkpoint = NULL; \
 			client->pers.connection->hasCheated = 1; \
 			client->pers.connection->aliveTime = INFINITE; \
-			/* client->pers.connection->lastAliveTime = INFINITE */  /* this actually might do something bad */ \
-			while(client->pers.connection->aliveTime < 1) client->pers.connection->aliveTime--;
+			/* client->pers.connection->lastAliveTime = INFINITE */  /* unnecessary? */ \
+			while(client->pers.connection->aliveTime < 1) client->pers.connection->aliveTime--; \
 			/* while(client->pers.connection->lastAliveTime < 1) client->pers.connection->lastAliveTime--; */ \
 		} \
 	} while(0)
@@ -519,7 +535,7 @@ extern int oc_gameMode;
 		if(!ent->client->pers.scrimTeam || ent->client->pers.override || G_admin_canEditOC(ent)) \
 			return; \
  \
-		if(ent->client->pers.teamSelection == PTE_ALIENS) \
+		if(ent->client->pers.teamSelection == TEAM_ALIENS) \
 		{ \
 			/* aliens can't fire weapons */ \
 			/* but sometimes they need weapons to distinguish on teams */ \
@@ -538,68 +554,70 @@ extern int oc_gameMode;
 			} \
 			else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1) \
 			{ \
-				meleeAttack( ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW ); \
+				meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
 			} \
 			else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1_UPG) \
 			{ \
-				meleeAttack( ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW ); \
+				meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
 			} \
 			else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL2) \
 			{ \
-				meleeAttack( ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW ); \
+				meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
 			} \
 			else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL2_UPG) \
 			{ \
-				meleeAttack( ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW ); \
+				meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
 			} \
 			else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL3) \
 			{ \
-				meleeAttack( ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW ); \
+				meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
 			} \
 			else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL3_UPG) \
 			{ \
-				meleeAttack( ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW ); \
+				meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
 			} \
 			else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL4) \
 			{ \
-				meleeAttack( ent, LEVEL4_CLAW_RANGE, LEVEL4_CLAW_WIDTH, LEVEL4_CLAW_DMG, MOD_LEVEL4_CLAW ); \
+				meleeAttack(ent, LEVEL4_CLAW_RANGE, LEVEL4_CLAW_WIDTH, LEVEL4_CLAW_WIDTH, LEVEL4_CLAW_DMG, MOD_LEVEL4_CLAW); \
 			} \
 			else \
 			{ \
-				G_ClientPrint( ent, "^1Error: ^3Alien class unknown for scrim - using Dragoon chomp", CLIENT_SPECTATORS ); \
-				meleeAttack( ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW ); \
+				G_ClientPrint(ent, "^1Error: ^3Alien class unknown for scrim - using Dragoon chomp", CLIENT_SPECTATORS); \
+				meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
 			} \
  \
 			if(ent->s.weapon == WP_ALEVEL1_UPG) \
-			{
-				poisonCloud( ent ); \
+			{ \
+				poisonCloud(ent); \
 			} \
 			if(ent->s.weapon == WP_ALEVEL2_UPG) \
 			{ \
-				poisonCloud( ent ); \
+				poisonCloud(ent); \
 			} \
-			if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD || ent->s.weapon == WP_HBUILD2) \
+			/* if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD || ent->s.weapon == WP_HBUILD2) */ \
+			if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD) \
 			{ \
-				cancelBuildFire( ent ); \
+				cancelBuildFire(ent); \
 			} \
 		} \
 		else \
 		{ \
 			if(ent->s.weapon == WP_LUCIFER_CANNON) \
 			{ \
-				LCChargeFire( ent, qtrue ); \
+				LCChargeFire(ent, qtrue); \
 			} \
 			if(ent->s.weapon == WP_ALEVEL1_UPG) \
 			{ \
-				poisonCloud( ent ); \
+				poisonCloud(ent); \
 			} \
 			if(ent->s.weapon == WP_ALEVEL2_UPG) \
 			{ \
-				poisonCloud( ent ); \
+				poisonCloud(ent); \
 			} \
-			if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD || ent->s.weapon == WP_HBUILD2) \
+			/* if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD || ent->s.weapon == WP_HBUILD2) */ \
+			if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD) \
 			{ \
-				cancelBuildFire( ent ); \
+				cancelBuildFire(ent); \
 			} \
 		} \
  \
@@ -628,13 +646,13 @@ extern int oc_gameMode;
  \
 		if(level.totalMedistations && client->pers.medis && client->pers.medisLastCheckpoint) \
 		{ \
-			G_Free(client->pers.medis); \
-			G_Free(client->pers.medisLastCheckpoint); \
+			BG_Free(client->pers.medis); \
+			BG_Free(client->pers.medisLastCheckpoint); \
 		} \
 		if(level.totalArmouries && client->pers.arms && client->pers.armsLastCheckpoint) \
 		{ \
-			G_Free(client->pers.arms); \
-			G_Free(client->pers.armsLastCheckpoint); \
+			BG_Free(client->pers.arms); \
+			BG_Free(client->pers.armsLastCheckpoint); \
 		} \
  \
 		/* cleanly handle scrim teams */ \
@@ -651,12 +669,12 @@ extern int oc_gameMode;
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		trap_GetUserInfo(clientNum, userinfo, sizeof(userinfo)); \
+		trap_GetUserinfo(clientNum, userinfo, sizeof(userinfo)); \
  \
 		if(G_admin_hide_check(userinfo, reason, sizeof(reason), &hidden, &hiddenTime, NULL)) \
 		{ \
-			client->pers.hiddenTime = hiddenTime \
-			Q_strncpyz(client->pers.hiddenReason, reas, sizeof(client->pers.hiddenReason)); \
+			client->pers.hiddenTime = hiddenTime; \
+			Q_strncpyz(client->pers.hiddenReason, reason, sizeof(client->pers.hiddenReason)); \
  \
 			if(hidden) \
 			{ \
@@ -671,18 +689,18 @@ extern int oc_gameMode;
 				client->pers.hidden = qfalse; \
 			} \
  \
-			trap_SendServerCommand(clientNum, va("print \"You have been %shidden.  Reason: %s\n\"", client->pers.hidden ? "" : "un", (client->pers.hiddenReason[0]) ? (client->pers.hiddenReason) : ("hidden by admin") ) ); \
+			trap_SendServerCommand(clientNum, va("print \"You have been %shidden.  Reason: %s\n\"", client->pers.hidden ? "" : "un", (client->pers.hiddenReason[0]) ? (client->pers.hiddenReason) : ("hidden by admin"))); \
 		} \
  \
 		if(level.totalMedistations) \
 		{ \
-			client->pers.medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
-			client->pers.medisLastCheckpoint = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
+			client->pers.medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
+			client->pers.medisLastCheckpoint = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
 		} \
 		if(level.totalArmouries) \
 		{ \
-			client->pers.arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
-			client->pers.armsLastCheckpoint = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
+			client->pers.arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
+			client->pers.armsLastCheckpoint = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
 		} \
  \
 		client->pers.nextWeaponCheckTime = client->pers.nextOverrideCheckTime = level.time; \
@@ -739,7 +757,7 @@ extern int oc_gameMode;
 			break; \
  \
 		/* test if the player is hidden */ \
-		if(level.clients[i].client->pers.hidden && !G_admin_permission(other, ADMF_SPEC_ALLCHAT)) \
+		if(level.clients[i].pers.hidden && !G_admin_permission(ent, ADMF_SPEC_ALLCHAT)) \
 		{ \
 			/* cannot spectate */ \
 			return; \
@@ -754,7 +772,7 @@ extern int oc_gameMode;
 			break; \
  \
 		/* test if the player is hidden */ \
-		if(level.clients[clientnum].client->pers.hidden && !G_admin_permission(other, ADMF_SPEC_ALLCHAT)) \
+		if(level.clients[clientnum].pers.hidden && !G_admin_permission(ent, ADMF_SPEC_ALLCHAT)) \
 		{ \
 			/* cannot spectate */ \
 			continue; \
@@ -849,7 +867,7 @@ extern int oc_gameMode;
 		} \
 	} while(0)
 
-	#define G_OC_NeedRepeaterBlast ((BG_OC_OCMode()) ? (1) : (0))
+	#define G_OC_NeedRepeaterBlast() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define G_OC_Frame() \
 	do \
@@ -873,7 +891,7 @@ extern int oc_gameMode;
 					ent = &g_entities[i]; \
 					if(ent && ent->client && ent->client->pers.scrimTeam) \
 					{ \
-						G_OC_RestartClient(ent, 0, 0);
+						G_OC_RestartClient(ent, 0, 0); \
 					} \
 				} \
  \
@@ -887,7 +905,7 @@ extern int oc_gameMode;
 		{ \
 			if(g_ocWarmup.integer && !G_OC_IsSingleScrim()) \
 			{ \
-				level.ocScrimState = G_OC_STATE_WARM;
+				level.ocScrimState = G_OC_STATE_WARM; \
 			} \
 			else \
 			{ \
@@ -895,7 +913,8 @@ extern int oc_gameMode;
  \
 				for(i = 0; i < level.maxclients; i++) \
 				{ \
-					G_OC_RestartClient(ent, 0, 0);
+					ent = &g_entities[i]; \
+					G_OC_RestartClient(ent, 0, 0); \
 				} \
  \
 				level.ocScrimState = G_OC_STATE_PLAY; \
@@ -905,10 +924,10 @@ extern int oc_gameMode;
 		/* see if we need to load the layout */ \
 		if(level.ocLoadTime && level.time > level.ocLoadTime) \
 		{ \
-			G_OC_LayoutLoad(NULL);
-			level.ocLoadTime = level.ocLoadDelayedByTrigger = 0;
+			G_OC_LayoutLoad(NULL); \
+			level.ocLoadTime = level.ocLoadDelayedByTrigger = 0; \
 			/* removal of the Waiting for stage triggers CP in case it exists */ \
-			G_ClientCP(NULL, "^7", "^l^o^a^d^i^n^g", 0);
+			G_ClientCP(NULL, "^7", "^l^o^a^d^i^n^g", 0); \
 		} \
 		/* see if it hasn't loaded yet, but it's going to take longer than */ \
 		/* usual because doors and everything else need to open */ \
@@ -921,7 +940,7 @@ extern int oc_gameMode;
 		/* everybody that's it's going to end */ \
 		if(level.scrimEndTime) \
 		{ \
-			if(G_OC_HasScrimEnded()) \
+			if(G_OC_HasScrimFinished()) \
 			{ \
 				/* immediately remove the alert message */ \
 				G_ClientCP(NULL, "^7", "crim ends in", 0); \
@@ -950,7 +969,7 @@ extern int oc_gameMode;
 	#define G_OC_NeedUnshrink() ((BG_OC_OCMode()) ? (1) : (0))
 //	#define G_OC_NeedUnshrink() 0  // barricades are never shrunk in OC mode
 #if 1
-	#define G_OC_Unshrink() return \
+	#define G_OC_Unshrink() return
 #else
 	#define G_OC_Unshrink() \
 	do \
@@ -972,7 +991,7 @@ extern int oc_gameMode;
 	} while(0)
 #endif
 
-	#define G_OC_BONUS_BUILDABLE_THINK \
+	#define G_OC_BONUS_BUILDABLE_THINK() \
 	do \
 	{ \
 		if(!BG_OC_OCMode()) \
@@ -1006,7 +1025,7 @@ extern int oc_gameMode;
 			built->groupID = 2;  /* UNPOWERED - TODO: ... */ \
  \
 		if(built->s.modelindex == BA_H_SPAWN) \
-			level.numNodes++; \jetpack
+			level.numNodes++; \
 	} while(0)
 
 	#define G_OC_NeedStartSolid() (!(BG_OC_OCMode()))  // OC buildables can be in and on other stuff
@@ -1019,7 +1038,7 @@ extern int oc_gameMode;
 	#define G_OC_EVOLVEBLOCK_TIME 2000
 
 	#define G_OC_HumanNameForWeapon(x) (BG_Weapon((x)) ? (BG_Weapon((x))->humanName) : ("NULL"))
-	#define G_OC_TeamForWeapon(x) (BG_WEAPON((x)) ? (BG_Weapon((x))->team) : (0))
+	#define G_OC_TeamForWeapon(x) (BG_Weapon((x)) ? (BG_Weapon((x))->team) : (0))
 
 	#define G_OC_NoSuddenDeath() ((BG_OC_OCMode()) ? (1) : (0))
 
@@ -1047,11 +1066,13 @@ extern int oc_gameMode;
 	int G_OC_PlayerSpawn(gentity_t *ent);
 	int G_OC_PlayerDie(gentity_t *ent);
 	int G_OC_CanUseBonus(gentity_t *ent);
-	int G_OC_WeaponIsReserved(weapon_t weapon);
+//	int G_OC_WeaponIsReserved(weapon_t weapon);
+	int G_OC_WeaponIsReserved(int weapon);
 	int G_OC_WeaponRemoveReserved(gentity_t *ent);
 	int G_OC_IsSingleScrim(void);
 	int G_OC_EndScrim(void);
-	int G_OC_ValidScrimWeapon(weapon_t weapon);
+	//int G_OC_ValidScrimWeapon(weapon_t weapon);
+	int G_OC_ValidScrimWeapon(int weapon);
 	int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamName, char *weaponName);
 	int G_OC_ValidScrimTeamName(char *name);
 	int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent);
@@ -1059,13 +1080,13 @@ extern int oc_gameMode;
 	int G_OC_NumScrimTeams(void);
 	int G_OC_TooFewScrimTeams(void);
 	int G_OC_HasScrimFinished(void);
-	int G_OC_NumberOfTeams(void);TODO MINTEAMS
+	int G_OC_NumberOfTeams(void);
 	#define G_OC_BUILDABLEBUILT(x) G_OC_BuildableBuilt(x)
 	int G_OC_BuildableBuilt(gentity_t *ent);
 	#define G_OC_BUILDABLEDESTROYED(x) G_OC_BuildableDestroyed(x)
 	int G_OC_BuildableDestroyed(gentity_t *ent);
 
-	int G_OC_Lol(gentity_t *ent);
+	void G_OC_Lol(gentity_t *ent);
 
 	#define G_OC_NeedSuicide() ((BG_OC_OCMode()) ? (1) : (0))
 	#define G_OC_NeverForceTeamBalance() ((BG_OC_OCMode()) ? (1) : (0))
@@ -1145,20 +1166,20 @@ extern int oc_gameMode;
  \
 		if(team == TEAM_HUMANS && G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ALIENONLY) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_BOTHTEAMS)) \
 		{ \
-			G_ClientPrint(ent, va("You cannot join humans with layout option '%s'", G_OC_OCFLAG_ALIENONLY_NAME), NULL, CLIENT_NULL); \
+			G_ClientPrint(ent, va("You cannot join humans with layout option '%s'", G_OC_OCFLAG_ALIENONLY_NAME), CLIENT_NULL); \
 			return; \
 		} \
  \
 		if(team == TEAM_ALIENS && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ALIENONLY) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_BOTHTEAMS)) \
 		{ \
-			G_ClientPrint(ent, va("You cannot join aliens without layout option '%s' or '%s'", G_OC_OCFLAG_ALIENONLY_NAME, G_OC_OCFLAG_BOTHTEAMS_NAME), NULL, CLIENT_NULL); \
+			G_ClientPrint(ent, va("You cannot join aliens without layout option '%s' or '%s'", G_OC_OCFLAG_ALIENONLY_NAME, G_OC_OCFLAG_BOTHTEAMS_NAME), CLIENT_NULL); \
 			return; \
 		} \
  \
 		/* long series of tests for alien classes */ \
-		if(team = TEAM_ALIENS && !G_OC_TestLayoutFlag(level.layout, OCFL_AGRANGER) && !G_OC_TestLayoutFlag(level.layout, OCFL_AGRANGERUPG) && !G_OC_TestLayoutFlag(level.layout, OCFL_ADRETCH) && !G_OC_TestLayoutFlag(level.layout, OCFL_ABASILISK) && !G_OC_TestLayoutFlag(level.layout, OCFL_ABASILISKUPG) && !G_OC_TestLayoutFlag(level.layout, OCFL_AMARAUDER) && !G_OC_TestLayoutFlag(level.layout, OCFL_AMARAUDERUPG) && !G_OC_TestLayoutFlag(level.layout, OCFL_ADRAGOON) && !G_OC_TestLayoutFlag(level.layout, OCFL_ADRAGOONUPG) && !G_OC_TestLayoutFlag(level.layout, OCFL_ATYRANT)) \
+		if(team == TEAM_ALIENS && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGER) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGERUPG) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRETCH) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISK) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISKUPG) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDER) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDERUPG) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOON) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOONUPG) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ATYRANT)) \
 		{ \
-			G_ClientPrint(ent, "There are no alien class flags in the layout", NULL, CLIENT_NULL);
+			G_ClientPrint(ent, "There are no alien class flags in the layout", CLIENT_NULL); \
 			return; \
 		} \
 	} while(0)
@@ -1170,9 +1191,9 @@ extern int oc_gameMode;
 			break; \
  \
 		if(!g_timelimit.integer) \
-			break;
+			break; \
  \
-		percentModifier -= (((float) g_timelimitDrop.value) * ((float) (((int) ((int) (level.time - level.startTime) / (int) 60000) / (int) g_timelimit.integer))))
+		percentAddition -= (((float) g_timelimitDrop.value) * ((float) (((int) ((int) (level.time - level.startTime) / (int) 60000) / (int) g_timelimit.integer)))); \
 	} while(0)
 
 	#define G_OC_NamedVoteMatches() \
@@ -1188,11 +1209,11 @@ extern int oc_gameMode;
 	{ \
 		G_StrToLower(arg3); \
  \
-		if(BG_OC_OCMode() && level.ocScrimState > G_OC_STATE_NONE && !G_admin_permission(ent, ADMF_NO_VOTE_LIMIT))
-		{
-			trap_SendServerCommand(ent-g_entities, va("print \"callvote: you cannot call for a mapchange during a scrim\n\""));
-			return;
-		}
+		if(BG_OC_OCMode() && level.ocScrimState > G_OC_STATE_NONE && !G_admin_permission(ent, ADMF_NO_VOTE_LIMIT)) \
+		{ \
+			trap_SendServerCommand(ent-g_entities, va("print \"callvote: you cannot call for a mapchange during a scrim\n\"")); \
+			return; \
+		} \
  \
 		if(!trap_FS_FOpenFile(va("maps/%s.bsp", arg2), NULL, FS_READ)) \
 		{ \
@@ -1203,8 +1224,8 @@ extern int oc_gameMode;
  \
 		if(g_ocOnly.integer) \
 		{ \
-			if(!arg[0]) \
-				Q_strncypz(arg3, "oc", sizeof(arg3)); \
+			if(!arg3[0]) \
+				Q_strncpyz(arg3, "oc", sizeof(arg3)); \
  \
 			if(arg3[0] != 'o' || arg3[0] != 'c') \
 			{ \
@@ -1247,7 +1268,7 @@ extern int oc_gameMode;
 		} \
 	} while(0)
 
-	#define #define G_OC_AlternateMapRestartVote() \
+	#define G_OC_AlternateMapRestartVote() \
 	do \
 	{ \
 		if(!BG_OC_OCMode()) \
@@ -1277,7 +1298,7 @@ extern int oc_gameMode;
 		} \
 	} while(0)
 
-	#define #define G_OC_AlternateDrawVote()
+	#define G_OC_AlternateDrawVote() \
 	do \
 	{ \
 		if(!BG_OC_OCMode()) \
@@ -1292,85 +1313,85 @@ extern int oc_gameMode;
 		} \
  \
 		level.votePassThreshold = g_mapVotePercent.value + percentAddition; \
-		Com_sprintf( level.voteString, sizeof( level.voteString ), "evacuation" ); \
-		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), \
-			"End match in a draw" ); \
+		Com_sprintf(level.voteString, sizeof(level.voteString), "evacuation"); \
+		Com_sprintf(level.voteDisplayString, sizeof(level.voteDisplayString), \
+			"End match in a draw"); \
 	} while(0)
 
 	#define G_OC_OtherVoteCommands() \
-	else if( !Q_stricmp( arg1, "hide" ) && BG_OC_OCMode() ) \
+	else if(!Q_stricmp(arg1, "hide") && BG_OC_OCMode()) \
 	{ \
-		if( !g_allowHideVote.integer ) \
+		if(!g_allowHideVote.integer) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, "print \"callvote: hide votes are disabled\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, "print \"callvote: hide votes are disabled\n\""); \
 			return; \
 		} \
  \
-		if( level.clients[clientNum].pers.hidden ) \
+		if(level.clients[clientNum].pers.hidden) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, \
-				"print \"callvote: player is already hidden\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, \
+				"print \"callvote: player is already hidden\n\""); \
 			return; \
 		} \
  \
 		if(level.clients[clientNum].pers.hiddenTime) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, \
-				"print \"callvote: player is force hidden\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, \
+				"print \"callvote: player is force hidden\n\""); \
 			return; \
 		} \
  \
-		if( G_admin_permission( &g_entities[clientNum], ADMF_IMMUNITY ) ) \
+		if(G_admin_permission(&g_entities[clientNum], ADMF_IMMUNITY)) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, \
-				"print \"callvote: admin is immune from vote hide\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, \
+				"print \"callvote: admin is immune from vote hide\n\""); \
 			return; \
 		} \
  \
-		Com_sprintf( level.voteString, sizeof( level.voteString ), \
-			"!hide %i", clientNum ); \
-		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), \
-			"Hide player \'%s\'", name ); \
+		Com_sprintf(level.voteString, sizeof(level.voteString), \
+			"!hide %i", clientNum); \
+		Com_sprintf(level.voteDisplayString, sizeof(level.voteDisplayString), \
+			"Hide player \'%s\'", name); \
 	} \
-	else if( !Q_stricmp( arg1, "unhide" ) && BG_OC_OCMode() ) \
+	else if(!Q_stricmp(arg1, "unhide") && BG_OC_OCMode()) \
 	{ \
-		if( !g_allowUnhideVote.integer ) \
+		if(!g_allowUnhideVote.integer) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, "print \"callvote: unhide votes are disabled\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, "print \"callvote: unhide votes are disabled\n\""); \
 			return; \
 		} \
  \
-		if( !level.clients[clientNum].pers.hidden ) \
+		if(!level.clients[clientNum].pers.hidden) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, \
-				"print \"callvote: player is not currently hidden\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, \
+				"print \"callvote: player is not currently hidden\n\""); \
 			return; \
 		} \
  \
 		if(level.clients[clientNum].pers.hiddenTime) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, \
-				"print \"callvote: player is force unhidden\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, \
+				"print \"callvote: player is force unhidden\n\""); \
 			return; \
 		} \
  \
-		if( G_admin_permission( &g_entities[clientNum], ADMF_IMMUNITY ) ) \
+		if(G_admin_permission(&g_entities[clientNum], ADMF_IMMUNITY)) \
 		{ \
-			trap_SendServerCommand( ent-g_entities, \
-				"print \"callvote: admin is immune from vote unhide\n\"" ); \
+			trap_SendServerCommand(ent-g_entities, \
+				"print \"callvote: admin is immune from vote unhide\n\""); \
 			return; \
 		} \
  \
-		Com_sprintf( level.voteString, sizeof( level.voteString ), \
-			"!unhide %i", clientNum ); \
-		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), \
-			"Un-Hide player \'%s\'", name ); \
+		Com_sprintf(level.voteString, sizeof(level.voteString), \
+			"!unhide %i", clientNum); \
+		Com_sprintf(level.voteDisplayString, sizeof(level.voteDisplayString), \
+			"Un-Hide player \'%s\'", name); \
 	} \
-	else if( !Q_stricmp( arg1, "startscrim" ) && BG_OC_OCMode() ) \
+	else if(!Q_stricmp(arg1, "startscrim") && BG_OC_OCMode()) \
 	{ \
 		if(arg2[0] != 'a' || arg2[0] != 'm') \
 		{ \
-			G_ClientPrint(ent, "callvote: usage /callvote startscrim [a/m]", 0); \
+			G_ClientPrint(ent, "callvote: usage /callvote startscrim [a/m]", CLIENT_NULL); \
 			return; \
 		} \
  \
@@ -1389,12 +1410,12 @@ extern int oc_gameMode;
 		if(G_OC_TooFewScrimTeams()) \
 		{ \
 			G_ClientPrint(ent, "callvote: too few teams exist for a scrim", CLIENT_NULL); \
-			return;
+			return; \
 		} \
  \
 		if(!ent->client->pers.scrimTeam) \
 		{ \
-			G_ClientPrint(ent, "callvote: you need to be on a scrim team to do this", 0); \
+			G_ClientPrint(ent, "callvote: you need to be on a scrim team to do this", CLIENT_NULL); \
 			return; \
 		} \
  \
@@ -1403,7 +1424,7 @@ extern int oc_gameMode;
 		Com_sprintf(level.voteDisplayString, sizeof(level.voteDisplayString), \
 			"Start a '%s^7' scrim^7", arg2[0] == 'm' ? "^1medi^7" : "^2armoury^7"); \
 	} \
-	else if( !Q_stricmp( arg1, "endscrim" ) && BG_OC_OCMode() ) \
+	else if(!Q_stricmp(arg1, "endscrim") && BG_OC_OCMode()) \
 	{ \
 		if(level.ocScrimState <= G_OC_STATE_NONE) \
 		{ \
@@ -1412,8 +1433,8 @@ extern int oc_gameMode;
 		} \
  \
 		level.votePassThreshold = g_endScrimVotePercent.value; \
-		Com_sprintf(level.voteString, sizeof(level.voteString), "!endscrim");
-		Com_sprintf(level.voteDisplayString, sizeof(level.voteDisplayString), "End the scrim");
+		Com_sprintf(level.voteString, sizeof(level.voteString), "!endscrim"); \
+		Com_sprintf(level.voteDisplayString, sizeof(level.voteDisplayString), "End the scrim"); \
 	}
 
 	#define G_OC_OtherCommandDescription() ((BG_OC_OCMode()) ? (", hide, unhide, startscrim, endscrim") : (""))
@@ -1441,7 +1462,7 @@ extern int oc_gameMode;
  \
 		if(BG_OC_OCMode()) \
 		{ \
-			G_ClientPrint(ent, "Team votes are disabled during an obstacle course", CLIENT_NULL);
+			G_ClientPrint(ent, "Team votes are disabled during an obstacle course", CLIENT_NULL); \
 			return; \
 		} \
 	} while(0)
@@ -1460,7 +1481,7 @@ extern int oc_gameMode;
 			break; \
  \
 		if(G_admin_canEditOC(ent)) \
-			break;
+			break; \
  \
 		ent->client->pers.needEvolve = 1; \
 		ent->client->pers.evolveTime = level.time + G_OC_EVOLVEBLOCK_TIME;  /* warning: funny things _might_ happen if clients do not spawn immediately, but they should */ \
@@ -1477,7 +1498,7 @@ extern int oc_gameMode;
 			(ent->client->ps.stats[STAT_HEALTH] >= BG_Class(currentClass)->health) \
 			? \
 			( \
-				/* check for evolve spam */
+				/* check for evolve spam */ \
 				(level.time >= ent->client->pers.nextValidEvolveTime && newClass != currentClass) \
 				? \
 				( \
@@ -1510,7 +1531,9 @@ extern int oc_gameMode;
 				( \
 					(0) \
 				) \
+			) \
 			: \
+			( \
 				(0) \
 			) \
 		) \
@@ -1547,7 +1570,7 @@ extern int oc_gameMode;
  \
 		/* some weapons are OK */ \
 		if(weapon == WP_NONE || weapon == WP_BLASTER || weapon ==  WP_MACHINEGUN) \
-			break;
+			break; \
  \
 		if(ent->client->pers.scrimTeam) \
 		{ \
@@ -1564,14 +1587,14 @@ extern int oc_gameMode;
 		else \
 		{ \
 			/* make sure the client has won */ \
-			if((!G_AllArms(ent->client->pers.arms) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_NumberOfArms(ent->client->pers.arms))) && !ent->client->pers.override) \
+			if((!G_OC_AllArms(ent->client->pers.arms) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(ent->client->pers.arms))) && !ent->client->pers.override) \
 			{ \
 				G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
 				return; \
 			} \
  \
 			/* is the weapon reserved for a scrim team? */ \
-			if(G_WeaponIsReserved(weapon) && !ent->client->pers.override && !G_admin_canEditOC(ent)) \
+			if(G_OC_WeaponIsReserved(weapon) && !ent->client->pers.override && !G_admin_canEditOC(ent)) \
 			{ \
 				G_ClientPrint(ent, "This item is reserved for the oc scrim", CLIENT_SPECTATORS); \
 				return; \
@@ -1620,7 +1643,7 @@ extern int oc_gameMode;
  \
 		/* some upgrades are OK */ \
 		if(upgrade == UP_AMMO) \
-			break;
+			break; \
  \
 		if(ent->client->pers.scrimTeam) \
 		{ \
@@ -1638,7 +1661,7 @@ extern int oc_gameMode;
 		{ \
 			/* make sure the client has won */ \
  \
-			if(!G_AllArms(ent->client->pers.arms)) \
+			if(!G_OC_AllArms(ent->client->pers.arms)) \
 			{ \
 				G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
 				return; \
@@ -1661,10 +1684,12 @@ extern int oc_gameMode;
 	#define G_OC_ClientThink() \
 	do \
 	{ \
+		int i; \
+ \
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		if(client->pers.teamSelection == TEAM_HUMANS || client->pers.teamSelection == TEAM_ALIENS && ent->health > 0 && client->sess.spectatorState != SPECTATOR_NOT) \
+		if((client->pers.teamSelection == TEAM_HUMANS || client->pers.teamSelection == TEAM_ALIENS) && ent->health > 0 && client->sess.spectatorState != SPECTATOR_NOT) \
 		{ \
 			client->pers.aliveTime += trap_Milliseconds() - client->pers.lastAliveTime; \
 			client->pers.lastAliveTime = trap_Milliseconds(); \
@@ -1672,8 +1697,8 @@ extern int oc_gameMode;
  \
 		if(client->pers.needEvolve) \
 		{ \
-			pClass_t currentClass = client->pers.classSelection; \
-			pClass_t newClass; \
+			class_t currentClass = client->pers.classSelection; \
+			class_t newClass; \
 			vec3_t infestOrigin; \
  \
 			if(level.time >= client->pers.evolveTime) \
@@ -1688,40 +1713,40 @@ extern int oc_gameMode;
  \
 			/* stop wallwalking */ \
 			pm.ps->persistant[PERS_STATE] &= ~PS_WALLCLIMBINGFOLLOW; \
-			pm.ps->stats[STAT_STATE] &= ~PS_WALLCLIMBINGCEILING; \
-			pm.ps->stats[STAT_STATE] &= ~PS_WALLCLIMBING; \
+			pm.ps->eFlags &= ~(EF_WALLCLIMBCEILING | EF_WALLCLIMB); \
+			pm.ps->stats[STAT_STATE] &= ~SS_WALLCLIMBING; \
 			if(pm.cmd.upmove < 0) \
 				pm.cmd.upmove = 0; \
  \
 			/* find the first class to evolve to */ \
 			if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGER)) \
 				newClass = PCL_ALIEN_BUILDER0; \
-			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGER_UPG)) \
+			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGERUPG)) \
 				newClass = PCL_ALIEN_BUILDER0_UPG; \
 			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRETCH)) \
 				newClass = PCL_ALIEN_LEVEL0; \
 			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISK)) \
 				newClass = PCL_ALIEN_LEVEL1; \
-			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISK_UPG)) \
+			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISKUPG)) \
 				newClass = PCL_ALIEN_LEVEL1_UPG; \
 			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDER)) \
 				newClass = PCL_ALIEN_LEVEL2; \
-			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDER_UPG)) \
+			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDERUPG)) \
 				newClass = PCL_ALIEN_LEVEL2_UPG; \
 			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOON)) \
 				newClass = PCL_ALIEN_LEVEL3; \
-			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOON_UPG)) \
+			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOONUPG)) \
 				newClass = PCL_ALIEN_LEVEL3_UPG; \
 			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ATYRANT)) \
 				newClass = PCL_ALIEN_LEVEL4; \
  \
-			/* furthur unnecessary checks for wallwaking and some other checks */ \MARKER
-			if(!(client->ps.stats[STAT_STATE] & SS_WALLCLIMBING) && !(client->ps.stats[STAT_STATE] & SS_WALLCLIMBINGCEILING) && client->pers.teamSelection == TEAM_ALIENS && !(client->ps.state[STAT_STATE] & SS_HOVELING) && ent->health > 0 && G_RoomForClassChange(ent, newClass, infestOrigin)) \
+			/* furthur unnecessary checks for wallwaking and some other checks */ \
+			if(!(client->ps.stats[STAT_STATE] & SS_WALLCLIMBING) && client->pers.teamSelection == TEAM_ALIENS && !(client->ps.stats[STAT_STATE] & SS_HOVELING) && ent->health > 0 && G_RoomForClassChange(ent, newClass, infestOrigin)) \
 			{ \
 				if(currentClass != newClass) \
 				{ \
-					client->pers.evolveHealthFraction = (((float) ent->client->ps.stats[STAT_HEALTH]) / ((float) BG_Class(currentClass)->health)) \
-
+					client->pers.evolveHealthFraction = (((float) ent->client->ps.stats[STAT_HEALTH]) / ((float) BG_Class(currentClass)->health)); \
+ \
 					if(client->pers.evolveHealthFraction < 0.0f) \
 						client->pers.evolveHealthFraction = 0.0f; \
 					if(client->pers.evolveHealthFraction > 1.0f) \
@@ -1754,29 +1779,29 @@ extern int oc_gameMode;
 			} \
 			else if(client->pers.classSelection == PCL_ALIEN_LEVEL3) \
 			{ \
-				if(client->ps.weaponTime <= 0)
-					pm.autoWeaponHit[client->ps.weapon] = CheckPounceAttack(ent);
+				if(client->ps.weaponTime <= 0) \
+					pm.autoWeaponHit[client->ps.weapon] = CheckPounceAttack(ent); \
 			} \
 			else if(client->pers.classSelection == PCL_ALIEN_LEVEL3_UPG) \
 			{ \
-				if(client->ps.weaponTime <= 0)
-					pm.autoWeaponHit[client->ps.weapon] = CheckPounceAttack(ent);
+				if(client->ps.weaponTime <= 0) \
+					pm.autoWeaponHit[client->ps.weapon] = CheckPounceAttack(ent); \
 			} \
 		} \
  \
 		if(client->ps.stats[STAT_HEALTH] <= 0) \
-			break;
+			break; \
  \
 		if(level.time >= client->pers.nextWeaponCheckTime && !client->pers.override && !G_admin_canEditOC(ent)) \
 		{ \
-			oc_scrimTeam_t *t; \
+			g_oc_scrimTeam_t *t; \
  \
 			client->pers.nextWeaponCheckTime += G_OC_FRAMETIMEWEAPON; \
-			if(client->pers.nextWeaponTime < level.time - G_OC_FRAMETIMEWEAPON * 10)  /* only up to 10 frames behind */ \
-				client->pers.nextWeaponTime = level.time + G_OC_FRAMETIMEWEAPON; \
+			if(client->pers.nextWeaponCheckTime < level.time - G_OC_FRAMETIMEWEAPON * 10)  /* only up to 10 frames behind */ \
+				client->pers.nextWeaponCheckTime = level.time + G_OC_FRAMETIMEWEAPON; \
 			if(client->pers.scrimTeam && level.ocScrimState >= G_OC_STATE_WARM) \
 			{ \
-				OC_GETTEAM(t, level.scrimTeam, client->pers.scrimTeam); \
+				G_OC_GETTEAM(t, level.scrimTeam, client->pers.scrimTeam); \
  \
 				/* always give scrim players max ammo */ \
 				G_OC_PlayerMaxAmmo(ent); \
@@ -1786,7 +1811,7 @@ extern int oc_gameMode;
 				{ \
 					if(i != t->weapon && BG_InventoryContainsWeapon(i, client->ps.stats)) \
 					{ \
-						BG_RemoveWeaponFromInventory(i, client->ps.stats); \
+						client->ps.stats[STAT_WEAPON] = WP_NONE; \
 						G_ForceWeaponChange(ent, WP_NONE); \
 					} \
 				} \
@@ -1794,30 +1819,36 @@ extern int oc_gameMode;
 				/* make sure player has scrim weapons */ \
 				if(!BG_InventoryContainsWeapon(t->weapon, client->ps.stats)) \
 				{ \
-					BG_AddWeaponToInventory(t->weapon, client->ps.stats); \
+					client->ps.stats[STAT_WEAPON] = t->weapon; \
 					G_ForceWeaponChange(ent, t->weapon); \
 				} \
 			} \
-			else
+			else \
 			{ \
 				G_OC_WeaponRemoveReserved(ent); \
 				if(client->pers.teamSelection == TEAM_HUMANS) \
-				{
+				{ \
 					if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats)) \
 					{ \
-						BG_AddWeaponToInventory(WP_BLASTER, client->ps.stats); \
+						client->ps.stats[STAT_WEAPON] = WP_BLASTER; \
 						G_ForceWeaponChange(ent, WP_NONE); \
 					} \
 					if(!BG_InventoryContainsWeapon(WP_NONE, client->ps.stats)) \
 					{ \
-						BG_AddWeaponToInventory(WP_NONE, client->ps.stats); \
+						client->ps.stats[STAT_WEAPON] = WP_NONE; \
 						G_ForceWeaponChange(ent, WP_NONE); \
 					} \
-					if(ent->client->pers.arms && !((G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(client->pers.arms)) || (client->pers.scrimTeam && ((level.scrimTeam[client->pers.scrimTeam].flags & G_OC_SCRIMFLAG_EQUIPMENT)) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(level.scrimTeam[client->pers.scrimTeam].arms))) || G_AllArms(client->pers.arms)))  /* messy mess of tests if client can buy equipment */ \
+					if(!client->pers.arms || !( \
+						(client->pers.scrimTeam) \
+						? \
+						(level.scrimTeam[client->pers.scrimTeam].flags & G_OC_SCRIMFLAG_EQUIPMENT) \
+						: \
+						(G_OC_AllArms(client->pers.arms) || ( G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(client->pers.arms))) \
+					))  /* messy mess of tests if client can buy equipment */ \
 					{ \
 						if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, client->ps.stats)) \
 						{ \
-							BG_AddWeaponToInventory(WP_MACHINEGUN, client->ps.stats); \
+							client->ps.stats[STAT_WEAPON] = WP_MACHINEGUN; \
 							G_ForceWeaponChange(ent, WP_MACHINEGUN); \
 						} \
 					} \
@@ -1826,23 +1857,25 @@ extern int oc_gameMode;
  \
 			if(BG_InventoryContainsWeapon(WP_HBUILD, client->ps.stats)) \
 			{ \
-				BG_RemoveWeaponFromInventory( WP_HBUILD, client->ps.stats); \
+				client->ps.stats[STAT_WEAPON] = WP_NONE; \
 				G_ForceWeaponChange(ent, WP_NONE); \
 			} \
+			/* \
 			if(BG_InventoryContainsWeapon(WP_HBUILD2, client->ps.stats)) \
 			{ \
-				BG_RemoveWeaponFromInventory(WP_HBUILD2, client->ps.stats); \
+				client->ps.stats[STAT_WEAPON] = WP_NONE; \
 				G_ForceWeaponChange(ent, WP_NONE); \
 			} \
+			*/ \
 		} \
  \
 		/* hacky method of automatically enabling and disabling override */ \
 		if(level.time >= client->pers.nextOverrideCheckTime) \
 		{ \
 			client->pers.nextOverrideCheckTime += G_OC_FRAMETIMEOVERRIDE; \
-			if(client->pers.nextOverrideCheckTime < level.time - OC_AO_FRAME_TIME * 10)  /* only up to 10 frames behind (so that it doesn't continously increment) */ \
+			if(client->pers.nextOverrideCheckTime < level.time - G_OC_FRAMETIMEOVERRIDE * 10)  /* only up to 10 frames behind (so that it doesn't continously increment) */ \
 			{ \
-				client->pers.nextOverrideCheckTime = level.time + G_OC_FRAMETIMEOVERRIDE;\
+				client->pers.nextOverrideCheckTime = level.time + G_OC_FRAMETIMEOVERRIDE; \
 			} \
  \
 			if(!client->pers.noAuO) \
@@ -1863,7 +1896,7 @@ extern int oc_gameMode;
 					{ \
 						G_ClientPrint(ent, "speedmode OFF", CLIENT_NULL); \
 					} \
-					client->speedmode = 0; \
+					client->speed = 0; \
  \
 					if(ent->flags & FL_GODMODE) \
 					{ \
@@ -1893,6 +1926,7 @@ extern int oc_gameMode;
 	void Cmd_Groupdown_f(gentity_t *ent);
 	void Cmd_Group_f(gentity_t *ent);
 	void Cmd_RestartOC_f(gentity_t *ent);
+	void Cmd_TeleportToCheckpoint_f(gentity_t *ent);
 	void Cmd_LeaveScrim_f(gentity_t *ent);
 	void Cmd_JoinScrim_f(gentity_t *ent);
 	void Cmd_ListScrim_f(gentity_t *ent);
@@ -1903,23 +1937,23 @@ extern int oc_gameMode;
 	void Cmd_AutoUnAngle_f(gentity_t *ent);
 
 	#define G_OC_CMDS \
-	{"groupUp", CMD_TEAM | CMD_LIVING, Cmd_GroupUp_f}, \
-		{"upGroup", CMD_TEAM | CMD_LIVING, Cmd_GroupUp_f}, \
-	{"groupDown", CMD_TEAM | CMD_LIVING, Cmd_GroupDown_f}, \
-		{"downGroup", CMD_TEAM | CMD_LIVING, Cmd_GroupDown_f}, \
+	{"groupUp", CMD_TEAM | CMD_LIVING, Cmd_Groupup_f}, \
+		{"upGroup", CMD_TEAM | CMD_LIVING, Cmd_Groupup_f}, \
+	{"groupDown", CMD_TEAM | CMD_LIVING, Cmd_Groupdown_f}, \
+		{"downGroup", CMD_TEAM | CMD_LIVING, Cmd_Groupdown_f}, \
 	{"group", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
 		{"groupDisplay", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
 		{"displayGroup", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
 		{"groupShow", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
 		{"showGroup", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
-	{"spawnUp", CMD_TEAM | CMD_LIVING, Cmd_SpawnUp_f}, \
-		{"spawnGroupUp", CMD_TEAM | CMD_LIVING, Cmd_SpawnUp_f}, \
-		{"upSpawn", CMD_TEAM | CMD_LIVING, Cmd_SpawnUp_f}, \
-		{"upSpawnGroup", CMD_TEAM | CMD_LIVING, Cmd_SpawnUp_f}, \
-	{"spawnDown", CMD_TEAM | CMD_LIVING, Cmd_SpawnDown_f}, \
-		{"spawnGroupDown", CMD_TEAM | CMD_LIVING, Cmd_SpawnDown_f}, \
-		{"downSpawn", CMD_TEAM | CMD_LIVING, Cmd_SpawnDown_f}, \
-		{"downSpawnGroup", CMD_TEAM | CMD_LIVING, Cmd_SpawnDown_f}, \
+	{"spawnUp", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
+		{"spawnGroupUp", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
+		{"upSpawn", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
+		{"upSpawnGroup", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
+	{"spawnDown", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
+		{"spawnGroupDown", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
+		{"downSpawn", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
+		{"downSpawnGroup", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
 	{"mystats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Mystats_f}, \
 	{"stats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Mystats_f}, \
 		{"statistics", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
@@ -1999,54 +2033,54 @@ extern int oc_gameMode;
  \
 			if(level.totalMedistations > connection->totalMedistations) \
 			{ \
-				tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
+				tmp = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
 				memcpy(tmp, connection->medisLastCheckpoint, connection->totalMedistations + 1); \
-				G_OC_SyncMedis(tmp, level.totalMedistations);
+				G_OC_SyncMedis(tmp, level.totalMedistations); \
 			} \
 			else \
 			{ \
-				tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
+				tmp = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *)); \
 				memcpy(tmp, connection->medisLastCheckpoint, connection->totalMedistations + 1); \
-				G_OC_SyncMedis(tmp, connection->totalMedistations);
+				G_OC_SyncMedis(tmp, connection->totalMedistations); \
 			} \
  \
 			if(tmp[level.totalMedistations])  /* check to make sure that they've been synced right */ \
 			{ \
-				G_Free(tmp); \
+				BG_Free(tmp); \
 				G_ClientPrint(ent, "^1Error restoring PTRC", CLIENT_SPECTATORS); \
 				return; \
 			} \
  \
 			memcpy(ent->client->pers.medisLastCheckpoint, tmp, (level.totalMedistations + 1) * sizeof(gentity_t *)); \
-			G_Free(tmp); \
+			BG_Free(tmp); \
 			memcpy(ent->client->pers.medis, ent->client->pers.medisLastCheckpoint, (level.totalMedistations + 1) * sizeof(gentity_t *));  /* all saved medis for the last checkpoint also belong in medis */ \
 		} \
-		if(level.totalArmouries && connection->totalArmouries && connection->armssLastCheckpoint && ent->client->pers.armsLastCheckpoint && ent->client->pers.arms) \
+		if(level.totalArmouries && connection->totalArmouries && connection->armsLastCheckpoint && ent->client->pers.armsLastCheckpoint && ent->client->pers.arms) \
 		{ \
 			gentity_t **tmp; \
  \
 			if(level.totalArmouries > connection->totalArmouries) \
 			{ \
-				tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
+				tmp = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
 				memcpy(tmp, connection->armsLastCheckpoint, connection->totalArmouries + 1); \
-				G_OC_SyncArms(tmp, level.totalArmouries);
+				G_OC_SyncArms(tmp, level.totalArmouries); \
 			} \
 			else \
 			{ \
-				tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
+				tmp = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *)); \
 				memcpy(tmp, connection->armsLastCheckpoint, connection->totalArmouries + 1); \
-				G_OC_SyncArms(tmp, connection->totalArmouries);
+				G_OC_SyncArms(tmp, connection->totalArmouries); \
 			} \
  \
 			if(tmp[level.totalArmouries])  /* check to make sure that they've been synced right */ \
 			{ \
-				G_Free(tmp); \
+				BG_Free(tmp); \
 				G_ClientPrint(ent, "^1Error restoring PTRC", CLIENT_SPECTATORS); \
 				return; \
 			} \
  \
 			memcpy(ent->client->pers.armsLastCheckpoint, tmp, (level.totalArmouries + 1) * sizeof(gentity_t *)); \
-			G_Free(tmp); \
+			BG_Free(tmp); \
 			memcpy(ent->client->pers.arms, ent->client->pers.armsLastCheckpoint, (level.totalArmouries + 1) * sizeof(gentity_t *));  /* all saved arms for the last checkpoint also belong in arms */ \
 		} \
 	} while(0)
@@ -2300,7 +2334,7 @@ extern int oc_gameMode;
 						if(VectorLength(pm->ps->velocity) > LEVEL2_WALLJUMP_MAXSPEED) \
 						{ \
 							VectorNormalize(pm->ps->velocity); \
-							VectorScale((pm->ps->velocity, LEVEL2_WALLJUMP_MAXSPEED, pm->ps->velocity); \
+							VectorScale(pm->ps->velocity, LEVEL2_WALLJUMP_MAXSPEED, pm->ps->velocity); \
 						} \
  \
 						PM_AddEvent(EV_JUMP); \
@@ -2348,5 +2382,8 @@ extern int oc_gameMode;
 	void BG_OC_SetNoWallWalk(int c);
 	int BG_OC_GetNoWallWalk(void);
 #endif /* if defined OC_CGAME || defined OC_GAME */
+
+#undef gentity_t
+#undef weapon_t
 
 #endif /* ifndef _G_OC_H */

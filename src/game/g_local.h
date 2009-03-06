@@ -23,12 +23,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // g_local.h -- local definitions for game module
 
+#ifndef _G_LOCAL_H
+#define _G_LOCAL_H
+
 #define OC_GAME
 #include "bg_oc.h"
 
 #include "../qcommon/q_shared.h"
 #include "bg_public.h"
 #include "g_public.h"
+#include "g_local.h"
+#include "bg_local.h"
 
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
@@ -280,10 +285,11 @@ struct gentity_s
   qboolean          pointAgainstWorld;              // don't use the bbox for map collisions
 
   int               groupID;  // extended buildable information
+#define GROUP_SPAWN 0  // 0 is always the group for player spawning
   int               spawnGroup;  // extended buildable information
   float             reserved2;  // extended buildable information
 
-  G_OC_ENTITY_STRUCT_DEFS
+  G_OC_BUILDABLE_STRUCT_DEFS 
 };
 
 typedef enum
@@ -325,12 +331,18 @@ typedef struct connectionRecord_s
 } connectionRecord_t;
 
 #define MAX_CP 20
-
 #define CP_FRAME_TIME     50
 #define CP_TIME           3000
+#define CP_MAX_MESSAGE    128
 #define CP_MODE_ENABLED   0
 #define CP_MODE_PRINT     1
 #define CP_MODE_DISABLED  2
+typedef struct
+{
+    qboolean    active;
+    int         start;
+    char        message[ CP_MAX_MESSAGE ];
+} mix_cp_t;
 
 //client flags
 #define CLIENT_NULL         0x00
@@ -404,6 +416,8 @@ typedef struct
   int                 crashTime;
   int                 CPMode;
   int                 autoAngleDisabled;  // are angles reset when teleporters are used?  Default 0: angles by default do get reset
+
+  G_OC_CLIENTDATA
 } clientPersistant_t;
 
 #define MAX_UNLAGGED_MARKERS 10
@@ -751,6 +765,7 @@ int       G_ClientNumberFromString( char *s );
 int       G_ClientNumbersFromString( char *s, int *plist, int max );
 int       G_SayArgc( void );
 qboolean  G_SayArgv( int n, char *buffer, int bufferLength );
+char      *ConcatArgs( int start );
 char      *G_SayConcatArgs( int start );
 void      G_DecolorString( char *in, char *out, int len );
 void      G_SanitiseString( char *in, char *out, int len );
@@ -759,6 +774,7 @@ void      Cmd_AdminMessage_f( gentity_t *ent );
 int       G_FloodLimited( gentity_t *ent );
 gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not );
 gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not );
+qboolean G_RoomForClassChange( gentity_t *ent, class_t class, vec3_t newOrigin );
 
 //
 // g_physics.c
@@ -800,8 +816,7 @@ typedef enum
 } itemBuildError_t;
 
 qboolean          AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideExit );
-gentity_t         *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal,
-                    buildable_t spawn, vec3_t spawnOrigin );
+gentity_t         *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal, buildable_t spawn, vec3_t spawnOrigin );
 
 buildable_t       G_IsPowered( vec3_t origin );
 qboolean          G_IsDCCBuilt( void );
@@ -815,8 +830,9 @@ itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distanc
 qboolean          G_BuildIfValid( gentity_t *ent, buildable_t buildable );
 void              G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qboolean force );
 void              G_SetIdleBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim );
-void              G_SpawnBuildable(gentity_t *ent, buildable_t buildable);
+void              G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int spawnGroup, float reserved2 );
 void              FinishSpawningBuildable( gentity_t *ent );
+void              G_LayoutBuildItem( buildable_t buildable, vec3_t origin, vec3_t angles, vec3_t origin2, vec3_t angles2, int groupID, int spawnGroup, float reserved2 );
 void              G_LayoutSave( char *name );
 int               G_LayoutList( const char *map, char *list, int len );
 void              G_LayoutSelect( void );
@@ -875,6 +891,7 @@ void        G_StrToLower( char *s );
 
 void        G_UpdateCPs( void );
 void        G_ClientCP( gentity_t *ent, char *message, char *find, int mode );
+void        G_ClientPrint( gentity_t *ent, char *message, int mode );
 
 //
 // g_combat.c
@@ -930,7 +947,7 @@ void manualTriggerSpectator( gentity_t *trigger, gentity_t *player );
 // g_trigger.c
 //
 void trigger_teleporter_touch( gentity_t *self, gentity_t *other, trace_t *trace );
-void G_Checktrigger_stages( team_t team, stage_t stage );
+int G_Checktrigger_stages( team_t team, stage_t stage );
 
 
 //
@@ -977,7 +994,7 @@ void      G_UpdateZaps( gentity_t *ent );
 //
 void      G_AddCreditToClient( gclient_t *client, short credit, qboolean cap );
 void      G_SetClientViewAngle( gentity_t *ent, vec3_t angle );
-gentity_t *G_SelectTremulousSpawnPoint( team_t  team, vec3_t preference, vec3_t origin, vec3_t angles );
+gentity_t *G_SelectTremulousSpawnPoint( team_t  team, vec3_t preference, vec3_t origin, vec3_t angles, gentity_t *ent );
 gentity_t *G_SelectSpawnPoint( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
 gentity_t *G_SelectAlienLockSpawnPoint( vec3_t origin, vec3_t angles );
 gentity_t *G_SelectHumanLockSpawnPoint( vec3_t origin, vec3_t angles );
@@ -1003,6 +1020,9 @@ void FireWeapon3( gentity_t *ent );
 //
 // g_main.c
 //
+void G_CountSpawns( void );
+void G_CalculateBuildPoints( void );
+void G_CalculateStages( void );
 void ScoreboardMessage( gentity_t *client );
 void MoveClientToIntermission( gentity_t *client );
 void G_MapConfigs( const char *mapname );
@@ -1319,3 +1339,5 @@ qboolean  trap_GetEntityToken( char *buffer, int bufferSize );
 
 void      trap_SnapVector( float *v );
 void      trap_SendGameStat( const char *data );
+
+#endif /* ifndef _G_LOCAL_H */

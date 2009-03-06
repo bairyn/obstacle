@@ -669,7 +669,6 @@ void AGeneric_Think( gentity_t *self )
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
   AGeneric_CreepCheck( self );
   G_OC_DefaultAlienPowered();
-4) i just started a clan consisting of me Grin
 }
 
 /*
@@ -1733,7 +1732,7 @@ void HSpawn_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
       VectorCopy( dest->s.angles, spawn_angles );
     else
       VectorCopy( other->s.angles, spawn_angles );
-    if( G_CheckSpawnPoint( dest->s.number, dest->s.origin, dest->s.origin2, BA_H_SPAWN, spawn_origin, 0 ) == NULL )
+    if( G_CheckSpawnPoint( dest->s.number, dest->s.origin, dest->s.origin2, BA_H_SPAWN, spawn_origin ) == NULL )
     {
       TeleportPlayer( other, spawn_origin, spawn_angles );
       VectorScale( other->client->ps.velocity, 0.0, other->client->ps.velocity );
@@ -3034,7 +3033,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
   }
 
   // Make sure we're not removing the last spawn
-  if( !g_cheats.integer && remainingSpawns > 0 && ( remainingSpawns - spawnCount ) < 1 && G_OC_NeedDestroyLastSpawn() )
+  if( !g_cheats.integer && remainingSpawns > 0 && ( remainingSpawns - spawnCount ) < 1 && !G_OC_NeedNoDestroyLastSpawn() )
     return IBE_LASTSPAWN;
 
   // Not enough points yielded
@@ -3841,7 +3840,7 @@ void G_LayoutSelect( void )
 G_LayoutBuildItem
 ============
 */
-static void G_LayoutBuildItem( buildable_t buildable, vec3_t origin,
+void G_LayoutBuildItem( buildable_t buildable, vec3_t origin,
   vec3_t angles, vec3_t origin2, vec3_t angles2, int groupID, int spawnGroup, float reserved2 )
 {
   gentity_t *builder;
@@ -3874,6 +3873,9 @@ void G_LayoutLoad( void )
   vec3_t angles = { 0.0f, 0.0f, 0.0f };
   vec3_t origin2 = { 0.0f, 0.0f, 0.0f };
   vec3_t angles2 = { 0.0f, 0.0f, 0.0f };
+  int groupID = 0;
+  int spawnGroup = 0;
+  float reserved2 = 0.0f;
   char line[ MAX_STRING_CHARS ];
   int i = 0;
 
@@ -3905,15 +3907,16 @@ void G_LayoutLoad( void )
     if( *layout == '\n' )
     {
       i = 0;
-      sscanf( line, "%d %f %f %f %f %f %f %f %f %f %f %f %f\n",
+      sscanf( line, "%d %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
         &buildable,
         &origin[ 0 ], &origin[ 1 ], &origin[ 2 ],
         &angles[ 0 ], &angles[ 1 ], &angles[ 2 ],
         &origin2[ 0 ], &origin2[ 1 ], &origin2[ 2 ],
-        &angles2[ 0 ], &angles2[ 1 ], &angles2[ 2 ] );
+        &angles2[ 0 ], &angles2[ 1 ], &angles2[ 2 ],
+        &groupID, &spawnGroup, &reserved2 );
 
       if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
-        G_LayoutBuildItem( buildable, origin, angles, origin2, angles2 );
+        G_LayoutBuildItem( buildable, origin, angles, origin2, angles2, groupID, spawnGroup, reserved2 );
       else
         G_Printf( S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
           " layout.  skipping\n", buildable );

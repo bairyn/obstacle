@@ -503,7 +503,7 @@ int G_Checktrigger_stages( team_t team, stage_t stage )
     {
       if( team == ent->stageTeam && stage == ent->stageStage )
       {
-        res++
+        res++;
         ent->use( ent, ent, ent );
       }
     }

@@ -1471,7 +1471,7 @@ void ClientThink_real( gentity_t *ent )
   }
 
   // set speed
-  if( client->ps.pm_type == PM_NOCLIP || client->pers.speed )
+  if( client->ps.pm_type == PM_NOCLIP || client->speed )
     client->ps.speed = client->pers.flySpeed;
   else
     client->ps.speed = g_speed.value *

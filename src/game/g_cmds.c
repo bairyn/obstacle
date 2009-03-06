@@ -497,7 +497,7 @@ void Cmd_Speed_f( gentity_t *ent )
   else
     msg = "speedmode ON\n";
 
-  ent->client->speedmode = !ent->client->speedmode;
+  ent->client->speed = !ent->client->speed;
 
   trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", msg ) );
 }
@@ -1328,7 +1328,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   {
     char buf[MAX_STRING_TOKENS];
 
-    Q_strncypz( buf, va( "%f", level.votePassThreshold ), sizeof( buf ) );
+    Q_strncpyz( buf, va( "%f", level.votePassThreshold ), sizeof( buf ) );
     G_MinorFormatNumber( buf );
     Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ), 
               va( " (Needs > %s percent)", buf ) );
@@ -1675,7 +1675,7 @@ void Cmd_SetViewpos_f( gentity_t *ent )
 
 #define AS_OVER_RT3         ((ALIENSENSE_RANGE*0.5f)/M_ROOT3)
 
-static qboolean G_RoomForClassChange( gentity_t *ent, class_t class,
+qboolean G_RoomForClassChange( gentity_t *ent, class_t class,
   vec3_t newOrigin )
 {
   vec3_t    fromMins, fromMaxs;
@@ -1884,7 +1884,7 @@ void Cmd_Class_f( gentity_t *ent )
 
       cost = BG_ClassCanEvolveFromTo( currentClass, newClass,
                                       ent->client->ps.persistant[ PERS_CREDIT ],
-                                      G_OC_NeedAlternateStageTest() ? g_alienStage.integer : G_OC_AlternateStageTest, 0 );
+                                      G_OC_NeedAlternateStageTest() ? g_alienStage.integer : G_OC_AlternateStageTest(), 0 );
 
       if( G_RoomForClassChange( ent, newClass, infestOrigin ) && G_OC_ClassChange() )
       {
@@ -2068,7 +2068,7 @@ void Cmd_ActivateItem_f( gentity_t *ent )
   char      s[ MAX_TOKEN_CHARS ];
   int   upgrade, weapon;
 
-  if( ent->client->pers.teamSelection != PTE_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
   {
     return;
   }
@@ -2113,7 +2113,7 @@ void Cmd_DeActivateItem_f( gentity_t *ent )
   char      s[ MAX_TOKEN_CHARS ];
   int   upgrade;
 
-  if( ent->client->pers.teamSelection != PTE_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
   {
     return;
   }
@@ -2138,7 +2138,7 @@ void Cmd_ToggleItem_f( gentity_t *ent )
   char      s[ MAX_TOKEN_CHARS ];
   int   upgrade, weapon;
 
-  if( ent->client->pers.teamSelection != PTE_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
   {
     return;
   }
@@ -2187,7 +2187,7 @@ void Cmd_Buy_f( gentity_t *ent )
   upgrade_t upgrade;
   qboolean  energyOnly;
 
-  if( ent->client->pers.teamSelection != PTE_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
   {
     // see if an alien is trying to buy something
     if(BG_OC_OCMode())
@@ -2404,7 +2404,7 @@ void Cmd_Sell_f( gentity_t *ent )
   int       i;
   int       weapon, upgrade;
 
-  if( ent->client->pers.teamSelection != PTE_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
   {
     // see if an alien is trying to sell something
     if(BG_OC_OCMode())
@@ -2788,7 +2788,7 @@ void G_StopFromFollowing( gentity_t *ent, int force )
         level.clients[ i ].sess.spectatorState == SPECTATOR_FOLLOW &&
         level.clients[ i ].sess.spectatorClient == ent->client->ps.clientNum &&
         ( ( !G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) &&
-        !g_entities[ i ].client.pers.stickSpec ) || force ) )
+        !g_entities[ i ].client->pers.stickySpec ) || force ) )
     {
       if( !G_FollowNewClient( &g_entities[ i ], 1 ) )
         G_StopFollowing( &g_entities[ i ] );
@@ -3132,7 +3132,7 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         ent->client->ps.persistant[ PERS_CREDIT ] = 0;
         G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
 
-        G_OC_PTRCRestore();MARKER
+        G_OC_PTRCRestore();
       }
     }
   }
@@ -3373,7 +3373,7 @@ commands_t cmds[ ] = {
 
   { "score", CMD_INTERMISSION, ScoreboardMessage },
 
-  { "CPMode" CMD_MESSAGE|CMD_INTERMISSION, Cmd_CPMode_f },
+  { "CPMode", CMD_MESSAGE|CMD_INTERMISSION, Cmd_CPMode_f },
 
   // cheats
   { "give", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Give_f },

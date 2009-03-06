@@ -47,9 +47,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define OC_GAME
 #define OC_BGAME
 
-#include "../qcommon/q_shared.h"
-#include "bg_public.h"
-#include "bg_local.h"
 #include "g_local.h"
 #include "bg_oc.h"
 
@@ -159,12 +156,13 @@ void G_OC_LayoutLoad(char *layout)
 	char *layoutPtr;
 	char map[MAX_QPATH];
 	int buildable = BA_NONE;
-	int groupID = 0, spawnGroup = 0;
-	float reserved2 = 0.0f;
 	vec3_t origin = { 0.0f, 0.0f, 0.0f };
 	vec3_t angles = { 0.0f, 0.0f, 0.0f };
 	vec3_t origin2 = { 0.0f, 0.0f, 0.0f };
 	vec3_t angles2 = { 0.0f, 0.0f, 0.0f };
+	int groupID = 0;
+	int spawnGroup = 0;
+	float reserved2 = 0.0f;
 	char line[MAX_STRING_CHARS];
 	int i = 0, j = 0, k, k2;
 	int max_spawnGroup = 0;
@@ -178,10 +176,10 @@ void G_OC_LayoutLoad(char *layout)
 		return;
 
 	if(layout_table)
-		G_Free(layout_table);
+		BG_Free(layout_table);
 	layout_table = NULL;
 
-	while(max_buildables >= MIN_LAYOUT_BUILDABLES && !(layout_table = G_Alloc(sizeof(layout_table_t) * max_buildables))) max_buildables /= 2;
+	while(max_buildables >= G_OC_MIN_LAYOUT_BUILDABLES && !(layout_table = BG_Alloc(sizeof(layout_table_t) * max_buildables))) max_buildables /= 2;
 	if(!layout_table)
 	{
 		G_ClientPrint(NULL, va("^1ERROR: ^7The server could not allocate enough memory (%d bytes) (%d buildables) for the layout table", sizeof(layout_table_t) * max_buildables, max_buildables), CLIENT_NULL);
@@ -202,7 +200,7 @@ void G_OC_LayoutLoad(char *layout)
 		G_Printf("ERROR: layout %s could not be opened\n", level.layout);
 		return;
 	  }
-	  layout = G_Alloc(len + 1);
+	  layout = BG_Alloc(len + 1);
 	  trap_FS_Read(layout, len, f);
 	  *(layout + len) = '\0';
 	  trap_FS_FCloseFile(f);
@@ -244,7 +242,7 @@ void G_OC_LayoutLoad(char *layout)
 			l++;
 			if(++j >= max_buildables)
 			{
-		//            G_ClientPrint(NULL, va("^3Warning: ^7The layout table is full (%d); a buildable was skipped", max_buildables), 0);
+		//            G_ClientPrint(NULL, va("^3Warning: ^7The layout table is full (%d); a buildable was skipped", max_buildables), CLIENT_NULL);
 		//            G_ClientCP(NULL, va("^3Warning: ^7The layout table is full (%d); a buildable was skipped", max_buildables), NULL, CLIENT_NULL);
 		//            G_LogPrintf("^3Warning: ^7The layout table is full (%d); a buildable was skipped\n", max_buildables);
 		//            return;
@@ -281,10 +279,10 @@ void G_OC_LayoutLoad(char *layout)
 				}
 
 				if(layout_table)
-					G_Free(layout_table);
+					BG_Free(layout_table);
 				layout_table = NULL;
 
-				G_LayoutLoad(layout);
+				G_OC_LayoutLoad(layout);
 				return;
 			}
 		  }
@@ -297,7 +295,7 @@ void G_OC_LayoutLoad(char *layout)
 		layout++;
 	}
 
-	G_Free(layoutPtr);
+	BG_Free(layoutPtr);
 
 	// first find the highest spawngroup
 	for(i = 0, l = layout_table; i < max_buildables && l->active; i++, l++)
@@ -310,7 +308,7 @@ void G_OC_LayoutLoad(char *layout)
 			}
 			else
 			{
-				G_ClientPrint(NULL, va("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)", l->spawnGroup, G_OC_MAX_SPAWNGROUP), 0);
+				G_ClientPrint(NULL, va("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)", l->spawnGroup, G_OC_MAX_SPAWNGROUP), CLIENT_NULL);
 				G_ClientCP(NULL, va("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)", l->spawnGroup, G_OC_MAX_SPAWNGROUP), NULL, CLIENT_NULL);
 				G_LogPrintf("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)\n", l->spawnGroup, G_OC_MAX_SPAWNGROUP);  // this line segfaults
 				return;
@@ -336,27 +334,27 @@ void G_OC_LayoutLoad(char *layout)
 		if(g_entities[i].client && level.clients[i].pers.connected != CON_CONNECTED)
 		{
 			if(level.clients[i].pers.medis)
-				G_Free(level.clients[i].pers.medis);
+				BG_Free(level.clients[i].pers.medis);
 			if(level.totalMedistations)
-				level.clients[i].pers.medis = G_Alloc((level.totalMedistations) * sizeof(gentity_t *));
+				level.clients[i].pers.medis = BG_Alloc((level.totalMedistations) * sizeof(gentity_t *));
 			else
 				level.clients[i].pers.medis = NULL;
 			if(level.clients[i].pers.medisLastCheckpoint)
-				G_Free(level.clients[i].pers.medisLastCheckpoint);
+				BG_Free(level.clients[i].pers.medisLastCheckpoint);
 			if(level.totalMedistations)
-				level.clients[i].pers.medisLastCheckpoint = G_Alloc((level.totalMedistations) * sizeof(gentity_t *));
+				level.clients[i].pers.medisLastCheckpoint = BG_Alloc((level.totalMedistations) * sizeof(gentity_t *));
 			else
 				level.clients[i].pers.medisLastCheckpoint = NULL;
 			if(level.clients[i].pers.arms)
-				G_Free(level.clients[i].pers.arms);
+				BG_Free(level.clients[i].pers.arms);
 			if(level.totalArmouries)
-				level.clients[i].pers.arms = G_Alloc((level.totalArmouries) * sizeof(gentity_t *));
+				level.clients[i].pers.arms = BG_Alloc((level.totalArmouries) * sizeof(gentity_t *));
 			else
 				level.clients[i].pers.arms = NULL;
 			if(level.clients[i].pers.armsLastCheckpoint)
-				G_Free(level.clients[i].pers.armsLastCheckpoint);
+				BG_Free(level.clients[i].pers.armsLastCheckpoint);
 			if(level.totalArmouries)
-				level.clients[i].pers.armsLastCheckpoint = G_Alloc((level.totalArmouries) * sizeof(gentity_t *));
+				level.clients[i].pers.armsLastCheckpoint = BG_Alloc((level.totalArmouries) * sizeof(gentity_t *));
 			else
 				level.clients[i].pers.armsLastCheckpoint = NULL;
 		}
@@ -384,7 +382,7 @@ void G_OC_LoadRatings(void)
 		return;
 	}
 
-	ratings = G_Alloc(len + 1);
+	ratings = BG_Alloc(len + 1);
 	trap_FS_Read(ratings, len, f);
 	*(ratings + len) = '\0';
 	trap_FS_FCloseFile(f);
@@ -488,7 +486,7 @@ void G_OC_LoadRatings(void)
 			if(!ratings_table)
 			{
 				// allocate room for the table
-				ratings_table = G_Alloc(G_OC_MAX_LAYOUT_RATINGS * sizeof(ratings_table_t));
+				ratings_table = BG_Alloc(G_OC_MAX_LAYOUT_RATINGS * sizeof(ratings_table_t));
 			}
 
 			for(r = ratings_table; r < ratings_table + G_OC_MAX_LAYOUT_RATINGS; r++)
@@ -577,7 +575,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		gentity_t *dest;
 		vec3_t spawn_origin, spawn_angles, infestOrigin;
 
-		if(ent->client->pers.teamSelection == PTE_HUMANS)
+		if(ent->client->pers.teamSelection == TEAM_HUMANS)
 		{
 		  for(i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++)
 		  {
@@ -585,14 +583,14 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			{
 				if(BG_InventoryContainsWeapon(i, ent->client->ps.stats))
 				{
-					BG_RemoveWeaponFromInventory(i, ent->client->ps.stats);
-					G_ForceWeaponChange(ent, WP_NONE);
+					ent->client->ps.stats[STAT_WEAPON] = WP_NONE;
+      				G_ForceWeaponChange(ent, WP_NONE);
 				}
 			}
 		  }
 		  if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, ent->client->ps.stats))
 		  {
-			BG_AddWeaponToInventory(WP_MACHINEGUN, ent->client->ps.stats);
+			ent->client->ps.stats[STAT_WEAPON] = WP_MACHINEGUN;
 			G_ForceWeaponChange(ent, WP_MACHINEGUN);
 		  }
 		  if(BG_InventoryContainsUpgrade(UP_LIGHTARMOUR, ent->client->ps.stats))
@@ -610,10 +608,10 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		  if(!BG_InventoryContainsUpgrade(UP_MEDKIT, ent->client->ps.stats))
 			BG_AddUpgradeToInventory(UP_MEDKIT, ent->client->ps.stats);
 		}
-		else if(ent->client->pers.teamSelection == PTE_ALIENS)
+		else if(ent->client->pers.teamSelection == TEAM_ALIENS)
 		{
 		  ent->client->pers.evolveHealthFraction = (float)ent->client->ps.stats[STAT_MAX_HEALTH] /
-			(float)BG_FindHealthForClass(ent->client->pers.classSelection);
+			(float) BG_Class(ent->client->pers.classSelection)->health;
 
 		  if(ent->client->pers.evolveHealthFraction < 0.0f)
 			ent->client->pers.evolveHealthFraction = 0.0f;
@@ -628,10 +626,10 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
 		  VectorCopy(infestOrigin, ent->s.pos.trBase);
 		  ClientSpawn(ent, ent, ent->s.pos.trBase, ent->s.apos.trBase);
-		  G_AddCreditToClient(ent->client, ALIEN_MAX_KILLS, qtrue);
+		  G_AddCreditToClient(ent->client, ALIEN_MAX_FRAGS, qtrue);
 		  if(!G_admin_canEditOC(ent))
 		  {
-			ent->client->pers.needEolve = 1;
+			ent->client->pers.needEvolve = 1;
 			ent->client->pers.evolveTime = level.time + G_OC_EVOLVEBLOCK_TIME;  // start class thing needs improvement
 		  }
 		}
@@ -643,7 +641,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 
 
 
-		ent->client->pers.restartocOKtime = level.time + G_OC_RESTARTOC_TIME;
+		ent->client->pers.nextCheckpointTime = level.time + G_OC_RESTARTOC_TIME;
 		ent->client->lastCreepSlowTime = 0;
 		G_OC_ClearMedis(ent->client->pers.medis);
 		G_OC_ClearMedis(ent->client->pers.medisLastCheckpoint);
@@ -655,7 +653,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 //        memset(ent->client->pers.armsLastCheckpoint, 0, sizeof(gentity_t *) * (level.totalArmouries+1));
 
 		ent->client->pers.checkpoint = NULL;
-		if(ent->client->pers.teamSelection == PTE_HUMANS)
+		if(ent->client->pers.teamSelection == TEAM_HUMANS)
 		{
 			if((dest = G_SelectHumanSpawnPoint(ent->s.origin, ent, 0, NULL)))
 			{
@@ -669,7 +667,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			  {
 				VectorCopy(ent->s.angles, spawn_angles);
 			  }
-			  if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_H_SPAWN, spawn_origin, 1) == NULL)
+			  if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_H_SPAWN, spawn_origin) == NULL)
 			  {
 			//        TeleportPlayer(ent, spawn_origin, spawn_angles);
 				  VectorCopy(spawn_origin, ent->client->ps.origin);
@@ -698,7 +696,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			  G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
 			}
 		}
-		else if(ent->client->pers.teamSelection == PTE_ALIENS)
+		else if(ent->client->pers.teamSelection == TEAM_ALIENS)
 		{
 			if((dest = G_SelectAlienSpawnPoint(ent->s.origin, ent, 0, NULL)))
 			{
@@ -712,7 +710,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			  {
 				VectorCopy(ent->s.angles, spawn_angles);
 			  }
-			  if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_A_SPAWN, spawn_origin, 1) == NULL)
+			  if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_A_SPAWN, spawn_origin) == NULL)
 			  {
 			//        TeleportPlayer(ent, spawn_origin, spawn_angles);
 				  VectorCopy(spawn_origin, ent->client->ps.origin);
@@ -756,7 +754,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		//  if(ent->client->ps.stats[STAT_HEALTH] > 0 && ent->client->sess.sessionTeam != TEAM_SPECTATOR && ent->client->pers.teamSelection == PTE_NONE)
 		G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
 
-		ent->client->pers.restartocOKtime = level.time + G_OC_RESTARTOC_TIME;
+		ent->client->pers.nextCheckpointTime = level.time + G_OC_RESTARTOC_TIME;
 		ent->client->pers.aliveTime = 0;
 		ent->client->pers.lastAliveTime = 0;
 		ent->client->pers.checkpoint = NULL;
@@ -817,7 +815,7 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 		if(level.ocScrimState == G_OC_STATE_PLAY && level.ocScrimMode == G_OC_MODE_MEDI)
 		{
 			// first merge all medis
-			gentity_t **tmp = G_Alloc(level.totalMedistations * sizeof(gentity_t *));
+			gentity_t **tmp = BG_Alloc(level.totalMedistations * sizeof(gentity_t *));
 			memcpy(tmp, t->medis, level.totalMedistations * sizeof(gentity_t *));  // memcpy should be faster than merge itself
 			for(i = 0; i < MAX_CLIENTS; i++)
 			{
@@ -848,18 +846,18 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 						// everbody's won, so don't wait for the timer and don't end immediately after
 						level.scrimEndTime = level.time + 3000;
 					}
-					level.ocScrimOrder++;
+					level.scrimWinOrder++;
 //                    G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
 					G_ClientPrint(ent, va("New medi! (%d/%d) (%s^7)", G_OC_NumberOfMedis(tmp), level.totalMedistations, ent->client->pers.netname), CLIENT_SPECTATORS | CLIENT_SCRIMTEAM);
-					if(level.ocScrimOrder == 1)
+					if(level.scrimWinOrder == 1)
 					{
-						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), G_OC_NumberOfMedis(tmp), level.totalMedistations, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), 0);
+						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), G_OC_NumberOfMedis(tmp), level.totalMedistations, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), CLIENT_NULL);
 						G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d medical stations) - %dm%ds%dms\n", t->name, G_OC_HumanNameForWeapon(t->weapon), G_OC_NumberOfMedis(tmp), level.totalMedistations, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME));
 					}
 					else
 					{
-						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), level.ocScrimOrder, SUFN(level.ocScrimOrder), G_OC_NumberOfMedis(tmp), level.totalMedistations, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), 0);
-						G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms\n", t->name, G_OC_HumanNameForWeapon(t->weapon), level.ocScrimOrder, SUFN(level.ocScrimOrder), G_OC_NumberOfMedis(tmp), level.totalMedistations, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME));
+						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), level.scrimWinOrder, SUFN(level.scrimWinOrder), G_OC_NumberOfMedis(tmp), level.totalMedistations, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), CLIENT_NULL);
+						G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d medical stations) - %dm%ds%dms\n", t->name, G_OC_HumanNameForWeapon(t->weapon), level.scrimWinOrder, SUFN(level.scrimWinOrder), G_OC_NumberOfMedis(tmp), level.totalMedistations, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME));
 					}
 
 					if(!(t->flags & G_OC_SCRIMFLAG_NOTSINGLETEAM))
@@ -867,11 +865,11 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 						char *record = G_OC_MediStats(ent, level.totalMedistations, G_OC_SCRIMTIME);
 						if(record && *record)
 						{
-							G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record), 0);
+							G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record), CLIENT_NULL);
 							G_LogPrintf(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s\n", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record));
 						}
-						if(G_StrFind(record, "^s^f^r^e^e"))
-							G_Free(record);
+						if(strstr(record, "^s^f^r^e^e"))
+							BG_Free(record);
 					}
 				}
 			}
@@ -899,7 +897,7 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 					G_OC_AppendMedi(ent->client->pers.medis, medi);
 					if(G_OC_AllMedis(tmp))
 					{
-						G_Free(tmp);
+						BG_Free(tmp);
 						return G_OC_UseMedi(ent, medi);
 					}
 					G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
@@ -909,7 +907,7 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 				}
 			}
 
-			G_Free(tmp);
+			BG_Free(tmp);
 		}
 	}
 	// the player is not on a scrim team
@@ -939,8 +937,8 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 				AP(va("print \"^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s\n\"", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
 				G_LogPrintf(va("^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s\n", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
 				G_ClientCP(ent, va("Medical Stations: %d/%d\n^2You Win!", level.totalMedistations, level.totalMedistations), NULL, CLIENT_SPECTATORS);
-				if(G_StrFind(record, "^s^f^r^e^e"))
-					G_Free(record);
+				if(strstr(record, "^s^f^r^e^e"))
+					BG_Free(record);
 				return 0;
 			}
 			G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
@@ -952,8 +950,8 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 				AP(va("print \"^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n\"", ent->client->pers.netname, G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record));
 				G_LogPrintf("^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n", ent->client->pers.netname, G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record);
 
-				if(G_StrFind(record, "^s^f^r^e^e"))
-					G_Free(record);
+				if(strstr(record, "^s^f^r^e^e"))
+					BG_Free(record);
 			}
 		}
 	}
@@ -1100,7 +1098,7 @@ int G_OC_NumberOfMedis(gentity_t **medis)
 	if(!BG_OC_OCMode())
 		return 0;
 
-	for(i = 0; i < level.totalMedistations; i++) if(medis[i]) count++ else break;
+	for(i = 0; i < level.totalMedistations; i++) if(medis[i]) count++; else break;
 
 	return count;
 }
@@ -1155,7 +1153,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 	if(!arm)
 		return 0;
 
-	if(arm->s.modelindex != BA_H_AMOURY)  // not an arm
+	if(arm->s.modelindex != BA_H_ARMOURY)  // not an arm
 		return 0;
 
 	if(!ent)
@@ -1187,7 +1185,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 		if(level.ocScrimState == G_OC_STATE_PLAY && level.ocScrimMode == G_OC_MODE_ARM)
 		{
 			// first merge all arms
-			gentity_t **tmp = G_Alloc(level.totalArmouries * sizeof(gentity_t *));
+			gentity_t **tmp = BG_Alloc(level.totalArmouries * sizeof(gentity_t *));
 			memcpy(tmp, t->arms, level.totalArmouries * sizeof(gentity_t *));  // memcpy should be faster than merge itself
 			for(i = 0; i < MAX_CLIENTS; i++)
 			{
@@ -1220,18 +1218,18 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 						// everbody's won, so don't wait for the timer and don't end immediately after
 						level.scrimEndTime = level.time + 3000;
 					}
-					level.ocScrimOrder++;
+					level.scrimWinOrder++;
 //                    G_ClientCP(ent, "^a^r^mNew Armoury!", "^a^r^m", CLIENT_SPECTATORS);
 					G_ClientPrint(ent, va("New Armoury! (%d/%d) (%s^7)", G_OC_NumberOfArms(tmp), level.totalArmouries, ent->client->pers.netname), CLIENT_SPECTATORS | CLIENT_SCRIMTEAM);
-					if(level.ocScrimOrder == 1)
+					if(level.scrimWinOrder == 1)
 					{
-						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), G_OC_NumberOfArms(tmp), level.totalArmouries, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), 0);
+						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), G_OC_NumberOfArms(tmp), level.totalArmouries, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), CLIENT_NULL);
 						G_LogPrintf("^7%s^7 (%ss^7)^2 wins the oc scrim! (%d/%d armouries) - %dm%ds%dms\n", t->name, G_OC_HumanNameForWeapon(t->weapon), G_OC_NumberOfArms(tmp), level.totalArmouries, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME));
 					}
 					else
 					{
-						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), level.ocScrimOrder, SUFN(level.ocScrimOrder), G_OC_NumberOfArms(tmp), level.totalArmouries, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), 0);
-						G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms\n", t->name, G_OC_HumanNameForWeapon(t->weapon), level.ocScrimOrder, SUFN(level.ocScrimOrder), G_OC_NumberOfArms(tmp), level.totalArmouries, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME));
+						G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms", t->name, G_OC_HumanNameForWeapon(t->weapon), level.scrimWinOrder, SUFN(level.scrimWinOrder), G_OC_NumberOfArms(tmp), level.totalArmouries, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME)), CLIENT_NULL);
+						G_LogPrintf("^7%s^7 (%ss^7)^2 finishes the oc scrim %d%s (%d/%d armouries) - %dm%ds%dms\n", t->name, G_OC_HumanNameForWeapon(t->weapon), level.scrimWinOrder, SUFN(level.scrimWinOrder), G_OC_NumberOfArms(tmp), level.totalArmouries, MINS(G_OC_SCRIMTIME), SECS(G_OC_SCRIMTIME), MSEC(G_OC_SCRIMTIME));
 					}
 
 					if(!(t->flags & G_OC_SCRIMFLAG_NOTSINGLETEAM))
@@ -1239,11 +1237,11 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 						char *record = G_OC_WinStats(ent, level.totalArmouries, G_OC_SCRIMTIME);
 						if(record && *record)
 						{
-							G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record), 0);
+							G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record), CLIENT_NULL);
 							G_LogPrintf(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s\n", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record));
 						}
-						if(G_StrFind(record, "^s^f^r^e^e"))
-							G_Free(record);
+						if(strstr(record, "^s^f^r^e^e"))
+							BG_Free(record);
 					}
 				}
 			}
@@ -1271,7 +1269,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 					G_OC_AppendArm(ent->client->pers.arms, arm);
 					if(G_OC_AllArms(tmp))
 					{
-						G_Free(tmp);
+						BG_Free(tmp);
 						return G_OC_UseArm(ent, arm);
 					}
 					G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
@@ -1281,14 +1279,14 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 				}
 			}
 
-			G_Free(tmp);
+			BG_Free(tmp);
 		}
 		else if(level.ocScrimState == G_OC_STATE_PLAY && level.ocScrimMode == G_OC_MODE_MEDI)
 		{
 			// keep track of the arms during a medi scrim (so that weapons,
 			// upgrades, etc can be bought) but don't give any records or wins
 			// first merge all arms
-			gentity_t **tmp = G_Alloc(level.totalArmouries * sizeof(gentity_t *));
+			gentity_t **tmp = BG_Alloc(level.totalArmouries * sizeof(gentity_t *));
 			memcpy(tmp, t->arms, level.totalArmouries * sizeof(gentity_t *));  // memcpy should be faster than merge itself
 			for(i = 0; i < MAX_CLIENTS; i++)
 			{
@@ -1336,7 +1334,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 					G_OC_AppendArm(ent->client->pers.arms, arm);
 					if(G_OC_AllArms(tmp))
 					{
-						G_Free(tmp);
+						BG_Free(tmp);
 						return G_OC_UseArm(ent, arm);
 					}
 					G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
@@ -1346,7 +1344,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 				}
 			}
 
-			G_Free(tmp);
+			BG_Free(tmp);
 		}
 	}
 	// the player is not on a scrim team
@@ -1397,8 +1395,8 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 						G_ClientCP(ent, va("^a^r^m^2You Win!"), "^a^r^m", CLIENT_SPECTATORS);
 					}
 				}
-				if(G_StrFind(record, "^s^f^r^e^e"))
-					G_Free(record);
+				if(strstr(record, "^s^f^r^e^e"))
+					BG_Free(record);
 				return 0;
 			}
 			G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
@@ -1545,7 +1543,7 @@ int G_OC_NumberOfArms(gentity_t **arms)
 	if(!BG_OC_OCMode())
 		return 0;
 
-	for(i = 0; i < level.totalArmouries; i++) if(arms[i]) count++ else break;
+	for(i = 0; i < level.totalArmouries; i++) if(arms[i]) count++; else break;
 
 	return count;
 }
@@ -1609,16 +1607,16 @@ int G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 			{
 				if(si->medis)
 				{
-					tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 					memcpy(tmp, si->medis, level.totalMedistations * sizeof(gentity_t *));
-					G_Free(si->medis);
-					si->medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+					BG_Free(si->medis);
+					si->medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 					memcpy(si->medis, tmp, level.totalMedistations * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 				else
 				{
-					si->medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+					si->medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 				}
 			}
 		}
@@ -1626,30 +1624,30 @@ int G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 		{
 			if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.medis)
 			{
-				tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+				tmp = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 				memcpy(tmp, level.clients[i].pers.medis, level.totalMedistations * sizeof(gentity_t *));
-				G_Free(level.clients[i].pers.medis);
-				level.clients[i].pers.medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+				BG_Free(level.clients[i].pers.medis);
+				level.clients[i].pers.medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 				memcpy(level.clients[i].pers.medis, tmp, level.totalMedistations * sizeof(gentity_t *));
-				G_Free(tmp);
+				BG_Free(tmp);
 			}
 			else if(g_entities[i].client && level.clients[i].pers.connected)
 			{
-				level.clients[i].pers.medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+				level.clients[i].pers.medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 			}
 
 			if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.medisLastCheckpoint)
 			{
-				tmp = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+				tmp = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 				memcpy(tmp, level.clients[i].pers.medisLastCheckpoint, level.totalMedistations * sizeof(gentity_t *));
-				G_Free(level.clients[i].pers.medisLastCheckpoint);
-				level.clients[i].pers.medisLastCheckpoint = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+				BG_Free(level.clients[i].pers.medisLastCheckpoint);
+				level.clients[i].pers.medisLastCheckpoint = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 				memcpy(level.clients[i].pers.medisLastCheckpoint, tmp, level.totalMedistations * sizeof(gentity_t *));
-				G_Free(tmp);
+				BG_Free(tmp);
 			}
 			else if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED)
 			{
-				level.clients[i].pers.medisLastCheckpoint = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+				level.clients[i].pers.medisLastCheckpoint = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 			}
 		}
 	}
@@ -1664,16 +1662,16 @@ int G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 			{
 				if(si->arms)
 				{
-					tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 					memcpy(tmp, si->arms, level.totalArmouries * sizeof(gentity_t *));
-					G_Free(si->arms);
-					si->arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+					BG_Free(si->arms);
+					si->arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 					memcpy(si->arms, tmp, level.totalArmouries * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 				else
 				{
-					si->arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+					si->arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 				}
 			}
 		}
@@ -1681,30 +1679,30 @@ int G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 		{
 			if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.arms)
 			{
-				tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+				tmp = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 				memcpy(tmp, level.clients[i].pers.arms, level.totalArmouries * sizeof(gentity_t *));
-				G_Free(level.clients[i].pers.arms);
-				level.clients[i].pers.arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+				BG_Free(level.clients[i].pers.arms);
+				level.clients[i].pers.arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 				memcpy(level.clients[i].pers.arms, tmp, level.totalArmouries * sizeof(gentity_t *));
-				G_Free(tmp);
+				BG_Free(tmp);
 			}
 			else if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED)
 			{
-				level.clients[i].pers.arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+				level.clients[i].pers.arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 			}
 
 			if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.armsLastCheckpoint)
 			{
-				tmp = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+				tmp = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 				memcpy(tmp, level.clients[i].pers.armsLastCheckpoint, level.totalArmouries * sizeof(gentity_t *));
-				G_Free(level.clients[i].pers.armsLastCheckpoint);
-				level.clients[i].pers.armsLastCheckpoint = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+				BG_Free(level.clients[i].pers.armsLastCheckpoint);
+				level.clients[i].pers.armsLastCheckpoint = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 				memcpy(level.clients[i].pers.armsLastCheckpoint, tmp, level.totalArmouries * sizeof(gentity_t *));
-				G_Free(tmp);
+				BG_Free(tmp);
 			}
 			else if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED)
 			{
-				level.clients[i].pers.armsLastCheckpoint = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+				level.clients[i].pers.armsLastCheckpoint = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 			}
 		}
 	}
@@ -1735,34 +1733,34 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 			{
 				if(si->active)
 				{
-					tmp = G_Alloc((level.totalMedistations + 2) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalMedistations + 2) * sizeof(gentity_t *));
 					memcpy(tmp, si->medis, (level.totalMedistations) * sizeof(gentity_t *));
 					G_OC_RemoveMedi(tmp, ent);
-					G_Free(si->medis);
-					si->medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+					BG_Free(si->medis);
+					si->medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 					memcpy(si->medis, tmp, level.totalMedistations * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 			}
 			for(i = 0; i < MAX_CLIENTS; i++)
 			{
 				if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.medis && level.clients[i].pers.medisLastCheckpoint)  // if medis is not allocated, neither should medisLastCheckpoint.  The inverse is also true
 				{
-					tmp = G_Alloc((level.totalMedistations + 2) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalMedistations + 2) * sizeof(gentity_t *));
 					memcpy(tmp, level.clients[i].pers.medis, (level.totalMedistations) * sizeof(gentity_t *));
 					G_OC_RemoveMedi(tmp, ent);
-					G_Free(level.clients[i].pers.medis);
-					level.clients[i].pers.medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+					BG_Free(level.clients[i].pers.medis);
+					level.clients[i].pers.medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 					memcpy(level.clients[i].pers.medis, tmp, level.totalMedistations * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 
-					tmp = G_Alloc((level.totalMedistations + 2) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalMedistations + 2) * sizeof(gentity_t *));
 					memcpy(tmp, level.clients[i].pers.medisLastCheckpoint, (level.totalMedistations) * sizeof(gentity_t *));
 					G_OC_RemoveMedi(tmp, ent);
-					G_Free(level.clients[i].pers.medisLastCheckpoint);
-					level.clients[i].pers.medisLastCheckpoint = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+					BG_Free(level.clients[i].pers.medisLastCheckpoint);
+					level.clients[i].pers.medisLastCheckpoint = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 					memcpy(level.clients[i].pers.medisLastCheckpoint, tmp, level.totalMedistations * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 			}
 		}
@@ -1773,7 +1771,7 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 			{
 				if(si->active)
 				{
-					G_Free(si->medis);
+					BG_Free(si->medis);
 					si->medis = NULL;
 				}
 			}
@@ -1781,10 +1779,10 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 			{
 				if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.medis && level.clients[i].pers.medisLastCheckpoint)  // if medis is not allocated, neither should medisLastCheckpoint.  The inverse is also true
 				{
-					G_Free(level.clients[i].pers.medis);
+					BG_Free(level.clients[i].pers.medis);
 					level.clients[i].pers.medis = NULL;
 
-					G_Free(level.clients[i].pers.medisLastCheckpoint);
+					BG_Free(level.clients[i].pers.medisLastCheckpoint);
 					level.clients[i].pers.medisLastCheckpoint = NULL;
 				}
 			}
@@ -1801,34 +1799,34 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 			{
 				if(si->active)
 				{
-					tmp = G_Alloc((level.totalArmouries + 2) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalArmouries + 2) * sizeof(gentity_t *));
 					memcpy(tmp, si->arms, (level.totalArmouries) * sizeof(gentity_t *));
 					G_OC_RemoveArm(tmp, ent);
-					G_Free(si->arms);
-					si->arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+					BG_Free(si->arms);
+					si->arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 					memcpy(si->arms, tmp, level.totalArmouries * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 			}
 			for(i = 0; i < MAX_CLIENTS; i++)
 			{
 				if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.arms && level.clients[i].pers.armsLastCheckpoint)  // if medis is not allocated, neither should medisLastCheckpoint.  The inverse is also true
 				{
-					tmp = G_Alloc((level.totalArmouries + 2) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalArmouries + 2) * sizeof(gentity_t *));
 					memcpy(tmp, level.clients[i].pers.arms, (level.totalArmouries) * sizeof(gentity_t *));
 					G_OC_RemoveArm(tmp, ent);
-					G_Free(level.clients[i].pers.arms);
-					level.clients[i].pers.arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+					BG_Free(level.clients[i].pers.arms);
+					level.clients[i].pers.arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 					memcpy(level.clients[i].pers.arms, tmp, level.totalArmouries * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 
-					tmp = G_Alloc((level.totalArmouries + 2) * sizeof(gentity_t *));
+					tmp = BG_Alloc((level.totalArmouries + 2) * sizeof(gentity_t *));
 					memcpy(tmp, level.clients[i].pers.armsLastCheckpoint, (level.totalArmouries) * sizeof(gentity_t *));
 					G_OC_RemoveArm(tmp, ent);
-					G_Free(level.clients[i].pers.armsLastCheckpoint);
-					level.clients[i].pers.armsLastCheckpoint = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+					BG_Free(level.clients[i].pers.armsLastCheckpoint);
+					level.clients[i].pers.armsLastCheckpoint = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 					memcpy(level.clients[i].pers.armsLastCheckpoint, tmp, level.totalArmouries * sizeof(gentity_t *));
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 			}
 		}
@@ -1839,7 +1837,7 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 			{
 				if(si->active)
 				{
-					G_Free(si->arms);
+					BG_Free(si->arms);
 					si->arms = NULL;
 				}
 			}
@@ -1847,10 +1845,10 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 			{
 				if(g_entities[i].client && level.clients[i].pers.connected == CON_CONNECTED && level.clients[i].pers.arms && level.clients[i].pers.armsLastCheckpoint)  // if medis is not allocated, neither should medisLastCheckpoint.  The inverse is also true
 				{
-					G_Free(level.clients[i].pers.arms);
+					BG_Free(level.clients[i].pers.arms);
 					level.clients[i].pers.arms = NULL;
 
-					G_Free(level.clients[i].pers.armsLastCheckpoint);
+					BG_Free(level.clients[i].pers.armsLastCheckpoint);
 					level.clients[i].pers.armsLastCheckpoint = NULL;
 				}
 			}
@@ -1884,7 +1882,7 @@ int G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent)  // called when a pla
 		return 0;
 
 	// prevent against checkpoint exploit
-	if(ent->client->pers.restartocOKtime && level.time < ent->client->pers.restartocOKtime)
+	if(ent->client->pers.nextCheckpointTime && level.time < ent->client->pers.nextCheckpointTime)
 		return 0;
 
 	if(ent->health <= 0)
@@ -1895,7 +1893,7 @@ int G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent)  // called when a pla
 		return 0;
 
 	// good to go...
-	ent->client->pers.restartocOKtime = 0;
+	ent->client->pers.nextCheckpointTime = 0;
 
 	// "Checkpoint!" if the player shot a new checkpoint
 	if(ent->client->pers.checkpoint != checkpoint)  // &&
@@ -1965,23 +1963,21 @@ void G_OC_PlayerMaxHealth(gentity_t *ent)
 
 int G_OC_PlayerSpawn(gentity_t *ent)  // called when a player spawns
 {
-	int maxAmmo, maxClips;
-
 	if(!BG_OC_OCMode())
 		return 0;
 
 	if(ent && ent->client)
 	{
 		ent->client->pers.lastAliveTime = trap_Milliseconds();  // reset to spawn time so that time during death doesn't count
-		G_OC_PlayerMaxAmmo(gentity_t *ent);
+		G_OC_PlayerMaxAmmo(ent);
 		if(!ent->client->pers.checkpoint)
-			G_OC_PlayerMaxCash(gentity_t *ent);
-		G_OC_PlayerMaxHealth(gentity_t *ent);
+			G_OC_PlayerMaxCash(ent);
+		G_OC_PlayerMaxHealth(ent);
 		VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);
-		if(ent->client->pers.teamSelection == PTE_ALIENS)
-		{
+//		if(ent->client->pers.teamSelection == TEAM_ALIENS)
+//		{
 //                VectorScale(ent->s.angles2, 0.0, ent->s.angles2);
-		}
+//		}
 	}
 
 	return 0;
@@ -1993,7 +1989,7 @@ int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 	gentity_t *client;
 
 	if(!BG_OC_OCMode())
-		return;
+		return 0;
 
 	if(ent->client->pers.scrimTeam)
 	{
@@ -2109,9 +2105,9 @@ int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 						}
 						t->flags &= ~G_OC_SCRIMFLAG_EQUIPMENT;
 					}
-					if(G_OC_AllArms(tmp) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
-					{
-					}
+//					if(G_OC_AllArms(tmp) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+//					{
+//					}
 					G_ClientPrint(ent, va("Your team lost %d armouries!", lost), CLIENT_SCRIMTEAM);
 				}
 			}
@@ -2137,7 +2133,7 @@ int G_OC_CanUseBonus(gentity_t *ent)
 	{
 		return 0;
 	}
-	if(G_admin_CanEditOC(ent))
+	if(G_admin_canEditOC(ent))
 	{
 		return 0;
 	}
@@ -2150,7 +2146,8 @@ int G_OC_CanUseBonus(gentity_t *ent)
 	return 1;
 }
 
-int G_OC_WeaponIsReserved(weapon_t weapon)
+//int G_OC_WeaponIsReserved(weapon_t weapon)
+int G_OC_WeaponIsReserved(int weapon)
 {
 	g_oc_scrimTeam_t *si;
 
@@ -2193,7 +2190,7 @@ int G_OC_WeaponRemoveReserved(gentity_t *ent)
 		{
 			if(BG_InventoryContainsWeapon(si->weapon, ent->client->ps.stats))
 			{
-				BG_RemoveWeaponFromInventory(si->weapon, ent->client->ps.stats);
+				ent->client->ps.stats[STAT_WEAPON] = WP_NONE;
 				G_ForceWeaponChange(ent, WP_NONE);
 				res = 1;
 			}
@@ -2252,7 +2249,7 @@ int G_OC_EndScrim(void)
 
 	level.scrimEndTime = 0;
 
-	G_ClientPrint(NULL, "The OC scrim ends", 0);
+	G_ClientPrint(NULL, "The OC scrim ends", CLIENT_NULL);
 
 	for(i = 0; i < level.maxclients; i++)
 	{
@@ -2271,7 +2268,7 @@ int G_OC_EndScrim(void)
 			{
 				if(level.ocScrimMode == G_OC_MODE_MEDI)
 				{
-					gentity_t **tmp = G_Alloc(level.totalMedistations * sizeof(gentity_t *));
+					gentity_t **tmp = BG_Alloc(level.totalMedistations * sizeof(gentity_t *));
 					memcpy(tmp, si->medis, level.totalMedistations * sizeof(gentity_t *));
 					for(i = 0; i < MAX_CLIENTS; i++)
 					{
@@ -2283,11 +2280,11 @@ int G_OC_EndScrim(void)
 
 					G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d medical stations)", si->name, G_OC_HumanNameForWeapon(si->weapon), G_OC_NumberOfMedis(tmp), level.totalMedistations), CLIENT_NULL);
 
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 				if(level.ocScrimMode == G_OC_MODE_ARM)
 				{
-					gentity_t **tmp = G_Alloc(level.totalArmouries * sizeof(gentity_t *));
+					gentity_t **tmp = BG_Alloc(level.totalArmouries * sizeof(gentity_t *));
 					memcpy(tmp, si->arms, level.totalArmouries * sizeof(gentity_t *));
 					for(i = 0; i < MAX_CLIENTS; i++)
 					{
@@ -2299,15 +2296,15 @@ int G_OC_EndScrim(void)
 
 					G_ClientPrint(NULL, va("^7%s^2 (%ss^7) loses the OC scrim (%d/%d armouries)", si->name, G_OC_HumanNameForWeapon(si->weapon), G_OC_NumberOfArms(tmp), level.totalArmouries), CLIENT_NULL);
 
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 			}
 
 //            tmp = si->next;
-//            G_Free(si);
+//            BG_Free(si);
 //            si = tmp;
-			G_Free(si->medis);
-			G_Free(si->arms);
+			BG_Free(si->medis);
+			BG_Free(si->arms);
 			si->active = 0;
 		}
 	}
@@ -2320,8 +2317,8 @@ int G_OC_EndScrim(void)
 static g_oc_scrimTeam_t *G_OC_ScrimTeam(char *name)
 {
 	g_oc_scrimTeam_t *si;
-	char teamName[MAX_NAME_LENGTH];
-	char buf[MAX_NAME_LENGTH];
+	char teamName[sizeof(level.scrimTeam->name)];
+	char buf[sizeof(level.scrimTeam->name)];
 
 	if(!BG_OC_OCMode())
 		return NULL;
@@ -2330,7 +2327,7 @@ static g_oc_scrimTeam_t *G_OC_ScrimTeam(char *name)
 		return NULL;
 
 	Q_strncpyz(teamName, name, sizeof(teamName));
-	G_SanitiseName(teamName, buf);
+	G_SanitiseString(teamName, buf, sizeof(buf));
 
 	for(si = level.scrimTeam + 1; si < level.scrimTeam + G_OC_MAX_SCRIM_TEAMS; si++)
 	{
@@ -2338,7 +2335,7 @@ static g_oc_scrimTeam_t *G_OC_ScrimTeam(char *name)
 		{
 			if(sizeof(si->name) > sizeof(teamName))
 				continue;  // wimp out
-			G_SanitiseName(si->name, teamName);
+			G_SanitiseString(si->name, teamName, sizeof(buf));
 			if(!strcmp(buf, teamName))
 				return si;
 		}
@@ -2350,7 +2347,7 @@ static g_oc_scrimTeam_t *G_OC_ScrimTeam(char *name)
 static g_oc_scrimTeam_t *G_OC_NewScrimTeam(char *name, weapon_t weapon, char *err, int errlen)
 {
 	g_oc_scrimTeam_t *si;
-	char buf[MAX_NAME_LENGTH];
+	char buf[sizeof(level.scrimTeam->name)];
 
 	if(!BG_OC_OCMode())
 		return 0;
@@ -2397,17 +2394,17 @@ static g_oc_scrimTeam_t *G_OC_NewScrimTeam(char *name, weapon_t weapon, char *er
 
 			// initialize some stuff
 			if(si->medis)
-				G_Free(si->medis);
+				BG_Free(si->medis);
 			if(si->arms)
-				G_Free(si->arms);
+				BG_Free(si->arms);
 			si->checkpoint = NULL;
 			si->flags = 0;
 			memset(si, 0x00000000, sizeof(g_oc_scrimTeam_t));
 
 			if(level.totalMedistations)
-				si->medis = G_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
+				si->medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
 			if(level.totalArmouries)
-				si->arms = G_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
+				si->arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 			si->active = 1;
 			return si;
 		}
@@ -2418,7 +2415,8 @@ static g_oc_scrimTeam_t *G_OC_NewScrimTeam(char *name, weapon_t weapon, char *er
 	return NULL;
 }
 
-int G_OC_ValidScrimWeapon(weapon_t weapon)
+//int G_OC_ValidScrimWeapon(weapon_t weapon)
+int G_OC_ValidScrimWeapon(int weapon)
 {
 	if(!BG_OC_OCMode())
 		return 0;
@@ -2429,7 +2427,7 @@ int G_OC_ValidScrimWeapon(weapon_t weapon)
 	if(weapon == WP_NONE)
 		return 0;
 
-	if(G_OC_TeamForWeapon(weapon) != WUT_HUMANS)
+	if(G_OC_TeamForWeapon(weapon) != TEAM_HUMANS)
 		return 0;
 
 	if(!BG_WeaponAllowedInStage(weapon, g_humanStage.integer) || !BG_WeaponIsAllowed(weapon))
@@ -2520,23 +2518,23 @@ int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamN
 		// existing team
 		t->flags |= G_OC_SCRIMFLAG_NOTSINGLETEAM;
 		ent->client->pers.scrimTeam = t - level.scrimTeam;
-		G_ClientPrint(NULL, va("%s^7 joined scrim team %s^7 (%ss^7)", ent->client->pers.netname, t->name, G_OC_HumanNameForWeapon(t->weapon)), 0);
+		G_ClientPrint(NULL, va("%s^7 joined scrim team %s^7 (%ss^7)", ent->client->pers.netname, t->name, G_OC_HumanNameForWeapon(t->weapon)), CLIENT_NULL);
 	}
 	else
 	{
 		// new team
-		weapon = BG_WeaponByName(weaponName);
+		weapon = BG_WeaponByName(weaponName)->number;
 
-		if(G_WeaponIsReserved(weapon))
+		if(G_OC_WeaponIsReserved(weapon))
 		{
 			G_ClientPrint(reportEnt, va("/joinScrim: the %s^7 is already in use by another team", G_OC_HumanNameForWeapon(t->weapon)), CLIENT_NULL);
-			return;
+			return 0;
 		}
 
 		if(!(t = G_OC_NewScrimTeam(teamName, weapon, err, sizeof(err))))
 		{
 			G_ClientPrint(reportEnt, va("/joinScrim: couldn't create scrim team: %s", err), CLIENT_NULL);
-			return;
+			return 0;
 		}
 
 		// scrim team is good
@@ -2574,7 +2572,7 @@ int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
 		return 0;
 
 	G_OC_RestartClient(ent, 1, 1);
-	G_ClientPrint(NULL, va("%s^7 let team %s^7 down", ent->client->pers.netname, level.scrimTeam[scrimTeam].name), 0);
+	G_ClientPrint(NULL, va("%s^7 let team %s^7 down", ent->client->pers.netname, level.scrimTeam[scrimTeam].name), CLIENT_NULL);
 
 	for(i = 0; i < level.maxclients; i++)
 	{
@@ -2586,9 +2584,9 @@ int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
 
 	if(!otherPlayers)
 	{
-		G_ClientPrint(NULL, va("OC Scrim team %s^7 no longer exists", level.scrimTeam[scrimTeam].name), 0);
-		G_Free(level.scrimTeam[scrimTeam].medis);
-		G_Free(level.scrimTeam[scrimTeam].arms);
+		G_ClientPrint(NULL, va("OC Scrim team %s^7 no longer exists", level.scrimTeam[scrimTeam].name), CLIENT_NULL);
+		BG_Free(level.scrimTeam[scrimTeam].medis);
+		BG_Free(level.scrimTeam[scrimTeam].arms);
 		level.scrimTeam[scrimTeam].checkpoint = NULL;
 		level.scrimTeam[scrimTeam].flags  = 0;
 		level.scrimTeam[scrimTeam].active = 0;
@@ -2605,7 +2603,7 @@ int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
 		if(!otherTeams)
 		{
 			G_OC_EndScrim();
-			G_ClientPrint(NULL, "OC Scrim cancelled", 0);
+			G_ClientPrint(NULL, "OC Scrim cancelled", CLIENT_NULL);
 		}
 	}
 
@@ -2632,7 +2630,7 @@ int G_OC_TooFewScrimTeams(void)
 	if(!BG_OC_OCMode())
 		return 0;
 
-	if(G_OC_EmptyScrim() || G_OC_NumScrimTeams() < 2)
+	if(G_OC_EmptyScrim() || G_OC_NumScrimTeams() < G_OC_MIN_SCRIM_TEAMS)
 	{
 		return 1;
 	}
@@ -2723,7 +2721,7 @@ funnies[] =
 	{"I know I'm getting better at golf because I'm hitting fewer spectators.", "", ""},
 	{"You have a right to your opinions.  I just don't want to hear them.", "", ""},
 	{"He who doesn't laugh probably didn't get the joke.", "", ""},
-	{"I'm not prejudiced.  I hate everyone equally." "", ""},
+	{"I'm not prejudiced.  I hate everyone equally.", "", ""},
 	{"PC's are like air conditioners.  If you open Windows(R) they don't work.", "", ""},
 	{"Well, it's no secret that the best thing about a secret is secretly telling someone your secret, thereby adding another secret to their secret collection of secrets, secretly.", "", ""},
 	{"Outside of the killings, Washington has one of the lowest crime rates in the country.", "", ""},
@@ -2736,11 +2734,11 @@ funnies[] =
 	{NULL, NULL, NULL}
 };
 
-int G_OC_Lol(gentity_t *ent)
+void G_OC_Lol(gentity_t *ent)
 {
-	funnies_t *f = funnies[rand() % (1 + sizeof(funnies) / sizeof(funnies[0]))];
+	funnies_t *f = &funnies[rand() % (1 + sizeof(funnies) / sizeof(funnies[0]))];
 	if(f->text && *f->text)
-		G_ClientPrint(ent, (char *) funnies[rand() % (sizeof(funnies) / sizeof(funnies[0]))], CLIENT_SPECTATORS);
+		G_ClientPrint(ent, (char *) &funnies[rand() % (sizeof(funnies) / sizeof(funnies[0]))], CLIENT_SPECTATORS);
 	if(f->text2 && *f->text2)
 		G_ClientCP(ent, funnies->text2, NULL, CLIENT_NULL | CLIENT_NEVERREPLACE);
 	if(f->text3 && *f->text3)
@@ -2801,6 +2799,145 @@ static void G_SanitiseNameWhitespaceColor(char *in, char *out, int len)
 
 /*
 =================
+G_OC_CompareStats
+=================
+*/
+static int G_OC_CompareStats(const char *a, const char *b)
+{
+    int countA;
+    int countB;
+    int scoreA;
+    int scoreB;
+    sscanf(a, "%d %d", &countA, &scoreA);
+    sscanf(b, "%d %d", &countB, &scoreB);
+    if(countA != countB)
+        return countB - countA;
+    else if(scoreA != scoreB)
+        return scoreA - scoreB;
+    else
+        return strcmp(a, b);  // alpha-order: count, time, name, date, guid, ip, adminname
+//    return 0;
+}
+
+/*
+=================
+G_OC_SameGuy
+
+Test for another instance (test for guid, ip and admin name)
+=================
+*/
+static int G_OC_SameGuy(gentity_t *ent, char *stats)  // there's a segfault somewhere in here
+{
+    char *statsPtr, *ip;
+    char linebuf[MAX_STRING_CHARS];
+    char toTest[MAX_STRING_CHARS];
+    char realName[MAX_NAME_LENGTH] = {""};
+    char pureName[MAX_NAME_LENGTH] = {""};
+    char cleanName[MAX_NAME_LENGTH] = {""};
+    char userinfo[MAX_INFO_STRING];
+    int i = 0, j = 0, l = 0;
+
+    statsPtr = stats;
+
+    trap_GetUserinfo(ent-g_entities, userinfo, sizeof(userinfo));
+
+    if(!(ip = Info_ValueForKey(userinfo, "ip")))
+      return 1;  // if for some reason ip cannot be parsed, return same guy
+
+    G_SanitiseString(ent->client->pers.netname, cleanName, sizeof(cleanName));
+    realName[0] = '\0';
+    pureName[0] = '\0';
+    cleanName[0] = '\0';
+    for(i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[i]; i++)
+    {
+        if(!Q_stricmp(g_admin_admins[i]->guid, ent->client->pers.guid))
+        {
+            l = g_admin_admins[i]->level;
+            G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
+            if(Q_stricmp(cleanName, pureName))
+            {
+                Q_strncpyz(realName, g_admin_admins[i]->name, sizeof(realName));
+            }
+            break;
+        }
+    }
+    i = 0;
+    if(realName[0] && pureName[0])
+        strcpy(realName, pureName);
+    else if(cleanName[0])
+        strcpy(realName, cleanName);
+    else
+        strcpy(realName, "UnnamedPlayer");  // How can this happen?
+
+    while(*statsPtr)
+    {
+      if(i >= sizeof(linebuf) - 1)
+      {
+        G_Printf(S_COLOR_RED "ERROR: line overflow");
+        return 0;
+      }
+      linebuf[i++] = *statsPtr;
+      linebuf[i]   = '\0';
+      if(*statsPtr == '\n')
+      {
+        i = 0;
+        while(linebuf[i++] > 1);  // skip the count
+        while(linebuf[i++] > 1);  // skip the time
+        while(linebuf[i++] > 1);  // skip the (aliased) name
+        while(linebuf[i++] > 1);  // skip the date
+
+        while(linebuf[i] > 1)     // parse and test for the guid
+        {
+            toTest[j++] = linebuf[i++];
+            toTest[j]   = '\0';
+        }
+        if(!Q_stricmp(ent->client->pers.guid, toTest))
+          return 1;
+        toTest[0] = j = 0;
+        while(linebuf[i++] > 1);  // skip the ip
+//        while(linebuf[i] > 1)     // parse and test for the ip
+//        {
+//            toTest[j++] = linebuf[i++];
+//            toTest[j]   = '\0';
+//        }
+        if(!Q_stricmp(ip, toTest))
+          return 1;
+        toTest[0] = j = 0;
+        while(linebuf[i] > 1)     // parse and test for admin name
+        {
+            toTest[j++] = linebuf[i++];
+            toTest[j]   = '\0';
+        }
+        if(!Q_stricmp(realName, toTest))
+          return 1;
+        toTest[0] = i = j = 0;
+      }
+      statsPtr++;
+    }
+    return 0;
+}
+
+/*
+=================
+strlcmp
+=================
+*/
+static int strlcmp(const char *a, const char *b, int len)
+{
+  const char *string1 = a;
+  const char *string2 = b;
+
+  while(string1 - a < len && string2 - b < len && *string1 && *string2 && *string1 == *string2 && *string1 != '\n' && *string2 != '\n')
+  {
+    string1++;
+    string2++;
+  }
+
+  return *string1 - *string2;
+}
+
+/*
+=================
 G_OC_MediStats
 
 'type: variable': a variable of type type
@@ -2850,7 +2987,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 
 	if(g_cheats.integer)
 	{
-		G_ClientPrint(ent, "Cannot store record with cheats enabled", 0);
+		G_ClientPrint(ent, "Cannot store record with cheats enabled", CLIENT_NULL);
 		return "";
 	}
 
@@ -2858,7 +2995,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 
 	l = 0;
 	records = ((g_statsRecords.integer > 0) ? (g_statsRecords.integer) : (1));
-	G_SanitiseName(ent->client->pers.netname, cleanName);
+	G_SanitiseString(ent->client->pers.netname, cleanName, sizeof(cleanName));
 	realName[0] = '\0';
 	pureName[0] = '\0';
 	cleanName[0] = '\0';
@@ -2867,7 +3004,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 		if(!Q_stricmp(g_admin_admins[i]->guid, ent->client->pers.guid))
 		{
 			l = g_admin_admins[i]->level;
-			G_SanitiseName(g_admin_admins[i]->name, pureName);
+			G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
 			if(Q_stricmp(cleanName, pureName))
 			{
 				Q_strncpyz(realName, g_admin_admins[i]->name, sizeof(realName));
@@ -2893,7 +3030,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 	strcat(date, va(" %d:%02i", qt.tm_hour, qt.tm_min));
 
 	strcpy(name, ent->client->pers.netname);
-	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name);
+	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name, sizeof(name));
 
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
@@ -2901,7 +3038,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 		G_Printf("MediStats(): no map is loaded\n");
 		return "";
 	}
-	G_ToLowerCase(level.layout);
+	G_StrToLower(level.layout);
 	Com_sprintf(fileName, sizeof(fileName), "stats/%s/%s/med.dat", map, level.layout);
 
 	if(!ip || !Q_stricmp(ip, "noip") || !Q_stricmp(ent->client->pers.guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
@@ -2930,18 +3067,18 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 	}
 
 	strcpy(stats, va("%d %d\n", level.totalArmouries, level.totalMedistations));
-	statsh    = G_Alloc(len + 1);
+	statsh    = BG_Alloc(len + 1);
 	trap_FS_Read(statsh, len, f);
 	*(statsh + len) = '\0';
 	if(len >= MAX_STRING_CHARS * 7)
 	{
-	G_Free(statsh);
+	BG_Free(statsh);
 	return " - overflow caught: file too big";
 	}
 	statsh2 = statsh;
 	while(*statsh2 && *statsh2++ != '\n');
 	strcat(stats, (len) ? (statsh2) : (""));
-	G_Free(statsh);
+	BG_Free(statsh);
 	stats2 = statsPos = stats + strlen(va("%d %d\n", level.totalArmouries, level.totalMedistations));
 
 	trap_FS_FCloseFile(f);
@@ -2966,14 +3103,14 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 		stats2++;
 	}
 	stats2 = statsPos;
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_CompareStats);
+	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
 	// if the same guy has another stat..
-	if(G_SameGuy(ent, stats2))
+	if(G_OC_SameGuy(ent, stats2))
 	{
 		// iterate through each stat, and return if there is a better time
 		for(i = 0; i < line; i++)
 		{
-			if(G_SameGuy(ent, buf[i]))
+			if(G_OC_SameGuy(ent, buf[i]))
 			{
 				k = 0;
 				data[0] = j = 0;
@@ -3000,7 +3137,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 		test:  // JMP for duplicates
 		for(i = 0; i < line; i++)
 		{
-			if(G_SameGuy(ent, buf[i]))
+			if(G_OC_SameGuy(ent, buf[i]))
 			{
 	//                while(*stats2 && strlcmp(buf[i], *stats2++, MAX_STRING_CHARS));
 	//                if(!*stats2--)
@@ -3064,7 +3201,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 	strcpy(buf[line++], stat);
 	// truncate -- Not needed
 	// sort
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_CompareStats);
+	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
 	// parse for the record # - if not found, return
 	record = 0;
 	for(i = 0; i < line; i++)
@@ -3102,7 +3239,7 @@ char *G_OC_MediStats(gentity_t *ent, int count, int time)
 
 	if(record)
 	{
-		char *s = G_Alloc(MAX_STRING_CHARS);
+		char *s = BG_Alloc(MAX_STRING_CHARS);
 		Com_sprintf(s, MAX_STRING_CHARS, " ^s^f^r^e^e^2New Record!: #%d^7", record);
 		return s;
 	}
@@ -3149,7 +3286,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 
 	if(g_cheats.integer)
 	{
-		G_ClientPrint(ent, "Cannot store record with cheats enabled", 0);
+		G_ClientPrint(ent, "Cannot store record with cheats enabled", CLIENT_NULL);
 		return "";
 	}
 
@@ -3157,7 +3294,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 
 	l = 0;
 	records = ((g_statsRecords.integer > 0) ? (g_statsRecords.integer) : (1));
-	G_SanitiseName(ent->client->pers.netname, cleanName);
+	G_SanitiseString(ent->client->pers.netname, cleanName, sizeof(cleanName));
 	realName[0] = '\0';
 	pureName[0] = '\0';
 	cleanName[0] = '\0';
@@ -3166,7 +3303,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 		if(!Q_stricmp(g_admin_admins[i]->guid, ent->client->pers.guid))
 		{
 			l = g_admin_admins[i]->level;
-			G_SanitiseName(g_admin_admins[i]->name, pureName);
+			G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
 			if(Q_stricmp(cleanName, pureName))
 			{
 				Q_strncpyz(realName, g_admin_admins[i]->name, sizeof(realName));
@@ -3192,7 +3329,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 	strcat(date, va(" %d:%02i", qt.tm_hour, qt.tm_min));
 
 	strcpy(name, ent->client->pers.netname);
-	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name);
+	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name, sizeof(name));
 
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
@@ -3200,7 +3337,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 		G_Printf("WinStats(): no map is loaded\n");
 		return "";
 	}
-	G_ToLowerCase(level.layout);
+	G_StrToLower(level.layout);
 	Com_sprintf(fileName, sizeof(fileName), "stats/%s/%s/win.dat", map, level.layout);
 
 	if(!ip || !Q_stricmp(ip, "noip") || !Q_stricmp(ent->client->pers.guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
@@ -3229,18 +3366,18 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 	}
 
 	strcpy(stats, va("%d %d\n", level.totalArmouries, level.totalMedistations));
-	statsh = G_Alloc(len + 1);
+	statsh = BG_Alloc(len + 1);
 	trap_FS_Read(statsh, len, f);
 	*(statsh + len) = '\0';
 	if(len >= MAX_STRING_CHARS * 7)
 	{
-		G_Free(statsh);
+		BG_Free(statsh);
 		return " - overflow caught: file too big";
 	}
 	statsh2 = statsh;
 	while(*statsh2 && *statsh2++ != '\n');
 	strcat(stats, (len) ? (statsh2) : (""));
-	G_Free(statsh);
+	BG_Free(statsh);
 	stats2 = statsPos = stats + strlen(va("%d %d\n", level.totalArmouries, level.totalMedistations));
 
 	trap_FS_FCloseFile(f);
@@ -3265,14 +3402,14 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 		stats2++;
 	}
 	stats2 = statsPos;
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_CompareStats);
+	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
 	// if the same guy has another stat..
-	if(G_SameGuy(ent, stats2))
+	if(G_OC_SameGuy(ent, stats2))
 	{
 		// iterate through each stat, and return if there is a better time
 		for(i = 0; i < line; i++)
 		{
-			if(G_SameGuy(ent, buf[i]))
+			if(G_OC_SameGuy(ent, buf[i]))
 			{
 				k = 0;
 				data[0] = j = 0;
@@ -3299,7 +3436,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 		test:  // JMP for duplicates
 		for(i = 0; i < line; i++)
 		{
-			if(G_SameGuy(ent, buf[i]))
+			if(G_OC_SameGuy(ent, buf[i]))
 			{
 	//                while(*stats2 && strlcmp(buf[i], *stats2++, MAX_STRING_CHARS));
 	//                if(!*stats2--)
@@ -3363,7 +3500,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 	strcpy(buf[line++], stat);
 	// truncate -- Not needed
 	// sort
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_CompareStats);
+	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
 	// parse for the record # - if not found, return
 	record = 0;
 	for(i = 0; i < line; i++)
@@ -3402,7 +3539,7 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 
 	if(record)
 	{
-		char *s = G_Alloc(MAX_STRING_CHARS);
+		char *s = BG_Alloc(MAX_STRING_CHARS);
 		Com_sprintf(s, MAX_STRING_CHARS, " ^s^f^r^e^e^2New Record!: #%d^7", record);
 		return s;
 	}
@@ -3448,13 +3585,6 @@ void Cmd_Stats_f(gentity_t *ent)
 		trap_SendServerCommand(ent-g_entities, "print \"Invalid stat string\n\"");
 		return;
 	}
-
-	if(g_floodMinTime.integer)
-		if (G_Flood_Limited(ent))
-		{
-			trap_SendServerCommand(ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"");
-			return;
-		}
 
 	if(trap_Argc() > 4 || trap_Argc() < 1)
 	{
@@ -3503,7 +3633,7 @@ void Cmd_Stats_f(gentity_t *ent)
 			return;
 		}
 	}
-	statsWin = G_Alloc(len + 1);
+	statsWin = BG_Alloc(len + 1);
 	statsWinPtr = statsWin;
 	trap_FS_Read(statsWin, len, f);
 	*(statsWin + len) = '\0';
@@ -3536,7 +3666,7 @@ void Cmd_Stats_f(gentity_t *ent)
 			return;
 		}
 	}
-	statsMedi = G_Alloc(len + 1);
+	statsMedi = BG_Alloc(len + 1);
 	statsMediPtr = statsMedi;
 	trap_FS_Read(statsMedi, len, f);
 	*(statsMedi + len) = '\0';
@@ -3575,8 +3705,8 @@ void Cmd_Stats_f(gentity_t *ent)
 		{
 			if(i >= sizeof(line) - 1)
 			{
-				G_Free(statsWin);
-				G_Free(statsMedi);
+				BG_Free(statsWin);
+				BG_Free(statsMedi);
 				G_Printf(S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
 				 va("stats/%s/%s/med.dat", map, layout), line);
 				return;
@@ -3656,8 +3786,8 @@ void Cmd_Stats_f(gentity_t *ent)
 		{
 			if(i >= sizeof(line) - 1)
 			{
-				G_Free(statsWin);
-				G_Free(statsMedi);
+				BG_Free(statsWin);
+				BG_Free(statsMedi);
 				G_Printf(S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
 				 va("stats/%s/%s/win.dat", map, layout), line);
 				return;
@@ -3722,8 +3852,8 @@ void Cmd_Stats_f(gentity_t *ent)
 		trap_SendServerCommand(ent-g_entities, va("print \"No Armouries\n\""));
 	}
 
-	G_Free(statsMedi);
-	G_Free(statsWin);
+	BG_Free(statsMedi);
+	BG_Free(statsWin);
 }
 
 /*
@@ -3742,24 +3872,24 @@ void Cmd_Mystats_f(gentity_t *ent)
 
 	if(level.ocLoadTime || !ent || !ent->client)
 		return;
-	G_ClientPrint(ent, "Your Obstacle Course Information--", 0);
+	G_ClientPrint(ent, "Your Obstacle Course Information--", CLIENT_NULL);
 	if(ent->client->pers.scrimTeam)
 	{
 		if(level.ocScrimState > G_OC_STATE_PREP)
 		{
 				if(level.ocScrimMode == G_OC_MODE_ARM && level.totalArmouries && level.scrimTeam[ent->client->pers.scrimTeam].arms)
 				{
-					gentity_t **tmp = G_Alloc(level.totalArmouries * sizeof(gentity_t *));
+					gentity_t **tmp = BG_Alloc(level.totalArmouries * sizeof(gentity_t *));
 					memcpy(tmp, level.scrimTeam[ent->client->pers.scrimTeam].arms, level.totalArmouries * sizeof(gentity_t *));	// memcpy should be faster than merge itself
 					for(i = 0; i < MAX_CLIENTS; i++)
 					{
 							client = g_entities + i;
 
 							if(client->client && client->client->pers.scrimTeam == ent->client->pers.scrimTeam)
-								G_MergeArms(tmp, client->client->pers.arms);
+								G_OC_MergeArms(tmp, client->client->pers.arms);
 					}
 
-					percent = (int)(100 * (G_NumberOfArms(tmp)) / (level.totalArmouries));
+					percent = (int)(100 * (G_OC_NumberOfArms(tmp)) / (level.totalArmouries));
 					if(percent < 50)
 					{
 						Q_strncpyz(color, "^1", sizeof(color));
@@ -3773,41 +3903,41 @@ void Cmd_Mystats_f(gentity_t *ent)
 						Q_strncpyz(color, "^2", sizeof(color));
 					}
 
-					if(level.totalArmouries == 1 || G_TestLayoutFlag(level.layout, OCFL_ONEARM))
+					if(level.totalArmouries == 1 || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
 					{
-							if(G_NumberOfArms(tmp))
+							if(G_OC_NumberOfArms(tmp))
 							{
-								G_ClientPrint(ent, va("Armouries: ^2Win^7 - %dm%ds%dms)", MINS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), SECS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), MSEC(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer))), 0);
+								G_ClientPrint(ent, va("Armouries: ^2Win^7 - %dm%ds%dms)", MINS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), SECS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), MSEC(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer))), CLIENT_NULL);
 							}
 							else
 							{
-								G_ClientPrint(ent, "Armouries: ^1None", 0);
+								G_ClientPrint(ent, "Armouries: ^1None", CLIENT_NULL);
 							}
 					}
 					else if(G_OC_AllArms(ent->client->pers.arms))
 					{
-							G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent) - ^2%dm%ds%dms", G_NumberOfArms(tmp), level.totalArmouries, color, percent, MINS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), SECS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), MSEC(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer))), 0);
+							G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent) - ^2%dm%ds%dms", G_OC_NumberOfArms(tmp), level.totalArmouries, color, percent, MINS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), SECS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), MSEC(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer))), CLIENT_NULL);
 					}
 					else
 					{
-						G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent)", G_NumberOfArms(tmp), level.totalArmouries, color, percent), 0);
+						G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent)", G_OC_NumberOfArms(tmp), level.totalArmouries, color, percent), CLIENT_NULL);
 					}
 
-					G_Free(tmp);
+					BG_Free(tmp);
 				}
 				else if(level.ocScrimMode == G_OC_MODE_MEDI && level.totalMedistations && level.scrimTeam[ent->client->pers.scrimTeam].medis)
 				{
-					gentity_t **tmp = G_Alloc(level.totalMedistations * sizeof(gentity_t *));
+					gentity_t **tmp = BG_Alloc(level.totalMedistations * sizeof(gentity_t *));
 					memcpy(tmp, level.scrimTeam[ent->client->pers.scrimTeam].medis, level.totalMedistations * sizeof(gentity_t *));	// memcpy should be faster than merge itself
 					for(i = 0; i < MAX_CLIENTS; i++)
 					{
 							client = g_entities + i;
 
 							if(client->client && client->client->pers.scrimTeam == ent->client->pers.scrimTeam)
-									G_MergeMedis(tmp, client->client->pers.medis);
+									G_OC_MergeMedis(tmp, client->client->pers.medis);
 					}
 
-					percent = (int)(100 * (G_NumberOfMedis(tmp)) / (level.totalMedistations));
+					percent = (int)(100 * (G_OC_NumberOfMedis(tmp)) / (level.totalMedistations));
 					if(percent < 50)
 					{
 							Q_strncpyz(color, "^1", sizeof(color));
@@ -3821,9 +3951,9 @@ void Cmd_Mystats_f(gentity_t *ent)
 							Q_strncpyz(color, "^2", sizeof(color));
 					}
 
-					G_ClientPrint(ent, va("Medical Stations: %d/%d (%s%d^7 percent)%s", G_NumberOfMedis(tmp), level.totalMedistations, color, percent, G_OC_AllMedis(tmp) ? va(" - ^2%dm%ds%dms", MINS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), SECS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), MSEC(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer))) : ("")), 0);
+					G_ClientPrint(ent, va("Medical Stations: %d/%d (%s%d^7 percent)%s", G_OC_NumberOfMedis(tmp), level.totalMedistations, color, percent, G_OC_AllMedis(tmp) ? va(" - ^2%dm%ds%dms", MINS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), SECS(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer)), MSEC(level.scrimTeam[ent->client->pers.scrimTeam].time - (level.ocStartTime + g_ocWarmup.integer))) : ("")), CLIENT_NULL);
 
-					G_Free(tmp);
+					BG_Free(tmp);
 			}
 		}
 		return;
@@ -3832,7 +3962,7 @@ void Cmd_Mystats_f(gentity_t *ent)
 	{
 		if(level.totalArmouries && ent->client->pers.arms)
 		{
-			percent = (int)(100 * (G_NumberOfArms(ent->client->pers.arms)) / (level.totalArmouries));
+			percent = (int)(100 * (G_OC_NumberOfArms(ent->client->pers.arms)) / (level.totalArmouries));
 			if(percent < 50)
 			{
 				Q_strncpyz(color, "^1", sizeof(color));
@@ -3846,29 +3976,29 @@ void Cmd_Mystats_f(gentity_t *ent)
 				Q_strncpyz(color, "^2", sizeof(color));
 			}
 
-			if(level.totalArmouries == 1 || G_TestLayoutFlag(level.layout, OCFL_ONEARM))
+			if(level.totalArmouries == 1 || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
 			{
-				if(G_NumberOfArms(ent->client->pers.arms))
+				if(G_OC_NumberOfArms(ent->client->pers.arms))
 				{
-						G_ClientPrint(ent, va("Armouries: ^2Win^7 - %dm%ds%dms)", MINS(ent->client->pers.winTime), SECS(ent->client->pers.winTime), MSEC(ent->client->pers.winTime)), 0);
+						G_ClientPrint(ent, va("Armouries: ^2Win^7 - %dm%ds%dms)", MINS(ent->client->pers.winTime), SECS(ent->client->pers.winTime), MSEC(ent->client->pers.winTime)), CLIENT_NULL);
 				}
 				else
 				{
-						G_ClientPrint(ent, "Armouries: ^1None", 0);
+						G_ClientPrint(ent, "Armouries: ^1None", CLIENT_NULL);
 				}
 			}
 			else if(G_OC_AllArms(ent->client->pers.arms))
 			{
-				G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent) - ^2%dm%ds%dms", G_NumberOfArms(ent->client->pers.arms), level.totalArmouries, color, percent, MINS(ent->client->pers.winTime), SECS(ent->client->pers.winTime), MSEC(ent->client->pers.winTime)), 0);
+				G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent) - ^2%dm%ds%dms", G_OC_NumberOfArms(ent->client->pers.arms), level.totalArmouries, color, percent, MINS(ent->client->pers.winTime), SECS(ent->client->pers.winTime), MSEC(ent->client->pers.winTime)), CLIENT_NULL);
 			}
 			else
 			{
-				G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent)", G_NumberOfArms(ent->client->pers.arms), level.totalArmouries, color, percent), 0);
+				G_ClientPrint(ent, va("Armouries: %d/%d (%s%d^7 percent)", G_OC_NumberOfArms(ent->client->pers.arms), level.totalArmouries, color, percent), CLIENT_NULL);
 			}
 		}
 		if(level.totalMedistations && ent->client->pers.medis)
 		{
-			percent = (int)(100 * (G_NumberOfMedis(ent->client->pers.medis)) / (level.totalMedistations));
+			percent = (int)(100 * (G_OC_NumberOfMedis(ent->client->pers.medis)) / (level.totalMedistations));
 			if(percent < 50)
 			{
 				Q_strncpyz(color, "^1", sizeof(color));
@@ -3882,7 +4012,7 @@ void Cmd_Mystats_f(gentity_t *ent)
 				Q_strncpyz(color, "^2", sizeof(color));
 			}
 
-			G_ClientPrint(ent, va("Medical Stations: %d/%d (%s%d^7 percent)%s", G_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, color, percent, G_OC_AllMedis(ent->client->pers.medis) ? va(" - ^2%dm%ds%dms", MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime)) : ("")), 0);
+			G_ClientPrint(ent, va("Medical Stations: %d/%d (%s%d^7 percent)%s", G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, color, percent, G_OC_AllMedis(ent->client->pers.medis) ? va(" - ^2%dm%ds%dms", MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime)) : ("")), CLIENT_NULL);
 		}
 	}
 }
@@ -3898,13 +4028,16 @@ void Cmd_Spawnup_f(gentity_t *ent)
 	trace_t tr;
 	gentity_t *traceEnt;
 
+	if(!BG_OC_OCMode())
+		return;
+
 	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
 	VectorMA(ent->client->ps.origin, 100, forward, end);
 
 	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
 	traceEnt = &g_entities[tr.entityNum];
 
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && level.oc && G_admin_canEditOC(ent))
+	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
 	{
 		if(++traceEnt->spawnGroup >= G_OC_MAX_SPAWNGROUP)
 			traceEnt->spawnGroup = 0;
@@ -3923,13 +4056,16 @@ void Cmd_Spawndown_f(gentity_t *ent)
 	trace_t tr;
 	gentity_t *traceEnt;
 
+	if(!BG_OC_OCMode())
+		return;
+
 	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
 	VectorMA(ent->client->ps.origin, 100, forward, end);
 
 	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
 	traceEnt = &g_entities[tr.entityNum];
 
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && level.oc && G_admin_canEditOC(ent))
+	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
 	{
 		if(--traceEnt->spawnGroup <= 0)
 			traceEnt->spawnGroup = 0;
@@ -3948,13 +4084,16 @@ void Cmd_Spawn_f(gentity_t *ent)
 	trace_t tr;
 	gentity_t *traceEnt;
 
+	if(!BG_OC_OCMode())
+		return;
+
 	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
 	VectorMA(ent->client->ps.origin, 100, forward, end);
 
 	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
 	traceEnt = &g_entities[tr.entityNum];
 
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && level.oc && G_admin_canEditOC(ent))
+	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
 	{
 		trap_SendServerCommand(ent-g_entities, va("print \"Structure ordered to spawn %d%s\n\"", traceEnt->spawnGroup, SUFN(traceEnt->spawnGroup)));
 	}
@@ -3972,13 +4111,16 @@ void Cmd_Groupup_f(gentity_t *ent)
 	trace_t tr;
 	gentity_t *traceEnt, *countEnt;
 
+	if(!BG_OC_OCMode())
+		return;
+
 	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
 	VectorMA(ent->client->ps.origin, 100, forward, end);
 
 	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
 	traceEnt = &g_entities[tr.entityNum];
 
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && level.oc && G_admin_canEditOC(ent))
+	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
 	{
 		traceEnt->groupID++;
 		if(traceEnt->s.modelindex == BA_H_SPAWN && traceEnt->groupID >= level.numNodes)
@@ -4009,13 +4151,16 @@ void Cmd_Groupdown_f(gentity_t *ent)
 	trace_t tr;
 	gentity_t *traceEnt, *countEnt;
 
+	if(!BG_OC_OCMode())
+		return;
+
 	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
 	VectorMA(ent->client->ps.origin, 100, forward, end);
 
 	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
 	traceEnt = &g_entities[tr.entityNum];
 
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && level.oc && G_admin_canEditOC(ent))
+	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
 	{
 		traceEnt->groupID--;
 		if(traceEnt->groupID < 0)
@@ -4046,13 +4191,16 @@ void Cmd_Group_f(gentity_t *ent)
 	trace_t tr;
 	gentity_t *traceEnt, *countEnt;
 
+	if(!BG_OC_OCMode())
+		return;
+
 	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
 	VectorMA(ent->client->ps.origin, 100, forward, end);
 
 	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
 	traceEnt = &g_entities[tr.entityNum];
 
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && level.oc && G_admin_canEditOC(ent))
+	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
 	{
 		for(i = 1, countEnt = g_entities + i; i < level.num_entities; countEnt++, i++)
 		{
@@ -4198,7 +4346,7 @@ void Cmd_ListScrim_f(gentity_t *ent)
 
 	Q_strcat(buf, sizeof(buf), "\n");
 
-	for(si = level.scrimTeam + 1; si < level.scrimTeam + MAX_SCRIM_TEAMS; si++)
+	for(si = level.scrimTeam + 1; si < level.scrimTeam + G_OC_MAX_SCRIM_TEAMS; si++)
 	{
 		if(si->active)
 		{
@@ -4329,7 +4477,7 @@ void Cmd_TestHidden_f(gentity_t *ent)
 
 	if(trap_Argc() < 2)
 	{
-		G_ClientPrint(ent, "%s: usage \\%s [clientNum | partial name match]", CLIENT_NULL);
+		G_ClientPrint(ent, va("%s: usage \\%s [clientNum | partial name match]", cmd, cmd), CLIENT_NULL);
 		return;
 	}
 
@@ -4337,16 +4485,16 @@ void Cmd_TestHidden_f(gentity_t *ent)
 	if((found = G_ClientNumbersFromString(name, pids, MAX_CLIENTS)) != 1)
 	{
 		G_MatchOnePlayer(pids, found, err, sizeof(err));
-		G_ClientPrint(ent, va("s: ^7%s", cmd, err), NULL);
+		G_ClientPrint(ent, va("%s: ^7%s", cmd, err), CLIENT_NULL);
 		return;
 	}
 
 	vic = &g_entities[pids[0]];
 
 	if(vic->client->pers.hidden)
-		G_ClientPrint(ent, va("%s: player ^2is^7 hidden", cmd));
+		G_ClientPrint(ent, va("%s: player ^2is^7 hidden", cmd), CLIENT_NULL);
 	else
-		G_ClientPrint(ent, va("%s: player ^3is not^7 hidden", cmd));
+		G_ClientPrint(ent, va("%s: player ^3is not^7 hidden", cmd), CLIENT_NULL);
 }
 
 void Cmd_QuickRestartOC_f(gentity_t *ent)
@@ -4399,7 +4547,7 @@ void Cmd_TeleportToCheckpoint_f(gentity_t *ent)
 	if(ent->client->pers.scrimTeam)
 	{
 		g_oc_scrimTeam_t *t;
-		G_OC_GETTEAM(t, level.scrim, ent->client->pers.scrimTeam);
+		G_OC_GETTEAM(t, level.scrimTeam, ent->client->pers.scrimTeam);
 
 		checkpoint = t->checkpoint;
 	}
@@ -4412,7 +4560,7 @@ void Cmd_TeleportToCheckpoint_f(gentity_t *ent)
 
 	if(ent->client->pers.teamSelection == TEAM_HUMANS)
 	{
-		if((dest = G_SelectHumanSpawnPoint(ent->s.origin, ent, 0 NULL)))
+		if((dest = G_SelectHumanSpawnPoint(ent->s.origin, ent, 0, NULL)))
 		{
 			VectorCopy(dest->s.origin, spawn_origin);
 			if(!ent->client->pers.autoAngleDisabled)
@@ -4424,7 +4572,7 @@ void Cmd_TeleportToCheckpoint_f(gentity_t *ent)
 			{
 				VectorCopy(ent->s.angles, spawn_angles);
 			}
-			if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_A_BOOSTER, spawn_origin, 0) == NULL)
+			if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_A_BOOSTER, spawn_origin) == NULL)
 			{
 				TeleportPlayer(ent, spawn_origin, spawn_angles);
 				VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);  // no velocity after teleportation
@@ -4442,7 +4590,7 @@ void Cmd_TeleportToCheckpoint_f(gentity_t *ent)
 		{
 			VectorCopy(ent->s.angles, spawn_angles);
 		}
-		if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_A_BOOSTER, spawn_origin, 0) == NULL)
+		if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_A_BOOSTER, spawn_origin) == NULL)
 		{
 			TeleportPlayer(ent, spawn_origin, spawn_angles);
 			VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);
@@ -4490,26 +4638,9 @@ void Cmd_AutoUnAngle_f(gentity_t *ent)
 	ent->client->pers.autoAngleDisabled = 1;
 }
 
-MARKER
-
 //======================================================
 // OC flags
 //======================================================
-TODO
-G_StrFind
-strstr
-G_ScrimTeamEmpty
-G_OC_EmptyScrim
-G_OCScrimValidWeapon
-G_OC_ValidScrimWeapon
-G_ToLowerCase
-G_StrToLower
-BG_FindHumanNameForWeapon
-G_OC_HumanNameForWeapon
-OCFL_
-G_OC_OCFLAG_
-()
-G_OC_OCFLAG_NOHEIGHTLOST
 
 /*
 ==================
@@ -4533,7 +4664,7 @@ void G_OC_ParseLayoutFlags(char *layout, char *out)
 	if(!layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c')  // must be an oc
 		return;
 
-	if(!G_LayoutExtraFlags(layout))  // no extra flags
+	if(!G_OC_LayoutExtraFlags(layout))  // no extra flags
 		return;
 
 	strcpy(ret, " (layout has options '");
@@ -4605,7 +4736,7 @@ void G_OC_ParseLayoutFlags(char *layout, char *out)
 	{
 		if(num++)
 			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_G_OC_OCFLAG_ABASILISKUPG_NAME);
+		strcat(ret, G_OC_OCFLAG_ABASILISKUPG_NAME);
 	}
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AMARAUDER))
@@ -4664,7 +4795,6 @@ Similar to G_admin_permission
 
 qboolean G_OC_TestLayoutFlag(char *layout, char *flag)
 {
-	int i;
 	char *flagPtr = flag;  // the flag to test
 	char *flags   = layout;  // the layout to test
 
