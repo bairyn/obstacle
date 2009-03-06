@@ -1534,6 +1534,7 @@ GOBJ_ = \
   $(B)/base/game/g_ptr.o \
   $(B)/base/game/g_weapon.o \
   $(B)/base/game/g_admin.o \
+  $(B)/base/game/g_oc.o \
   $(B)/base/game/bg_oc.o \
   \
   $(B)/base/qcommon/q_math.o \
