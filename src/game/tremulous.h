@@ -576,7 +576,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MGTURRET_VERTICALCAP        30  // +/- maximum pitch
 #define MGTURRET_REPEAT             150
 #define MGTURRET_K_SCALE            1.0f
-#define MGTURRET_RANGE              300.0f
+#define MGTURRET_RANGE              400.0f
 #define MGTURRET_SPREAD             200
 #define MGTURRET_DMG                TREMULOUS_VALUE(HDM(8), HDM(4))
 #define MGTURRET_SPINUP_TIME        TREMULOUS_VALUE(750, 0) // time between target sighted and fire

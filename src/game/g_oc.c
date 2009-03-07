@@ -2674,13 +2674,13 @@ funnies[] =
 
 void G_OC_Lol(gentity_t *ent)
 {
-	funnies_t *f = &funnies[rand() % (1 + sizeof(funnies) / sizeof(funnies[0]))];
+	funnies_t *f = &funnies[rand() % (sizeof(funnies) / sizeof(funnies[0]))];
 	if(f->text && *f->text)
-		G_ClientPrint(ent, (char *) &funnies[rand() % (sizeof(funnies) / sizeof(funnies[0]))], CLIENT_SPECTATORS);
+		G_ClientPrint(ent, f->text, CLIENT_SPECTATORS);
 	if(f->text2 && *f->text2)
-		G_ClientCP(ent, funnies->text2, NULL, CLIENT_NULL | CLIENT_NEVERREPLACE);
+		G_ClientCP(ent, f->text2, NULL, CLIENT_NULL | CLIENT_NEVERREPLACE);
 	if(f->text3 && *f->text3)
-		G_ClientCP(ent, funnies->text3, NULL, CLIENT_SPECTATORS | CLIENT_NOTARGET | CLIENT_NEVERREPLACE);
+		G_ClientCP(ent, f->text3, NULL, CLIENT_SPECTATORS | CLIENT_NOTARGET | CLIENT_NEVERREPLACE);
 }
 
 // TODO: G_OC_*Stats are really, really crappy.  But they work for the most part, so they'll be OK for now

@@ -2108,7 +2108,7 @@ extern int oc_gameMode;
 	//<+===============================================+>
 
 	#define BG_OC_PMNeedCrashLand() ((BG_OC_OCMode()) ? (1) : (0))
-	#define BG_OC_PMOCDodge() ((BG_OC_OCMode()) ? (1) : (0))
+	#define BG_OC_PMOCDodge() (0)
 	#define BG_OC_PMOCWallJump() ((BG_OC_OCMode()) ? (1) : (0))
 	#define BG_OC_PMOCGroundTraceWallJump() ((BG_OC_OCMode()) ? (1) : (0))
 	#define BG_OC_PMOCPounce() (0)
