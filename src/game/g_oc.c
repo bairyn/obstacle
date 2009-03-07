@@ -46,7 +46,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define OC_GAME
 
 #include "g_local.h"
-#include "bg_oc.h"
 
 //======================================================
 // cvars
@@ -617,7 +616,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 
 			//          // set angles
 				  if(!ent || !ent->client->pers.autoAngleDisabled)
-					G_SetClientViewAngle(ent, spawn_angles);
+					SetClientViewAngle(ent, spawn_angles);
 				  // save results of pmove
 				  BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, qtrue);
 
@@ -660,7 +659,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 
 				  // set angles
 				  if(!ent || !ent->client->pers.autoAngleDisabled)
-					G_SetClientViewAngle(ent, spawn_angles);
+					SetClientViewAngle(ent, spawn_angles);
 				  // save results of pmove
 				  BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, qtrue);
 

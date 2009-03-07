@@ -176,7 +176,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { NULL, "P", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "ff", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "version", VERSION, CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
-  { NULL, "build", BUILDID, CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+//  { NULL, "build", BUILDID, CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },  // TODO: figure out why this doesn't compile with lcc
 
   // OC cvars
   G_OC_CVARTABLE

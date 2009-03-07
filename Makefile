@@ -4,10 +4,6 @@
 # GNU Make required
 #
 
-GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
-#OCFLAGS=-DGAMESUM=\\\"$(GAMESUM)\\\"
-OCFLAGS=-DGAMESUM=\\\"$(GAMESUM)\\\"
-
 COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]')
 
 COMPILE_ARCH=$(shell uname -m | sed -e s/i.86/x86/)
@@ -833,6 +829,9 @@ else
 endif
 
 BASE_CFLAGS += -DPRODUCT_VERSION=\\\"$(VERSION)\\\"
+GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
+OCFLAGS = -DGAMESUM=\\\"$(GAMESUM)\\\"
+BASE_CFLAGS += $(OCFLAGS)
 
 ifeq ($(V),1)
 echo_cmd=@:

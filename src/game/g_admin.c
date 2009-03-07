@@ -5409,13 +5409,13 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
   char *info, *infoPtr, *cr;
   char fileName[ MAX_OSPATH ];
   char line[ MAX_STRING_CHARS ], linebuf[ MAX_STRING_CHARS ];
-
+/*
     if ( G_Flood_Limited( ent ) )
     {
       trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
       return qfalse;
     }
-
+*/
   if( G_SayArgc() == 2 + skiparg )
     G_SayArgv( 1 + skiparg, fileName, MAX_OSPATH );
   else if( G_SayArgc() == 1 + skiparg )

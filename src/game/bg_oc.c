@@ -74,7 +74,7 @@ int BG_OC_GetHeightNeverLost(void)
 // no wallwalk
 //======================================================
 
-void BG_OC_SetWallWalk(int c)
+void BG_OC_SetNoWallWalk(int c)
 {
 	oc_noWallWalk = c;
 }

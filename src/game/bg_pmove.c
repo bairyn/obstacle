@@ -765,7 +765,7 @@ static qboolean PM_CheckWallJump( void )
     return qtrue;
   }
 
-  return qfalse;  // should never get here
+//  return qfalse;  // should never get here
 }
 
 
@@ -1026,7 +1026,7 @@ static qboolean PM_CheckDodge( void )
     return qtrue;
   }
 
-  return qfalse;  // should never get here
+//  return qfalse;  // should never get here
 }
 
 //============================================================================
