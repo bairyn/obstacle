@@ -248,7 +248,8 @@ extern int oc_gameMode;
 	int       winTime;  /* recorded time for win */ \
 	/* frame checking to ease CPU usage */ \
 	int       nextWeaponCheckTime; \
-	int       nextOverrideCheckTime;
+	int       nextOverrideCheckTime; \
+	int       buildableOverride;
 
 	#define G_OC_FRAMETIMEWEAPON 1000
 	#define G_OC_FRAMETIMEOVERRIDE 1500
@@ -784,24 +785,12 @@ extern int oc_gameMode;
 	#define G_OC_AlternateCanBuild() \
 	do \
 	{ \
-		/* TODO: in OC mode, certain things are always bypassed (no power, not enough build points, etc); but certain things are only bypassed if the client enables it (room to build, permission by map to build, etc) */ \
-		vec3_t            angles; \
-		vec3_t            entity_origin, normal; \
-		vec3_t            mins, maxs; \
-		trace_t           tr1, tr2, tr3; \
-		itemBuildError_t  reason = IBE_NONE, tempReason; \
-		gentity_t         *tempent; \
-		float             minNormal; \
-		qboolean          invert; \
-		int               contents; \
-		playerState_t     *ps = &ent->client->ps; \
-		int               buildPoints; \
- \
 		if(!BG_OC_OCMode()) \
 			break; \
  \
 		/* Stop all buildables from interacting with traces */ \
-		G_SetBuildableLinkState(qfalse); \
+		if(!ent->client->pers.buildableOverride) \
+		  G_SetBuildableLinkState(qfalse); /* in OC mode, stackables ae allowed if buildable override is on for the client */ \
  \
 		BG_BuildableBoundingBox(buildable, mins, maxs); \
  \
@@ -816,87 +805,116 @@ extern int oc_gameMode;
 		invert = BG_Buildable(buildable)->invertNormal; \
  \
 		/* can we build at this angle? */ \
-		if(!(normal[2] >= minNormal || (invert && normal[2] <= -minNormal))) \
+		if(!ent->client->pers.buildableOverride) \
+		{ \
+			if(!(normal[2] >= minNormal || (invert && normal[2] <= -minNormal))) \
 			reason = IBE_NORMAL; \
- \
-		if(tr1.entityNum != ENTITYNUM_WORLD) \
+			\
+			if(tr1.entityNum != ENTITYNUM_WORLD) \
 			reason = IBE_NORMAL; \
- \
+			\
+		} \
 		contents = trap_PointContents(entity_origin, -1); \
 		buildPoints = BG_Buildable(buildable)->buildPoints; \
  \
-		if(ent->client->ps.stats[STAT_TEAM] == TEAM_ALIENS) \
+		if(!ent->client->pers.buildableOverride) \
 		{ \
-			/*alien criteria */ \
- \
-			/* Check there is an Overmind */ \
-			if(buildable != BA_A_OVERMIND) \
+			if(ent->client->ps.stats[STAT_TEAM] == TEAM_ALIENS) \
 			{ \
-				if(!level.overmindPresent) \
+				/*alien criteria */ \
+				\
+				/* \
+				/8 Check there is an Overmind 8/ \
+				if(buildable != BA_A_OVERMIND) \
+				{ \
+					if(!level.overmindPresent) \
 					reason = IBE_NOOVERMIND; \
-			} \
- \
-			/*check there is creep near by for building on */ \
-			if(BG_Buildable(buildable)->creepTest) \
-			{ \
-				if(!G_IsCreepHere(entity_origin)) \
+				} \
+				*/ \
+				\
+				/*check there is creep near by for building on */ \
+				if(BG_Buildable(buildable)->creepTest) \
+				{ \
+					if(!G_IsCreepHere(entity_origin)) \
 					reason = IBE_NOCREEP; \
-			} \
- \
-			if(buildable == BA_A_HOVEL) \
-			{ \
-				vec3_t    builderMins, builderMaxs; \
- \
-				/*this assumes the adv builder is the biggest thing that'll use the hovel */ \
-				BG_ClassBoundingBox(PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL); \
- \
-				if(APropHovel_Blocked(origin, angles, normal, ent)) \
+				} \
+				\
+				if(buildable == BA_A_HOVEL) \
+				{ \
+					vec3_t    builderMins, builderMaxs; \
+					\
+					/*this assumes the adv builder is the biggest thing that'll use the hovel */ \
+					BG_ClassBoundingBox(PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL); \
+					\
+					if(APropHovel_Blocked(origin, angles, normal, ent)) \
 					reason = IBE_HOVELEXIT; \
-			} \
- \
-			/* Check permission to build here */ \
-			if(tr1.surfaceFlags & SURF_NOALIENBUILD || contents & CONTENTS_NOALIENBUILD) \
+				} \
+				\
+				/* Check permission to build here */ \
+				if(tr1.surfaceFlags & SURF_NOALIENBUILD || contents & CONTENTS_NOALIENBUILD) \
 				reason = IBE_PERMISSION; \
-		} \
-		else if(ent->client->ps.stats[STAT_TEAM] == TEAM_HUMANS) \
-		{ \
-			/*human criteria */ \
- \
-			/* Check for power */ \
-			if(G_IsPowered(entity_origin) == BA_NONE) \
+			} \
+			else if(ent->client->ps.stats[STAT_TEAM] == TEAM_HUMANS) \
 			{ \
-				/*tell player to build a repeater to provide power */ \
-				if(buildable != BA_H_REACTOR && buildable != BA_H_REPEATER) \
+				/*human criteria */ \
+				\
+				/* Check for power */ \
+				/* \
+				if(G_IsPowered(entity_origin) == BA_NONE) \
+				{ \
+					/8tell player to build a repeater to provide power 8/ \
+					if(buildable != BA_H_REACTOR && buildable != BA_H_REPEATER) \
 					reason = IBE_NOPOWERHERE; \
-			} \
- \
-			/*this buildable requires a DCC */ \
-			if(BG_Buildable(buildable)->dccTest && !G_IsDCCBuilt()) \
+				} \
+				*/ \
+				\
+				/*this buildable requires a DCC */ \
+				/* \
+				if(BG_Buildable(buildable)->dccTest && !G_IsDCCBuilt()) \
 				reason = IBE_NODCC; \
- \
-			/*check that there is a parent reactor when building a repeater */ \
-			if(buildable == BA_H_REPEATER) \
-			{ \
-				tempent = G_FindBuildable(BA_H_REACTOR); \
- \
-				if(tempent == NULL) /* No reactor */ \
+				*/ \
+				\
+				/*check that there is a parent reactor when building a repeater */ \
+				/* \
+				if(buildable == BA_H_REPEATER) \
+				{ \
+					tempent = G_FindBuildable(BA_H_REACTOR); \
+					\
+					if(tempent == NULL) /8 No reactor 8/ \
 					reason = IBE_RPTNOREAC; \
-				/*      else if(g_markDeconstruct.integer && G_IsPowered(entity_origin) == BA_H_REACTOR && !G_OC_NoMarkDeconstruct()) \
-						reason = IBE_RPTPOWERHERE;*/ \
-				else if(!g_markDeconstruct.integer && G_RepeaterEntityForPoint(entity_origin) && !G_OC_NoMarkDeconstruct()) \
+					/8      else if(g_markDeconstruct.integer && G_IsPowered(entity_origin) == BA_H_REACTOR && !G_OC_NoMarkDeconstruct()) \
+							reason = IBE_RPTPOWERHERE;8/ \
+					else if(!g_markDeconstruct.integer && G_RepeaterEntityForPoint(entity_origin) && !G_OC_NoMarkDeconstruct()) \
 					reason = IBE_RPTPOWERHERE; \
-			} \
- \
-			/* Check permission to build here */ \
-			if(tr1.surfaceFlags & SURF_NOHUMANBUILD || contents & CONTENTS_NOHUMANBUILD) \
+				} \
+				*/ \
+				\
+				/* Check permission to build here */ \
+				if(tr1.surfaceFlags & SURF_NOHUMANBUILD || contents & CONTENTS_NOHUMANBUILD) \
 				reason = IBE_PERMISSION; \
+			} \
 		} \
+ \
+ /* \
+ if(buildable == BA_A_HOVEL) \
+				{ \
+					vec3_t    builderMins, builderMaxs; \
+					\
+					/8this assumes the adv builder is the biggest thing that'll use the hovel 8/ \
+					BG_ClassBoundingBox(PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL); \
+					\
+					if(APropHovel_Blocked(origin, angles, normal, ent)) \
+					reason = IBE_HOVELEXIT; \
+				}	*/ \
  \
 		/* Check permission to build here */ \
+		if(!ent->client->pers.buildableOverride)  /* && */ \
 		if(tr1.surfaceFlags & SURF_NOBUILD || contents & CONTENTS_NOBUILD) \
 			reason = IBE_PERMISSION; \
  \
 		/* Can we only have one of these? */ \
+		/* in OC mode, multiple buildables of any type should always be available */ \
+		/* \
 		if(BG_Buildable(buildable)->uniqueTest) \
 		{ \
 			tempent = G_FindBuildable(buildable); \
@@ -922,14 +940,20 @@ extern int oc_gameMode;
 				} \
 			} \
 		} \
+		*/ \
  \
+		/* always enough BP in OC mode */ \
+		/* \
 		if((tempReason = G_SufficientBPAvailable(buildable, origin)) != IBE_NONE) \
 			reason = tempReason; \
+		*/ \
  \
 		/* Relink buildables */ \
-		G_SetBuildableLinkState(qtrue); \
+		if(!ent->client->pers.buildableOverride) \
+			G_SetBuildableLinkState(qtrue); \
  \
 		/*check there is enough room to spawn from (presuming this is a spawn) */ \
+		/* no matter if they do have buildable override, players should always be able to spawn from it */ \
 		if(reason == IBE_NONE) \
 		{ \
 			G_SetBuildableMarkedLinkState(qfalse); \
@@ -939,9 +963,13 @@ extern int oc_gameMode;
 		} \
  \
 		/*this item does not fit here */ \
-		if(reason == IBE_NONE && (tr2.fraction < 1.0 || tr3.fraction < 1.0)) \
-			reason = IBE_NOROOM; \
+		/* */ \
+		if(!ent->client->pers.buildableOverride) \
+		{ \
+			if(reason == IBE_NONE && (tr2.fraction < 1.0 || tr3.fraction < 1.0)) \
+				reason = IBE_NOROOM; \
  \
+		} \
 		if(reason != IBE_NONE) \
 			level.numBuildablesForRemoval = 0; \
 	} \
@@ -2067,6 +2095,7 @@ extern int oc_gameMode;
 	#define G_OC_ClientCanBuild(x) ((BG_OC_OCMode()) ? ((G_admin_canEditOC((x))) ? (1) : (0)) : (1))
 	#define G_OC_ClientCannotBuild(x) G_ClientPrint((x), "You cannot build in an obstacle course", CLIENT_SPECTATORS)
 
+	void Cmd_BuildableOverride_f(gentity_t *ent);
 	void Cmd_Stats_f(gentity_t *ent);
 	void Cmd_Mystats_f(gentity_t *ent);
 	void Cmd_Spawnup_f(gentity_t *ent);
@@ -2113,6 +2142,13 @@ extern int oc_gameMode;
 		{"highScores", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
 		{"high-Scores", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
 		{"high_Scores", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
+	{"buildableOverride", 0, Cmd_BuildableOverride_f}, \
+		{"buildOverride", 0, Cmd_BuildableOverride_f}, \
+		{"overrideBuildable", 0, Cmd_BuildableOverride_f}, \
+		{"overrideBuild", 0, Cmd_BuildableOverride_f}, \
+		{"canBuild", 0, Cmd_BuildableOverride_f}, \
+		{"bo", 0, Cmd_BuildableOverride_f}, \
+		{"ob", 0, Cmd_BuildableOverride_f}, \
 	{"leaveScrim", CMD_MESSAGE, Cmd_LeaveScrim_f}, \
 		{"leaveScrimTeam", CMD_MESSAGE, Cmd_LeaveScrim_f}, \
 		{"ScrimTeamLeave", CMD_MESSAGE, Cmd_LeaveScrim_f}, \

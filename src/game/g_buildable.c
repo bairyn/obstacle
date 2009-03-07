@@ -3093,12 +3093,6 @@ Checks to see if a buildable can be built
 */
 itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin )
 {
-  if( G_OC_NeedAlternateCanBuild() )
-  {
-    G_OC_AlternateCanBuild();
-  }
-  else
-  {
 	vec3_t            angles;
 	vec3_t            entity_origin, normal;
 	vec3_t            mins, maxs;
@@ -3111,6 +3105,12 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
 	playerState_t     *ps = &ent->client->ps;
 	int               buildPoints;
 
+  if( G_OC_NeedAlternateCanBuild() )
+  {
+    G_OC_AlternateCanBuild();
+  }
+  else
+  {
 	// Stop all buildables from interacting with traces
 	G_SetBuildableLinkState( qfalse );
 
@@ -3255,9 +3255,8 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
 
 	if( reason != IBE_NONE )
 		level.numBuildablesForRemoval = 0;
-
-	return reason;
   }
+  return reason;
 }
 
 

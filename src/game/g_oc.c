@@ -4366,6 +4366,25 @@ void Cmd_ListScrim_f(gentity_t *ent)
 	G_ClientPrint(ent, buf, CLIENT_NULL);
 }
 
+void Cmd_BuildableOverride_f(gentity_t *ent)
+{
+	if(!BG_OC_OCMode())
+	{
+		ADMP("Can only be used during an obstacle course\n");
+		return;
+	}
+
+	ent->client->pers.buildableOverride = !ent->client->pers.buildableOverride;
+	if(ent->client->pers.buildableOverride)
+	{
+		G_ClientPrint(ent, "Buildable Override enabled", CLIENT_NULL);
+	}
+	else
+	{
+		G_ClientPrint(ent, "Buildable Override disabled", CLIENT_NULL);
+	}
+}
+
 void Cmd_Hide_f(gentity_t *ent)
 {
 	if(!BG_OC_OCMode())
