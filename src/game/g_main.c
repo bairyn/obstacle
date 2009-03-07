@@ -2079,10 +2079,11 @@ void CheckExitRules( void )
     trap_SetConfigstring( CS_WINNER, "Humans Win" );
     LogExit( "Humans win." );
   }
-  else if( level.uncondAlienWin ||
+  else if( ( level.uncondAlienWin ||
            ( ( level.time > level.startTime + 1000 ) &&
              ( level.numHumanSpawns == 0 ) &&
-             ( level.numLiveHumanClients == 0 ) ) )
+             ( level.numLiveHumanClients == 0 ) ) ) &&
+		   ( G_OC_NeedEndGameTeamWin() ) )
   {
     //aliens win
     level.lastWin = TEAM_ALIENS;

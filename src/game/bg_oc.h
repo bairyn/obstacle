@@ -713,7 +713,7 @@ extern int oc_gameMode;
 		return qtrue; \
 	} while(0)
 
-	#define G_OC_NeedNoCreep() (BG_OC_OCMode())
+	#define G_OC_NeedNoCreep() (BG_OC_OCMode() ? (1) : (0))
 	#define G_OC_NoCreep() \
 	do \
 	{ \
@@ -1104,7 +1104,7 @@ extern int oc_gameMode;
 	// game times
 	//<+===============================================+>
 
-	#define G_OC_NeedEndGameTimelimit() (BG_OC_OCMode() ? ((level.numConnectedClients) ? (1) : (0)) : (1))
+	#define G_OC_NeedEndGameTimelimit() ((BG_OC_OCMode()) ? ((level.numConnectedClients) ? (0) : (1)) : (1))
 	#define G_OC_NeedEndGameTeamWin() (!(BG_OC_OCMode()))
 
 	//<+===============================================+>
@@ -1809,7 +1809,7 @@ extern int oc_gameMode;
 				/* remove all non-team weapons */ \
 				for(i = WP_NONE; i < WP_NUM_WEAPONS; i++) \
 				{ \
-					if(i != t->weapon && BG_InventoryContainsWeapon(i, client->ps.stats)) \
+					if(i != t->weapon && client->ps.stats[STAT_WEAPON] == i) \
 					{ \
 						client->ps.stats[STAT_WEAPON] = WP_NONE; \
 						G_ForceWeaponChange(ent, WP_NONE); \
@@ -1817,7 +1817,7 @@ extern int oc_gameMode;
 				} \
  \
 				/* make sure player has scrim weapons */ \
-				if(!BG_InventoryContainsWeapon(t->weapon, client->ps.stats)) \
+				if(client->ps.stats[STAT_WEAPON] != t->weapon) \
 				{ \
 					client->ps.stats[STAT_WEAPON] = t->weapon; \
 					G_ForceWeaponChange(ent, t->weapon); \
@@ -1828,16 +1828,6 @@ extern int oc_gameMode;
 				G_OC_WeaponRemoveReserved(ent); \
 				if(client->pers.teamSelection == TEAM_HUMANS) \
 				{ \
-					if(!BG_InventoryContainsWeapon(WP_BLASTER, client->ps.stats)) \
-					{ \
-						client->ps.stats[STAT_WEAPON] = WP_BLASTER; \
-						G_ForceWeaponChange(ent, WP_NONE); \
-					} \
-					if(!BG_InventoryContainsWeapon(WP_NONE, client->ps.stats)) \
-					{ \
-						client->ps.stats[STAT_WEAPON] = WP_NONE; \
-						G_ForceWeaponChange(ent, WP_NONE); \
-					} \
 					if(!client->pers.arms || !( \
 						(client->pers.scrimTeam) \
 						? \
@@ -1846,7 +1836,7 @@ extern int oc_gameMode;
 						(G_OC_AllArms(client->pers.arms) || ( G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(client->pers.arms))) \
 					))  /* messy mess of tests if client can buy equipment */ \
 					{ \
-						if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, client->ps.stats)) \
+						if(client->ps.stats[STAT_WEAPON] != WP_MACHINEGUN) \
 						{ \
 							client->ps.stats[STAT_WEAPON] = WP_MACHINEGUN; \
 							G_ForceWeaponChange(ent, WP_MACHINEGUN); \
@@ -1855,18 +1845,11 @@ extern int oc_gameMode;
 				} \
 			} \
  \
-			if(BG_InventoryContainsWeapon(WP_HBUILD, client->ps.stats)) \
+			if(client->ps.stats[STAT_WEAPON] == WP_HBUILD) \
 			{ \
 				client->ps.stats[STAT_WEAPON] = WP_NONE; \
 				G_ForceWeaponChange(ent, WP_NONE); \
 			} \
-			/* \
-			if(BG_InventoryContainsWeapon(WP_HBUILD2, client->ps.stats)) \
-			{ \
-				client->ps.stats[STAT_WEAPON] = WP_NONE; \
-				G_ForceWeaponChange(ent, WP_NONE); \
-			} \
-			*/ \
 		} \
  \
 		/* hacky method of automatically enabling and disabling override */ \
@@ -2124,14 +2107,14 @@ extern int oc_gameMode;
 	// pmove
 	//<+===============================================+>
 
-	#define BG_OC_PMNeedCrashLand() (BG_OC_OCMode())
-	#define BG_OC_PMOCDodge() (BG_OC_OCMode())
-	#define BG_OC_PMOCWallJump() (BG_OC_OCMode())
-	#define BG_OC_PMOCGroundTraceWallJump() (BG_OC_OCMode())
+	#define BG_OC_PMNeedCrashLand() ((BG_OC_OCMode()) ? (1) : (0))
+	#define BG_OC_PMOCDodge() ((BG_OC_OCMode()) ? (1) : (0))
+	#define BG_OC_PMOCWallJump() ((BG_OC_OCMode()) ? (1) : (0))
+	#define BG_OC_PMOCGroundTraceWallJump() ((BG_OC_OCMode()) ? (1) : (0))
 	#define BG_OC_PMOCPounce() (0)
 
-//	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((pm->ps->velocity[2] <= BG_Class(pm->ps->stats[STAT_CLASS])->jumpMagnitude * JUMP_OC_ZERO_HEIGHT_MODIFIER) ? (0) : (1)): (1))
-	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((oc_heightNeverLost) ? (1) : (0)) : (1))
+	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((pm->ps->velocity[2] <= BG_Class(pm->ps->stats[STAT_CLASS])->jumpMagnitude * JUMP_OC_ZERO_HEIGHT_MODIFIER) ? (0) : (1)): (1))
+//	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((oc_heightNeverLost) ? (1) : (0)) : (1))
 
 	#define BG_OC_PMNoDodge() BG_OC_OCMode()
 

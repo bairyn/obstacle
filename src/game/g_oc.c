@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * g_admin than a typical version.
  */
 
+// TODO: use g_ocOnly (currently limited only to votes)
 // TODO: middle click to toggle build override
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
 
@@ -518,14 +519,14 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		  {
 			if(i != WP_MACHINEGUN && i != WP_BLASTER && i != WP_NONE)
 			{
-				if(BG_InventoryContainsWeapon(i, ent->client->ps.stats))
+				if(ent->client->ps.stats[STAT_WEAPON] != i)
 				{
 					ent->client->ps.stats[STAT_WEAPON] = WP_NONE;
       				G_ForceWeaponChange(ent, WP_NONE);
 				}
 			}
 		  }
-		  if(!BG_InventoryContainsWeapon(WP_MACHINEGUN, ent->client->ps.stats))
+		  if(ent->client->ps.stats[STAT_WEAPON] != WP_MACHINEGUN)
 		  {
 			ent->client->ps.stats[STAT_WEAPON] = WP_MACHINEGUN;
 			G_ForceWeaponChange(ent, WP_MACHINEGUN);
@@ -2125,7 +2126,7 @@ int G_OC_WeaponRemoveReserved(gentity_t *ent)
 	{
 		if(si->active)
 		{
-			if(BG_InventoryContainsWeapon(si->weapon, ent->client->ps.stats))
+			if(ent->client->ps.stats[STAT_WEAPON] != si->weapon)
 			{
 				ent->client->ps.stats[STAT_WEAPON] = WP_NONE;
 				G_ForceWeaponChange(ent, WP_NONE);
