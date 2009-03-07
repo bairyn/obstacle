@@ -780,6 +780,173 @@ extern int oc_gameMode;
 	} \
 	while(0)
 
+	#define G_OC_NeedAlternateCanBuild() (BG_OC_OCMode() ? (1): (1))
+	#define G_OC_AlternateCanBuild() \
+	do \
+	{ \
+		/* TODO: in OC mode, certain things are always bypassed (no power, not enough build points, etc); but certain things are only bypassed if the client enables it (room to build, permission by map to build, etc) */ \
+		vec3_t            angles; \
+		vec3_t            entity_origin, normal; \
+		vec3_t            mins, maxs; \
+		trace_t           tr1, tr2, tr3; \
+		itemBuildError_t  reason = IBE_NONE, tempReason; \
+		gentity_t         *tempent; \
+		float             minNormal; \
+		qboolean          invert; \
+		int               contents; \
+		playerState_t     *ps = &ent->client->ps; \
+		int               buildPoints; \
+ \
+		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		/* Stop all buildables from interacting with traces */ \
+		G_SetBuildableLinkState(qfalse); \
+ \
+		BG_BuildableBoundingBox(buildable, mins, maxs); \
+ \
+		BG_PositionBuildableRelativeToPlayer(ps, mins, maxs, trap_Trace, entity_origin, angles, &tr1); \
+		trap_Trace(&tr2, entity_origin, mins, maxs, entity_origin, ent->s.number, MASK_PLAYERSOLID); \
+		trap_Trace(&tr3, ps->origin, NULL, NULL, entity_origin, ent->s.number, MASK_PLAYERSOLID); \
+ \
+		VectorCopy(entity_origin, origin); \
+ \
+		VectorCopy(tr1.plane.normal, normal); \
+		minNormal = BG_Buildable(buildable)->minNormal; \
+		invert = BG_Buildable(buildable)->invertNormal; \
+ \
+		/* can we build at this angle? */ \
+		if(!(normal[2] >= minNormal || (invert && normal[2] <= -minNormal))) \
+			reason = IBE_NORMAL; \
+ \
+		if(tr1.entityNum != ENTITYNUM_WORLD) \
+			reason = IBE_NORMAL; \
+ \
+		contents = trap_PointContents(entity_origin, -1); \
+		buildPoints = BG_Buildable(buildable)->buildPoints; \
+ \
+		if(ent->client->ps.stats[STAT_TEAM] == TEAM_ALIENS) \
+		{ \
+			/*alien criteria */ \
+ \
+			/* Check there is an Overmind */ \
+			if(buildable != BA_A_OVERMIND) \
+			{ \
+				if(!level.overmindPresent) \
+					reason = IBE_NOOVERMIND; \
+			} \
+ \
+			/*check there is creep near by for building on */ \
+			if(BG_Buildable(buildable)->creepTest) \
+			{ \
+				if(!G_IsCreepHere(entity_origin)) \
+					reason = IBE_NOCREEP; \
+			} \
+ \
+			if(buildable == BA_A_HOVEL) \
+			{ \
+				vec3_t    builderMins, builderMaxs; \
+ \
+				/*this assumes the adv builder is the biggest thing that'll use the hovel */ \
+				BG_ClassBoundingBox(PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL); \
+ \
+				if(APropHovel_Blocked(origin, angles, normal, ent)) \
+					reason = IBE_HOVELEXIT; \
+			} \
+ \
+			/* Check permission to build here */ \
+			if(tr1.surfaceFlags & SURF_NOALIENBUILD || contents & CONTENTS_NOALIENBUILD) \
+				reason = IBE_PERMISSION; \
+		} \
+		else if(ent->client->ps.stats[STAT_TEAM] == TEAM_HUMANS) \
+		{ \
+			/*human criteria */ \
+ \
+			/* Check for power */ \
+			if(G_IsPowered(entity_origin) == BA_NONE) \
+			{ \
+				/*tell player to build a repeater to provide power */ \
+				if(buildable != BA_H_REACTOR && buildable != BA_H_REPEATER) \
+					reason = IBE_NOPOWERHERE; \
+			} \
+ \
+			/*this buildable requires a DCC */ \
+			if(BG_Buildable(buildable)->dccTest && !G_IsDCCBuilt()) \
+				reason = IBE_NODCC; \
+ \
+			/*check that there is a parent reactor when building a repeater */ \
+			if(buildable == BA_H_REPEATER) \
+			{ \
+				tempent = G_FindBuildable(BA_H_REACTOR); \
+ \
+				if(tempent == NULL) /* No reactor */ \
+					reason = IBE_RPTNOREAC; \
+				/*      else if(g_markDeconstruct.integer && G_IsPowered(entity_origin) == BA_H_REACTOR && !G_OC_NoMarkDeconstruct()) \
+						reason = IBE_RPTPOWERHERE;*/ \
+				else if(!g_markDeconstruct.integer && G_RepeaterEntityForPoint(entity_origin) && !G_OC_NoMarkDeconstruct()) \
+					reason = IBE_RPTPOWERHERE; \
+			} \
+ \
+			/* Check permission to build here */ \
+			if(tr1.surfaceFlags & SURF_NOHUMANBUILD || contents & CONTENTS_NOHUMANBUILD) \
+				reason = IBE_PERMISSION; \
+		} \
+ \
+		/* Check permission to build here */ \
+		if(tr1.surfaceFlags & SURF_NOBUILD || contents & CONTENTS_NOBUILD) \
+			reason = IBE_PERMISSION; \
+ \
+		/* Can we only have one of these? */ \
+		if(BG_Buildable(buildable)->uniqueTest) \
+		{ \
+			tempent = G_FindBuildable(buildable); \
+			if(tempent && !tempent->deconstruct && !(tempent->s.eFlags & EF_DEAD)) \
+			{ \
+				switch(buildable) \
+				{ \
+					case BA_A_OVERMIND: \
+						reason = IBE_ONEOVERMIND; \
+						break; \
+ \
+					case BA_A_HOVEL: \
+						reason = IBE_ONEHOVEL; \
+						break; \
+ \
+					case BA_H_REACTOR: \
+						reason = IBE_ONEREACTOR; \
+						break; \
+ \
+					default: \
+						Com_Error(ERR_FATAL, "No reason for denying build of %d\n", buildable); \
+						break; \
+				} \
+			} \
+		} \
+ \
+		if((tempReason = G_SufficientBPAvailable(buildable, origin)) != IBE_NONE) \
+			reason = tempReason; \
+ \
+		/* Relink buildables */ \
+		G_SetBuildableLinkState(qtrue); \
+ \
+		/*check there is enough room to spawn from (presuming this is a spawn) */ \
+		if(reason == IBE_NONE) \
+		{ \
+			G_SetBuildableMarkedLinkState(qfalse); \
+			if(G_CheckSpawnPoint(ENTITYNUM_NONE, origin, normal, buildable, NULL) != NULL) \
+				reason = IBE_NORMAL; \
+			G_SetBuildableMarkedLinkState(qtrue); \
+		} \
+ \
+		/*this item does not fit here */ \
+		if(reason == IBE_NONE && (tr2.fraction < 1.0 || tr3.fraction < 1.0)) \
+			reason = IBE_NOROOM; \
+ \
+		if(reason != IBE_NONE) \
+			level.numBuildablesForRemoval = 0; \
+	} \
+	while(0)
+
 	#define G_OC_DefaultAlienPowered() \
 	do \
 	{ \
@@ -1490,20 +1657,20 @@ extern int oc_gameMode;
 	#define G_OC_CanActivateItem() ((BG_OC_OCMode()) ? ((G_admin_canEditOC(ent)) ? (1) : (0)) : (0))  // can use or activate or reload weapon
 
 	#define G_OC_ClassChange() \
-	( \
+	(\
 		(BG_OC_OCMode() && !G_admin_canEditOC(ent)) \
 		? \
-		( \
+		(\
 			/* can only evolve in OC mode if the client has full health */ \
 			(ent->client->ps.stats[STAT_HEALTH] >= BG_Class(currentClass)->health) \
 			? \
-			( \
+			(\
 				/* check for evolve spam */ \
 				(level.time >= ent->client->pers.nextValidEvolveTime && newClass != currentClass) \
 				? \
-				( \
+				(\
 					(ent->client->pers.nextValidEvolveTime = level.time + 2500), \
-					( \
+					(\
 						/* check if the class is invalid for the OC */ \
 						(newClass == PCL_ALIEN_BUILDER0 && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGER)) || \
 						(newClass == PCL_ALIEN_BUILDER0_UPG && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGERUPG)) || \
@@ -1517,28 +1684,28 @@ extern int oc_gameMode;
 						(newClass == PCL_ALIEN_LEVEL4 && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ATYRANT)) \
 					) \
 					? \
-					( \
+					(\
 						/* not a valid class for the OC */ \
 						(0) \
 					) \
 					: \
-					( \
+					(\
 						/* can evolve */ \
 						(1) \
 					) \
 				) \
 				: \
-				( \
+				(\
 					(0) \
 				) \
 			) \
 			: \
-			( \
+			(\
 				(0) \
 			) \
 		) \
 		: \
-		( \
+		(\
 			/* not OC mode, or client can edit; no OC limits */ \
 			(1) \
 		) \
@@ -1828,12 +1995,12 @@ extern int oc_gameMode;
 				G_OC_WeaponRemoveReserved(ent); \
 				if(client->pers.teamSelection == TEAM_HUMANS) \
 				{ \
-					if(!client->pers.arms || !( \
+					if(!client->pers.arms || !(\
 						(client->pers.scrimTeam) \
 						? \
 						(level.scrimTeam[client->pers.scrimTeam].flags & G_OC_SCRIMFLAG_EQUIPMENT) \
 						: \
-						(G_OC_AllArms(client->pers.arms) || ( G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(client->pers.arms))) \
+						(G_OC_AllArms(client->pers.arms) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(client->pers.arms))) \
 					))  /* messy mess of tests if client can buy equipment */ \
 					{ \
 						if(client->ps.stats[STAT_WEAPON] != WP_MACHINEGUN) \
