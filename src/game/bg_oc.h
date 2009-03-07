@@ -713,7 +713,7 @@ extern int oc_gameMode;
 		return qtrue; \
 	} while(0)
 
-	#define G_OC_NeedNoCreep() (BG_OC_OCMode() ? (1) : (0))
+	#define G_OC_NeedNoCreep() (BG_OC_OCMode() ? (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_NOCREEP)) : (0))
 	#define G_OC_NoCreep() \
 	do \
 	{ \
