@@ -1760,12 +1760,15 @@ extern int oc_gameMode;
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		if(!G_BuildableRange(ent->client->ps.origin, 100, BA_H_ARMOURY)) \
-			return; \
+		if(G_admin_canEditOC(ent)) \
+			break; \
  \
 		/* some weapons are OK */ \
 		if(weapon == WP_NONE || weapon == WP_BLASTER || weapon ==  WP_MACHINEGUN) \
 			break; \
+ \
+		if(!G_BuildableRange(ent->client->ps.origin, 100, BA_H_ARMOURY)) \
+			return; \
  \
 		if(!G_admin_canEditOC(ent)) \
 		{ \
@@ -1836,12 +1839,15 @@ extern int oc_gameMode;
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		if(!G_BuildableRange(ent->client->ps.origin, 100, BA_H_ARMOURY)) \
+		if(G_admin_canEditOC(ent)) \
 			break; \
  \
 		/* some upgrades are OK */ \
 		if(upgrade == UP_AMMO) \
 			break; \
+ \
+		if(!G_BuildableRange(ent->client->ps.origin, 100, BA_H_ARMOURY)) \
+			return; \
  \
 		if(!G_admin_canEditOC(ent)) \
 		{ \
@@ -2024,7 +2030,7 @@ extern int oc_gameMode;
 					G_ForceWeaponChange(ent, t->weapon); \
 				} \
 			} \
-			else \
+			else if(!client->pers.scrimTeam) \
 			{ \
 				G_OC_WeaponRemoveReserved(ent); \
 				if(client->pers.teamSelection == TEAM_HUMANS) \
