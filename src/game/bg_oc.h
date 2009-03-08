@@ -1761,38 +1761,41 @@ extern int oc_gameMode;
 			break; \
  \
 		if(!G_BuildableRange(ent->client->ps.origin, 100, BA_H_ARMOURY)) \
-			break; \
+			return; \
  \
 		/* some weapons are OK */ \
 		if(weapon == WP_NONE || weapon == WP_BLASTER || weapon ==  WP_MACHINEGUN) \
 			break; \
  \
-		if(ent->client->pers.scrimTeam) \
+		if(!G_admin_canEditOC(ent)) \
 		{ \
-			/* see if the team can buy equipment yet */ \
-			g_oc_scrimTeam_t *t; \
-			G_OC_GETTEAM(t, level.scrimTeam, ent->client->pers.scrimTeam); \
+			if(ent->client->pers.scrimTeam) \
+			{ \
+				/* see if the team can buy equipment yet */ \
+				g_oc_scrimTeam_t *t; \
+				G_OC_GETTEAM(t, level.scrimTeam, ent->client->pers.scrimTeam); \
  \
-			if(!(t->flags & G_OC_SCRIMFLAG_EQUIPMENT)) \
-			{ \
-				G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
-				return; \
+				if(!(t->flags & G_OC_SCRIMFLAG_EQUIPMENT)) \
+				{ \
+					G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
+					return; \
+				} \
 			} \
-		} \
-		else \
-		{ \
-			/* make sure the client has won */ \
-			if((!G_OC_AllArms(ent->client->pers.arms) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(ent->client->pers.arms))) && !ent->client->pers.override) \
+			else \
 			{ \
-				G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
-				return; \
-			} \
+				/* make sure the client has won */ \
+				if((!G_OC_AllArms(ent->client->pers.arms) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(ent->client->pers.arms))) && !ent->client->pers.override) \
+				{ \
+					G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
+					return; \
+				} \
  \
-			/* is the weapon reserved for a scrim team? */ \
-			if(G_OC_WeaponIsReserved(weapon) && !ent->client->pers.override && !G_admin_canEditOC(ent)) \
-			{ \
-				G_ClientPrint(ent, "This item is reserved for the oc scrim", CLIENT_SPECTATORS); \
-				return; \
+				/* is the weapon reserved for a scrim team? */ \
+				if(G_OC_WeaponIsReserved(weapon) && !ent->client->pers.override && !G_admin_canEditOC(ent)) \
+				{ \
+					G_ClientPrint(ent, "This item is reserved for the oc scrim", CLIENT_SPECTATORS); \
+					return; \
+				} \
 			} \
 		} \
 	} while(0)
@@ -1840,26 +1843,29 @@ extern int oc_gameMode;
 		if(upgrade == UP_AMMO) \
 			break; \
  \
-		if(ent->client->pers.scrimTeam) \
+		if(!G_admin_canEditOC(ent)) \
 		{ \
-			/* see if the team can buy equipment yet */ \
-			g_oc_scrimTeam_t *t; \
-			G_OC_GETTEAM(t, level.scrimTeam, ent->client->pers.scrimTeam); \
- \
-			if(!(t->flags & G_OC_SCRIMFLAG_EQUIPMENT)) \
+			if(ent->client->pers.scrimTeam) \
 			{ \
-				G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
-				return; \
+				/* see if the team can buy equipment yet */ \
+				g_oc_scrimTeam_t *t; \
+				G_OC_GETTEAM(t, level.scrimTeam, ent->client->pers.scrimTeam); \
+ \
+				if(!(t->flags & G_OC_SCRIMFLAG_EQUIPMENT)) \
+				{ \
+					G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
+					return; \
+				} \
 			} \
-		} \
-		else \
-		{ \
-			/* make sure the client has won */ \
- \
-			if(!G_OC_AllArms(ent->client->pers.arms)) \
+			else \
 			{ \
-				G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
-				return; \
+				/* make sure the client has won */ \
+ \
+				if(!G_OC_AllArms(ent->client->pers.arms)) \
+				{ \
+					G_ClientPrint(ent, "You cannot buy equipment for the OC yet", CLIENT_NULL); \
+					return; \
+				} \
 			} \
 		} \
 	} while(0)

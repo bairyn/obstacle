@@ -3304,6 +3304,11 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
   {
     // in-game building by a player
     BG_GetClientNormal( &builder->client->ps, normal );
+
+    if( built->s.modelindex == BA_H_SPAWN || built->s.modelindex == BA_H_SPAWN )
+	  builder->groupID = 0;
+    else
+	  builder->groupID = 2;  // TODO: use alternative and not ugly hardcoded magic stuff
   }
 
   // when building the initial layout, spawn the entity slightly off its
@@ -3487,7 +3492,6 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
   trap_LinkEntity( built );
 
   G_OC_BUILDABLEBUILT( built );
-  G_OC_BUILDABLEBUILD();
 
   return built;
 }
