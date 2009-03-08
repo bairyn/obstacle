@@ -369,6 +369,9 @@ extern int oc_gameMode;
 	char *G_OC_MediStats(gentity_t *ent, int count, int time);
 	char *G_OC_WinStats(gentity_t *ent, int count, int time);
 
+	#define G_OC_NoDamageAlert() ((BG_OC_OCMode()) ? (1) : (0))
+	#define G_OC_CanBuildableBeDestoryedOnOtherTeam() ((BG_OC_OCMode()) ? (1) : (0))
+
 	#define G_OC_Damage() \
 	do \
 	{ \

@@ -1975,7 +1975,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
   if( tr.fraction < 1.0f &&
       ( traceEnt->s.eType == ET_BUILDABLE ) &&
-      ( traceEnt->buildableTeam == ent->client->pers.teamSelection ) &&
+      ( traceEnt->buildableTeam == ent->client->pers.teamSelection || G_OC_CanBuildableBeDestoryedOnOtherTeam() ) &&
       ( ent->client->ps.weapon == WP_ABUILD ||
         ent->client->ps.weapon == WP_ABUILD2 ||
         ent->client->ps.weapon == WP_HBUILD ) )
@@ -1984,6 +1984,7 @@ void Cmd_Destroy_f( gentity_t *ent )
     if( traceEnt->health <= 0 )
     {
       G_QueueBuildPoints( traceEnt );
+      G_OC_BuildableDestroyed( traceEnt );
       G_FreeEntity( traceEnt );
       return;
     }
@@ -2045,6 +2046,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       else
       {
         G_LogDestruction( traceEnt, ent, MOD_DECONSTRUCT );
+        G_OC_BuildableDestroyed( traceEnt );
         G_FreeEntity( traceEnt );
 
         if( !g_cheats.integer && !G_OC_NoBuildTimer() )

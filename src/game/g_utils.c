@@ -518,8 +518,6 @@ void G_FreeEntity( gentity_t *ent )
   if( ent->neverFree )
     return;
 
-  G_OC_BuildableDestroyed( ent );
-
   memset( ent, 0, sizeof( *ent ) );
   ent->classname = "freent";
   ent->freetime = level.time;
