@@ -2327,9 +2327,6 @@ static g_oc_scrimTeam_t *G_OC_NewScrimTeam(char *name, weapon_t weapon, char *er
 	{
 		if(!si->active)
 		{
-			Q_strncpyz(si->name, buf, sizeof(si->name));
-			si->weapon = weapon;
-
 			// initialize some stuff
 			if(si->medis)
 				BG_Free(si->medis);
@@ -2338,6 +2335,9 @@ static g_oc_scrimTeam_t *G_OC_NewScrimTeam(char *name, weapon_t weapon, char *er
 			si->checkpoint = NULL;
 			si->flags = 0;
 			memset(si, 0x00000000, sizeof(g_oc_scrimTeam_t));
+
+			Q_strncpyz(si->name, buf, sizeof(si->name));
+			si->weapon = weapon;
 
 			if(level.totalMedistations)
 				si->medis = BG_Alloc((level.totalMedistations + 1) * sizeof(gentity_t *));
