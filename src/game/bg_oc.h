@@ -2167,6 +2167,16 @@ extern int oc_gameMode;
 	{"leaveScrim", CMD_MESSAGE, Cmd_LeaveScrim_f}, \
 		{"leaveScrimTeam", CMD_MESSAGE, Cmd_LeaveScrim_f}, \
 		{"ScrimTeamLeave", CMD_MESSAGE, Cmd_LeaveScrim_f}, \
+	{"listScrim", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"listScrims", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"scrimList", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"scrimsList", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"listScrimTeams", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"scrimTeamList", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"scrimsTeamList", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"scrimTeamsList", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"scrimListTeams", CMD_MESSAGE, Cmd_ListScrim_f}, \
+		{"scrimListTeam", CMD_MESSAGE, Cmd_ListScrim_f}, \
 	{"joinScrim", CMD_MESSAGE, Cmd_JoinScrim_f}, \
 		{"joinScrimTeam", CMD_MESSAGE, Cmd_JoinScrim_f}, \
 		{"scrimTeamJoin", CMD_MESSAGE, Cmd_JoinScrim_f}, \
