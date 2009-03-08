@@ -3333,13 +3333,8 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
 
   // extended buildable stuff
   built->groupID = builder->groupID;
-  builder->groupID = 0;
-
   built->spawnGroup = builder->spawnGroup;
-  builder->spawnGroup = 0;
-
   built->reserved2 = builder->reserved2;
-  builder->reserved2 = 0.0f;
 
   //things that vary for each buildable that aren't in the dbase
   switch( buildable )
@@ -3627,6 +3622,8 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
   G_SetOrigin( built, tr.endpos );
 
   trap_LinkEntity( built );
+
+  G_OC_BUILDABLEBUILT( built );
 }
 
 /*
@@ -3651,8 +3648,6 @@ void G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int s
   ent->groupID = groupID;
   ent->spawnGroup = spawnGroup;
   ent->reserved2 = reserved2;
-
-  G_OC_BUILDABLEBUILT( ent );
 }
 
 /*
