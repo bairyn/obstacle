@@ -63,7 +63,7 @@ extern int oc_gameMode;
 // game only stuff
 //<+===============================================+><+===============================================+>
 
-#ifdef OC_GAME
+#ifdef GAME
 	#include "../qcommon/q_shared.h"
 
 	//<+===============================================+>
@@ -2295,20 +2295,20 @@ extern int oc_gameMode;
 			memcpy(ent->client->pers.arms, ent->client->pers.armsLastCheckpoint, (level.totalArmouries + 1) * sizeof(gentity_t *));  /* all saved arms for the last checkpoint also belong in arms */ \
 		} \
 	} while(0)
-#endif /* ifdef OC_GAME */
+#endif /* ifdef GAME */
 
 //<+===============================================+><+===============================================+>
 // cgame only stuff
 //<+===============================================+><+===============================================+>
 
 #ifdef OC_CGAME
-#endif /* ifdef OC_CGAME */
+#endif /* ifdef CGAME */
 
 //<+===============================================+><+===============================================+>
 // game or cgame
 //<+===============================================+><+===============================================+>
 
-#if defined(OC_CGAME) || defined(OC_GAME) || defined(OC_BGAME)
+#if defined(CGAME) || defined(GAME)
 	//<+===============================================+>
 	// OC mode itself
 	//<+===============================================+>
@@ -2593,7 +2593,7 @@ extern int oc_gameMode;
 	int BG_OC_GetHeightNeverLost(void);
 	void BG_OC_SetNoWallWalk(int c);
 	int BG_OC_GetNoWallWalk(void);
-#endif /* if defined OC_CGAME || defined OC_GAME */
+#endif /* if defined CGAME || defined GAME */
 
 #undef gentity_t
 #undef weapon_t

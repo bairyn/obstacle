@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _G_LOCAL_H
 #define _G_LOCAL_H
 
-#define OC_GAME
 #include "bg_oc.h"
 
 #include "../qcommon/q_shared.h"

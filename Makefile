@@ -832,6 +832,11 @@ BASE_CFLAGS += -DPRODUCT_VERSION=\\\"$(VERSION)\\\"
 GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
 OCFLAGS = -DGAMESUM=\\\"$(GAMESUM)\\\"
 BASE_CFLAGS += $(OCFLAGS)
+ifeq ($(PLATFORM),mingw32)
+  Q3CFLAGS += -DGAMESUM=\\\"$(GAMESUM)\\\"
+else
+  Q3CFLAGS += -DGAMESUM=\"$(GAMESUM)\"
+endif
 
 ifeq ($(V),1)
 echo_cmd=@:
@@ -1094,17 +1099,17 @@ endef
 
 define DO_CGAME_Q3LCC
 $(echo_cmd) "CGAME_Q3LCC $<"
-$(Q)$(Q3LCC) -DPRODUCT_VERSION=\"$(VERSION)\" -DCGAME -o $@ $<
+$(Q)$(Q3LCC) -DPRODUCT_VERSION=\"$(VERSION)\" $(Q3CFLAGS) -DCGAME -o $@ $<
 endef
 
 define DO_GAME_Q3LCC
 $(echo_cmd) "GAME_Q3LCC $<"
-$(Q)$(Q3LCC) -DPRODUCT_VERSION=\"$(VERSION)\" -DGAME -o $@ $<
+$(Q)$(Q3LCC) -DPRODUCT_VERSION=\"$(VERSION)\" $(Q3CFLAGS) -DGAME -o $@ $<
 endef
 
 define DO_UI_Q3LCC
 $(echo_cmd) "UI_Q3LCC $<"
-$(Q)$(Q3LCC) -DPRODUCT_VERSION=\"$(VERSION)\" -DUI -o $@ $<
+$(Q)$(Q3LCC) -DPRODUCT_VERSION=\"$(VERSION)\" $(Q3CFLAGS) -DUI -o $@ $<
 endef
 
 
