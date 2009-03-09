@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * buildable in range, extended votes, pause, buildlog, revert, several small
  * variable changes, extended layout format and version build and version; and
  * several which are recommended: client-side speedometer, cmd stealth and poor
- * aimbot detection, crash, CPMode, restart CP, no auto-vote, LayoutLoad memory
+ * aimbot detection, crash, connectMessage, CPMode, restart CP, no auto-vote, LayoutLoad memory
  * leak fix, speed, g_connectMessage and 'x is building' message.  Note that
  * this mod uses an entirely different system of flags and a much different
  * g_admin than a typical version.
