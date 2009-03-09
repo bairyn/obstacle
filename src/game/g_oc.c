@@ -43,6 +43,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // TODO: use g_ocOnly (currently limited only to votes)
 // TODO: middle click to toggle build override
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
+// TODO: before 2.0, fix memory corruption bug and fix strange medi counter decrementing bug (happens to arm too)
 
 #define OC_GAME
 

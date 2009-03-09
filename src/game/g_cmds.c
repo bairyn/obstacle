@@ -1985,7 +1985,7 @@ void Cmd_Destroy_f( gentity_t *ent )
     if( traceEnt->health <= 0 )
     {
       G_QueueBuildPoints( traceEnt );
-      G_OC_BuildableDestroyed( traceEnt );
+//      G_OC_BuildableDestroyed( traceEnt );
       G_FreeEntity( traceEnt );
       return;
     }
@@ -2047,7 +2047,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       else
       {
         G_LogDestruction( traceEnt, ent, MOD_DECONSTRUCT );
-        G_OC_BuildableDestroyed( traceEnt );
+//        G_OC_BuildableDestroyed( traceEnt );
         G_FreeEntity( traceEnt );
 
         if( !g_cheats.integer && !G_OC_NoBuildTimer() )
