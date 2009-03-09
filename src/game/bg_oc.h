@@ -1516,7 +1516,7 @@ extern int oc_gameMode;
 			"End match in a draw"); \
 	} while(0)
 
-	#define G_OC_OtherVoteCommands() \
+	#define G_OC_OTHERVOTECOMMANDS \
 	else if(!Q_stricmp(arg1, "hide") && BG_OC_OCMode()) \
 	{ \
 		if(!g_allowHideVote.integer) \

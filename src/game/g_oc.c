@@ -2646,7 +2646,6 @@ funnies[] =
 	{"I'm going to join in and turn this game around 360 degrees!", "", ""},
 	{"If we don't succeed, we run the risk of failure.", "", ""},
 	{"Man was predistined to have free will.", "", ""},
-	{"What's the volume of a circle?  Ask the guy who sits above one.", "", ""},
 	{"PC's are like air conditioners.  If you open Windows(R) they don't work.", "", ""},
 	{"What's one of the most well known oxymorons?  One on wikipedia: Microsoft Works.", "", ""},
 	{"If life is without walls, who needs windows and gates?", "", ""},

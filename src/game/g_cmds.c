@@ -1316,6 +1316,7 @@ void Cmd_CallVote_f( gentity_t *ent )
 
     }
   }
+  G_OC_OTHERVOTECOMMANDS
   else
   {
     trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
