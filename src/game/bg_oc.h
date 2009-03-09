@@ -2341,7 +2341,8 @@ extern int oc_gameMode;
 	#define BG_OC_PMOCGroundTraceWallJump() ((BG_OC_OCMode()) ? (1) : (0))
 	#define BG_OC_PMOCPounce() (0)
 
-	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((pm->ps->velocity[2] <= BG_Class(pm->ps->stats[STAT_CLASS])->jumpMagnitude * JUMP_OC_ZERO_HEIGHT_MODIFIER) ? (0) : (1)): (1))
+	#define BG_OC_ZERO_HEIGHT_MODIFIER 0.9f
+	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((pm->ps->velocity[2] <= BG_Class(pm->ps->stats[STAT_CLASS])->jumpMagnitude * BG_OC_ZERO_HEIGHT_MODIFIER) ? (0) : (1)): (1))
 //	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((oc_heightNeverLost) ? (1) : (0)) : (1))
 
 	#define BG_OC_PMNoDodge() BG_OC_OCMode()
