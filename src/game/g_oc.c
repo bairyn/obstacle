@@ -2127,7 +2127,7 @@ int G_OC_WeaponRemoveReserved(gentity_t *ent)
 	{
 		if(si->active)
 		{
-			if(ent->client->ps.stats[STAT_WEAPON] != si->weapon)
+			if(ent->client->ps.stats[STAT_WEAPON] == si->weapon)
 			{
 				ent->client->ps.stats[STAT_WEAPON] = WP_NONE;
 				G_ForceWeaponChange(ent, WP_NONE);
