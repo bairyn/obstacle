@@ -1153,16 +1153,13 @@ extern int oc_gameMode;
 
 	#define G_OC_NeedLevelCheck() (BG_OC_OCMode() ? ((level.time % 6000 == 0) ? (1) : (0)) : (1))  // save some processing power
 
-	#define G_OC_LevelChecks() \
+	#define G_OC_LevelChecks()
+	#define G_OC_LevelChecks_() \
 	do \
 	{ \
 		if(!BG_OC_OCMode()) \
 			break; \
- \
-		G_OC_CalculateTimers(); \
 	} while(0)
-
-	void G_OC_CalculateTimers();
 
 	#define G_OC_CheckpointSpawnCheck() ((BG_OC_OCMode()) ? (spawn == BA_A_BOOSTER ? (1) : (0)) : (0))
 
@@ -1908,7 +1905,7 @@ extern int oc_gameMode;
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		client->ps.persistent[PERS_OCTIMER] = client->pers.aliveTime; \
+		client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime; \
 	} while(0)
 
 	#define G_OC_ClientThink() \
@@ -1919,7 +1916,7 @@ extern int oc_gameMode;
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		client->ps.persistent[PERS_OCTIMER] = client->pers.aliveTime; \
+		client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime; \
  \
 		if((client->pers.teamSelection == TEAM_HUMANS || client->pers.teamSelection == TEAM_ALIENS) && ent->health > 0 && client->sess.spectatorState != SPECTATOR_NOT) \
 		{ \
