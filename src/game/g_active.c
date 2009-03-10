@@ -405,6 +405,8 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
             !( client->oldbuttons & BUTTON_ATTACK );
   attack3 = ( client->buttons & BUTTON_USE_HOLDABLE ) &&
             !( client->oldbuttons & BUTTON_USE_HOLDABLE );
+
+  G_OC_SpectatorThink();
    
   // We are in following mode only if we are following a non-spectating client
   following = client->sess.spectatorState == SPECTATOR_FOLLOW;

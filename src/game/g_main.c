@@ -2599,6 +2599,9 @@ void G_RunFrame( int levelTime )
     // see if it is time to end the level
     CheckExitRules( );
   }
+
+  G_OC_LevelChecks();
+
   G_SpawnClients( TEAM_ALIENS );
   G_SpawnClients( TEAM_HUMANS );
   G_CalculateAvgPlayers( );

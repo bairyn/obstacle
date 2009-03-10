@@ -277,6 +277,7 @@ typedef enum
   PERS_BANK,      // human credit in the bank
   PERS_QUEUEPOS,  // position in the spawn queue
   PERS_NEWWEAPON  // weapon to switch to
+  BG_OC_PERS
 } persEnum_t;
 
 #define PS_WALLCLIMBINGFOLLOW   0x00000001
