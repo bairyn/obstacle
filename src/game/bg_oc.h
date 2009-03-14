@@ -2320,7 +2320,52 @@ extern int oc_gameMode;
 // cgame only stuff
 //<+===============================================+><+===============================================+>
 
-#ifdef OC_CGAME
+#ifdef CGAME
+	#define CG_OC_DRAWCP() \
+	do \
+	{ \
+		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		/* TODO: either find a better spot for this or make it more flexible */ \
+ \
+		if(cg_printTimer.integer); \
+		{ \
+			/* timer */ \
+ \
+			/* cg_printTimer is set, so cg.time is always set */ \
+			cg.centerPrintTime = cg.time; \
+ \
+			Q_strcat(buf, sizeof(buf), va("^2%dm:%ds:%dms\n^7", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER]))); \
+		} \
+ \
+		if(cg_printSpeedometer.integer); \
+		{ \
+			/* speedometer */ \
+ \
+			float tmp = cg.snap->ps.velocity[2]; \
+ \
+			/* cg_printSpeedometer is set, so cg.time is always set */ \
+			cg.centerPrintTime = cg.time; \
+ \
+			Q_strcat(buf, sizeof(buf), va("^2XYZ: %d^7ups\n^7", (int) VectorLength(cg.snap->ps.velocity))); \
+			cg.snap->ps.velocity[2] = 0.0f; \
+			Q_strcat(buf, sizeof(buf), va("^2XY: %d^7ups\n^7", (int) VectorLength(cg.snap->ps.velocity))); \
+			cg.snap->ps.velocity[2] = tmp; \
+		} \
+	} while(0)
+
+	#define CG_OC_CVARS \
+	vmCvar_t cg_printTimer; \
+	vmCvar_t cg_printSpeedometer;
+
+	#define CG_OC_DCVARS \
+	{ &cg_printTimer, "cg_printTimer", "0", CVAR_ARCHIVE }, \
+	{ &cg_printSpeedometer, "cg_printSpeedometer", "0", CVAR_ARCHIVE },
+
+	#define CG_OC_ECVARS \
+	extern vmCvar_t cg_printTimer; \
+	extern vmCvar_t cg_printSpeedometer;
 #endif /* ifdef CGAME */
 
 //<+===============================================+><+===============================================+>

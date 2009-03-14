@@ -2930,11 +2930,16 @@ CG_DrawCenterString
 */
 static void CG_DrawCenterString( void )
 {
+  char  buf[ 1024 ];
   char  *start;
   int   l;
   int   x, y, w;
   int h;
   float *color;
+
+  Q_strncpyz(buf, cg.centerPrint, sizeof(buf));
+
+  CG_OC_DRAWCP();
 
   if( !cg.centerPrintTime )
     return;
@@ -2945,7 +2950,7 @@ static void CG_DrawCenterString( void )
 
   trap_R_SetColor( color );
 
-  start = cg.centerPrint;
+  start = &buf[ 0 ];
 
   y = cg.centerPrintY - cg.centerPrintLines * BIGCHAR_HEIGHT / 2;
 

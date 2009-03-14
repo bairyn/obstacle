@@ -81,6 +81,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TEAM_OVERLAY_MAXNAME_WIDTH  12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH  16
 
+//==================================================================
+
+#define MSEC(t) ( ( t ) - ( ( ( t ) / 1000 ) * 1000 ) )
+#define SECS(t) ( ( ( t ) - ( ( ( t ) / 60000 ) * 60000 ) ) / 1000 )
+#define MINS(t) ( ( t ) / 60000 )
+
+#define SUFN(x) ( ( ( x ) < 11 && ( x ) > 13 ) ? ( ( ( x ) % 10 == 1 ) ? ( "st" ) : ( ( ( x ) % 10 == 2 ) ? ( "nd" ) : ( ( ( x ) % 10 == 3 ) ? ( "rd" ) : ( "th" ) ) ) ) : ( "th" ) )
+
+#define EXCOLOR(s) \
+{ \
+    int i; \
+ \
+    for(i = 0; i < sizeof((s)); i++) \
+    { \
+        if(((s)[i]) == '^' && i + 3 < sizeof((s))) \
+        { \
+            memmove( (&(s)[i]) + 2, (&(s)[i]), strlen((s)) + 1); \
+            (s)[++i] = '^'; \
+            (s)[++i] = '7'; \
+        } \
+    } \
+}
+
+//==================================================================
+
 typedef enum
 {
   FOOTSTEP_NORMAL,
@@ -1443,6 +1468,8 @@ extern  upgradeInfo_t   cg_upgrades[ 32 ];
 extern  buildableInfo_t cg_buildables[ BA_NUM_BUILDABLES ];
 
 extern  markPoly_t      cg_markPolys[ MAX_MARK_POLYS ];
+
+CG_OC_ECVARS
 
 extern  vmCvar_t    cg_teslaTrailTime;
 extern  vmCvar_t    cg_centertime;
