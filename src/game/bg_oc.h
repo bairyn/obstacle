@@ -1596,7 +1596,7 @@ extern int oc_gameMode;
 	} \
 	else if(!Q_stricmp(arg1, "startscrim") && BG_OC_OCMode()) \
 	{ \
-		if(arg2[0] != 'a' || arg2[0] != 'm') \
+		if(arg2[0] != 'a' && arg2[0] != 'm') \
 		{ \
 			G_ClientPrint(ent, "callvote: usage /callvote startscrim [a/m]", CLIENT_NULL); \
 			return; \
@@ -2339,6 +2339,7 @@ extern int oc_gameMode;
 			break; \
  \
 		/* TODO: either find a better spot for this or make it more flexible */ \
+		/* TODO: remove the strangeness by moving CP mixes from server to cleint */ \
  \
 		if(cg_printTimer.integer) \
 		{ \
