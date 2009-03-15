@@ -1917,13 +1917,13 @@ extern int oc_gameMode;
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime; \
- \
-		if((client->pers.teamSelection == TEAM_HUMANS || client->pers.teamSelection == TEAM_ALIENS) && ent->health > 0 && client->sess.spectatorState != SPECTATOR_NOT) \
+		if((client->pers.teamSelection == TEAM_HUMANS || client->pers.teamSelection == TEAM_ALIENS) && client->ps.stats[STAT_HEALTH] > 0 && client->sess.spectatorState != SPECTATOR_NOT) \
 		{ \
 			client->pers.aliveTime += trap_Milliseconds() - client->pers.lastAliveTime; \
 			client->pers.lastAliveTime = trap_Milliseconds(); \
 		} \
+ \
+		client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime; \
  \
 		if(client->pers.needEvolve) \
 		{ \
@@ -1971,7 +1971,7 @@ extern int oc_gameMode;
 				newClass = PCL_ALIEN_LEVEL4; \
  \
 			/* furthur unnecessary checks for wallwaking and some other checks */ \
-			if(!(client->ps.stats[STAT_STATE] & SS_WALLCLIMBING) && client->pers.teamSelection == TEAM_ALIENS && !(client->ps.stats[STAT_STATE] & SS_HOVELING) && ent->health > 0 && G_RoomForClassChange(ent, newClass, infestOrigin)) \
+			if(!(client->ps.stats[STAT_STATE] & SS_WALLCLIMBING) && client->pers.teamSelection == TEAM_ALIENS && !(client->ps.stats[STAT_STATE] & SS_HOVELING) && client->ps.stats[STAT_HEALTH] > 0 && G_RoomForClassChange(ent, newClass, infestOrigin)) \
 			{ \
 				if(currentClass != newClass) \
 				{ \
