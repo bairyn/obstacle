@@ -122,10 +122,6 @@ fi
 
 # copy into server
 
-if ! cp build/release-linux-x86/base/vm/game.qvm ${build_serverdir}/; then
-	exit
-fi
-
 if ! cp build/debug-linux-x86/base/gamex86.so ${build_serverdir}/; then
 	exit
 fi
