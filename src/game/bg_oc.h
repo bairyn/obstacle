@@ -1139,15 +1139,22 @@ extern int oc_gameMode;
 		/* everybody that's it's going to end */ \
 		if(level.scrimEndTime) \
 		{ \
-			if(G_OC_HasScrimFinished()) \
+			if(level.time >= level.scrimEndTime) \
 			{ \
-				/* immediately remove the alert message */ \
-				G_ClientCP(NULL, "^7", "crim ends in", 0); \
+				G_OC_EndScrim(); \
 			} \
 			else \
 			{ \
-				/* alert */ \
-                G_ClientCP(NULL, va("OC Scrim ends in ^2%d^7!", (level.scrimEndTime - level.time) / 1000), "crim ends in", 0); \
+				if(G_OC_HasScrimFinished()) \
+				{ \
+					/* immediately remove the alert message */ \
+					G_ClientCP(NULL, "^7", "crim ends in", 0); \
+				} \
+				else \
+				{ \
+					/* alert */ \
+					G_ClientCP(NULL, va("OC Scrim ends in ^2%d^7!", (level.scrimEndTime - level.time) / 1000), "crim ends in", 0); \
+				} \
 			} \
 		} \
 	} while(0)
