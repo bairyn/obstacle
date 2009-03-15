@@ -1917,7 +1917,7 @@ extern int oc_gameMode;
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		if((client->pers.teamSelection == TEAM_HUMANS || client->pers.teamSelection == TEAM_ALIENS) && client->ps.stats[STAT_HEALTH] > 0 && client->sess.spectatorState == SPECTATOR_NOT) \
+		if(client->ps.stats[STAT_HEALTH] > 0 && client->sess.spectatorState == SPECTATOR_NOT) /* increment the timer if the player is alive and not spectating */ \
 		{ \
 			client->pers.aliveTime += trap_Milliseconds() - client->pers.lastAliveTime; \
 			client->pers.lastAliveTime = trap_Milliseconds(); \
