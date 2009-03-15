@@ -2322,6 +2322,8 @@ extern int oc_gameMode;
 //<+===============================================+><+===============================================+>
 
 #ifdef CGAME
+	/* TODO: move some toggles such as hide to a client-side cvar */
+
 	#define CG_OC_DRAWCP() \
 	do \
 	{ \
@@ -2386,7 +2388,7 @@ extern int oc_gameMode;
 	#define CG_OC_SetConfigStrings() \
 	do \
 	{ \
-		switch(atoi((const char *) CG_ConfigString(CS_OCMODE))) \
+		switch(atoi(CG_ConfigString(CS_OCMODE))) \
 		{ \
 			case 0: \
 				BG_OC_SetOCModeNone(); \
