@@ -326,7 +326,8 @@ extern int oc_gameMode;
 	#define OC_PREP_TIME 1500  // enough to get a few frames in
 	#define OC_PREP_TRIGGER_TIME 6500
 
-	#define G_OC_NeedLoadOC() (((g_ocOnly.integer) || (tolower(level.layout[0]) == 'o' && tolower(level.layout[0]) == 'c')) ? ((G_StrToLower(level.layout)), (BG_OC_SetOCModeOC()), (1)) : ((BG_OC_SetOCModeNone()), (0)))
+	#define G_OC_NeedLoadOC() (((g_ocOnly.integer) || (tolower(level.layout[0]) == 'o' && tolower(level.layout[0]) == 'c')) ? ((G_StrToLower(level.layout)), (trap_SetConfigstring(CS_OCMODE, "1")), (BG_OC_SetOCModeOC()), (1)) : ((trap_SetConfigstring(CS_OCMODE, "0")), (BG_OC_SetOCModeNone()), (0)))
+
 	#define G_OC_LoadOC() \
 	do \
 	{ \
@@ -2329,7 +2330,7 @@ extern int oc_gameMode;
  \
 		/* TODO: either find a better spot for this or make it more flexible */ \
  \
-		if(cg_printTimer.integer); \
+		if(cg_printTimer.integer) \
 		{ \
 			/* timer */ \
  \
@@ -2339,7 +2340,7 @@ extern int oc_gameMode;
 			Q_strcat(buf, sizeof(buf), va("^2%dm:%ds:%dms\n^7", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER]))); \
 		} \
  \
-		if(cg_printSpeedometer.integer); \
+		if(cg_printSpeedometer.integer) \
 		{ \
 			/* speedometer */ \
  \
@@ -2363,6 +2364,21 @@ extern int oc_gameMode;
 	{ &cg_printTimer, "cg_printTimer", "0", CVAR_ARCHIVE }, \
 	{ &cg_printSpeedometer, "cg_printSpeedometer", "0", CVAR_ARCHIVE },
 
+	#define CG_OC_SERVERCMDS \
+	else if(num == CS_OCMODE) \
+	{ \
+		switch(atoi(str)) \
+		{ \
+			case 0: \
+				BG_OC_SetOCModeNone(); \
+				break; \
+ \
+			default: \
+				BG_OC_SetOCModeOC(); \
+				break; \
+		} \
+	}
+
 	#define CG_OC_ECVARS \
 	extern vmCvar_t cg_printTimer; \
 	extern vmCvar_t cg_printSpeedometer;
@@ -2380,6 +2396,9 @@ extern int oc_gameMode;
 	void BG_OC_SetOCModeNone(void);
 	void BG_OC_SetOCModeOC(void);
 	int  BG_OC_GetOCMode(void);
+
+	#define BG_OC_CS
+	#define CS_OCMODE 31
 
 	//<+===============================================+>
 	// game and balance stuff

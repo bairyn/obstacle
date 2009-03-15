@@ -389,6 +389,7 @@ static void CG_ConfigStringModified( void )
   {
     CG_ShaderStateChanged( );
   }
+  CG_OC_SERVERCMDS
 }
 
 
