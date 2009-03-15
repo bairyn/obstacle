@@ -643,7 +643,9 @@ void AGeneric_CreepCheck( gentity_t *self )
 {
   gentity_t *spawn;
 
-  if(! G_OC_NeedRepeaterBlast() )
+  G_CreepSlow( self );
+
+  if(!G_OC_NeedRepeaterBlast() )
     return;
 
   spawn = self->parentNode;
@@ -656,7 +658,6 @@ void AGeneric_CreepCheck( gentity_t *self )
       G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_NOCREEP );
     return;
   }
-  G_CreepSlow( self );
 }
 
 /*
