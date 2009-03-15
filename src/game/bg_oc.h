@@ -1923,7 +1923,15 @@ extern int oc_gameMode;
 			client->pers.lastAliveTime = trap_Milliseconds(); \
 		} \
  \
-		client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime; \
+		if(client->pers.scrimTeam) \
+		{ \
+			g_oc_scrimTeam *t = level.scrimTeam[client->pers.scrimTeam];
+			client->ps.persistant[PERS_OCTIMER] = G_OC_SCRIMTIME;
+		} \
+		else \
+		{ \
+			client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime; \
+		} \
  \
 		if(client->pers.needEvolve) \
 		{ \
