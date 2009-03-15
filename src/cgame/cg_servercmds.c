@@ -171,6 +171,7 @@ void CG_SetConfigValues( void )
 
   cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
   cg.warmup = atoi( CG_ConfigString( CS_WARMUP ) );
+  CG_OC_SetConfigStrings();
 }
 
 

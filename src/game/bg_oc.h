@@ -2382,6 +2382,21 @@ extern int oc_gameMode;
 	#define CG_OC_ECVARS \
 	extern vmCvar_t cg_printTimer; \
 	extern vmCvar_t cg_printSpeedometer;
+
+	#define CG_OC_SetConfigStrings() \
+	do \
+	{ \
+		switch(atoi((const char *) CG_ConfigString(CS_OCMODE))) \
+		{ \
+			case 0: \
+				BG_OC_SetOCModeNone(); \
+				break; \
+ \
+			default: \
+				BG_OC_SetOCModeOC(); \
+				break; \
+		} \
+	} while(0)
 #endif /* ifdef CGAME */
 
 //<+===============================================+><+===============================================+>
