@@ -1925,7 +1925,7 @@ extern int oc_gameMode;
  \
 		if(client->pers.scrimTeam) \
 		{ \
-			g_oc_scrimTeam_t *t = level.scrimTeam[client->pers.scrimTeam]; \
+			g_oc_scrimTeam_t *t = &level.scrimTeam[client->pers.scrimTeam]; \
 			client->ps.persistant[PERS_OCTIMER] = G_OC_SCRIMTIME; \
 		} \
 		else \
