@@ -1483,6 +1483,7 @@ CG_OC_ECVARS
 
 extern  vmCvar_t    cg_teslaTrailTime;
 extern  vmCvar_t    cg_centertime;
+extern  vmCvar_t    cg_staticCenterPrints;
 extern  vmCvar_t    cg_runpitch;
 extern  vmCvar_t    cg_runroll;
 extern  vmCvar_t    cg_swingSpeed;

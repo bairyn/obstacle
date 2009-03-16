@@ -2904,6 +2904,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 {
   mix_cp_t *i, *cp = NULL;
   char *s;
+  qboolean replaced = qfalse;
 
   if( !str )
     return;
@@ -2928,6 +2929,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
         if( !cp )
         {
+          replaced = qtrue;
           cp = i;  // use the first replaced slot; don't stop yet because sometimes multiple CP's need to be replaced
         }
       }
@@ -2966,7 +2968,8 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
   Q_strncpyz( cp->message, str, sizeof( cp->message ) );
 
   cp->time = cg.time;
-  cp->y = y;
+  if( !replaced || !cg_staticCenterPrints.integer )
+    cp->y = y;
   cp->charWidth = charWidth;
 
   // count the number of lines for centering
@@ -3034,7 +3037,7 @@ static void CG_DrawCenterString( void )
       // see if we need to bump up y
       for( j = 0; j < id && j < sizeof( yl ) && j < sizeof( yt ); j++ )
       {
-        if( yl[ j ] && yt[ j ] && yl[ j ] <= yl[ id ] && yl[ id ] <= yt[ id ] )
+        if( yl[ j ] && yt[ j ] && yl[ j ] <= yl[ id ] && yl[ id ] <= yt[ j ] )
         {
           start = cg.centerPrint[ j ].message;
           k = 0;
