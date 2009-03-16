@@ -945,6 +945,20 @@ typedef struct
 // After this many msec the crosshair name fades out completely
 #define CROSSHAIR_CLIENT_TIMEOUT 1000
 
+#define MAX_CP_CHARS 128  // buffer size for each individual CP
+#define MAX_CP 20  // 20 individual CP messages at most
+
+typedef struct mix_cp_s mix_cp_t;
+struct mix_cp_s
+{
+	qboolean active;
+	int time;  // start time
+	int charWidth;
+	int y;
+	char message[ MAX_CP_CHARS ];
+	int lines;
+};
+
 typedef struct
 {
   int           clientFrame;                        // incremented each frame
@@ -1048,11 +1062,7 @@ typedef struct
   int           spectatorPaintLen;                  // current offset from start
 
   // centerprinting
-  int           centerPrintTime;
-  int           centerPrintCharWidth;
-  int           centerPrintY;
-  char          centerPrint[ 1024 ];
-  int           centerPrintLines;
+  mix_cp_t      centerPrint[ MAX_CP ];
 
   // low ammo warning state
   int           lowAmmoWarning;   // 1 = low, 2 = empty
@@ -1664,7 +1674,7 @@ extern  int numSortedTeamPlayers;
 
 void        CG_AddLagometerFrameInfo( void );
 void        CG_AddLagometerSnapshotInfo( snapshot_t *snap );
-void        CG_CenterPrint( const char *str, int y, int charWidth );
+void        CG_CenterPrint( const char *str, const char *find, int y, int charWidth );
 void        CG_DrawActive( stereoFrame_t stereoView );
 void        CG_OwnerDraw( float x, float y, float w, float h, float text_x,
                           float text_y, int ownerDraw, int ownerDrawFlags,

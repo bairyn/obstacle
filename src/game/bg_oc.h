@@ -2339,23 +2339,17 @@ extern int oc_gameMode;
 #ifdef CGAME
 	/* TODO: move some toggles such as hide to a client-side cvar */
 
-	#define CG_OC_DRAWCP() \
+	#define CG_OC_Frame() \
 	do \
 	{ \
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		/* TODO: either find a better spot for this or make it more flexible */ \
-		/* TODO: remove the strangeness by moving CP mixes from server to cleint */ \
- \
 		if(cg_printTimer.integer) \
 		{ \
 			/* timer */ \
  \
-			/* cg_printTimer is set, so cg.time is always set */ \
-			cg.centerPrintTime = cg.time; \
- \
-			Q_strcat(buf, sizeof(buf), va("^2%dm:%ds:%dms\n^7", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER]))); \
+			CG_CenterPrint(va("^t^i^m^e^2%dm:%ds:%dms^7", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER])), "^t^i^m^e", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH ); \
 		} \
  \
 		if(cg_printSpeedometer.integer) \
@@ -2364,12 +2358,10 @@ extern int oc_gameMode;
  \
 			float tmp = cg.snap->ps.velocity[2]; \
  \
-			/* cg_printSpeedometer is set, so cg.time is always set */ \
-			cg.centerPrintTime = cg.time; \
+			CG_CenterPrint(va("^2XYZ: %d^7ups", (int) VectorLength(cg.snap->ps.velocity)), "XYZ:", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
  \
-			Q_strcat(buf, sizeof(buf), va("^2XYZ: %d^7ups\n^7", (int) VectorLength(cg.snap->ps.velocity))); \
 			cg.snap->ps.velocity[2] = 0.0f; \
-			Q_strcat(buf, sizeof(buf), va("^2XY: %d^7ups\n^7", (int) VectorLength(cg.snap->ps.velocity))); \
+			CG_CenterPrint(va("^2XY: %d^7ups", (int) VectorLength(cg.snap->ps.velocity)), "XY:", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
 			cg.snap->ps.velocity[2] = tmp; \
 		} \
 	} while(0)

@@ -236,7 +236,7 @@ static void CG_AnnounceAlienStageTransistion( stage_t from, stage_t to )
     return;
 
   trap_S_StartLocalSound( cgs.media.alienStageTransition, CHAN_ANNOUNCER );
-  CG_CenterPrint( "We have evolved!", 200, GIANTCHAR_WIDTH * 4 );
+  CG_CenterPrint( "We have evolved!", NULL, 200, GIANTCHAR_WIDTH * 4 );
 }
 
 /*
@@ -250,7 +250,7 @@ static void CG_AnnounceHumanStageTransistion( stage_t from, stage_t to )
     return;
 
   trap_S_StartLocalSound( cgs.media.humanStageTransition, CHAN_ANNOUNCER );
-  CG_CenterPrint( "Reinforcements have arrived!", 200, GIANTCHAR_WIDTH * 4 );
+  CG_CenterPrint( "Reinforcements have arrived!", NULL, 200, GIANTCHAR_WIDTH * 4 );
 }
 
 /*
@@ -431,7 +431,7 @@ static void CG_MapRestart( void )
 
   // play the "fight" sound if this is a restart without warmup
   if( cg.warmup == 0 )
-    CG_CenterPrint( "FIGHT!", 120, GIANTCHAR_WIDTH * 2 );
+    CG_CenterPrint( "FIGHT!", NULL, 120, GIANTCHAR_WIDTH * 2 );
 
   trap_Cvar_Set( "cg_thirdPerson", "0" );
 }
@@ -1085,7 +1085,7 @@ static void CG_ParseVoice( void )
 
 static void CG_CenterPrint_f( void )
 {
-  CG_CenterPrint( CG_Argv( 1 ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+  CG_CenterPrint( CG_Argv( 1 ), ( CG_Argv( 2 ) && *CG_Argv( 2 ) ) ? ( CG_Argv( 2 ) ) : ( NULL ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 }
 
 static void CG_Print_f( void )

@@ -1764,3 +1764,121 @@ void ClientDisconnect( int clientNum )
 
   CalculateRanks( );
 }
+
+#ifdef _G_OC_H  // leftover from a mod
+#define CLIENT_GETSCRIMTEAM(x) x->client->pers.scrimTeam
+#else
+#define CLIENT_GETSCRIMTEAM(x) 0
+#endif /* #ifdef _G_OC_H */
+
+// big buffer for the following communication functions
+static char buf[ MAX_STRING_CHARS ];
+
+void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
+{
+    gentity_t *i;
+    qboolean target;
+
+    if(ent && !ent->client)
+        return;
+
+    // iterate for each client
+    for( i = &g_entities[ 0 ]; i < g_entities + level.maxclients; i++ )
+    {
+        if(i->client->pers.connected != CON_CONNECTED)
+        {
+            continue;
+        }
+
+        // reset target boolean
+        target = qfalse;
+
+        // is this client one of the targets?
+        if((i == ent) ||
+           (!ent) ||
+           (mode & CLIENT_SPECTATORS && i->client->sess.spectatorState == SPECTATOR_FOLLOW && i->client->sess.spectatorClient == ent - g_entities) ||
+           (mode & CLIENT_SCRIMTEAM && CLIENT_GETSCRIMTEAM(i) == CLIENT_GETSCRIMTEAM(ent)))
+        {
+            target = qtrue;
+        }
+        if(mode & CLIENT_ALLBUT)
+        {
+            target = !target;
+        }
+        if(mode & CLIENT_NOTARGET && i == ent)
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_NOTEAM && CLIENT_GETSCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_ONLYTEAM && !CLIENT_GETSCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+
+        if(target)
+        {
+            buf[0] = 0;
+			if(find)
+				Com_sprintf(buf, sizeof(buf), "cp \"%s\" \"%s\"", message, find);
+			else
+				Com_sprintf(buf, sizeof(buf), "cp \"%s\"", message);
+            trap_SendServerCommand(i - g_entities, buf);
+        }
+    }
+}
+
+void G_ClientPrint( gentity_t *ent, char *message, int mode )
+{
+    gentity_t *i;
+    qboolean target;
+
+    if(ent && !ent->client)
+        return;
+
+    // iterate for each client
+    for( i = &g_entities[ 0 ]; i < g_entities + level.maxclients; i++ )
+    {
+        if(i->client->pers.connected != CON_CONNECTED)
+        {
+            continue;
+        }
+
+        // reset target boolean
+        target = qfalse;
+
+        // is this client one of the targets?
+        if((i == ent) ||
+           (!ent) ||
+           (mode & CLIENT_SPECTATORS && i->client->sess.spectatorState == SPECTATOR_FOLLOW && i->client->sess.spectatorClient == ent - g_entities) ||
+           (mode & CLIENT_SCRIMTEAM && CLIENT_GETSCRIMTEAM(i) == CLIENT_GETSCRIMTEAM(ent)))
+        {
+            target = qtrue;
+        }
+        if(mode & CLIENT_ALLBUT)
+        {
+            target = !target;
+        }
+        if(mode & CLIENT_NOTARGET && i == ent)
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_NOTEAM && CLIENT_GETSCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+        if(mode & CLIENT_ONLYTEAM && !CLIENT_GETSCRIMTEAM(i))
+        {
+            target = qfalse;
+        }
+
+        if(target)
+        {
+            buf[0] = 0;
+            Com_sprintf(buf, sizeof(buf), "print \"%s\n\"", message);
+            trap_SendServerCommand(i - g_entities, buf);
+        }
+    }
+}

@@ -2487,9 +2487,6 @@ void G_RunFrame( int levelTime )
   // get any cvar changes
   G_UpdateCvars( );
 
-  // update cp's
-  G_UpdateCPs( );
-
   //
   // go through all allocated objects
   //

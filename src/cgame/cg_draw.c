@@ -2900,26 +2900,87 @@ Called for important messages that should stay in the center of the screen
 for a few moments
 ==============
 */
-void CG_CenterPrint( const char *str, int y, int charWidth )
+void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 {
-  char  *s;
+  mix_cp_t *i, *cp = NULL;
+  char *s;
 
-  Q_strncpyz( cg.centerPrint, str, sizeof( cg.centerPrint ) );
+  if( !str )
+    return;
 
-  cg.centerPrintTime = cg.time;
-  cg.centerPrintY = y;
-  cg.centerPrintCharWidth = charWidth;
+  // first attempt to find something to replace
+  for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
+  {
+    if( i->active )
+    {
+      if( i->time > i->time + cg_centertime.value )
+      {
+        // the cp has faded away
+        i->active = qfalse;
+      }
+    }
+
+    if( i->active )
+    {
+      if( ( Q_strncmp( str, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  if find matches the message exactly, then it will be replaced
+      {
+        i->active = qfalse;
+
+        if( !cp )
+        {
+          cp = i;  // use the first replaced slot; don't stop yet because sometimes multiple CP's need to be replaced
+        }
+      }
+    }
+  }
+
+  if( !cp )
+  {
+    // nothing was replaced, so find an available slot
+    for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
+    {
+      if( i->active )
+      {
+        if( i->time > i->time + cg_centertime.value )
+        {
+          // the cp has faded away
+          i->active = qfalse;
+        }
+      }
+
+      if( !i->active )
+      {
+        cp = i;
+        break;
+      }
+    }
+  }
+
+  if( !cp )
+  {
+    // no slots found
+    Com_Printf(S_COLOR_RED "Error: no more available slots for CP: " S_COLOR_WHITE "%s\n", str);
+    return;
+  }
+
+  Q_strncpyz( cp->message, str, sizeof( cp->message ) );
+
+  cp->time = cg.time;
+  cp->y = y;
+  cp->charWidth = charWidth;
 
   // count the number of lines for centering
-  cg.centerPrintLines = 1;
-  s = cg.centerPrint;
+  cp->lines = 1;
+  s = cp->message;
   while( *s )
   {
     if( *s == '\n' )
-      cg.centerPrintLines++;
+      cp->lines++;
 
     s++;
   }
+
+  cp->active = qtrue;
 }
 
 
@@ -2930,60 +2991,99 @@ CG_DrawCenterString
 */
 static void CG_DrawCenterString( void )
 {
-  char  buf[ 1024 ];
+  char  buf[ MAX_CP_CHARS ];  // for text heights
   char  *start;
   int   l;
   int   x, y, w;
   int h;
   float *color;
+  int yl[ MAX_CP ] = {0};  // the lowest y for each CP; this is to stop CP's with similar heights
+  int yt[ MAX_CP ] = {0};  // the highest y for each CP
+  mix_cp_t *i;
+  int      j;
+  int      k;
+  int      hu;
+  int id;
 
-  Q_strncpyz(buf, cg.centerPrint, sizeof(buf));
-
-  CG_OC_DRAWCP();
-
-  if( !cg.centerPrintTime )
-    return;
-
-  color = CG_FadeColor( cg.centerPrintTime, 1000 * cg_centertime.value );
-  if( !color )
-    return;
-
-  trap_R_SetColor( color );
-
-  start = &buf[ 0 ];
-
-  y = cg.centerPrintY - cg.centerPrintLines * BIGCHAR_HEIGHT / 2;
-
-  while( 1 )
+  for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
   {
-    char linebuffer[ 1024 ];
+    id = i - cg.centerPrint;
 
-    for( l = 0; l < 50; l++ )
+    if( i->active )
     {
-      if( !start[ l ] || start[ l ] == '\n' )
-        break;
+      if( i->time > i->time + cg_centertime.value )
+      {
+        i->active = qfalse;
+          continue;
+      }
 
-      linebuffer[ l ] = start[ l ];
+      if( !i->time )
+        continue;
+
+      color = CG_FadeColor( i->time, 1000 * cg_centertime.value );
+      if( !color )
+        continue;
+
+      trap_R_SetColor( color );
+
+      y = i->y - i->lines * BIGCHAR_HEIGHT / 2;
+
+      yl[ id ] = y;
+      yt[ id ] = i->y;
+
+      // see if we need to bump up y
+      for( j = 0; j < id && j < sizeof( yl ) && j < sizeof( yt ); j++ )
+      {
+        if( yl[ j ] && yt[ j ] && yl[ j ] <= yl[ id ] && yl[ id ] <= yt[ id ] )
+        {
+          start = cg.centerPrint[ j ].message;
+          k = 0;
+
+          while( *start && *start != '\n' )
+            buf[ k++ ] = *start++;
+          buf[ k ] = 0;
+
+          hu = UI_Text_Height( buf, 0.5, 0 ) + 6;
+          yl[ id ] += hu;
+          yt[ id ] += hu;
+          i->y     += hu;
+          y        += hu;
+        }
+      }
+
+      start = i->message;
+      while( 1 )
+      {
+        char linebuffer[ 1024 ];
+
+        for( l = 0; l < 50; l++ )
+        {
+          if( !start[ l ] || start[ l ] == '\n' )
+            break;
+
+          linebuffer[ l ] = start[ l ];
+        }
+
+        linebuffer[ l ] = 0;
+
+        w = UI_Text_Width( linebuffer, 0.5, 0 );
+        h = UI_Text_Height( linebuffer, 0.5, 0 );
+        x = ( SCREEN_WIDTH - w ) / 2;
+        UI_Text_Paint( x, y + h, 0.5, color, linebuffer, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE );
+        y += h + 6;
+
+        while( *start && ( *start != '\n' ) )
+          start++;
+
+        if( !*start )
+          break;
+
+        start++;
+      }
+
+      trap_R_SetColor( NULL );
     }
-
-    linebuffer[ l ] = 0;
-
-    w = UI_Text_Width( linebuffer, 0.5, 0 );
-    h = UI_Text_Height( linebuffer, 0.5, 0 );
-    x = ( SCREEN_WIDTH - w ) / 2;
-    UI_Text_Paint( x, y + h, 0.5, color, linebuffer, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE );
-    y += h + 6;
-
-    while( *start && ( *start != '\n' ) )
-      start++;
-
-    if( !*start )
-      break;
-
-    start++;
   }
-
-  trap_R_SetColor( NULL );
 }
 
 

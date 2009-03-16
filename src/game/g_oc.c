@@ -2093,6 +2093,9 @@ int G_OC_WeaponIsReserved(int weapon)
 	if(!BG_OC_OCMode())
 		return 0;
 
+	if(level.ocScrimState <= G_OC_STATE_NONE)
+		return 0;
+
 //    for(si = level.scrimTeam + 1; si; si = si->next)
 	for(si = level.scrimTeam + 1; si < level.scrimTeam + G_OC_MAX_SCRIM_TEAMS; si++)
 	{
@@ -2120,6 +2123,9 @@ int G_OC_WeaponRemoveReserved(gentity_t *ent)
 		return 0;
 
 	if(!ent->client)
+		return 0;
+
+	if(level.ocScrimState <= G_OC_STATE_NONE)
 		return 0;
 
 //    for(si = level.scrimTeam + 1; si; si = si->next)

@@ -336,12 +336,6 @@ typedef struct connectionRecord_s
 #define CP_MODE_ENABLED   0
 #define CP_MODE_PRINT     1
 #define CP_MODE_DISABLED  2
-typedef struct
-{
-    qboolean    active;
-    int         start;
-    char        message[ CP_MAX_MESSAGE ];
-} mix_cp_t;
 
 //client flags
 #define CLIENT_NULL         0x00
@@ -411,7 +405,6 @@ typedef struct
   qboolean            useUnlagged;  
 
   // misc
-  mix_cp_t            clientCP[ MAX_CP ];
   int                 crashTime;
   int                 CPMode;
   int                 autoAngleDisabled;  // are angles reset when teleporters are used?  Default 0: angles by default do get reset
@@ -888,10 +881,6 @@ gentity_t   *G_ClosestEnt( vec3_t origin, gentity_t **entities, int numEntities 
 void        G_MinorFormatNumber( char *s );
 void        G_StrToLower( char *s );
 
-void        G_UpdateCPs( void );
-void        G_ClientCP( gentity_t *ent, char *message, char *find, int mode );
-void        G_ClientPrint( gentity_t *ent, char *message, int mode );
-
 //
 // g_combat.c
 //
@@ -1003,6 +992,8 @@ void      BeginIntermission( void );
 void      ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles );
 void      player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod );
 qboolean  SpotWouldTelefrag( gentity_t *spot );
+void      G_ClientCP( gentity_t *ent, char *message, char *find, int mode );
+void      G_ClientPrint( gentity_t *ent, char *message, int mode );
 
 //
 // g_svcmds.c
