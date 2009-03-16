@@ -1058,6 +1058,8 @@ void G_SpawnClients( team_t team )
 
       ent = &g_entities[ clientNum ];
 
+      G_OC_PlayerSpawn( ent );
+
       ent->client->sess.spectatorState = SPECTATOR_NOT;
       ClientUserinfoChanged( clientNum );
       ClientSpawn( ent, spawn, spawn_origin, spawn_angles );
