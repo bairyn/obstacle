@@ -232,7 +232,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse },
 
   { &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
-  { &g_allowVote, "g_majorityVotes", "1", CVAR_ARCHIVE, 0, qfalse },
+  { &g_majorityVotes, "g_majorityVotes", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_voteLimit, "g_voteLimit", "5", CVAR_ARCHIVE, 0, qfalse },
   { &g_mapVotePercent, "g_mapVotePercent", "74", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVotePercent, "g_suddenDeathVotePercent", "74", CVAR_ARCHIVE, 0, qfalse },
@@ -2285,6 +2285,10 @@ void CheckVote( void )
           // still waiting for a majority
           return;
         }
+    }
+    else
+    {
+      return;
     }
   }
 

@@ -1340,25 +1340,17 @@ void Cmd_CallVote_f( gentity_t *ent )
   G_Printf( "'%s' called a vote for '%s'\n", ent->client->pers.netname, 
     level.voteString ) ;
 
-//  ent->client->pers.voteCount++;
-
-//  // start the voting, the caller autoamtically votes yes
-  // start the voting, and don't be a rude asshole by assuming the voter wants to vote yes
+  // start the voting
   level.voteTime = level.time;
-//  level.voteYes = 1;
   level.voteYes = 0;
   level.voteNo = 0;
-//  ent->client->pers.vote = qtrue;
   ent->client->pers.vote = qfalse;
 
   for( i = 0; i < level.maxclients; i++ )
     level.clients[i].ps.eFlags &= ~EF_VOTED;
 
-//  ent->client->ps.eFlags |= EF_VOTED;
-
   trap_SetConfigstring( CS_VOTE_TIME, va( "%i", level.voteTime ) );
   trap_SetConfigstring( CS_VOTE_STRING, level.voteDisplayString );
-//  trap_SetConfigstring( CS_VOTE_YES, "1" );
   trap_SetConfigstring( CS_VOTE_YES, "0" );
   trap_SetConfigstring( CS_VOTE_NO, "0" );
 }
