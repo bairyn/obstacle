@@ -1340,7 +1340,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   G_Printf( "'%s' called a vote for '%s'\n", ent->client->pers.netname, 
     level.voteString ) ;
 
-  ent->client->pers.voteCount++;
+//  ent->client->pers.voteCount++;
 
 //  // start the voting, the caller autoamtically votes yes
   // start the voting, and don't be a rude asshole by assuming the voter wants to vote yes
