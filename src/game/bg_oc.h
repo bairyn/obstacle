@@ -326,7 +326,7 @@ extern int oc_gameMode;
 	#define OC_PREP_TIME 1500  // enough to get a few frames in
 	#define OC_PREP_TRIGGER_TIME 6500
 
-	#define G_OC_NeedLoadOC() (((g_ocOnly.integer) || (tolower(level.layout[0]) == 'o' && tolower(level.layout[0]) == 'c')) ? ((G_StrToLower(level.layout)), (trap_SetConfigstring(CS_OCMODE, "1")), (BG_OC_SetOCModeOC()), (1)) : ((trap_SetConfigstring(CS_OCMODE, "0")), (BG_OC_SetOCModeNone()), (0)))
+	#define G_OC_NeedLoadOC() (((g_ocOnly.integer >= 0) && ((g_ocOnly.integer > 0) || (tolower(level.layout[0]) == 'o' && tolower(level.layout[0]) == 'c'))) ? ((G_StrToLower(level.layout)), (trap_SetConfigstring(CS_OCMODE, "1")), (BG_OC_SetOCModeOC()), (1)) : ((trap_SetConfigstring(CS_OCMODE, "0")), (BG_OC_SetOCModeNone()), (0)))
 
 	#define G_OC_LoadOC() \
 	do \
