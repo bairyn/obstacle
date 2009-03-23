@@ -40,8 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * g_admin than a typical version.
  */
 
-// TODO: use g_ocOnly (currently limited only to votes)
-// TODO: middle click to toggle build override
+// TODO: update with mgdev
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
 // TODO: before 2.0, fix memory corruption bug and fix strange medi counter decrementing bug (happens to arm too)
 
