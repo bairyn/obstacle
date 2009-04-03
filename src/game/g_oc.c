@@ -2054,9 +2054,23 @@ int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 	else
 	{
 		if(level.totalMedistations)
+		{
+			int lost = G_OC_NumberOfMedis(ent->client->pers.medis) - G_OC_NumberOfMedis(ent->client->pers.medisLastCheckpoint);
 			memcpy(ent->client->pers.medis, ent->client->pers.medisLastCheckpoint, (level.totalMedistations + 1) * sizeof(gentity_t *));
+			if(lost)
+			{
+				G_ClientPrint(ent, va("You lost %d medis", lost), CLIENT_SPECTATORS);
+			}
+		}
 		if(level.totalArmouries)
+		{
+			int lost = G_OC_NumberOfArms(ent->client->pers.arms) - G_OC_NumberOfArms(ent->client->pers.armsLastCheckpoint);
 			memcpy(ent->client->pers.arms, ent->client->pers.armsLastCheckpoint, (level.totalArmouries + 1) * sizeof(gentity_t *));
+			if(lost)
+			{
+				G_ClientPrint(ent, va("You lost %d armouries", lost), CLIENT_SPECTATORS);
+			}
+		}
 	}
 
 	return 0;
@@ -2674,6 +2688,7 @@ funnies[] =
 	{"Dan Quayle: We're going to have the best-educated American people in the world.", "(Dan Quayle never really said this)", "(Dan Quayle never really said this)"},
 	{"The word 'genius' isn't applicable in football.  A genius is a guy like Norman Einstein.", "", ""},
 	{"We are ready for any unforeseen event that may or may not occur.", "", ""},
+	Eating is unhealthy
 	{NULL, NULL, NULL}
 };
 
