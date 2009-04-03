@@ -699,7 +699,7 @@ typedef struct centity_s
   particleSystem_t      *entityPS;
   qboolean              entityPSMissing;
 
-  trailSystem_t         *level2ZapTS[ 3 ];
+  trailSystem_t         *level2ZapTS[ LEVEL2_AREAZAP_MAX_TARGETS ];
   int                   level2ZapTime;
 
   trailSystem_t         *muzzleTS; //used for the tesla and reactor
@@ -1499,7 +1499,6 @@ extern  vmCvar_t    cg_drawCrosshairNames;
 extern  vmCvar_t    cg_crosshairSize;
 extern  vmCvar_t    cg_drawAmmoStack;
 extern  vmCvar_t    cg_draw2D;
-extern  vmCvar_t    cg_drawStatus;
 extern  vmCvar_t    cg_animSpeed;
 extern  vmCvar_t    cg_debugAnim;
 extern  vmCvar_t    cg_debugPosition;

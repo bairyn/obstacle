@@ -1449,7 +1449,7 @@ extern int oc_gameMode;
 			} \
 		} \
  \
-		if(!trap_FS_FOpenFile(va("maps/%s.bsp", arg2), NULL, FS_READ)) \
+		if(!G_MapExists(arg2)) \
 		{ \
 			trap_SendServerCommand(ent - g_entities, va("print \"callvote: " \
 				"'maps/%s.bsp' could not be found on the server\n\"", arg2)); \
@@ -2430,7 +2430,7 @@ extern int oc_gameMode;
 	//<+===============================================+>
 
 	#define BG_OC_PERS \
-	,PERS_OCTIMER
+	,PERS_OCTIMER  // netcode now has room for 4 more
 
 	#define BG_OC_NeedBuildableAppend() BG_OC_OCMode()
 	#define BG_OC_NeedClassAppend() BG_OC_OCMode()

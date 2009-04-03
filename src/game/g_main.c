@@ -123,6 +123,7 @@ vmCvar_t  g_markDeconstruct;
 vmCvar_t  g_debugMapRotation;
 vmCvar_t  g_currentMapRotation;
 vmCvar_t  g_currentMap;
+vmCvar_t  g_nextMap;
 vmCvar_t  g_initialMapRotation;
 
 vmCvar_t  g_debugVoices;
@@ -149,10 +150,12 @@ vmCvar_t  g_adminLog;
 vmCvar_t  g_adminParseSay;
 vmCvar_t  g_adminNameProtect;
 vmCvar_t  g_adminTempBan;
+vmCvar_t  g_adminMaxBan;
 
 vmCvar_t  g_dretchPunt;
 
 vmCvar_t  g_privateMessages;
+vmCvar_t  g_specChat;
 vmCvar_t  g_publicAdminMessages;
 
 vmCvar_t  g_tag;
@@ -278,6 +281,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_debugMapRotation, "g_debugMapRotation", "0", 0, 0, qfalse  },
   { &g_currentMapRotation, "g_currentMapRotation", "-1", 0, 0, qfalse  }, // -1 = NOT_ROTATING
   { &g_currentMap, "g_currentMap", "0", 0, 0, qfalse  },
+  { &g_nextMap, "g_nextMap", "", 0 , 0, qtrue  },
   { &g_initialMapRotation, "g_initialMapRotation", "", CVAR_ARCHIVE, 0, qfalse  },
   { &g_debugVoices, "g_debugVoices", "0", 0, 0, qfalse  },
   { &g_voiceChats, "g_voiceChats", "1", CVAR_ARCHIVE, 0, qfalse },
@@ -298,10 +302,12 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_adminParseSay, "g_adminParseSay", "1", CVAR_ARCHIVE, 0, qfalse  },
   { &g_adminNameProtect, "g_adminNameProtect", "1", CVAR_ARCHIVE, 0, qfalse  },
   { &g_adminTempBan, "g_adminTempBan", "2m", CVAR_ARCHIVE, 0, qfalse  },
+  { &g_adminMaxBan, "g_adminMaxBan", "2w", CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_dretchPunt, "g_dretchPunt", "0", CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_privateMessages, "g_privateMessages", "1", CVAR_ARCHIVE, 0, qfalse  },
+  { &g_specChat, "g_specChat", "1", CVAR_ARCHIVE, 0, qfalse  },
   { &g_publicAdminMessages, "g_publicAdminMessages", "1", CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_tag, "g_tag", "main", CVAR_INIT, 0, qfalse },
@@ -711,10 +717,13 @@ static void G_ClearVotes( void )
 {
   level.voteTime = 0;
   trap_SetConfigstring( CS_VOTE_TIME, "" );
+  trap_SetConfigstring( CS_VOTE_STRING, "" );
   level.teamVoteTime[ 0 ] = 0;
   trap_SetConfigstring( CS_TEAMVOTE_TIME, "" );
+  trap_SetConfigstring( CS_TEAMVOTE_STRING, "" );
   level.teamVoteTime[ 1 ] = 0;
   trap_SetConfigstring( CS_TEAMVOTE_TIME + 1, "" );
+  trap_SetConfigstring( CS_TEAMVOTE_STRING + 1, "" );
 }
 
 /*
@@ -1084,13 +1093,13 @@ void G_CountSpawns( void )
 
   for( i = 1, ent = g_entities + i ; i < level.num_entities ; i++, ent++ )
   {
-    if( !ent->inuse )
+    if( !ent->inuse || ent->s.eType != ET_BUILDABLE || ent->health <= 0 )
       continue;
 
-    if( ent->s.modelindex == BA_A_SPAWN && ent->health > 0 )
+    if( ent->s.modelindex == BA_A_SPAWN )
       level.numAlienSpawns++;
 
-    if( ent->s.modelindex == BA_H_SPAWN && ent->health > 0 )
+    if( ent->s.modelindex == BA_H_SPAWN )
       level.numHumanSpawns++;
   }
 }
@@ -1321,6 +1330,7 @@ void G_CalculateStages( void )
     trap_Cvar_Set( "g_alienStage", va( "%d", S2 ) );
     level.alienStage2Time = level.time;
     lastAlienStageModCount = g_alienStage.modificationCount;
+    G_LogPrintf("Stage: A 2: Aliens reached Stage 2\n");
   }
 
   if( g_alienCredits.integer >=
@@ -1330,6 +1340,7 @@ void G_CalculateStages( void )
     trap_Cvar_Set( "g_alienStage", va( "%d", S3 ) );
     level.alienStage3Time = level.time;
     lastAlienStageModCount = g_alienStage.modificationCount;
+    G_LogPrintf("Stage: A 3: Aliens reached Stage 3\n");
   }
 
   if( g_humanCredits.integer >=
@@ -1339,6 +1350,7 @@ void G_CalculateStages( void )
     trap_Cvar_Set( "g_humanStage", va( "%d", S2 ) );
     level.humanStage2Time = level.time;
     lastHumanStageModCount = g_humanStage.modificationCount;
+    G_LogPrintf("Stage: H 2: Humans reached Stage 2\n");
   }
 
   if( g_humanCredits.integer >=
@@ -1348,6 +1360,7 @@ void G_CalculateStages( void )
     trap_Cvar_Set( "g_humanStage", va( "%d", S3 ) );
     level.humanStage3Time = level.time;
     lastHumanStageModCount = g_humanStage.modificationCount;
+    G_LogPrintf("Stage: H 3: Humans reached Stage 3\n");
   }
 
   if( g_alienStage.modificationCount > lastAlienStageModCount )
@@ -1646,10 +1659,14 @@ void ExitLevel( void )
   int       i;
   gclient_t *cl;
 
-  if( G_MapRotationActive( ) )
+  if ( G_MapExists( g_nextMap.string ) )
+    trap_SendConsoleCommand( EXEC_APPEND, va("map %s\n", g_nextMap.string ) );
+  else if( G_MapRotationActive( ) )
     G_AdvanceMapRotation( );
   else
     trap_SendConsoleCommand( EXEC_APPEND, "map_restart\n" );
+
+  trap_Cvar_Set( "g_nextMap", "" );
 
   level.restarted = qtrue;
   level.changemap = NULL;
@@ -2294,6 +2311,7 @@ void CheckVote( void )
 
   level.voteTime = 0;
   trap_SetConfigstring( CS_VOTE_TIME, "" );
+  trap_SetConfigstring( CS_VOTE_STRING, "" );
 }
 
 
@@ -2342,6 +2360,7 @@ void CheckTeamVote( team_t team )
 
   level.teamVoteTime[ cs_offset ] = 0;
   trap_SetConfigstring( CS_TEAMVOTE_TIME + cs_offset, "" );
+  trap_SetConfigstring( CS_TEAMVOTE_STRING + cs_offset, "" );
 }
 
 
@@ -2608,7 +2627,7 @@ void G_RunFrame( int levelTime )
   G_SpawnClients( TEAM_ALIENS );
   G_SpawnClients( TEAM_HUMANS );
   G_CalculateAvgPlayers( );
-  //G_UpdateZaps( msec );
+  G_UpdateZaps( msec );
 
   // update to team status?
   CheckTeamStatus( );

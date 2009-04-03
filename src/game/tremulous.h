@@ -84,10 +84,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL2_CLAW_K_SCALE         1.0f
 #define LEVEL2_CLAW_U_REPEAT        400
 #define LEVEL2_CLAW_U_K_SCALE       1.0f
-#define LEVEL2_AREAZAP_DMG          ADM(40)
-#define LEVEL2_AREAZAP_RANGE        120.0f
-#define LEVEL2_AREAZAP_CUTOFF       300.0f
-#define LEVEL2_AREAZAP_REPEAT       500
+#define LEVEL2_AREAZAP_DMG          ADM(60)
+#define LEVEL2_AREAZAP_RANGE        200.0f
+#define LEVEL2_AREAZAP_WIDTH        15.0f
+#define LEVEL2_AREAZAP_REPEAT       1500
+#define LEVEL2_AREAZAP_TIME         1000
 #define LEVEL2_AREAZAP_MAX_TARGETS  5
 #define LEVEL2_WALLJUMP_MAXSPEED    1000.0f
 
@@ -131,7 +132,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL4_TRAMPLE_DURATION        3000  // msec trample lasts on full charge
 //#define LEVEL4_TRAMPLE_STOP_PERCENTAGE 20    // removed from the end of trample when it isn't very useful
 #define LEVEL4_TRAMPLE_STOP_PENALTY    1     // charge lost per msec when stopped
-#define LEVEL4_TRAMPLE_REPEAT          75    // msec before a trample will rehit a player
+#define LEVEL4_TRAMPLE_REPEAT          100 // msec before a trample will rehit a player
 
 #define LEVEL4_CRUSH_DAMAGE_PER_V      0.5f  // damage per falling velocity
 #define LEVEL4_CRUSH_DAMAGE            120   // to players only
@@ -231,7 +232,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define ALIEN_BHLTH_MODIFIER        1.0f
 #define ABHM(h)                     ((int)((float)h*ALIEN_BHLTH_MODIFIER))
-#define ALIEN_BVALUE_MODIFIER       30.0f
+#define ALIEN_BVALUE_MODIFIER       90.0f
 #define ABVM(h)                      ((int)((float)h*ALIEN_BVALUE_MODIFIER))
 
 #define CREEP_BASESIZE              700
@@ -544,7 +545,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define HUMAN_BHLTH_MODIFIER        1.0f
 #define HBHM(h)                     ((int)((float)h*HUMAN_BHLTH_MODIFIER))
-#define HUMAN_BVALUE_MODIFIER       80.0f
+#define HUMAN_BVALUE_MODIFIER       240.0f
 #define HBVM(h)                     ((int)((float)h*(float)HUMAN_BVALUE_MODIFIER)) // remember these are measured in credits not frags (c.f. ALIEN_CREDITS_PER_FRAG)
 
 #define REACTOR_BASESIZE            1000
@@ -658,8 +659,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define HUMAN_MAX_CREDITS           2000
 #define HUMAN_TK_SUICIDE_PENALTY    150
 
-#define HUMAN_BUILDER_SCOREINC      AVM( LEVEL0_VALUE );
-#define ALIEN_BUILDER_SCOREINC      HVM( ALIEN_CREDITS_PER_FRAG );
+#define HUMAN_BUILDER_SCOREINC      50       // builders receive this many points every 10 seconds
+#define ALIEN_BUILDER_SCOREINC      AVM(50)  // builders receive this many points every 10 seconds
 
 /*
  * Misc

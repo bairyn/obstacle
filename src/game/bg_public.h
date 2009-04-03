@@ -232,6 +232,7 @@ typedef enum
   STAT_BUILDABLE, // which ghost model to display for building
   STAT_FALLDIST,  // the distance the player fell
   STAT_VIEWLOCK   // direction to lock the view in
+  // netcode has space for 1 more
 } statIndex_t;
 
 #define SCA_WALLCLIMBER         0x00000001
@@ -276,10 +277,10 @@ typedef enum
 
   PERS_STATE,
   PERS_CREDIT,    // human credit
-  PERS_BANK,      // human credit in the bank
   PERS_QUEUEPOS,  // position in the spawn queue
   PERS_NEWWEAPON  // weapon to switch to
   BG_OC_PERS
+  // netcode has space for 5 more
 } persEnum_t;
 
 #define PS_WALLCLIMBINGFOLLOW   0x00000001
@@ -1115,6 +1116,9 @@ int       BG_PlayerPoisonCloudTime( playerState_t *ps );
 weapon_t  BG_GetPlayerWeapon( playerState_t *ps );
 qboolean  BG_HasEnergyWeapon( playerState_t *ps );
 qboolean  BG_PlayerCanChangeWeapon( playerState_t *ps );
+
+void BG_PackZapTargets( entityState_t *es, int *entityNums, int count );
+void BG_UnpackZapTargets( entityState_t *es, int *entityNums, int count );
 
 const buildableAttributes_t *BG_BuildableByName( const char *name );
 const buildableAttributes_t *BG_BuildableByEntityName( const char *name );

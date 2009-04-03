@@ -3,7 +3,7 @@ VERSION=$(git show --pretty=format:"%ai" HEAD | tr -cd [:digit:] | head -c 12)
 DATA='GPL README armour/ configs/ models/ scripts/ sound/ ui/ vm/ -x  models/buildables/telenode/* models/weapons/ckit/*'
 DATANAME=oc-$VERSION
 TEXTURES='fonts/ gfx/ models/buildables/telenode/ models/weapons/ckit/ ui/assets emoticons/'
-TEXTUREPAK='oc-textures-05'
+TEXTUREPAK='oc-textures-06'
 
 if [ -e vm ]
 then

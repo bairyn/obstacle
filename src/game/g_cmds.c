@@ -528,7 +528,7 @@ void Cmd_Kill_f( gentity_t *ent )
 {
   if( ent->client->ps.stats[ STAT_STATE ] & SS_HOVELING )
   {
-    trap_SendServerCommand( ent-g_entities, "print \"Leave the hovel first (use your destroy key)\n\"" );
+    trap_SendServerCommand( ent-g_entities, "print \"Leave the Hovel first (use your destroy key)\n\"" );
     return;
   }
 
@@ -719,7 +719,7 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
     G_OC_OtherSayTeamCheck();
   }
 
-  if( BG_ClientListTest( &other->client->sess.ignoreList, ent-g_entities ) )
+  if( ent && BG_ClientListTest( &other->client->sess.ignoreList, ent-g_entities ) )
     ignore = qtrue;
 
   trap_SendServerCommand( other-g_entities, va( "%s \"%s%s%c%c%s%s\"",
@@ -739,7 +739,7 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
   char        text[ MAX_SAY_TEXT ];
   char        location[ 64 ];
 
-  if( g_chatTeamPrefix.integer )
+  if( ent && g_chatTeamPrefix.integer )
   {
     prefix = BG_TeamName( ent->client->pers.teamSelection );
     prefix = va( "[%c] ", toupper( *prefix ) );
@@ -747,18 +747,34 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
   else
     prefix = "";
 
+  // check if blocked by g_specChat 0
+  if( ( !g_specChat.integer ) && ( mode != SAY_TEAM ) &&
+      ( ent ) && ( ent->client->pers.teamSelection == TEAM_NONE ) && 
+      ( !G_admin_permission( ent, ADMF_NOCENSORFLOOD ) ) ) 
+  {
+    trap_SendServerCommand( ent-g_entities, va( "print \"Global chatting for "
+      "spectators has been disabled. You may only use team chat.\n\"") );
+    return;
+  }
+
   switch( mode )
   {
     default:
     case SAY_ALL:
-      G_LogPrintf( "say: %s^7: %s\n", ent->client->pers.netname, chatText );
+      G_LogPrintf( "say: %s%s^7: " S_COLOR_GREEN "%s\n", prefix, 
+        ( ent ) ? ent->client->pers.netname : "console", chatText );
       Com_sprintf( name, sizeof( name ), "%s%s" S_COLOR_WHITE ": ", prefix,
-                   ent->client->pers.netname );
+        ( ent ) ? ent->client->pers.netname : "console" );
       color = COLOR_GREEN;
       break;
 
     case SAY_TEAM:
-      G_LogPrintf( "sayteam: %s^7: %s\n", ent->client->pers.netname, chatText );
+      // console say_team is handled in g_svscmds, not here
+      if( !ent || !ent->client )
+        Com_Error( ERR_FATAL, "SAY_TEAM by non-client entity\n" );
+
+      G_LogPrintf( "sayteam: %s%s^7: " S_COLOR_CYAN "%s\n", prefix, 
+        ent->client->pers.netname, chatText );
       if( Team_GetLocationMsg( ent, location, sizeof( location ) ) )
         Com_sprintf( name, sizeof( name ), "(%s" S_COLOR_WHITE ") (%s): ",
           ent->client->pers.netname, location );
@@ -772,10 +788,10 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
       if( target && OnSameTeam( target, ent ) &&
           Team_GetLocationMsg( ent, location, sizeof( location ) ) )
         Com_sprintf( name, sizeof( name ), "[%s" S_COLOR_WHITE "] (%s): ",
-          ent->client->pers.netname, location );
+          ( ent ) ? ent->client->pers.netname : "console", location );
       else
         Com_sprintf( name, sizeof( name ), "[%s" S_COLOR_WHITE "]: ",
-          ent->client->pers.netname );
+          ( ent ) ? ent->client->pers.netname : "console" );
       color = COLOR_MAGENTA;
       break;
   }
@@ -1123,6 +1139,8 @@ void Cmd_CallVote_f( gentity_t *ent )
     !Q_stricmp( arg1, "unmute" ) G_OC_NamedVoteMatches() )
   {
     int clientNums[ MAX_CLIENTS ];
+    int matches = 0;
+    char err[ MAX_STRING_CHARS ] = "";
 
     if( !arg2[ 0 ] )
     {
@@ -1131,7 +1149,8 @@ void Cmd_CallVote_f( gentity_t *ent )
       return;
     }
 
-    if( G_ClientNumbersFromString( arg2, clientNums, MAX_CLIENTS ) == 1 )
+    matches = G_ClientNumbersFromString( arg2, clientNums, MAX_CLIENTS );
+    if( matches == 1 )
     {
       // there was only one partial name match
       clientNum = clientNums[ 0 ];
@@ -1147,6 +1166,12 @@ void Cmd_CallVote_f( gentity_t *ent )
       Q_strncpyz( name, level.clients[ clientNum ].pers.netname,
         sizeof( name ) );
       Q_CleanStr( name );
+    }
+    else if( matches > 1 )
+    {
+      G_MatchOnePlayer( clientNums, matches, err, sizeof( err ) );
+      ADMP( va( "^3callvote: ^7%s\n", err ) );
+      return;
     }
     else
     {
@@ -1235,7 +1260,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     {
       G_StrToLower( arg3 );
 
-      if( !trap_FS_FOpenFile( va( "maps/%s.bsp", arg2 ), NULL, FS_READ ) )
+      if( !G_MapExists( arg2 ) )
       {
         trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
           "'maps/%s.bsp' could not be found on the server\n\"", arg2 ) );
@@ -1267,6 +1292,28 @@ void Cmd_CallVote_f( gentity_t *ent )
             sizeof( level.voteDisplayString ), "Change to map '%s^7'", arg2 );
       }
     }
+  }
+  else if( !Q_stricmp( arg1, "nextmap" ) )
+  {
+    if( G_MapExists( g_nextMap.string ) )
+    {
+      trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
+        "the next map is already set to '%s^7'\n\"", g_nextMap.string ) );
+      return;
+    }
+
+    if( !G_MapExists( arg2 ) )
+    {
+      trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
+        "'maps/%s^7.bsp' could not be found on the server\n\"", arg2 ) );
+      return;
+    }
+
+    Com_sprintf( level.voteString, sizeof( level.voteString ),
+      "set g_nextMap %s", arg2 );
+
+    Com_sprintf( level.voteDisplayString,
+      sizeof( level.voteDisplayString ), "Set the next map to '%s^7'", arg2 );
   }
   else if( !Q_stricmp( arg1, "draw" ) )
   {
@@ -1336,11 +1383,14 @@ void Cmd_CallVote_f( gentity_t *ent )
   }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE
-        " called a vote for '%s'\n\"", ent->client->pers.netname, level.voteString ) );
-  G_Printf( "'%s' called a vote for '%s'\n", ent->client->pers.netname, 
-    level.voteString ) ;
+       " called a vote: %s^7\n\"", ent->client->pers.netname, 
+       level.voteDisplayString ) );
+
+  G_LogPrintf("Vote: %s^7 called a vote: %s^7\n", 
+      ent->client->pers.netname, level.voteDisplayString );
 
   // start the voting
+  ent->client->pers.voteCount++;
   level.voteTime = level.time;
   level.voteYes = 0;
   level.voteNo = 0;
@@ -1446,6 +1496,8 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
     !Q_stricmp( arg1, "allowbuild" ) )
   {
     int clientNums[ MAX_CLIENTS ];
+    int matches = 0;
+    char err[ MAX_STRING_CHARS ] = "";
 
     if( !arg2[ 0 ] )
     {
@@ -1454,7 +1506,8 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
       return;
     }
 
-    if( G_ClientNumbersFromString( arg2, clientNums, MAX_CLIENTS ) == 1 )
+    matches = G_ClientNumbersFromString( arg2, clientNums, MAX_CLIENTS ) ;
+    if( matches == 1 )
     {
       // there was only one partial name match
       clientNum = clientNums[ 0 ];
@@ -1477,6 +1530,12 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
       Q_strncpyz( name, level.clients[ clientNum ].pers.netname,
         sizeof( name ) );
       Q_CleanStr( name );
+    }
+    else if( matches > 1 )
+    {
+      G_MatchOnePlayer( clientNums, matches, err, sizeof( err ) );
+      ADMP( va( "^3callteamvote: ^7%s\n", err ) );
+      return;
     }
     else
     {
@@ -1570,8 +1629,12 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
   }
   ent->client->pers.voteCount++;
 
-  G_TeamCommand( team, va( "print \"%s " S_COLOR_WHITE "called a team vote\n\"",
-    ent->client->pers.netname ) );
+  G_TeamCommand( team, va( "print \"%s " S_COLOR_WHITE "called a team vote: %s\n\"",
+    ent->client->pers.netname, level.teamVoteDisplayString[ cs_offset ] ) );
+
+  G_LogPrintf( "Teamvote: %s^7 called a teamvote (%s): %s\n", 
+      ent->client->pers.netname, BG_TeamName(team), 
+      level.teamVoteDisplayString[ cs_offset ] );
 
   G_Printf( "'%s' called a teamvote for '%s'\n", ent->client->pers.netname, 
     level.teamVoteString[ cs_offset ] ) ;
@@ -1830,9 +1893,12 @@ void Cmd_Class_f( gentity_t *ent )
     {
       int cost;
     
-      if( ent->client->ps.eFlags & EF_WALLCLIMB )
+      //check that we have an overmind
+      if( !G_OC_NeverOvermindAbsent() )  // &&
+      if( !ent->client->pers.override )  // &&
+      if( !level.overmindPresent )
       {
-        G_TriggerMenu( clientNum, MN_A_EVOLVEWALLWALK );
+        G_TriggerMenu( clientNum, MN_A_NOOVMND_EVOLVE );
         return;
       }
 
@@ -1856,11 +1922,10 @@ void Cmd_Class_f( gentity_t *ent )
         }
       }
 
-      if( !G_OC_NeverOvermindAbsent() )  // &&
-      if( !ent->client->pers.override )  // &&
-      if( !level.overmindPresent )
+      //check that we are not wallwalking
+      if( ent->client->ps.eFlags & EF_WALLCLIMB )
       {
-        G_TriggerMenu( clientNum, MN_A_NOOVMND_EVOLVE );
+        G_TriggerMenu( clientNum, MN_A_EVOLVEWALLWALK );
         return;
       }
 
