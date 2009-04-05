@@ -187,6 +187,8 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "unmute a muted player",
       "[^3name|slot#^7]"
     }
+
+    G_OC_ADMINDEFS
   };
 
 static int adminNumCmds = sizeof( g_admin_cmds ) / sizeof( g_admin_cmds[ 0 ] );
@@ -476,6 +478,7 @@ static void admin_writeconfig( void )
     admin_writeconfig_string( levels, f );
     trap_FS_Write( "\n", 1, f );
   }
+  G_OC_ADMINWRITE
   trap_FS_FCloseFile( f );
 }
 
@@ -1062,6 +1065,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   char *t;
   qboolean level_open, admin_open, ban_open, command_open;
   int i;
+  G_OC_ADMINREADDEC
 
   G_admin_cleanup();
 
@@ -1090,6 +1094,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   admin_level_maxname = 0;
 
   level_open = admin_open = ban_open = command_open = qfalse;
+  G_OC_ADMININITOPEN
   COM_BeginParseSession( g_admin.string );
   while( 1 )
   {
@@ -1105,6 +1110,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       g_admin_levels[ lc++ ] = l;
       level_open = qtrue;
       admin_open = ban_open = command_open = qfalse;
+      G_OC_ADMININITOPEN
     }
     else if( !Q_stricmp( t, "[admin]" ) )
     {
@@ -1114,6 +1120,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       g_admin_admins[ ac++ ] = a;
       admin_open = qtrue;
       level_open = ban_open = command_open = qfalse;
+      G_OC_ADMININITOPEN
     }
     else if( !Q_stricmp( t, "[ban]" ) )
     {
@@ -1123,6 +1130,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       g_admin_bans[ bc++ ] = b;
       ban_open = qtrue;
       level_open = admin_open = command_open = qfalse;
+      G_OC_ADMININITOPEN
     }
     else if( !Q_stricmp( t, "[command]" ) )
     {
@@ -1133,7 +1141,9 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       c->levels[ 0 ] = -1;
       command_open = qtrue;
       level_open = admin_open = ban_open = qfalse;
+      G_OC_ADMININITOPEN
     }
+	G_OC_ADMINREADOPEN
     else if( level_open )
     {
       if( !Q_stricmp( t, "level" ) )
@@ -1249,14 +1259,15 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
         COM_ParseError( "[command] unrecognized token \"%s\"", t );
       }
     }
+	G_OC_ADMINREADSET
     else
     {
       COM_ParseError( "unexpected token \"%s\"", t );
     }
   }
   BG_Free( cnf2 );
-  ADMP( va( "^3!readconfig: ^7loaded %d levels, %d admins, %d bans, %d commands\n",
-          lc, ac, bc, cc ) );
+  ADMP( va( "^3!readconfig: ^7loaded %d levels, %d admins, %d bans, %d commands%s\n",
+          lc, ac, bc, cc, G_OC_ADMINNUM ) );
   if( lc == 0 )
     admin_default_levels();
   else

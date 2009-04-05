@@ -67,6 +67,177 @@ extern int oc_gameMode;
 	#include "../qcommon/q_shared.h"
 
 	//<+===============================================+>
+	// admin
+	//<+===============================================+>
+
+	#define MAX_ADMIN_HIDE_REASON 50
+
+	#define MAX_ADMIN_SHOWHIDES 10
+
+	typedef struct g_admin_hide
+	{
+		char name[MAX_NAME_LENGTH];
+		char guid[33];
+		char ip[40];
+		char reason[MAX_ADMIN_HIDE_REASON];
+		char made[18]; // big enough for strftime() %c
+		int expires;
+		char hider[MAX_NAME_LENGTH];
+		int hidden;
+	}
+	g_admin_hide_t;
+
+	qboolean G_admin_editoc(gentity_t *ent, int skiparg);
+	qboolean G_admin_hide(gentity_t *ent, int skiparg);
+	qboolean G_admin_showhides(gentity_t *ent, int skiparg);
+	qboolean G_admin_devmap(gentity_t *ent, int skiparg);
+	qboolean G_admin_layoutsave(gentity_t *ent, int skiparg);
+	qboolean G_admin_adjusthide(gentity_t *ent, int skiparg);
+
+	qboolean G_adman_canEditOC(gentity_t *ent);
+
+	qboolean G_admin_hide_check(char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, int *id);
+
+	#define G_OC_ADMINDEFS  /* FIXME: this causes the list to be out of order */ \
+	, \
+	{"adjusthide", G_admin_adjusthide, "c", \
+      "change the duration, hidden or reason of a hide.  time is specified as numbers " \
+      "followed by units 'w' (weeks), 'd' (days), 'h' (hours) or 'm' (minutes)," \
+      " or seconds if no units are specified - if hidden is only" \
+      " arg, add c as first arg." \
+      " For example, to enable isHidden for slot #4, use" \
+      " !adjusthide 4 c 1.", \
+      "[^3hide#^7] (^5time^7) (^5chidden hidden^7) (^5reason^7)" \
+    }, \
+ \
+    {"devmap", G_admin_devmap, "C", \
+      "load a map with cheats (and optionally force layout)", \
+      "[^3mapname^7] (^5layout^7)" \
+    }, \
+ \
+	{"editoc", G_admin_editoc, "(", \
+		"editoc", \
+		"[^30 - none|1 - admins|2 - all#^7]" \
+	}, \
+ \
+	{"hide", G_admin_hide, "j", \
+		"hide a player", \
+		"[^3name|slot#^7]" \
+	}, \
+ \
+	{"layoutsave", G_admin_layoutsave, ")", \
+		"save a map layout", \
+		"[^3layoutname^7]" \
+	}, \
+ \
+	{"layoutsavereview", G_admin_layoutsave, "l", \
+		"save a map layout", \
+		"[^3layoutname^7]" \
+	}, \
+ \
+	{"showhides", G_admin_showhides, "j", \
+		"display a (partial) list of active hides", \
+		"(^5start at hide#^7)" (^5name|IP^7) \
+	}, \
+ \
+	{"unhide", G_admin_hide, "J", \
+		"Un-Hide a player", \
+		"[^3name|slot#^7]" \
+	}
+
+	g_admin_hide_t *g_admin_hide_t[MAX_ADMIN_HIDES];
+
+	#define G_OC_ADMINWRITE \
+	for(i = 0; i < MAX_ADMIN_HIDES && g_admin_hides[i]; i++) \
+	{ \
+		/* don't write expired hides */ \
+		/* if expires is 0, then it's a perm hide */ \
+		if(g_admin_hides[i]->expires != 0 && (g_admin_hides[i]->expires - t) < 1) \
+			continue; \
+ \
+		trap_FS_Write("[hide]\n", 7, f); \
+		trap_FS_Write("name    = ", 10, f); \
+		admin_writeconfig_string(g_admin_hides[i]->name, f); \
+		trap_FS_Write("guid    = ", 10, f); \
+		admin_writeconfig_string(g_admin_hides[i]->guid, f); \
+		trap_FS_Write("ip      = ", 10, f); \
+		admin_writeconfig_string(g_admin_hides[i]->ip, f); \
+		trap_FS_Write("reason  = ", 10, f); \
+		admin_writeconfig_string(g_admin_hides[i]->reason, f); \
+		trap_FS_Write("made    = ", 10, f); \
+		admin_writeconfig_string(g_admin_hides[i]->made, f); \
+		trap_FS_Write("expires = ", 10, f); \
+		admin_writeconfig_int(g_admin_hides[i]->expires, f); \
+		trap_FS_Write("hider  = ", 10, f); \
+		admin_writeconfig_string(g_admin_hides[i]->hider, f); \
+		trap_FS_Write("hidden = ", 10, f); \
+		admin_writeconfig_int(g_admin_hides[i]->hidden, f); \
+		trap_FS_Write("\n", 1, f); \
+	}
+
+	#define G_OC_ADMINREADDEC \
+	g_admin_hide_t *h = NULL; \
+	int hc = 0; \
+	qboolean hide_open;
+
+	#define G_OC_ADMININITOPEN \
+	hide_open = qfalse;
+
+	#define G_OC_ADMINREADSET \
+	else if(hide_open) \
+	{ \
+		if(!Q_stricmp(t, "name")) \
+		{ \
+			admin_readconfig_string(&cnf, h->name, sizeof(h->name)); \
+		} \
+		else if(!Q_stricmp(t, "guid")) \
+		{ \
+			admin_readconfig_string(&cnf, h->guid, sizeof(h->guid)); \
+		} \
+		else if(!Q_stricmp(t, "ip")) \
+		{ \
+			admin_readconfig_string(&cnf, h->ip, sizeof(h->ip)); \
+		} \
+		else if(!Q_stricmp(t, "reason")) \
+		{ \
+			admin_readconfig_string(&cnf, h->reason, sizeof(h->reason)); \
+		} \
+		else if(!Q_stricmp(t, "made")) \
+		{ \
+			admin_readconfig_string(&cnf, h->made, sizeof(h->made)); \
+		} \
+		else if(!Q_stricmp(t, "expires")) \
+		{ \
+			admin_readconfig_int(&cnf, &h->expires); \
+		} \
+		else if(!Q_stricmp(t, "hider")) \
+		{ \
+			admin_readconfig_string(&cnf, h->hider, sizeof(h->hider)); \
+		} \
+		else if(!Q_stricmp(t, "hidden")) \
+		{ \
+			admin_readconfig_int(&cnf, &h->hidden); \
+		} \
+		else \
+		{ \
+			COM_ParseError("[hide] unrecognized token \"%s\"", t); \
+		} \
+	}
+ 
+	#define G_OC_ADMINREADOPEN \
+    else if(!Q_stricmp(t, "[hide]")) \
+    { \
+      if(hc >= MAX_ADMIN_HIDES) \
+        return qfalse; \
+      h = BG_Alloc(sizeof(g_admin_hide_t)); \
+      g_admin_hides[hc++] = h; \
+      hide_open = qtrue; \
+      level_open = ban_open = admin_open = command_open = qfalse; \
+    }
+
+	#define G_OC_ADMINNUM (va(", %d hides", hc))
+
+	//<+===============================================+>
 	// scrims and votes
 	//<+===============================================+>
 
@@ -2349,7 +2520,7 @@ extern int oc_gameMode;
 		{ \
 			/* timer */ \
  \
-			CG_CenterPrint(va("^t^i^m^e^2%dm:%ds:%dms^7", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER])), "^t^i^m^e", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH ); \
+			CG_CenterPrint(va("^t^i^m^e^2%dm:%ds:%dms^7", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER])), "^t^i^m^e", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
 		} \
  \
 		if(cg_printSpeedometer.integer) \
