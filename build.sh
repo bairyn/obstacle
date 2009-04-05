@@ -10,7 +10,7 @@ build_pakonly=0
 # make pak
 
 if [ $# -lt 1 ]; then
-	echo -ne "./build.sh <pakname>.pk3 (serverdir) (webdir) (pakonly)\nExample: ./build.sh data-2.0-oc-dev ~/.tremulousoc/oc /var/www\nExample: ./build.sh data-2.0-oc-dev . . yes\n(The second argument and the third agument, both '.', in the second example will be used by the script because pakonly is set)\n"
+	echo -ne "./build.sh <pakname>.pk3 (serverdir) (webdir) (pakonly)\nExample: ./build.sh data-oc-2.0-dev ~/.tremulousoc/oc /var/www\nExample: ./build.sh data-oc-2.0-dev . . yes\n(The second argument and the third agument, both '.', in the second example will be used by the script because pakonly is set)\n"
 	exit 0
 fi
 

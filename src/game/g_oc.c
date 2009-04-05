@@ -83,11 +83,13 @@ qboolean G_admin_editoc(void *ent_v, int skiparg)
   char command[MAX_ADMIN_CMD_LEN];
   int i;
   G_SayArgv(skiparg+1, command, sizeof(command));
-  if(!BG_OC_OCMode())
+  if(BG_OC_OCMode())
   {
     if(!Q_stricmp(command, "0") || !Q_stricmp(command, "off"))
     {
       AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
+              (ent) ? ent->client->pers.netname : "console"));
+      G_LogPrintf(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
       level.ocEditMode = 0;
       for(i = 0; i < level.maxclients; i++)
@@ -101,6 +103,8 @@ qboolean G_admin_editoc(void *ent_v, int skiparg)
     {
       AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
+      G_LogPrintf(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
+              (ent) ? ent->client->pers.netname : "console"));
       level.ocEditMode = 1;
       for(i = 0; i < level.maxclients; i++)
       {
@@ -112,6 +116,8 @@ qboolean G_admin_editoc(void *ent_v, int skiparg)
     else if(!Q_stricmp(command, "2") || !Q_stricmp(command, "all"))
     {
       AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
+              (ent) ? ent->client->pers.netname : "console"));
+      G_LogPrintf(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
       level.ocEditMode = 2;
       for(i = 0; i < level.maxclients; i++)

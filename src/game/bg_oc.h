@@ -1613,7 +1613,7 @@ extern int oc_gameMode;
 			if(!arg3[0]) \
 				Q_strncpyz(arg3, "oc", sizeof(arg3)); \
  \
-			if(arg3[0] != 'o' || arg3[0] != 'c') \
+			if(arg3[0] != 'o' || arg3[1] != 'c') \
 			{ \
 				trap_SendServerCommand(ent - g_entities, va("print \"callvote: " \
 					"'%s^7' is not an obstacle course\n\"", ((arg3[0]) ? (arg3) : ("(empty)")))); \
@@ -2355,8 +2355,8 @@ extern int oc_gameMode;
 		{"spawnGroupDown", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
 		{"downSpawn", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
 		{"downSpawnGroup", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
-	{"mystats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Mystats_f}, \
-	{"stats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Mystats_f}, \
+	{"myStats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Mystats_f}, \
+	{"stats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
 		{"statistics", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
 		{"hiScores", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
 		{"hi-Scores", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
