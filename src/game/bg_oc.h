@@ -70,6 +70,7 @@ extern int oc_gameMode;
 	// admin
 	//<+===============================================+>
 
+	#define MAX_ADMIN_HIDES 1024
 	#define MAX_ADMIN_HIDE_REASON 50
 
 	#define MAX_ADMIN_SHOWHIDES 10
@@ -87,20 +88,20 @@ extern int oc_gameMode;
 	}
 	g_admin_hide_t;
 
-	qboolean G_admin_editoc(gentity_t *ent, int skiparg);
-	qboolean G_admin_hide(gentity_t *ent, int skiparg);
-	qboolean G_admin_showhides(gentity_t *ent, int skiparg);
-	qboolean G_admin_devmap(gentity_t *ent, int skiparg);
-	qboolean G_admin_layoutsave(gentity_t *ent, int skiparg);
-	qboolean G_admin_adjusthide(gentity_t *ent, int skiparg);
+	qboolean G_admin_editoc(void *ent, int skiparg);
+	qboolean G_admin_hide(void *ent, int skiparg);
+	qboolean G_admin_showhides(void *ent, int skiparg);
+	qboolean G_admin_devmap(void *ent, int skiparg);
+	qboolean G_admin_layoutsave(void *ent, int skiparg);
+	qboolean G_admin_adjusthide(void *ent, int skiparg);
 
-	qboolean G_adman_canEditOC(gentity_t *ent);
+	qboolean G_admin_canEditOC(void *ent);
 
 	qboolean G_admin_hide_check(char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, int *id);
 
 	#define G_OC_ADMINDEFS  /* FIXME: this causes the list to be out of order */ \
 	, \
-	{"adjusthide", G_admin_adjusthide, "c", \
+	{"adjusthide", (qboolean(*)(gentity_t *, int))(G_admin_adjusthide), "c", \
       "change the duration, hidden or reason of a hide.  time is specified as numbers " \
       "followed by units 'w' (weeks), 'd' (days), 'h' (hours) or 'm' (minutes)," \
       " or seconds if no units are specified - if hidden is only" \
@@ -110,42 +111,42 @@ extern int oc_gameMode;
       "[^3hide#^7] (^5time^7) (^5chidden hidden^7) (^5reason^7)" \
     }, \
  \
-    {"devmap", G_admin_devmap, "C", \
+    {"devmap", (qboolean(*)(gentity_t *, int))(G_admin_devmap), "C", \
       "load a map with cheats (and optionally force layout)", \
       "[^3mapname^7] (^5layout^7)" \
     }, \
  \
-	{"editoc", G_admin_editoc, "(", \
+	{"editoc", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "(", \
 		"editoc", \
 		"[^30 - none|1 - admins|2 - all#^7]" \
 	}, \
  \
-	{"hide", G_admin_hide, "j", \
+	{"hide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "j", \
 		"hide a player", \
 		"[^3name|slot#^7]" \
 	}, \
  \
-	{"layoutsave", G_admin_layoutsave, ")", \
+	{"layoutsave", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), ")", \
 		"save a map layout", \
 		"[^3layoutname^7]" \
 	}, \
  \
-	{"layoutsavereview", G_admin_layoutsave, "l", \
+	{"layoutsavereview", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), "l", \
 		"save a map layout", \
 		"[^3layoutname^7]" \
 	}, \
  \
-	{"showhides", G_admin_showhides, "j", \
+	{"showhides", (qboolean(*)(gentity_t *, int))(G_admin_showhides), "j", \
 		"display a (partial) list of active hides", \
-		"(^5start at hide#^7)" (^5name|IP^7) \
+		"(^5start at hide#^7) (^5name|IP^7)" \
 	}, \
  \
-	{"unhide", G_admin_hide, "J", \
+	{"unhide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "J", \
 		"Un-Hide a player", \
 		"[^3name|slot#^7]" \
 	}
 
-	g_admin_hide_t *g_admin_hide_t[MAX_ADMIN_HIDES];
+	extern g_admin_hide_t *g_admin_hides[MAX_ADMIN_HIDES];
 
 	#define G_OC_ADMINWRITE \
 	for(i = 0; i < MAX_ADMIN_HIDES && g_admin_hides[i]; i++) \

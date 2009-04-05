@@ -348,7 +348,7 @@ static qboolean admin_higher_guid( char *admin_guid, char *victim_guid )
   return qtrue;
 }
 
-static qboolean admin_higher( gentity_t *admin, gentity_t *victim )
+qboolean admin_higher( gentity_t *admin, gentity_t *victim )
 {
 
   // console always wins
@@ -385,7 +385,7 @@ static void admin_writeconfig_int( int v, fileHandle_t f )
   trap_FS_Write( "\n", 1, f );
 }
 
-static void admin_writeconfig( void )
+void admin_writeconfig( void )
 {
   fileHandle_t f;
   int len, i, j;

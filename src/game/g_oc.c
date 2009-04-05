@@ -51,7 +51,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // admin
 //======================================================
 
-qboolean G_admin_canEditOC(gentity_t *ent)
+g_admin_hide_t *g_admin_hides[MAX_ADMIN_HIDES];
+
+extern g_admin_level_t *g_admin_levels[MAX_ADMIN_LEVELS];
+extern g_admin_admin_t *g_admin_admins[MAX_ADMIN_ADMINS];
+extern g_admin_ban_t *g_admin_bans[MAX_ADMIN_BANS];
+extern g_admin_command_t *g_admin_commands[MAX_ADMIN_COMMANDS];
+extern g_admin_namelog_t *g_admin_namelog[MAX_ADMIN_NAMELOGS];
+
+qboolean G_admin_canEditOC(void *ent)
 {
 	if(!BG_OC_OCMode())
 		return qfalse;
@@ -62,13 +70,70 @@ qboolean G_admin_canEditOC(gentity_t *ent)
 	if(level.ocEditMode == 0)
 		return qfalse;
 
-	if(level.ocEditMode == 1 && !G_admin_permission(ent, "("))
+	if(level.ocEditMode == 1 && !G_admin_permission(ent, '('))
 		return qfalse;
 
 	return qtrue;
 }
 
-qboolean G_admin_layoutsave(gentity_t *ent, int skiparg)
+qboolean G_admin_editoc(void *ent_v, int skiparg)
+{
+  gentity_t *ent = (gentity_t *)ent_v;
+  gentity_t *client;
+  char command[MAX_ADMIN_CMD_LEN];
+  int i;
+  G_SayArgv(skiparg+1, command, sizeof(command));
+  if(!BG_OC_OCMode())
+  {
+    if(!Q_stricmp(command, "0") || !Q_stricmp(command, "off"))
+    {
+      AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
+              (ent) ? ent->client->pers.netname : "console"));
+      level.ocEditMode = 0;
+      for(i = 0; i < level.maxclients; i++)
+      {
+        client = &g_entities[i];
+        if(client->client)
+          client->client->pers.noAuO = 0;
+      }
+    }
+    else if(!Q_stricmp(command, "1") || !Q_stricmp(command, "allwithflag"))
+    {
+      AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
+              (ent) ? ent->client->pers.netname : "console"));
+      level.ocEditMode = 1;
+      for(i = 0; i < level.maxclients; i++)
+      {
+        client = &g_entities[i];
+        if(client->client)
+          client->client->pers.noAuO = 0;
+      }
+    }
+    else if(!Q_stricmp(command, "2") || !Q_stricmp(command, "all"))
+    {
+      AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
+              (ent) ? ent->client->pers.netname : "console"));
+      level.ocEditMode = 2;
+      for(i = 0; i < level.maxclients; i++)
+      {
+        client = &g_entities[i];
+        if(client->client)
+          client->client->pers.noAuO = 0;
+      }
+    }
+    else
+    {
+      return qfalse;
+    }
+  }
+  else
+  {
+    return qfalse;
+  }
+  return qtrue;
+}
+
+qboolean G_admin_layoutsave(void *ent, int skiparg)
 {
   char layout[MAX_QPATH];
   char command[MAX_ADMIN_CMD_LEN], *cmd;
@@ -86,7 +151,7 @@ qboolean G_admin_layoutsave(gentity_t *ent, int skiparg)
   }
 
   G_SayArgv(skiparg + 1, layout, sizeof(layout));
-  G_ToLowerCase(layout);
+  G_StrToLower(layout);
 
   if(!(*layout == 'o' && *(layout + 1) == 'c') || !(g_ocReview.integer && Q_stricmp(cmd, "layoutsave")))
   {
@@ -94,7 +159,7 @@ qboolean G_admin_layoutsave(gentity_t *ent, int skiparg)
     Q_strncpyz(output, va("layout saved as '%s'", layout), sizeof(output));
     EXCOLOR(output);
     AP(va("print \"^3!layoutsave: ^7%s^7 by ^7%s^7\n\"", output,
-            (ent) ? ent->client->pers.netname : "console"));
+            (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
   }
   else
   {
@@ -102,12 +167,12 @@ qboolean G_admin_layoutsave(gentity_t *ent, int skiparg)
     Q_strncpyz(output, va("layout saved for review as '%s_review'", layout), sizeof(output));
     EXCOLOR(output);
     AP(va("print \"^3!layoutsave: ^7%s^7 by ^7%s^7\n\"", output,
-            (ent) ? ent->client->pers.netname : "console"));
+            (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
   }
   return qtrue;
 }
 
-qboolean G_admin_devmap(gentity_t *ent, int skiparg)
+qboolean G_admin_devmap(void *ent, int skiparg)
 {
   char map[MAX_QPATH];
   char layout[MAX_QPATH] = { "" };
@@ -145,7 +210,7 @@ qboolean G_admin_devmap(gentity_t *ent, int skiparg)
   trap_SendConsoleCommand(EXEC_APPEND, va("devmap %s", map));
   level.restarted = qtrue;
   AP(va("print \"^3!devmap: ^7map '%s' started by %s^7 with cheats %s\n\"", map,
-          (ent) ? ent->client->pers.netname : "console",
+          (ent) ? ((gentity_t *) ent)->client->pers.netname : "console",
           (layout[0]) ? va("(forcing layout '%s')", layout) : ""));
   return qtrue;
 }
@@ -160,7 +225,7 @@ static qboolean admin_create_hide(gentity_t *ent, char *netname, char *guid, cha
   qboolean foundAdminTrueName=qfalse;
 
   t = trap_RealTime(&qt);
-  h = G_Alloc(sizeof(g_admin_hide_t));
+  h = BG_Alloc(sizeof(g_admin_hide_t));
 
   if(!h)
     return qfalse;
@@ -207,7 +272,7 @@ static qboolean admin_create_hide(gentity_t *ent, char *netname, char *guid, cha
   if(i == MAX_ADMIN_HIDES)
   {
     ADMP("^3!hides: ^7too many hides\n");
-    G_Free(h);
+    BG_Free(h);
     return qfalse;
   }
   g_admin_hides[i] = h;
@@ -275,7 +340,7 @@ qboolean G_admin_hide_check(char *userinfo, char *reason, int rlen, int *hidden,
   return qfalse;
 }
 
-qboolean G_admin_hide(gentity_t *ent, int skiparg)
+qboolean G_admin_hide(void *ent, int skiparg)
 {
   int seconds;
   char secs[7];
@@ -285,7 +350,7 @@ qboolean G_admin_hide(gentity_t *ent, int skiparg)
   char command[MAX_ADMIN_CMD_LEN], *cmd;
   gentity_t *vic;
 
-  if(!level.oc)
+  if(!BG_OC_OCMode())
   {
     ADMP("^3!hide: ^7can only be used during an obstacle course\n");
     return qfalse;
@@ -340,7 +405,7 @@ qboolean G_admin_hide(gentity_t *ent, int skiparg)
     {
         AP(va("print \"^3!unhide: ^7%s^7 has been unhidden by ^7%s\n\"",
                 vic->client->pers.netname,
-                (ent) ? ent->client->pers.netname : "console"));
+                (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
     }
     else
     {
@@ -353,7 +418,7 @@ qboolean G_admin_hide(gentity_t *ent, int skiparg)
         vic->client->pers.hiddenTime = level.time + seconds * 1000;
         AP(va("print \"^3!unhide: ^7%s^7 has been unhidden by ^7%s; force duration: ^7%s^7\n\"",
                 vic->client->pers.netname,
-                (ent) ? ent->client->pers.netname : "console", duration));
+                (ent) ? ((gentity_t *) ent)->client->pers.netname : "console", duration));
     }
   }
   else
@@ -370,7 +435,7 @@ qboolean G_admin_hide(gentity_t *ent, int skiparg)
             admin_writeconfig();
     }
     vic->client->pers.hidden = qtrue;
-    G_StopFromFollowing(vic);
+    G_StopFromFollowing(vic, 0);
     vic->r.svFlags |= SVF_SINGLECLIENT;
     vic->r.singleClient = vic-g_entities;
     CPx(pids[0], "cp \"^1You've been hidden\"");
@@ -378,7 +443,7 @@ qboolean G_admin_hide(gentity_t *ent, int skiparg)
     {
         AP(va("print \"^3!hide: ^7%s^7 has been hidden by ^7%s\n\"",
                 vic->client->pers.netname,
-                (ent) ? ent->client->pers.netname : "console"));
+                (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
     }
     else
     {
@@ -391,7 +456,7 @@ qboolean G_admin_hide(gentity_t *ent, int skiparg)
         vic->client->pers.hiddenTime = level.time + seconds * 1000;
         AP(va("print \"^3!hide: ^7%s^7 has been hidden by ^7%s; force duration: ^7%s^7\n\"",
                 vic->client->pers.netname,
-                (ent) ? ent->client->pers.netname : "console", duration));
+                (ent) ? ((gentity_t *) ent)->client->pers.netname : "console", duration));
     }
   }
 
@@ -399,13 +464,13 @@ qboolean G_admin_hide(gentity_t *ent, int skiparg)
   return qtrue;
 }
 
-qboolean G_admin_showhides(gentity_t *ent, int skiparg)
+qboolean G_admin_showhides(void *ent, int skiparg)
 {
   int i, found = 0;
   int max = -1, count;
   int t;
   char duration[32];
-  int max_name = 1, max_hider = 1, max_hidden = 1, colorlen;
+  int max_name = 1, max_hider = 1, colorlen;
   int len;
   int secs;
   int start = 0;
@@ -602,7 +667,7 @@ qboolean G_admin_showhides(gentity_t *ent, int skiparg)
   return qtrue;
 }
 
-qboolean G_admin_adjusthide(gentity_t *ent, int skiparg)
+qboolean G_admin_adjusthide(void *ent, int skiparg)
 {
   int hnum;
   int length;
@@ -670,7 +735,7 @@ qboolean G_admin_adjusthide(gentity_t *ent, int skiparg)
     "%s%s%s%s%s%s\n\"",
     hnum,
     g_admin_hides[hnum - 1]->name,
-    (ent) ? ent->client->pers.netname : "console",
+    (ent) ? ((gentity_t *) ent)->client->pers.netname : "console",
     (length < 0 && ((secs[0] == 'c' || secs[0] == 'C' || secs[0] == 'h' || secs[0] == 'H') && ((secs[1] == ' ' || secs[1] == '\t' || secs[1] == '-') || (secs[1] >= '0' && secs[1] <= '9') || (hiddenC[0] && hiddenC[0] >= '0' && hiddenC[0] <= '9'))) && G_SayArgc() > 3 + skiparg) ? (hidden ? "hidden: hidden" : "hidden: unhidden") : "",
     (length >= 0) ? "duration: " : "",
     duration,
@@ -678,7 +743,7 @@ qboolean G_admin_adjusthide(gentity_t *ent, int skiparg)
     (reason && *reason) ? "reason: " : "",
     reason ? reason : ""));
   if(ent)
-    Q_strncpyz(g_admin_hides[hnum - 1]->hider, ent->client->pers.netname,
+    Q_strncpyz(g_admin_hides[hnum - 1]->hider, ((gentity_t *) ent)->client->pers.netname,
       sizeof(g_admin_hides[hnum - 1]->hider));
   if(g_admin.string[0])
     admin_writeconfig();
@@ -3325,7 +3390,7 @@ funnies[] =
 	{"Dan Quayle: We're going to have the best-educated American people in the world.", "(Dan Quayle never really said this)", "(Dan Quayle never really said this)"},
 	{"The word 'genius' isn't applicable in football.  A genius is a guy like Norman Einstein.", "", ""},
 	{"We are ready for any unforeseen event that may or may not occur.", "", ""},
-	Eating is unhealthy
+	{"Eating is unhealthy.", "", ""},
 	{NULL, NULL, NULL}
 };
 

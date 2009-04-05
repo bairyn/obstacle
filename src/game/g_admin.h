@@ -145,6 +145,10 @@ void G_admin_namelog_update( gclient_t *ent, qboolean disconnect );
 int G_admin_level( gentity_t *ent );
 int G_admin_parse_time( const char *time );
 
+qboolean admin_higher( gentity_t *admin, gentity_t *victim );
+
+void admin_writeconfig( void );
+
 // ! command functions
 qboolean G_admin_time( gentity_t *ent, int skiparg );
 qboolean G_admin_setlevel( gentity_t *ent, int skiparg );
