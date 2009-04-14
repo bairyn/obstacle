@@ -1825,12 +1825,26 @@ void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
 
         if(target)
         {
-            buf[0] = 0;
-			if(find)
-				Com_sprintf(buf, sizeof(buf), "cp \"%s\" \"%s\"", message, find);
-			else
-				Com_sprintf(buf, sizeof(buf), "cp \"%s\"", message);
-            trap_SendServerCommand(i - g_entities, buf);
+			if(i->client->pers.CPMode == CP_MODE_ENABLED)
+			{
+				buf[0] = 0;
+				if(find)
+					Com_sprintf(buf, sizeof(buf), "cp \"%s\" \"%s\"", message, find);
+				else
+					Com_sprintf(buf, sizeof(buf), "cp \"%s\"", message);
+				trap_SendServerCommand(i - g_entities, buf);
+			}
+
+			else if(i->client->pers.CPMode == CP_MODE_PRINT)
+			{
+				buf[0] = 0;
+				Com_sprintf(buf, sizeof(buf), "print \"%s\"", message);
+				trap_SendServerCommand(i - g_entities, buf);
+			}
+
+			else if(i->client->pers.CPMode == CP_MODE_DISABLED)
+			{
+			}
         }
     }
 }
