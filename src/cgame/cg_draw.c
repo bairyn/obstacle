@@ -1982,7 +1982,7 @@ static void CG_DrawPlayerTimer( rectDef_t *rect, float text_x, float text_y,
 
   s = "";
   if(BG_OC_OCMode())
-	s = BG_OC_PLAYERTIMER;
+	s = CG_OC_PLAYERTIMER;
   w = UI_Text_Width( "0", scale, 0 );
   h = UI_Text_Height( "0", scale, 0 );
   strLength = CG_DrawStrlen( s );
@@ -2782,7 +2782,7 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
       CG_DrawTeamLabel( &rect, TEAM_HUMANS, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
     case CG_SPEEDOMETER:
-      CG_DrawSpeed( &rect, text_x, text_y, scale, color );
+      CG_DrawSpeed( &rect, text_x, text_y, scale, foreColor );
       break;
 
     //loading screen
