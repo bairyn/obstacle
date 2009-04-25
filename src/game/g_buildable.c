@@ -3450,8 +3450,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
   }
 
   built->s.number = built - g_entities;
-  built->r.contents = CONTENTS_BODY;
-  built->clipmask = MASK_PLAYERSOLID;
+  built->r.contents = BG_OC_BODYMASK;
+built->r.contents = MASK_PLAYERSOLID;
+  built->clipmask = BG_OC_PLAYERMASK;
+built->clipmask = MASK_PLAYERSOLID;
   built->enemy = NULL;
   built->s.weapon = BG_Buildable( buildable )->turretProjType;
 

@@ -60,6 +60,9 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix zero-height jump bug
+// TODO: fix empty or partial CP's
+// TODO: fix collisions with projectiles and knockback
+// TODO: fix clipping with buildablies
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -2621,6 +2624,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define BG_OC_PLAYERMASK ((BG_OC_OCMode()) ? (MASK_DEADSOLID) : (MASK_PLAYERSOLID))  // don't clip against players if OC mode (not for everything)
 	#define BG_OC_SHOTMASK ((BG_OC_OCMode()) ? (MASK_SOLID) : (MASK_SHOT))  // if OC mode don't clip against players (don't use this for everything; should be used for projectiles from player weapons or spawn checking)
+	#define BG_OC_BODYMASK ((BG_OC_OCMode() ? (CONTENTS_SOLID | CONTENTS_PLAYERCLIP | CONTENTS_BODY) : (CONTENTS_BODY)))
 
 	//<+===============================================+>
 	// pmove
