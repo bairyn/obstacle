@@ -619,6 +619,7 @@ extern int oc_gameMode;
 	{ \
 		if(!BG_OC_OCMode()) \
 			break; \
+break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn't work.  Needs to be rewritten */ \
  \
 		if(level.totalMedistations && client->pers.medisLastCheckpoint && (!client->pers.connection->totalMedistations || client->pers.connection->totalMedistations == level.totalMedistations)) \
 		{ \
@@ -2431,6 +2432,7 @@ extern int oc_gameMode;
 	{ \
 		if(!BG_OC_OCMode()) \
 			break; \
+break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn't work.  Needs to be rewritten */ \
  \
 		if(connection->hasCheated) \
 			break; \
