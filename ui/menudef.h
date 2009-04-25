@@ -146,6 +146,8 @@
 #define CG_TIMER_SECS                     46
 #define CG_SNAPSHOT                       47
 #define CG_LAGOMETER                      48
+#define CG_SPEEDOMETER                    900
+#define CG_PLAYER_TIMER                   901
 #define CG_PLAYER_CROSSHAIRNAMES          49
 #define CG_STAGE_REPORT_TEXT              50
 #define CG_ALIENS_SCORE_LABEL             51
@@ -182,6 +184,4 @@
 #define CG_PLAYER_CHARGE_BAR              77
 #define CG_PLAYER_CROSSHAIR               78
 #define CG_PLAYER_LOCATION                79
-
-#define CG_PLAYER_TIMER                   89
 #endif

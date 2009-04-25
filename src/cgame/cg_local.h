@@ -1532,6 +1532,7 @@ extern  vmCvar_t    cg_shoulderViewRight;
 extern  vmCvar_t    cg_shoulderViewForward;
 extern  vmCvar_t    cg_stereoSeparation;
 extern  vmCvar_t    cg_lagometer;
+extern  vmCvar_t    cg_drawSpeed;
 extern  vmCvar_t    cg_synchronousClients;
 extern  vmCvar_t    cg_stats;
 extern  vmCvar_t    cg_paused;
@@ -1675,6 +1676,7 @@ extern  int numSortedTeamPlayers;
 
 void        CG_AddLagometerFrameInfo( void );
 void        CG_AddLagometerSnapshotInfo( snapshot_t *snap );
+void        CG_AddSpeed( float speed );
 void        CG_CenterPrint( const char *str, const char *find, int y, int charWidth );
 void        CG_DrawActive( stereoFrame_t stereoView );
 void        CG_OwnerDraw( float x, float y, float w, float h, float text_x,

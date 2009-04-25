@@ -124,6 +124,20 @@ itemDef
   ownerdraw CG_PLAYER_TIMER
 }
 
+//SPEEDOMETER
+itemDef
+{
+  name "speedometer"
+  rect (320-(STAT_W/2)) 350 STAT_W STAT_H
+  aspectBias ALIGN_CENTER
+  style WINDOW_STYLE_EMPTY
+  visible MENU_TRUE
+  decoration
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 1
+  textscale 0.3
+  ownerdraw CG_SPEEDOMETER
+}
+
 //LOCATION
 itemDef
 {

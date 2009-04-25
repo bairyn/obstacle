@@ -2302,6 +2302,98 @@ static void CG_DrawLagometer( rectDef_t *rect, float text_x, float text_y,
   CG_DrawDisconnect( );
 }
 
+#define SPEEDOMETER_NUM_SAMPLES 160
+float speedSamples[ SPEEDOMETER_NUM_SAMPLES ];
+// array indices
+int oldestSpeedSample = 0;
+int maxSpeedSample = 0;
+
+/*
+===================
+CG_AddSpeed
+
+append a speed to the sample history
+===================
+*/
+void CG_AddSpeed( float speed )
+{
+  if( speed > speedSamples[ maxSpeedSample ] )
+  {
+    maxSpeedSample = oldestSpeedSample;
+    speedSamples[ oldestSpeedSample++ ] = speed;
+    oldestSpeedSample %= SPEEDOMETER_NUM_SAMPLES;
+    return;
+  }
+
+  speedSamples[ oldestSpeedSample ] = speed;
+  if( maxSpeedSample == oldestSpeedSample++ )
+  {
+    // if old max was overwritten find a new one
+    int i;
+    for( maxSpeedSample = 0, i = 1; i < SPEEDOMETER_NUM_SAMPLES; i++ )
+    {
+      if( speedSamples[ i ] > speedSamples[ maxSpeedSample ] )
+        maxSpeedSample = i;
+    }
+  }
+
+  oldestSpeedSample %= SPEEDOMETER_NUM_SAMPLES;
+}
+
+#define SPEEDOMETER_MIN_RANGE 900
+
+/*
+===================
+CG_DrawSpeed
+===================
+*/
+static void CG_DrawSpeed( rectDef_t *rect, float text_x, float text_y, 
+                          float scale, vec4_t textColor )
+{
+  int i;
+  float val, max = speedSamples[ maxSpeedSample ], top;
+  vec4_t slow = { 0.0, 0.0, 1.0, 1.0 };
+  vec4_t medium = { 0.0, 1.0, 0.0, 1.0 };
+  vec4_t fast = { 1.0, 0.0, 0.0, 1.0 };
+  vec4_t color = { 0, 0, 0, 1 };
+  char speedstr[ 9 ]; // won't need more than 99999999 I'd think
+  if( max < SPEEDOMETER_MIN_RANGE )
+    max = SPEEDOMETER_MIN_RANGE;
+
+  textColor[ 3 ] = 0.25;
+  trap_R_SetColor( textColor );
+  textColor[ 3 ] = 1;
+  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, cgs.media.whiteShader );
+
+  for( i = 1; i < SPEEDOMETER_NUM_SAMPLES; i++ )
+  {
+    val = speedSamples[ ( oldestSpeedSample + i ) % SPEEDOMETER_NUM_SAMPLES ];
+#define SPEED_MED 600.f
+#define SPEED_FAST 1800.f
+#define SPEED_DIFF (SPEED_FAST - SPEED_MED)
+    if( val < SPEED_MED )
+      VectorLerp( val / SPEED_MED, slow, medium, color );
+    else if( val < SPEED_FAST )
+      VectorLerp( ( val - SPEED_MED ) / SPEED_DIFF, medium, fast, color );
+    else
+      VectorCopy( fast, color );
+    trap_R_SetColor( color );
+    top = rect->y + ( 1 - val / max ) * rect->h;
+    CG_DrawPic( rect->x + ( i / (float)SPEEDOMETER_NUM_SAMPLES ) * rect->w, top,
+                rect->w / (float)SPEEDOMETER_NUM_SAMPLES, val * rect->h / max,
+                cgs.media.whiteShader );
+  }
+  if( val > 99999 )
+    val = 99999;
+  trap_R_SetColor( NULL );
+  Com_sprintf( speedstr, sizeof( speedstr ), "%d", (int)val );
+  textColor[ 3 ] = 0.5f;
+  UI_Text_Paint(
+      rect->x + ( rect->w - UI_Text_Width( speedstr, scale, 0 ) ) / 2.0f,
+      rect->y + ( rect->h + UI_Text_Height( speedstr, scale, 0 ) ) / 2.0f,
+      scale, textColor, speedstr, 0, 0, ITEM_TEXTSTYLE_NORMAL );
+}
+
 /*
 ===================
 CG_DrawConsole
@@ -2688,6 +2780,9 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
       break;
     case CG_HUMANS_SCORE_LABEL:
       CG_DrawTeamLabel( &rect, TEAM_HUMANS, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
+      break;
+    case CG_SPEEDOMETER:
+      CG_DrawSpeed( &rect, text_x, text_y, scale, color );
       break;
 
     //loading screen
