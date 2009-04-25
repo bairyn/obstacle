@@ -59,6 +59,8 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: fix zero-height jump bug
+
 //<+===============================================+><+===============================================+>
 // game only stuff
 //<+===============================================+><+===============================================+>
@@ -2513,7 +2515,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 #ifdef CGAME
 	/* TODO: move some toggles such as hide to a client-side cvar */
 
-	#define CG_OC_PLAYERTIMER (va("^t^i^m^e^2%dm:%ds:%dms^7", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER])))
+	#define CG_OC_PLAYERTIMER (va("%dm:%ds:%dms", MINS(cg.snap->ps.persistant[PERS_OCTIMER]), SECS(cg.snap->ps.persistant[PERS_OCTIMER]), MSEC(cg.snap->ps.persistant[PERS_OCTIMER])))
 
 	#define CG_OC_CanSetPlayerTimer() ((BG_OC_OCMode()) ? (1) : (0))
 
