@@ -2360,6 +2360,9 @@ static void CG_DrawSpeed( rectDef_t *rect, float text_x, float text_y,
   if( max < SPEEDOMETER_MIN_RANGE )
     max = SPEEDOMETER_MIN_RANGE;
 
+  if( !cg_drawSpeedometer.integer )
+    return;
+
   textColor[ 3 ] = 0.25;
   trap_R_SetColor( textColor );
   textColor[ 3 ] = 1;

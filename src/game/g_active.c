@@ -1192,7 +1192,7 @@ static void G_UnlaggedDetectCollisions( gentity_t *ent )
   G_UnlaggedOn( ent, ent->client->oldOrigin, range );
 
   trap_Trace(&tr, ent->client->oldOrigin, ent->r.mins, ent->r.maxs,
-    ent->client->ps.origin, ent->s.number,  MASK_PLAYERSOLID );
+    ent->client->ps.origin, ent->s.number,  BG_OC_PLAYERMASK);
   if( tr.entityNum >= 0 && tr.entityNum < MAX_CLIENTS )
     g_entities[ tr.entityNum ].client->unlaggedCalc.used = qfalse;
 
@@ -1539,7 +1539,7 @@ void ClientThink_real( gentity_t *ent )
   if( pm.ps->stats[ STAT_STATE ] & SS_HOVELING )
     pm.tracemask = MASK_DEADSOLID;
   else
-    pm.tracemask = MASK_PLAYERSOLID;
+    pm.tracemask = BG_OC_PLAYERMASK;
 
   pm.trace = trap_Trace;
   pm.pointcontents = trap_PointContents;
