@@ -182,4 +182,6 @@
 #define CG_PLAYER_CHARGE_BAR              77
 #define CG_PLAYER_CROSSHAIR               78
 #define CG_PLAYER_LOCATION                79
+
+#define CG_PLAYER_TIMER                   89
 #endif

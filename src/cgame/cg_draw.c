@@ -1964,6 +1964,44 @@ static void CG_DrawClock( rectDef_t *rect, float text_x, float text_y,
 }
 
 /*
+=================
+CG_DrawPlayerTimer
+=================
+*/
+static void CG_DrawPlayerTimer( rectDef_t *rect, float text_x, float text_y,
+                          float scale, vec4_t color,
+                          int textalign, int textvalign, int textStyle )
+{
+  char    *s;
+  float   tx, ty;
+  int     i, strLength;
+  float   w, h, totalWidth;
+
+  if( !cg_drawPlayerTimer.integer )
+    return;
+
+  s = "";
+  if(BG_OC_OCMode())
+	s = BG_OC_PLAYERTIMER;
+  w = UI_Text_Width( "0", scale, 0 );
+  h = UI_Text_Height( "0", scale, 0 );
+  strLength = CG_DrawStrlen( s );
+  totalWidth = w * strLength;
+
+  CG_AlignText( rect, s, 0.0f, totalWidth, h, textalign, textvalign, &tx, &ty );
+
+  for( i = 0; i < strLength; i++ )
+  {
+    char c[ 2 ];
+
+    c[ 0 ] = s[ i ];
+    c[ 1 ] = '\0';
+
+    UI_Text_Paint( text_x + tx + i * w, text_y + ty, scale, color, c, 0, 0, textStyle );
+  }
+}
+
+/*
 ==================
 CG_DrawSnapshot
 ==================
@@ -2698,6 +2736,9 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
       break;
     case CG_CLOCK:
       CG_DrawClock( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
+      break;
+    case CG_PLAYER_TIMER:
+      CG_DrawPlayerTimer( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
       break;
     case CG_TIMER_MINS:
       CG_DrawTimerMins( &rect, foreColor );

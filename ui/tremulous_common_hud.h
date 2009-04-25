@@ -107,6 +107,23 @@ itemDef
   ownerdraw CG_CLOCK
 }
 
+//PLAYER TIMER
+itemDef
+{
+  name "player-timer"
+  rect STAT_X ((5*BORDER)+(4*STAT_H)) STAT_W STAT_H
+  aspectBias ALIGN_RIGHT
+  style WINDOW_STYLE_EMPTY
+  visible MENU_TRUE
+  decoration
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 1
+  textalign ALIGN_RIGHT
+  textvalign VALIGN_CENTER
+  textscale 0.3
+  textstyle ITEM_TEXTSTYLE_NORMAL
+  ownerdraw CG_PLAYER_TIMER
+}
+
 //LOCATION
 itemDef
 {
