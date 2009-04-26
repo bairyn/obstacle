@@ -2112,11 +2112,13 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(client->pers.scrimTeam) \
 		{ \
 			g_oc_scrimTeam_t *t = &level.scrimTeam[client->pers.scrimTeam]; \
-			client->ps.persistant[PERS_OCTIMER] = G_OC_SCRIMTIME; \
+			client->ps.persistant[PERS_OCTIMER] = G_OC_SCRIMTIME & 0x0000FFFF; \
+			client->ps.persistant[PERS_OCTIMER + 1] = G_OC_SCRIMTIME >> 16; \
 		} \
 		else \
 		{ \
-			client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime; \
+			client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime & 0x0000FFFF; \
+			client->ps.persistant[PERS_OCTIMER + 1] = client->pers.aliveTime >> 16; \
 		} \
  \
 		if(client->pers.needEvolve) \
@@ -2521,7 +2523,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define CG_OC_OCTIMER (cg.snap->ps.persistant[PERS_OCTIMER] | (cg.snap->ps.persistant[PERS_OCTIMER + 1] << 16))  /* only 16 bits are transmitted */
 
-	#define CG_OC_PLAYERTIMER (va("%dm:%ds:%dms", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)))
+	#define CG_OC_PLAYERTIMER (va("%dm:%ds:%3dms", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)))
 
 	#define CG_OC_CanSetPlayerTimer() ((BG_OC_OCMode()) ? (1) : (0))
 
@@ -2535,7 +2537,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{ \
 			/* timer */ \
  \
-			CG_CenterPrint(va("^t^i^m^e^2%dm:%ds:%dms^7", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)), "^t^i^m^e", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
+			CG_CenterPrint(va("^t^i^m^e^2%dm:%ds:%3dms^7", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)), "^t^i^m^e", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
 		} \
  \
 		if(cg_printSpeedometer.integer) \
