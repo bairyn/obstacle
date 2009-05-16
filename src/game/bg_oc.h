@@ -597,11 +597,14 @@ extern int oc_gameMode;
 
 	#define G_OC_SpotNeverTelefrags() ((BG_OC_OCMode()) ? (1) : (0))
 
-	#define G_OC_NeedOtherSayTeamCheck() ((BG_OC_OCMode()) ? ((ent->client->pers.scrimTeam) ? (1) : (0)) : (0))
+	#define G_OC_NeedOtherSayTeamCheck() ((BG_OC_OCMode()) ? ((ent && ent->client->pers.scrimTeam) ? (1) : (0)) : (0))
 	#define G_OC_OtherSayTeamCheck() \
 	do \
 	{ \
 		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		if(!ent) \
 			break; \
  \
 		if(mode == SAY_TEAM && other->client->pers.scrimTeam != ent->client->pers.scrimTeam) \
@@ -2629,7 +2632,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define BG_OC_PLAYERMASK ((BG_OC_OCMode()) ? (MASK_DEADSOLID) : (MASK_PLAYERSOLID))  // don't clip against players if OC mode (not for everything)
 	#define BG_OC_SHOTMASK ((BG_OC_OCMode()) ? (MASK_SOLID) : (MASK_SHOT))  // if OC mode don't clip against players (don't use this for everything; should be used for projectiles from player weapons or spawn checking)
-	#define BG_OC_BODYMASK ((BG_OC_OCMode() ? (CONTENTS_SOLID | CONTENTS_PLAYERCLIP | CONTENTS_BODY) : (CONTENTS_BODY)))
+	#define BG_OC_BUILDABLECONTENTS ((BG_OC_OCMode()) ? (CONTENTS_PLAYERCLIP) : (CONTENTS_BODY))  /* OC hack: players don't collide with bodies, so set contents as solid */
 
 	//<+===============================================+>
 	// pmove

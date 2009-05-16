@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd `dirname $0`
+
 # vars
 
 build_serverdir=~/.tremulousoc/oc
@@ -29,109 +31,109 @@ if [ $# -ge 4 ]; then
 fi
 
 if ! make; then
-	exit
+	exit 1
 fi
 
 if ! make debug; then
-	exit
+	exit 1
 fi
 
 if [ -d "pak_tmp" ]; then
 	if ! rm -r pak_tmp; then
-		exit
+		exit 1
 	fi
 fi
 
 if ! mkdir ./pak_tmp; then
-	exit
+	exit 1
 fi
 
 if ! mkdir ./pak_tmp/vm; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./configs ./pak_tmp/configs; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./ui ./pak_tmp/ui; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./scripts ./pak_tmp/scripts; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./sound ./pak_tmp/sound; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./models ./pak_tmp/models; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./emoticons ./pak_tmp/emoticons; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./gfx ./pak_tmp/gfx; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./armour ./pak_tmp/armour; then
-	exit
+	exit 1
 fi
 
 if ! cp -R ./fonts ./pak_tmp/fonts; then
-	exit
+	exit 1
 fi
 
 if ! cp ./GPL ./pak_tmp/GPL; then
-	exit
+	exit 1
 fi
 
 if ! cp ./README ./pak_tmp/README; then
-	exit
+	exit 1
 fi
 
 if ! cp ./build/release-linux-x86/base/vm/cgame.qvm ./pak_tmp/vm/; then
-	exit
+	exit 1
 fi
 
 if ! cp ./build/release-linux-x86/base/vm/ui.qvm ./pak_tmp/vm/; then
-	exit
+	exit 1
 fi
 
 if [ -e ${build_pakname}.pk3 ]; then
 	if ! rm ${build_pakname}.pk3; then
-		exit
+		exit 1
 	fi
 fi
 
 if ! cd pak_tmp/; then
-	exit
+	exit 1
 fi
 
 if ! zip -9r ../${build_pakname}.pk3 vm/cgame.qvm vm/ui.qvm ui configs scripts sound models emoticons gfx armour fonts GPL; then
-	exit
+	exit 1
 fi
 
 if ! cd ../; then
-	exit
+	exit 1
 fi
 
 # copy into server
 
 if ! cp build/debug-linux-x86/base/gamex86.so ${build_serverdir}/; then
-	exit
+	exit 1
 fi
 
 if ! cp ${build_pakname}.pk3 ${build_webdir}/; then
-	exit
+	exit 1
 fi
 
 if ! cp ${build_pakname}.pk3 ${build_serverdir}/; then
-	exit
+	exit 1
 fi
 
 # sometimes the binary copied can already be running
