@@ -382,7 +382,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, tokens))
+      if(strstr(cg_disableWeaponSounds.string, token))
 	  {
         continue;
 	  }
@@ -410,7 +410,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, tokens))
+      if(strstr(cg_disableWeaponSounds.string, token))
 	  {
         continue;
 	  }
@@ -480,7 +480,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, tokens))
+      if(strstr(cg_disableWeaponSounds.string, token))
 	  {
         continue;
 	  }
@@ -495,7 +495,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, tokens))
+      if(strstr(cg_disableWeaponSounds.string, token))
 	  {
         continue;
 	  }
@@ -523,7 +523,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, tokens))
+      if(strstr(cg_disableWeaponSounds.string, token))
 	  {
         continue;
 	  }
@@ -688,7 +688,7 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, tokens))
+      if(strstr(cg_disableWeaponSounds.string, token))
 	  {
         continue;
 	  }
