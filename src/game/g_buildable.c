@@ -2206,6 +2206,7 @@ void HMGTurret_Think( gentity_t *self )
   // Turn off client side muzzle flashes
   self->s.eFlags &= ~EF_FIRING;
 
+G_Printf("self->r.contents: %d, self->r.contents == CONTENTS_PLAYERCLIP: %d", self->r.contents, self->r.contents == CONTENTS_PLAYERCLIP);
   // If not powered or spawned don't do anything
   self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
