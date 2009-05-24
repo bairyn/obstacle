@@ -2896,7 +2896,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		dp = -DotProduct(pm->ps->velocity, normal); \
  \
 		if(DotProduct(pm->ps->velocity, normal) < 0) \
-			VectorMA(pm->ps->velocity, dp, pm->ps->velocity); \
+			VectorMA(pm->ps->velocity, dp, normal, pm->ps->velocity); \
 	} while(0)
 
 	//<+===============================================+>
