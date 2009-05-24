@@ -59,7 +59,6 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix zero-height jump bug
 // TODO: fix empty and partial CP's
 // TODO: fix collisions with projectiles and knockback
 // TODO: fix clipping with buildablies
