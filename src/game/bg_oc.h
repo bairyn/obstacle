@@ -60,9 +60,11 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix zero-height jump bug
-// TODO: fix empty or partial CP's
+// TODO: fix empty and partial CP's
 // TODO: fix collisions with projectiles and knockback
 // TODO: fix clipping with buildablies
+// TODO: make annoying tesla sound optional
+// TODO: notarget buildables
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -399,7 +401,7 @@ extern int oc_gameMode;
 	int       totalMedistations; \
 	int       totalArmouries; \
 	int       lastAliveTime; \
-	int       aliveTime; \
+	unsigned int aliveTime; \
 	int       hasCheated;
 
 	#define G_OC_CLIENTDATA \
@@ -2094,7 +2096,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime & 0x0000FFFF;  /* only 16 bits are transmitted */ \
+		client->ps.persistant[PERS_OCTIMER] = (unsigned int) (((unsigned int) client->pers.aliveTime) & ((unsigned int) 0x0000FFFF));  /* only 16 bits are transmitted */ \
 		client->ps.persistant[PERS_OCTIMER + 1] = client->pers.aliveTime >> 16; \
 	} while(0)
 
@@ -2115,13 +2117,13 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(client->pers.scrimTeam) \
 		{ \
 			g_oc_scrimTeam_t *t = &level.scrimTeam[client->pers.scrimTeam]; \
-			client->ps.persistant[PERS_OCTIMER] = G_OC_SCRIMTIME & 0x0000FFFF; \
-			client->ps.persistant[PERS_OCTIMER + 1] = G_OC_SCRIMTIME >> 16; \
+			client->ps.persistant[PERS_OCTIMER] = (unsigned int) ((unsigned int) ((unsigned int) G_OC_SCRIMTIME) & 0x0000FFFF); \
+			client->ps.persistant[PERS_OCTIMER + 1] = (unsigned int) ((unsigned int) ((unsigned int) G_OC_SCRIMTIME) >> ((unsigned int) 16)); \
 		} \
 		else \
 		{ \
-			client->ps.persistant[PERS_OCTIMER] = client->pers.aliveTime & 0x0000FFFF; \
-			client->ps.persistant[PERS_OCTIMER + 1] = client->pers.aliveTime >> 16; \
+			client->ps.persistant[PERS_OCTIMER] = (unsigned int) ((unsigned int) ((unsigned int) client->pers.aliveTime) & 0x0000FFFF); \
+			client->ps.persistant[PERS_OCTIMER + 1] = (unsigned int) ((unsigned int) ((unsigned int) client->pers.aliveTime) >> ((unsigned int) 16)); \
 		} \
  \
 		if(client->pers.needEvolve) \
@@ -2524,9 +2526,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 #ifdef CGAME
 	/* TODO: move some toggles such as hide to a client-side cvar */
 
-	#define CG_OC_OCTIMER (cg.snap->ps.persistant[PERS_OCTIMER] | (cg.snap->ps.persistant[PERS_OCTIMER + 1] << 16))  /* only 16 bits are transmitted */
+	#define CG_OC_OCTIMER ((unsigned int) ((unsigned int) ((unsigned int) ((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER]) & (unsigned int) 0x0000FFFF) | ((unsigned int) (((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER + 1]) << 16))))  /* only 16 bits are sent */
 
 	#define CG_OC_PLAYERTIMER (va("%dm:%ds:%3dms", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)))
+	#define CG_OC_PLAYERTIMERPRINT (va("^t^i^m^e%dm:%ds:%3d", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)))
 
 	#define CG_OC_CanSetPlayerTimer() ((BG_OC_OCMode()) ? (1) : (0))
 
@@ -2540,7 +2543,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{ \
 			/* timer */ \
  \
-			CG_CenterPrint(va("^t^i^m^e^2%dm:%ds:%3dms^7", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)), "^t^i^m^e", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
+			CG_CenterPrint(CG_OC_PLAYERTIMERPRINT, "^t^i^m^e", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
 		} \
  \
 		if(cg_printSpeedometer.integer) \
@@ -2643,10 +2646,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PMOCWallJump() ((BG_OC_OCMode()) ? (1) : (0))
 	#define BG_OC_PMOCGroundTraceWallJump() ((BG_OC_OCMode()) ? (1) : (0))
 	#define BG_OC_PMOCPounce() (0)
-
-	#define BG_OC_ZERO_HEIGHT_MODIFIER 0.9f
-	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((pm->ps->velocity[2] <= BG_Class(pm->ps->stats[STAT_CLASS])->jumpMagnitude * BG_OC_ZERO_HEIGHT_MODIFIER) ? (0) : (1)): (1))
-//	#define BG_OC_PMZeroJump() ((BG_OC_OCMode()) ? ((oc_heightNeverLost) ? (1) : (0)) : (1))
 
 	#define BG_OC_PMNoDodge() BG_OC_OCMode()
 
@@ -2887,6 +2886,18 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		else \
 			jumpMagnitude = pm->ps->stats[STAT_MISC] * LEVEL3_POUNCE_JUMP_MAG_UPG / LEVEL3_POUNCE_TIME_UPG; \
 	}
+
+	#define BG_OC_PMNeedJumpChange() ((BG_OC_OCMode()) ? (1) : (0))
+
+	#define BG_OC_PMJumpChange() \
+	do \
+	{ \
+		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		if(DotProduct(pm->ps->velocity, normal) < 0) \
+			VectorMA(pm->ps->velocity, -DotProduct(pm->ps->velocity, normal), normal, pm->ps->velocity); \
+	} while(0)
 
 	//<+===============================================+>
 	// special modes

@@ -1534,8 +1534,6 @@ void ClientThink_real( gentity_t *ent )
 
   memset( &pm, 0, sizeof( pm ) );
 
-  G_OC_ClientThink();
-
   if( ent->flags & FL_FORCE_GESTURE )
   {
     ent->flags &= ~FL_FORCE_GESTURE;
@@ -1548,6 +1546,8 @@ void ClientThink_real( gentity_t *ent )
   pm.ps = &client->ps;
   pm.pmext = &client->pmext;
   pm.cmd = *ucmd;
+
+  G_OC_ClientThink();
 
   if( pm.ps->pm_type == PM_DEAD )
     pm.tracemask = MASK_DEADSOLID;
