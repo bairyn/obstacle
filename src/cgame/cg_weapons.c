@@ -382,6 +382,11 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
+      if(strstr(cg_disableWeaponSounds.string, tokens))
+	  {
+        continue;
+	  }
+
       wim->impactSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
       continue;
@@ -404,6 +409,11 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, tokens))
+	  {
+        continue;
+	  }
 
       wim->impactFleshSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
@@ -470,6 +480,11 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
+      if(strstr(cg_disableWeaponSounds.string, tokens))
+	  {
+        continue;
+	  }
+
       wim->firingSound = trap_S_RegisterSound( token, qfalse );
 
       continue;
@@ -479,6 +494,11 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, tokens))
+	  {
+        continue;
+	  }
 
       wim->missileSound = trap_S_RegisterSound( token, qfalse );
 
@@ -502,6 +522,11 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, tokens))
+	  {
+        continue;
+	  }
 
       wim->flashSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
@@ -662,6 +687,11 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       token = COM_Parse( &text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, tokens))
+	  {
+        continue;
+	  }
 
       wi->readySound = trap_S_RegisterSound( token, qfalse );
 

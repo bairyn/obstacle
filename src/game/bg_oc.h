@@ -38,9 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * variable changes, extended layout format and version build and version; and
  * several which are recommended: client-side speedometer, cmd stealth and poor
  * aimbot detection, crash, connectMessage, CPMode, restart CP, no auto-vote, LayoutLoad memory
- * leak fix, speed, g_connectMessage and 'x is building' message.  Note that
- * this mod uses an entirely different system of flags and a much different
- * g_admin than a typical version.
+ * leak fix, speed, disableWeaponSounds, g_connectMessage and 'x is building' message.
  */
 
 #ifdef _TREMULOUS_H
@@ -62,7 +60,6 @@ extern int oc_gameMode;
 // TODO: fix empty and partial CP's
 // TODO: fix collisions with projectiles and knockback
 // TODO: fix clipping with buildablies
-// TODO: make annoying tesla sound optional
 // TODO: notarget buildables
 
 //<+===============================================+><+===============================================+>
@@ -2891,11 +2888,15 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PMJumpChange() \
 	do \
 	{ \
+		float dp; \
+ \
 		if(!BG_OC_OCMode()) \
 			break; \
  \
+		dp = -DotProduct(pm->ps->velocity, normal); \
+ \
 		if(DotProduct(pm->ps->velocity, normal) < 0) \
-			VectorMA(pm->ps->velocity, -DotProduct(pm->ps->velocity, normal), normal, pm->ps->velocity); \
+			VectorMA(pm->ps->velocity, dp, pm->ps->velocity); \
 	} while(0)
 
 	//<+===============================================+>
