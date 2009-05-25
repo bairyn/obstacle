@@ -384,6 +384,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
 
       if(strstr(cg_disableWeaponSounds.string, token))
 	  {
+		wi->impactSound = NULL;
         continue;
 	  }
 
@@ -412,6 +413,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
 
       if(strstr(cg_disableWeaponSounds.string, token))
 	  {
+		wi->impactFleshSound = NULL;
         continue;
 	  }
 
@@ -482,6 +484,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
 
       if(strstr(cg_disableWeaponSounds.string, token))
 	  {
+		wi->firingSound = NULL;
         continue;
 	  }
 
@@ -497,6 +500,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
 
       if(strstr(cg_disableWeaponSounds.string, token))
 	  {
+		wi->missileSound = NULL;
         continue;
 	  }
 
@@ -525,6 +529,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
 
       if(strstr(cg_disableWeaponSounds.string, token))
 	  {
+		wi->flashSound = NULL;
         continue;
 	  }
 
@@ -690,6 +695,7 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
 
       if(strstr(cg_disableWeaponSounds.string, token))
 	  {
+		wi->readySound = NULL;
         continue;
 	  }
 

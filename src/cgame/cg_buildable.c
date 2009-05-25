@@ -364,7 +364,11 @@ void CG_InitBuildables( void )
       Com_sprintf( filename, sizeof( filename ), "sound/buildables/%s/%s", buildableName, soundfile );
 
       if(strstr(cg_disableWeaponSounds.string, va("%s/%s", buildableName, soundfile)))
+      {
+	    cg_buildables[ i ].sounds[ j ].enabled = qtrue;
+	    cg_buildables[ i ].sounds[ j ].sound = NULL;
         continue;
+      }
 
       if( cg_buildables[ i ].sounds[ j ].enabled )
       {
