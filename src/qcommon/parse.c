@@ -979,7 +979,7 @@ static void Parse_StripDoubleQuotes(char *string)
 {
   if (*string == '\"')
   {
-    memmove( string, string + 1, strlen( string ) + 1 );
+    strcpy(string, string+1);
   }
   if (string[strlen(string)-1] == '\"')
   {

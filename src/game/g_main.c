@@ -1141,14 +1141,16 @@ void G_CalculateBuildPoints( void )
          level.alienNextQueueTime < level.time )
   {
     level.alienBuildPointQueue--;
-    level.alienNextQueueTime += g_alienBuildQueueTime.integer;
+    level.alienNextQueueTime += (int)g_alienBuildQueueTime.integer * (float)( 1 -  ((float)level.alienBuildPointQueue) / level.alienBuildPoints );
   }
 
   while( level.humanBuildPointQueue > 0 &&
          level.humanNextQueueTime < level.time )
   {
+    int addtime;
     level.humanBuildPointQueue--;
-    level.humanNextQueueTime += g_alienBuildQueueTime.integer;
+        level.humanNextQueueTime += (int)g_humanBuildQueueTime.integer  * (float)( 1 - ((float)level.humanBuildPointQueue) / level.humanBuildPoints );
+
   }
 
   // Sudden Death checks
