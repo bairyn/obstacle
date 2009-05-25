@@ -58,7 +58,7 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix empty and partial CP's
-// TODO: fix clipping with buildablies
+// TODO: fix clipping with buildablies and weapons
 // TODO: notarget buildables
 // TODO: fix override not being disabled after editoc is disabled
 

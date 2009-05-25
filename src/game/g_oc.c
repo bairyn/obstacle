@@ -2566,11 +2566,11 @@ int G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent)  // called when a pla
 	{
 		ent->client->pers.checkpoint = checkpoint;
 		if(level.totalMedistations && ent->client->pers.medisLastCheckpoint && ent->client->pers.medis)
-			memcpy(ent->client->pers.medisLastCheckpoint, ent->client->pers.medis, (level.totalMedistations + 1) * sizeof(int));
+			memcpy(ent->client->pers.medisLastCheckpoint, ent->client->pers.medis, (level.totalMedistations + 1) * sizeof(gentity_t *));
 		else if(level.totalMedistations)
 			G_ClientPrint(ent, "^1Error saving checkpoint information", CLIENT_SPECTATORS);
 		if(level.totalArmouries && ent->client->pers.armsLastCheckpoint && ent->client->pers.arms)
-			memcpy(ent->client->pers.armsLastCheckpoint, ent->client->pers.arms, (level.totalArmouries + 1) * sizeof(int));
+			memcpy(ent->client->pers.armsLastCheckpoint, ent->client->pers.arms, (level.totalArmouries + 1) * sizeof(gentity_t *));
 		else if(level.totalArmouries)
 			G_ClientPrint(ent, "^1Error saving checkpoint information", CLIENT_SPECTATORS);
 	}
