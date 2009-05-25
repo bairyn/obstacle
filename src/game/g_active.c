@@ -23,22 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-static int c = 0;
-static void ttrap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentMask )
-{
-	trace_t traceWithMaskAll;
-
-	trap_Trace(results, start, mins, maxs, end, passEntityNum, contentMask);
-
-	trap_Trace(&traceWithMaskAll, start, mins, maxs, end, passEntityNum, MASK_ALL);
-	if(c++ > 1000)
-	{
-		c = 0;
-		G_Printf("g_entities[results->entityNum].classname: %s; g_entities[results->entityNum].r.contents: %d; start: %03f, %03f, %03f; mins: %03f, %03f, %03f; maxs: %03f, %03f, %03f; end: %03f, %03f, %03f; passEntityNum: %d; contentMask: %d; contentMask == MASK_DEADSOLID: %d\n", g_entities[results->entityNum].classname, g_entities[results->entityNum].r.contents, start[0], start[1], start[2], mins[0], mins[1], mins[2], maxs[0], maxs[1], maxs[2], end[0], end[1], end[2], passEntityNum, contentMask, contentMask == MASK_DEADSOLID);
-		G_Printf("g_entities[traceWithMaskAll.entityNum].classname: %s; g_entities[traceWithMaskAll.entityNum].r.contents: %d\n\n", g_entities[traceWithMaskAll.entityNum].classname, g_entities[traceWithMaskAll.entityNum].r.contents);
-	}
-}
-
 /*
 ===============
 G_DamageFeedback
@@ -1555,9 +1539,9 @@ void ClientThink_real( gentity_t *ent )
   if( pm.ps->stats[ STAT_STATE ] & SS_HOVELING )
     pm.tracemask = MASK_DEADSOLID;
   else
-    pm.tracemask = BG_OC_PLAYERMASK;
+    pm.tracemask = MASK_PLAYERSOLID;
 
-  pm.trace = ttrap_Trace;
+  pm.trace = trap_Trace;
   pm.pointcontents = trap_PointContents;
   pm.debugLevel = g_debugMove.integer;
   pm.noFootsteps = 0;

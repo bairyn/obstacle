@@ -1519,7 +1519,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   ent->takedamage = qtrue;
   ent->inuse = qtrue;
   ent->classname = "player";
-  ent->r.contents = CONTENTS_BODY;
+  ent->r.contents = BG_OC_CLIENTCONTENTS;
   ent->clipmask = MASK_PLAYERSOLID;
   ent->die = player_die;
   ent->waterlevel = 0;

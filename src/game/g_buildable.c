@@ -95,12 +95,12 @@ gentity_t *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal,
   else
     return NULL;
 
-  trap_Trace( &tr, origin, NULL, NULL, localOrigin, spawnNum, BG_OC_SHOTMASK );
+  trap_Trace( &tr, origin, NULL, NULL, localOrigin, spawnNum, MASK_SHOT );
 
   if( tr.entityNum != ENTITYNUM_NONE )
     return &g_entities[ tr.entityNum ];
 
-  trap_Trace( &tr, localOrigin, cmins, cmaxs, localOrigin, -1, BG_OC_PLAYERMASK );
+  trap_Trace( &tr, localOrigin, cmins, cmaxs, localOrigin, -1, MASK_PLAYERSOLID );
 
   if( tr.entityNum != ENTITYNUM_NONE )
     return &g_entities[ tr.entityNum ];
@@ -1258,7 +1258,7 @@ qboolean AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideEx
 
   // see if there's something between the hovel and its exit 
   // (eg built right up against a wall)
-  trap_Trace( &tr, start, NULL, NULL, end, player->s.number, BG_OC_PLAYERMASK );
+  trap_Trace( &tr, start, NULL, NULL, end, player->s.number, MASK_PLAYERSOLID );
   if( tr.fraction < 1.0f )
     return qtrue;
 
@@ -1267,16 +1267,16 @@ qboolean AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideEx
   VectorMA( origin, HOVEL_TRACE_DEPTH, normal, start );
 
   //compute a place up in the air to start the real trace
-  trap_Trace( &tr, origin, mins, maxs, start, player->s.number, BG_OC_PLAYERMASK );
+  trap_Trace( &tr, origin, mins, maxs, start, player->s.number, MASK_PLAYERSOLID );
 
   VectorMA( origin, ( HOVEL_TRACE_DEPTH * tr.fraction ) - 1.0f, normal, start );
   VectorMA( origin, -HOVEL_TRACE_DEPTH, normal, end );
 
-  trap_Trace( &tr, start, mins, maxs, end, player->s.number, BG_OC_PLAYERMASK );
+  trap_Trace( &tr, start, mins, maxs, end, player->s.number, MASK_PLAYERSOLID );
 
   VectorCopy( tr.endpos, origin );
 
-  trap_Trace( &tr, origin, mins, maxs, origin, player->s.number, BG_OC_PLAYERMASK );
+  trap_Trace( &tr, origin, mins, maxs, origin, player->s.number, MASK_PLAYERSOLID );
 
   if( tr.fraction < 1.0f )
     return qtrue;
@@ -2206,7 +2206,6 @@ void HMGTurret_Think( gentity_t *self )
   // Turn off client side muzzle flashes
   self->s.eFlags &= ~EF_FIRING;
 
-G_Printf("self->r.contents: %d, self->r.contents == CONTENTS_PLAYERCLIP: %d", self->r.contents, self->r.contents == CONTENTS_PLAYERCLIP);
   // If not powered or spawned don't do anything
   self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
@@ -3451,8 +3450,8 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
   }
 
   built->s.number = built - g_entities;
-  built->r.contents = BG_OC_BUILDABLECONTENTS;
-  built->clipmask = BG_OC_PLAYERMASK;
+  built->r.contents = CONTENTS_BODY;
+  built->clipmask = MASK_PLAYERSOLID;
   built->enemy = NULL;
   built->s.weapon = BG_Buildable( buildable )->turretProjType;
 

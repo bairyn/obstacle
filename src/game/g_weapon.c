@@ -359,7 +359,7 @@ void bulletFire( gentity_t *ent, float spread, int damage, int mod )
     G_UnlaggedOff( );
   }
   else
-    trap_Trace( &tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT );
+    trap_Trace( &tr, muzzle, NULL, NULL, end, ent->s.number, BG_OC_SHOTMASK );
 
   if( tr.surfaceFlags & SURF_NOIMPACT )
     return;
@@ -762,7 +762,7 @@ void teslaFire( gentity_t *self )
   target[ 2 ] += self->enemy->r.maxs[ 2 ];
 
   // Trace to the target entity
-  trap_Trace( &tr, origin, NULL, NULL, target, self->s.number, MASK_SHOT );
+  trap_Trace( &tr, origin, NULL, NULL, target, self->s.number, BG_OC_SHOTMASK );
   if( tr.entityNum != self->enemy->s.number )
     return;
 

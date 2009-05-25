@@ -2560,7 +2560,7 @@ static void CG_ScanForCrosshairEntity( void )
   VectorMA( start, 131072, cg.refdef.viewaxis[ 0 ], end );
 
   CG_Trace( &trace, start, vec3_origin, vec3_origin, end,
-    cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY );
+    cg.snap->ps.clientNum, CONTENTS_SOLID|BG_OC_CLIENTCONTENTS );
 
   // if the player is in fog, don't show it
   content = trap_CM_PointContents( trace.endpos, 0 );

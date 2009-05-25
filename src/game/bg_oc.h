@@ -58,9 +58,9 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix empty and partial CP's
-// TODO: fix collisions with projectiles and knockback
 // TODO: fix clipping with buildablies
 // TODO: notarget buildables
+// TODO: fix override not being disabled after editoc is disabled
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -2629,9 +2629,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_ClassAppend() Q_strcat(buf, sizeof(buf), "/oc");
 	#define BG_OC_WeaponAppend() Q_strcat(buf, sizeof(buf), "/oc");
 
-	#define BG_OC_PLAYERMASK ((BG_OC_OCMode()) ? (MASK_DEADSOLID) : (MASK_PLAYERSOLID))  // don't clip against players if OC mode (not for everything)
-	#define BG_OC_SHOTMASK ((BG_OC_OCMode()) ? (MASK_SOLID) : (MASK_SHOT))  // if OC mode don't clip against players (don't use this for everything; should be used for projectiles from player weapons or spawn checking)
-	#define BG_OC_BUILDABLECONTENTS ((BG_OC_OCMode()) ? (CONTENTS_PLAYERCLIP) : (CONTENTS_BODY))  /* OC hack: players don't collide with bodies, so set contents as solid */
+	#define BG_OC_PLAYERMASK ((BG_OC_OCMode()) ? (MASK_PLAYERSOLID | CONTENTS_CORPSE) : (MASK_PLAYERSOLID))  // use this instead of MASK_PLAYERSOLID when traces should always hit players.  In OC mode, MASK_PLAYERSOLID will not interact with clients.
+	#define BG_OC_SHOTMASK ((BG_OC_OCMode()) ? (MASK_SHOT | CONTENTS_CORPSE) : (MASK_SHOT))  // same as above, but for shots
+	#define BG_OC_CLIENTCONTENTS ((BG_OC_OCMode()) ? (CONTENTS_CORPSE) : (CONTENTS_BODY))
 
 	//<+===============================================+>
 	// pmove

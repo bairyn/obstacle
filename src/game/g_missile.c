@@ -660,7 +660,7 @@ gentity_t *fire_hive( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
   bolt->methodOfDeath = MOD_SWARM;
-  bolt->clipmask = MASK_SHOT;
+  bolt->clipmask = BG_OC_SHOTMASK;
   bolt->target_ent = self->target_ent;
   bolt->timestamp = level.time + HIVE_LIFETIME;
 
@@ -702,7 +702,7 @@ gentity_t *fire_lockblob( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
   bolt->methodOfDeath = MOD_UNKNOWN; //doesn't do damage so will never kill
-  bolt->clipmask = MASK_SHOT;
+  bolt->clipmask = BG_OC_SHOTMASK;
   bolt->target_ent = NULL;
 
   bolt->s.pos.trType = TR_LINEAR;
@@ -780,7 +780,7 @@ gentity_t *fire_paraLockBlob( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->damage = 0;
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
-  bolt->clipmask = MASK_SHOT;
+  bolt->clipmask = BG_OC_SHOTMASK;
   bolt->target_ent = NULL;
 
   bolt->s.pos.trType = TR_GRAVITY;
