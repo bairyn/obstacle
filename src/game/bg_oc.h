@@ -678,6 +678,27 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
 	} while(0)
 
+	#define G_OC_NeedAlternateHiveSearchAndDestroy() ((BG_OC_OCMode()) ? (1) : (0))
+
+	#define G_OC_AlternateHiveSearchAndDestroy() \
+	do \
+	{ \
+		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		else if( self->timestamp > level.time ) \
+		{ \
+			VectorCopy( self->r.currentOrigin, self->s.pos.trBase ); \
+			self->s.pos.trType = TR_STATIONARY; \
+			self->s.pos.trTime = level.time; \
+ \
+			self->think = G_ExplodeMissile; \
+			self->nextthink = level.time + 50; \
+			self->parent->active = qfalse;  /* allow the parent to start again */ \
+			return; \
+		} \
+	} while(0)
+
 	#define G_OC_CloseRangeWeaponFired(x) \
 	do \
 	{ \
