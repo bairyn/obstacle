@@ -23,8 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /*
  * g_oc.c
  *
- * The main source file for the OC mod.  Putting everything in bg_oc makes the
- * mod easier to update and makes it more compatible with Tremulous.  There are,
+ * The main header for the OC mod.  Putting everything in bg_oc makes the mod
+ * easier to update and makes it more compatible with Tremulous.  There are,
  * though, several non-OC things that this mod nedes: floating point votes,
  * CP mix and print system, teleporters, trigger count return on at least
  * G_Checktrigger_stages(), extended !info, G_MinorFormatNumber(), override,
@@ -33,13 +33,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * dynamic vec3_t initializer for PCLOUD in g_weapon.c, G_BuildableRange returns
  * buildable in range, extended votes, pause, buildlog, revert, several small
  * variable changes, extended layout format and version build and version; and
- * several which are recommended: client-side speedometer, cmd stealth and poor
- * aimbot detection, crash, connectMessage, CPMode, restart CP, no auto-vote, LayoutLoad memory
- * leak fix, speed, disableWeaponSounds, g_connectMessage and 'x is building' message.
+ * several which are recommended: client-side speedometer, notarget buildables, cmd
+ * stealth and weak aimbot detection, crash, connectMessage, CPMode, restart CP,
+ * no auto-vote, LayoutLoad memory leak fix, speed, disableWeaponSounds, 
+ * g_connectMessage and 'x is building' message.
  */
-
-// TODO: fix strange viewing while quickrestarting with an upside-down egg
-// TODO: before 2.0, fix memory corruption bug and fix strange medi counter decrementing bug (happens to arm too)
 
 #define OC_GAME
 

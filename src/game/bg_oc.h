@@ -36,9 +36,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * dynamic vec3_t initializer for PCLOUD in g_weapon.c, G_BuildableRange returns
  * buildable in range, extended votes, pause, buildlog, revert, several small
  * variable changes, extended layout format and version build and version; and
- * several which are recommended: client-side speedometer, cmd stealth and poor
- * aimbot detection, crash, connectMessage, CPMode, restart CP, no auto-vote, LayoutLoad memory
- * leak fix, speed, disableWeaponSounds, g_connectMessage and 'x is building' message.
+ * several which are recommended: client-side speedometer, notarget buildables, cmd
+ * stealth and weak aimbot detection, crash, connectMessage, CPMode, restart CP,
+ * no auto-vote, LayoutLoad memory leak fix, speed, disableWeaponSounds, 
+ * g_connectMessage and 'x is building' message.
  */
 
 #ifdef _TREMULOUS_H
@@ -57,9 +58,9 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: fix strange viewing while quickrestarting with an upside-down egg
 // TODO: fix empty and partial CP's
-// TODO: fix clipping with buildablies and weapons
-// TODO: notarget buildables
+// TODO: enabled knockback for luci and flamer, but only to one's self.  Also disable bonuses with luci and flamer
 // TODO: fix override not being disabled after editoc is disabled
 
 //<+===============================================+><+===============================================+>

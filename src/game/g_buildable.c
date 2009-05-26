@@ -521,6 +521,9 @@ static void G_CreepSlow( gentity_t *self )
   {
     enemy = &g_entities[ entityList[ i ] ];
 
+    if( enemy->flags & FL_NOTARGET )
+      continue;
+
     if( enemy->client && enemy->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS &&
         enemy->client->ps.groundEntityNum != ENTITYNUM_NONE )
     {
@@ -1073,6 +1076,9 @@ void AAcidTube_Think( gentity_t *self )
       if( !G_Visible( self, enemy, CONTENTS_SOLID ) )
         continue;
 
+      if( enemy->flags & FL_NOTARGET )
+        continue;
+
       if( enemy->client && enemy->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
       {
         // start the attack animation
@@ -1563,6 +1569,8 @@ qboolean ATrapper_CheckTarget( gentity_t *self, gentity_t *target, int range )
     return qfalse;
   if( target->client->ps.stats[ STAT_STATE ] & SS_BLOBLOCKED ) // locked?
     return qfalse;
+  if( target->flags & FL_NOTARGET ) // Does the target have notarget enabled?
+    return qfalse;
 
   VectorSubtract( target->r.currentOrigin, self->r.currentOrigin, distance );
   if( VectorLength( distance ) > range ) // is the target within range?
@@ -1596,6 +1604,9 @@ void ATrapper_FindEnemy( gentity_t *ent, int range )
   {
     //if target is not valid keep searching
     if( !ATrapper_CheckTarget( ent, target, range ) )
+      continue;
+
+    if( enemy->flags & FL_NOTARGET )
       continue;
 
     //we found a target
@@ -1723,6 +1734,9 @@ void HSpawn_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
   if( self->health <= 0 )
     return;
 
+  if( other->flags & FL_NOTARGET )
+    return;
+
   if( !self->spawned )
     return;
 
@@ -1790,6 +1804,9 @@ void HReactor_Think( gentity_t *self )
       enemy = &g_entities[ entityList[ i ] ];
       if( !enemy->client ||
           enemy->client->ps.stats[ STAT_TEAM ] != TEAM_ALIENS )
+        continue;
+
+      if( enemy->flags & FL_NOTARGET )
         continue;
 
       tent = G_TempEntity( enemy->s.pos.trBase, EV_TESLATRAIL );
@@ -1975,7 +1992,10 @@ void HMedistat_Think( gentity_t *self )
     for( i = 0; i < num; i++ )
     {
       player = &g_entities[ entityList[ i ] ];
-      
+
+      if( player->flags & FL_NOTARGET )
+        continue;
+
       //remove poison from everyone, not just the healed player
       if( player->client && player->client->ps.stats[ STAT_STATE ] & SS_POISONED )
         player->client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
@@ -2000,6 +2020,9 @@ void HMedistat_Think( gentity_t *self )
       for( i = 0; i < num; i++ )
       {
         player = &g_entities[ entityList[ i ] ];
+
+        if( player->flags & FL_NOTARGET )
+          continue;
 
         if( player->client && player->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
         {
@@ -2184,6 +2207,8 @@ void HMGTurret_FindEnemy( gentity_t *self )
     target = &g_entities[ entityList[ i ] ];
     if( !HMGTurret_CheckTarget( self, target, qtrue ) )
       continue;
+    if( target->flags & FL_NOTARGET )
+      continue;
     self->enemy = target;
     self->enemy->targeted = self;
     return;
@@ -2304,6 +2329,8 @@ void HTeslaGen_Think( gentity_t *self )
     for( i = 0; i < num; i++ )
     {
       self->enemy = &g_entities[ entityList[ i ] ];
+      if( self->enemy->flags & FL_NOTARGET )
+        continue;
       if( self->enemy->client && self->enemy->health > 0 &&
           self->enemy->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS &&
           Distance( self->enemy->s.pos.trBase,
