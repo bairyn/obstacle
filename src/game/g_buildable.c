@@ -1606,7 +1606,7 @@ void ATrapper_FindEnemy( gentity_t *ent, int range )
     if( !ATrapper_CheckTarget( ent, target, range ) )
       continue;
 
-    if( enemy->flags & FL_NOTARGET )
+    if( target->flags & FL_NOTARGET )
       continue;
 
     //we found a target
