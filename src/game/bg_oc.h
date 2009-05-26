@@ -61,7 +61,6 @@ extern int oc_gameMode;
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
 // TODO: fix empty and partial CP's
 // TODO: enabled knockback for luci and flamer, but only to one's self.  Also disable bonuses with luci and flamer
-// TODO: fix override not being disabled after editoc is disabled
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -2341,6 +2340,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 						G_ClientPrint(ent, "notarget OFF", CLIENT_NULL); \
 					} \
 					ent->flags &= FL_NOTARGET; \
+ \
+					client->pers.override = 0; \
 				} \
 			} \
 		} \
