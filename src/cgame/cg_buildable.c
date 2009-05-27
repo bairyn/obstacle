@@ -365,7 +365,7 @@ void CG_InitBuildables( void )
 
       if(strstr(cg_disableWeaponSounds.string, va("%s/%s", buildableName, soundfile)))
       {
-	    cg_buildables[ i ].sounds[ j ].enabled = qtrue;
+	    cg_buildables[ i ].sounds[ j ].enabled = qfalse;
 	    cg_buildables[ i ].sounds[ j ].sound = 0;
         continue;
       }

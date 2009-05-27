@@ -60,7 +60,8 @@ extern int oc_gameMode;
 
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
 // TODO: fix empty and partial CP's
-// TODO: enabled knockback for luci and flamer, but only to one's self.  Also disable bonuses with luci and flamer
+// TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer
+// TODO: fix player names not showing
 
 //<+===============================================+><+===============================================+>
 // game only stuff
