@@ -59,7 +59,7 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
-// TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer
+// TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
 
 //<+===============================================+><+===============================================+>
@@ -2921,6 +2921,11 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(DotProduct(pm->ps->velocity, normal) < 0) \
 			VectorMA(pm->ps->velocity, dp, normal, pm->ps->velocity); \
 	} while(0)
+
+	#define BG_OC_PMNeedAlternateStopSprintCheck() ((BG_OC_OCMode()) ? (1) : (0))
+
+	#define BG_OC_PMAlternateStopSprintCheck() \
+	if(pm->ps->pm_type != PM_NORMAL || pm->cmd.buttons & BUTTON_WALKING)
 
 	//<+===============================================+>
 	// special modes
