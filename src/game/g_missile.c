@@ -620,7 +620,8 @@ void AHive_SearchAndDestroy( gentity_t *self )
       if( tr.entityNum != ENTITYNUM_WORLD )
       {
         nearest = d;
-        self->target_ent = ent;
+        if(!(ent->flags & FL_NOTARGET))
+          self->target_ent = ent;
       }
     }
   }
