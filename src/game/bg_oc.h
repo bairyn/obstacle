@@ -59,7 +59,6 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
-// TODO: fix empty and partial CP's
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer
 // TODO: fix player names not showing
 

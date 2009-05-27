@@ -1084,8 +1084,12 @@ static void CG_ParseVoice( void )
 
 static void CG_CenterPrint_f( void )
 {
-CG_Printf("DEBUG: CG_Argv( 1 ) is:\n > %s\nCG_Argv( 2 ) is:\n > %s\ntrap_Argc( ) is:\n > %d\n\n", CG_Argv( 1 ), CG_Argv( 2 ), trap_Argc());
-  CG_CenterPrint( CG_Argv( 1 ), ( CG_Argv( 2 ) && *CG_Argv( 2 ) ) ? ( CG_Argv( 2 ) ) : ( NULL ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+  char message[ MAX_STRING_CHARS ], find[ MAX_STRING_CHARS ];
+
+  strncpy( message, CG_Argv( 1 ), sizeof( message ) );
+  strncpy( find, CG_Argv( 2 ), sizeof( find ) );
+
+  CG_CenterPrint( message, ( find && find[ 0 ] ) ? ( find ) : ( NULL ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 }
 
 static void CG_Print_f( void )
