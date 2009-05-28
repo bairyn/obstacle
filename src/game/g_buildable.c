@@ -3366,7 +3366,7 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
 
   // extended buildable stuff
   built->groupID = builder->groupID;
-  built->spawnGroup = builder->spawnGroup;
+  built->reserved = builder->reserved;
   built->reserved2 = builder->reserved2;
 
   //things that vary for each buildable that aren't in the dbase
@@ -3637,7 +3637,7 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
 
   trap_Trace( &tr, built->s.origin, built->r.mins, built->r.maxs, dest, built->s.number, built->clipmask );
 
-  if( tr.startsolid && !G_OC_NeedStartSolid() )
+  if( G_OC_NeedStartSolid() && tr.startsolid )
   {
     G_Printf( S_COLOR_YELLOW "G_FinishSpawningBuildable: %s startsolid at %s\n",
               built->classname, vtos( built->s.origin ) );
@@ -3668,7 +3668,7 @@ Items can't be immediately dropped to floor, because they might
 be on an entity that hasn't spawned yet.
 ============
 */
-void G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int spawnGroup, float reserved2 )
+void G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int reserved, float reserved2 )
 {
   ent->s.modelindex = buildable;
 
@@ -3678,7 +3678,7 @@ void G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int s
   ent->think = G_FinishSpawningBuildable;
 
   ent->groupID = groupID;
-  ent->spawnGroup = spawnGroup;
+  ent->reserved = reserved;
   ent->reserved2 = reserved2;
 }
 
@@ -3877,7 +3877,7 @@ G_LayoutBuildItem
 ============
 */
 void G_LayoutBuildItem( buildable_t buildable, vec3_t origin,
-  vec3_t angles, vec3_t origin2, vec3_t angles2, int groupID, int spawnGroup, float reserved2 )
+  vec3_t angles, vec3_t origin2, vec3_t angles2, int groupID, int reserved, float reserved2 )
 {
   gentity_t *builder;
 
@@ -3887,7 +3887,7 @@ void G_LayoutBuildItem( buildable_t buildable, vec3_t origin,
   VectorCopy( angles, builder->s.angles );
   VectorCopy( origin2, builder->s.origin2 );
   VectorCopy( angles2, builder->s.angles2 );
-  G_SpawnBuildable( builder, buildable, groupID, spawnGroup, reserved2 );
+  G_SpawnBuildable( builder, buildable, groupID, reserved, reserved2 );
 }
 
 /*
@@ -3910,7 +3910,7 @@ void G_LayoutLoad( void )
   vec3_t origin2 = { 0.0f, 0.0f, 0.0f };
   vec3_t angles2 = { 0.0f, 0.0f, 0.0f };
   int groupID = 0;
-  int spawnGroup = 0;
+  int reserved = 0;
   float reserved2 = 0.0f;
   char line[ MAX_STRING_CHARS ];
   int i = 0;
@@ -3949,10 +3949,10 @@ void G_LayoutLoad( void )
         &angles[ 0 ], &angles[ 1 ], &angles[ 2 ],
         &origin2[ 0 ], &origin2[ 1 ], &origin2[ 2 ],
         &angles2[ 0 ], &angles2[ 1 ], &angles2[ 2 ],
-        &groupID, &spawnGroup, &reserved2 );
+        &groupID, &reserved, &reserved2 );
 
       if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
-        G_LayoutBuildItem( buildable, origin, angles, origin2, angles2, groupID, spawnGroup, reserved2 );
+        G_LayoutBuildItem( buildable, origin, angles, origin2, angles2, groupID, reserved, reserved2 );
       else
         G_Printf( S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
           " layout.  skipping\n", buildable );

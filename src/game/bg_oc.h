@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * several which are recommended: client-side speedometer, notarget buildables, cmd
  * stealth and weak aimbot detection, crash, connectMessage, CPMode, restart CP,
  * no auto-vote, LayoutLoad memory leak fix, speed, disableWeaponSounds, 
- * g_connectMessage and 'x is building' message.
+ * g_connectMessage, and 'x is building' message.
  */
 
 #ifdef _TREMULOUS_H
@@ -356,25 +356,6 @@ extern int oc_gameMode;
 
 	#define G_OC_STAT_MAXRECORDS 16
 	#define G_OC_MAX_LAYOUT_RATINGS 1024
-	/*
-	 * We can either load a long while by reading the layout file MAX_SPAWNGROUP times,
-	 * or read it a few times and put it in fragmented tables.  The problem
-	 * with fragmented tables is that spawn groups may not spawn in the right order.
-	 * Each table is loaded in order, but each table is loaded in order too.
-	 * This rare issue is only ever a problem when a structure is built over
-	 * (over, so it relies on another structure's spawnGroup) and the two (or
-	 * multiple) structures are in different tables, and the wrong table comes
-	 * first.  Fortunately, layout editors usually build in groups so any structures
-	 * which depend on each other are usually in the same table.  It is also even
-	 * rarer because the layout developer usually builds the second one second, and
-	 * the third one third, and since the layout is usually saved in order
-	 * the order of the tables is usually correct (this isn't always
-	 * the case, especially if the developer deconstructs a lot of structures).
-	*/
-	#define G_OC_MAX_LAYOUT_BUILDABLES 4096
-	// TODO: keep BG_Alloc from crashing server when (and only when) trying different memory sizes it can't handle.
-	// until then, both these are somewhat low
-	#define G_OC_MIN_LAYOUT_BUILDABLES 512
 
 	void G_OC_LoadRatings(void);
 	char *G_OC_Rating(char *mapname, char *layoutname);
@@ -383,8 +364,6 @@ extern int oc_gameMode;
 	//<+===============================================+>
 	// editoc
 	//<+===============================================+>
-
-	#define G_OC_MAX_SPAWNGROUP 2048
 
 	//<+===============================================+>
 	// cvars
@@ -989,11 +968,18 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_AlternateCanBuild() \
 	do \
 	{ \
+		int override; \
+ \
 		if(!BG_OC_OCMode()) \
 			break; \
  \
+		if(ent && ent->client && !ent->client->pers.buildableOverride) \
+			override = 0; \
+		else \
+			override = 1; \
+ \
 		/* Stop all buildables from interacting with traces */ \
-		if(!ent->client->pers.buildableOverride) \
+		if(!override) \
 		  G_SetBuildableLinkState(qfalse); /* in OC mode, stackables ae allowed if buildable override is on for the client */ \
  \
 		BG_BuildableBoundingBox(buildable, mins, maxs); \
@@ -1009,7 +995,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		invert = BG_Buildable(buildable)->invertNormal; \
  \
 		/* can we build at this angle? */ \
-		if(!ent->client->pers.buildableOverride) \
+		if(!override) \
 		{ \
 			if(!(normal[2] >= minNormal || (invert && normal[2] <= -minNormal))) \
 			reason = IBE_NORMAL; \
@@ -1021,7 +1007,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		contents = trap_PointContents(entity_origin, -1); \
 		buildPoints = BG_Buildable(buildable)->buildPoints; \
  \
-		if(!ent->client->pers.buildableOverride) \
+		if(!override) \
 		{ \
 			if(ent->client->ps.stats[STAT_TEAM] == TEAM_ALIENS) \
 			{ \
@@ -1112,7 +1098,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				}	*/ \
  \
 		/* Check permission to build here */ \
-		if(!ent->client->pers.buildableOverride)  /* && */ \
+		if(!override)  /* && */ \
 		if(tr1.surfaceFlags & SURF_NOBUILD || contents & CONTENTS_NOBUILD) \
 			reason = IBE_PERMISSION; \
  \
@@ -1153,7 +1139,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		*/ \
  \
 		/* Relink buildables */ \
-		if(!ent->client->pers.buildableOverride) \
+		if(!override) \
 			G_SetBuildableLinkState(qtrue); \
  \
 		/*check there is enough room to spawn from (presuming this is a spawn) */ \
@@ -1168,7 +1154,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		/*this item does not fit here */ \
 		/* */ \
-		if(!ent->client->pers.buildableOverride) \
+		if(!override) \
 		{ \
 			if(reason == IBE_NONE && (tr2.fraction < 1.0 || tr3.fraction < 1.0)) \
 				reason = IBE_NOROOM; \
@@ -2380,14 +2366,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{"displayGroup", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
 		{"groupShow", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
 		{"showGroup", CMD_TEAM | CMD_LIVING, Cmd_Group_f}, \
-	{"spawnUp", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
-		{"spawnGroupUp", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
-		{"upSpawn", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
-		{"upSpawnGroup", CMD_TEAM | CMD_LIVING, Cmd_Spawnup_f}, \
-	{"spawnDown", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
-		{"spawnGroupDown", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
-		{"downSpawn", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
-		{"downSpawnGroup", CMD_TEAM | CMD_LIVING, Cmd_Spawndown_f}, \
 	{"myStats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Mystats_f}, \
 	{"stats", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \
 		{"statistics", CMD_MESSAGE | CMD_INTERMISSION, Cmd_Stats_f}, \

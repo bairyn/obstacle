@@ -1089,7 +1089,7 @@ static void CG_CenterPrint_f( void )
   strncpy( message, CG_Argv( 1 ), sizeof( message ) );
   strncpy( find, CG_Argv( 2 ), sizeof( find ) );
 
-  CG_CenterPrint( message, ( find && find[ 0 ] ) ? ( find ) : ( NULL ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+  CG_CenterPrint( message, ( find[ 0 ] ) ? ( find ) : ( NULL ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 }
 
 static void CG_Print_f( void )

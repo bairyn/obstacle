@@ -285,7 +285,7 @@ struct gentity_s
 
   int               groupID;  // extended buildable information
 #define GROUP_SPAWN 0  // 0 is always the group for player spawning
-  int               spawnGroup;  // extended buildable information
+  int               reserved;  // extended buildable information
   float             reserved2;  // extended buildable information
 
   G_OC_BUILDABLE_STRUCT_DEFS 
@@ -824,9 +824,9 @@ itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distanc
 qboolean          G_BuildIfValid( gentity_t *ent, buildable_t buildable );
 void              G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qboolean force );
 void              G_SetIdleBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim );
-void              G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int spawnGroup, float reserved2 );
+void              G_SpawnBuildable( gentity_t *ent, buildable_t buildable, int groupID, int reserved, float reserved2 );
 void              FinishSpawningBuildable( gentity_t *ent );
-void              G_LayoutBuildItem( buildable_t buildable, vec3_t origin, vec3_t angles, vec3_t origin2, vec3_t angles2, int groupID, int spawnGroup, float reserved2 );
+void              G_LayoutBuildItem( buildable_t buildable, vec3_t origin, vec3_t angles, vec3_t origin2, vec3_t angles2, int groupID, int reserved, float reserved2 );
 void              G_LayoutSave( char *name );
 int               G_LayoutList( const char *map, char *list, int len );
 void              G_LayoutSelect( void );

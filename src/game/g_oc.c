@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * several which are recommended: client-side speedometer, notarget buildables, cmd
  * stealth and weak aimbot detection, crash, connectMessage, CPMode, restart CP,
  * no auto-vote, LayoutLoad memory leak fix, speed, disableWeaponSounds, 
- * g_connectMessage and 'x is building' message.
+ * g_connectMessage, and 'x is building' message.
  */
 
 #define OC_GAME
@@ -784,12 +784,16 @@ typedef struct
 	vec3_t origin2;
 	vec3_t angles2;
 	int groupID;
-	int spawnGroup;
+	int reserved;
 	float reserved2;
 } layout_table_t;
 
 static ratings_table_t *ratings_table = NULL;
-static layout_table_t *layout_table = NULL;
+
+static int G_OC_CompareLayoutBuildables(layout_table_t *a, layout_table_t *b)
+{
+	return a->origin[2] - b->origin[2];
+}
 
 void G_OC_LayoutLoad(char *layout)
 {
@@ -803,13 +807,12 @@ void G_OC_LayoutLoad(char *layout)
 	vec3_t origin2 = { 0.0f, 0.0f, 0.0f };
 	vec3_t angles2 = { 0.0f, 0.0f, 0.0f };
 	int groupID = 0;
-	int spawnGroup = 0;
+	int reserved = 0;
 	float reserved2 = 0.0f;
 	char line[MAX_STRING_CHARS];
-	int i = 0, j = 0, k, k2;
-	int max_spawnGroup = 0;
-	int max_buildables = G_OC_MAX_LAYOUT_BUILDABLES;
-	layout_table_t *l = layout_table;
+	int i = 0, j = 0;
+	layout_table_t *l;
+	static layout_table_t layoutTable[MAX_GENTITIES];
 
 	if(!BG_OC_OCMode())
 		return;
@@ -817,20 +820,7 @@ void G_OC_LayoutLoad(char *layout)
 	if(!level.layout[0] || !Q_stricmp(level.layout, "*BUILTIN*"))
 		return;
 
-	if(layout_table)
-		BG_Free(layout_table);
-	layout_table = NULL;
-
-	while(max_buildables >= G_OC_MIN_LAYOUT_BUILDABLES && !(layout_table = BG_Alloc(sizeof(layout_table_t) * max_buildables))) max_buildables /= 2;
-	if(!layout_table)
-	{
-		G_ClientPrint(NULL, va("^1ERROR: ^7The server could not allocate enough memory (%d bytes) (%d buildables) for the layout table", sizeof(layout_table_t) * max_buildables, max_buildables), CLIENT_NULL);
-		G_ClientCP(NULL, va("^1ERROR: ^7The server could not allocate enough memory (%d bytes) (%d buildables) for the layout table", sizeof(layout_table_t) * max_buildables, max_buildables), NULL, CLIENT_NULL);
-		G_LogPrintf("^1ERROR: ^7The server could not allocate enough memory (%d bytes) (%d buildables) for the layout table\n", sizeof(layout_table_t) * max_buildables, max_buildables);
-		return;
-	}
-
-	l = layout_table;
+	l = layoutTable;
 
 	if(!layout)
 	{
@@ -868,7 +858,7 @@ void G_OC_LayoutLoad(char *layout)
 			&angles[0], &angles[1], &angles[2],
 			&origin2[0], &origin2[1], &origin2[2],
 			&angles2[0], &angles2[1], &angles2[2],
-			&groupID, &spawnGroup, &reserved2);
+			&groupID, &reserved, &reserved2);
 
 		  if(buildable > BA_NONE && buildable < BA_NUM_BUILDABLES)
 		  {
@@ -878,53 +868,15 @@ void G_OC_LayoutLoad(char *layout)
 			VectorCopy(origin2, l->origin2);
 			VectorCopy(angles2, l->angles2);
 			l->groupID = groupID;
-			l->spawnGroup = spawnGroup;
+			l->reserved = reserved;
 			l->reserved2 = reserved2;
 			l->active = 1;
 			l++;
-			if(++j >= max_buildables)
+			if(++j >= sizeof(layoutTable) / sizeof(layoutTable[0]))
 			{
-		//            G_ClientPrint(NULL, va("^3Warning: ^7The layout table is full (%d); a buildable was skipped", max_buildables), CLIENT_NULL);
-		//            G_ClientCP(NULL, va("^3Warning: ^7The layout table is full (%d); a buildable was skipped", max_buildables), NULL, CLIENT_NULL);
-		//            G_LogPrintf("^3Warning: ^7The layout table is full (%d); a buildable was skipped\n", max_buildables);
-		//            return;
-				// first find the highest spawngroup
-				for(k = 0, l = layout_table; k < max_buildables && l->active; k++, l++)
-				{
-					if(l->spawnGroup > max_spawnGroup)
-					{
-						if(l->spawnGroup < G_OC_MAX_SPAWNGROUP)
-						{
-							max_spawnGroup = l->spawnGroup;
-						}
-						else
-						{
-							G_ClientPrint(NULL, va("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)", l->spawnGroup, G_OC_MAX_SPAWNGROUP), CLIENT_NULL);
-							G_ClientCP(NULL, va("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)", l->spawnGroup, G_OC_MAX_SPAWNGROUP), NULL, CLIENT_NULL);
-							G_LogPrintf("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)\n", l->spawnGroup, G_OC_MAX_SPAWNGROUP);
-					return;
-						}
-					}
-				}
-				max_spawnGroup++;
-
-				// build each buildable in order
-				for(k = 0; k < max_spawnGroup; k++)
-				{
-					for(k2 = 0, l = layout_table; k2 < max_buildables && l->active; k2++, l++)
-					{
-						if(i == l->spawnGroup)
-						{
-							G_LayoutBuildItem(l->buildable, l->origin, l->angles, l->origin2, l->angles2, l->groupID, l->spawnGroup, l->reserved2);
-						}
-					}
-				}
-
-				if(layout_table)
-					BG_Free(layout_table);
-				layout_table = NULL;
-
-				G_OC_LayoutLoad(layout);
+				G_ClientPrint(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), CLIENT_NULL);
+				G_ClientCP(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), NULL, CLIENT_NULL);
+				G_LogPrintf("^1Error: ^7Too many buildables (%d)!\n", sizeof(layoutTable) / sizeof(layoutTable[0]));
 				return;
 			}
 		  }
@@ -939,36 +891,12 @@ void G_OC_LayoutLoad(char *layout)
 
 	BG_Free(layoutPtr);
 
-	// first find the highest spawngroup
-	for(i = 0, l = layout_table; i < max_buildables && l->active; i++, l++)
+	// build each buildable after ordering by position of Z axis
+	qsort(layoutTable, sizeof(layoutTable) / sizeof(layoutTable[0]), sizeof(layoutTable[0]), (int(*)())G_OC_CompareLayoutBuildables);
+	for(i = 0; i < j; i++)
 	{
-		if(l->spawnGroup > max_spawnGroup)
-		{
-			if(l->spawnGroup < G_OC_MAX_SPAWNGROUP)
-			{
-				max_spawnGroup = l->spawnGroup;
-			}
-			else
-			{
-				G_ClientPrint(NULL, va("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)", l->spawnGroup, G_OC_MAX_SPAWNGROUP), CLIENT_NULL);
-				G_ClientCP(NULL, va("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)", l->spawnGroup, G_OC_MAX_SPAWNGROUP), NULL, CLIENT_NULL);
-				G_LogPrintf("^3Warning: ^7A buildable has a spawngroup (%d) higher than the maximum (%d)\n", l->spawnGroup, G_OC_MAX_SPAWNGROUP);  // this line segfaults
-				return;
-			}
-		}
-	}
-	max_spawnGroup++;
-
-	// build each buildable in order
-	for(i = 0; i < max_spawnGroup; i++)
-	{
-		for(j = 0, l = layout_table; j < max_buildables && l->active; j++, l++)
-		{
-			if(i == l->spawnGroup)
-			{
-				G_LayoutBuildItem(l->buildable, l->origin, l->angles, l->origin2, l->angles2, l->groupID, l->spawnGroup, l->reserved2);
-			}
-		}
+		l = &layoutTable[i];
+		G_LayoutBuildItem(l->buildable, l->origin, l->angles, l->origin2, l->angles2, l->groupID, l->reserved, l->reserved2);
 	}
 
 	for(i = 0; i < MAX_CLIENTS; i++)
@@ -4676,88 +4604,6 @@ void Cmd_Mystats_f(gentity_t *ent)
 
 			G_ClientPrint(ent, va("Medical Stations: %d/%d (%s%d^7 percent)%s", G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, color, percent, G_OC_AllMedis(ent->client->pers.medis) ? va(" - ^2%dm%ds%dms", MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime)) : ("")), CLIENT_NULL);
 		}
-	}
-}
-
-/*
-=================
-Cmd_Spawnup_f
-=================
-*/
-void Cmd_Spawnup_f(gentity_t *ent)
-{
-	vec3_t forward, end;
-	trace_t tr;
-	gentity_t *traceEnt;
-
-	if(!BG_OC_OCMode())
-		return;
-
-	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
-	VectorMA(ent->client->ps.origin, 100, forward, end);
-
-	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
-	traceEnt = &g_entities[tr.entityNum];
-
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
-	{
-		if(++traceEnt->spawnGroup >= G_OC_MAX_SPAWNGROUP)
-			traceEnt->spawnGroup = 0;
-		trap_SendServerCommand(ent-g_entities, va("print \"Structure ordered to spawn %d%s\n\"", traceEnt->spawnGroup, SUFN(traceEnt->spawnGroup)));
-	}
-}
-
-/*
-=================
-Cmd_Spawndown_f
-=================
-*/
-void Cmd_Spawndown_f(gentity_t *ent)
-{
-	vec3_t forward, end;
-	trace_t tr;
-	gentity_t *traceEnt;
-
-	if(!BG_OC_OCMode())
-		return;
-
-	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
-	VectorMA(ent->client->ps.origin, 100, forward, end);
-
-	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
-	traceEnt = &g_entities[tr.entityNum];
-
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
-	{
-		if(--traceEnt->spawnGroup <= 0)
-			traceEnt->spawnGroup = 0;
-		trap_SendServerCommand(ent-g_entities, va("print \"Structure ordered to spawn %d%s\n\"", traceEnt->spawnGroup, SUFN(traceEnt->spawnGroup)));
-	}
-}
-
-/*
-=================
-Cmd_Spawn_f
-=================
-*/
-void Cmd_Spawn_f(gentity_t *ent)
-{
-	vec3_t forward, end;
-	trace_t tr;
-	gentity_t *traceEnt;
-
-	if(!BG_OC_OCMode())
-		return;
-
-	AngleVectors(ent->client->ps.viewangles, forward, NULL, NULL);
-	VectorMA(ent->client->ps.origin, 100, forward, end);
-
-	trap_Trace(&tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID);
-	traceEnt = &g_entities[tr.entityNum];
-
-	if(tr.fraction < 1.0f && (traceEnt->s.eType == ET_BUILDABLE) && G_admin_canEditOC(ent))
-	{
-		trap_SendServerCommand(ent-g_entities, va("print \"Structure ordered to spawn %d%s\n\"", traceEnt->spawnGroup, SUFN(traceEnt->spawnGroup)));
 	}
 }
 
