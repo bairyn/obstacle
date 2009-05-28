@@ -63,6 +63,8 @@ extern int oc_gameMode;
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
 // TODO: add !info
+// TODO: fix model bbox mismatch (bbox needs to stay 1.1)
+// TODO: don't reset cheats in devmap
 
 //<+===============================================+><+===============================================+>
 // game only stuff
