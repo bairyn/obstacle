@@ -2274,6 +2274,10 @@ int G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 			}
 		}
 	}
+	else if(ent->s.modelindex == BA_H_SPAWN)
+	{
+		level.numNodes++;
+	}
 
 	return 0;
 }
@@ -2421,6 +2425,10 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 				}
 			}
 		}
+	}
+	else if(ent->s.modelindex == BA_H_SPAWN)
+	{
+		level.numNodes--;
 	}
 
 	return 0;

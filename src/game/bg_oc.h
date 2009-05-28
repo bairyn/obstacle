@@ -62,6 +62,7 @@ extern int oc_gameMode;
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
+// TODO: add !info
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -1430,9 +1431,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			built->groupID = 0;  /* default - TODO: ... */ \
 		else \
 			built->groupID = 2;  /* UNPOWERED - TODO: ... */ \
- \
-		if(built->s.modelindex == BA_H_SPAWN) \
-			level.numNodes++; \
 	} while(0)
 
 	#define G_OC_NeedStartSolid() (!(BG_OC_OCMode()))  // OC buildables can be in and on other stuff
