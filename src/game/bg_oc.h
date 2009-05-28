@@ -2927,7 +2927,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PMNeedAlternateStopSprintCheck() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define BG_OC_PMAlternateStopSprintCheck() \
-	if(pm->ps->pm_type != PM_NORMAL || pm->cmd.buttons & BUTTON_WALKING)
+	((pm->ps->pm_type != PM_NORMAL || pm->cmd.buttons & BUTTON_WALKING) ? (1) : (0))
 
 	//<+===============================================+>
 	// special modes
