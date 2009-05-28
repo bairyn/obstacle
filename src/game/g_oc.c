@@ -2518,6 +2518,17 @@ void G_OC_PlayerMaxAmmo(gentity_t *ent)
 		client->ps.ammo = (int)((float)client->ps.ammo * BATTPACK_MODIFIER);
 }
 
+void G_OC_PlayerMaxClips(gentity_t *ent)
+{
+	gclient_t *client = ent->client;
+
+	if(client->ps.weapon != WP_ALEVEL3_UPG &&
+		BG_Weapon(client->ps.weapon)->infiniteAmmo)
+		return;
+
+	client->ps.clips = BG_Weapon(client->ps.weapon)->maxClips;
+}
+
 void G_OC_PlayerMaxCash(gentity_t *ent)
 {
 	G_AddCreditToClient(ent->client, ALIEN_MAX_CREDITS, qtrue);

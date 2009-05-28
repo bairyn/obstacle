@@ -2089,6 +2089,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	} while(0)
 
 	void G_OC_PlayerMaxAmmo(gentity_t *ent);
+	void G_OC_PlayerMaxClips(gentity_t *ent);
 	void G_OC_PlayerMaxCash(gentity_t *ent);
 	void G_OC_PlayerMaxHealth(gentity_t *ent);
 
@@ -2267,6 +2268,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			else if(!client->pers.scrimTeam) \
 			{ \
 				G_OC_WeaponRemoveReserved(ent); \
+				G_OC_PlayerMaxClips(ent);  /* infinite clips in OC mode */ \
 				if(client->pers.teamSelection == TEAM_HUMANS) \
 				{ \
 					if(!client->pers.arms || !(\
@@ -2912,7 +2914,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PMNeedAlternateStopSprintCheck() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define BG_OC_PMAlternateStopSprintCheck() \
-	((pm->ps->pm_type != PM_NORMAL || pm->cmd.buttons & BUTTON_WALKING) ? (1) : (0))
+	(((pm->cmd.forwardmove == 0 && pm->cmd.rightmove == 0) || pm->ps->pm_type != PM_NORMAL || pm->cmd.buttons & BUTTON_WALKING) ? (1) : (0))
 
 	#define BG_OC_PMGROUNDTRACEHITCHECK ((BG_OC_OCMode()) ? ((trace.fraction < 1.0f && !(trace.surfaceFlags & (SURF_SKY | SURF_SLICK)) && !(trace.entityNum != ENTITYNUM_WORLD && i != 4)) ? (1) : (0)) : ((trace.fraction < 1.0f && !(trace.surfaceFlags & (SURF_SKY | SURF_SLICK))) ? (1) : (0)))
 
