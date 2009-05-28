@@ -2303,7 +2303,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				client->pers.nextOverrideCheckTime = level.time + G_OC_FRAMETIMEOVERRIDE; \
 			} \
  \
-			if(!client->pers.noAuO && !sv_cheats.integer) \
+			if(!client->pers.noAuO && !g_cheats.integer) \
 			{ \
 				if(G_admin_canEditOC(ent)) \
 				{ \
