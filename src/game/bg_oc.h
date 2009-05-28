@@ -1179,8 +1179,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	} \
 	while(0)
 
-	#define BG_OC_BUILDABLEPOSITIONMASK ((BG_OC_OCMode()) ? (MASK_PLAYERSOLID) : (MASK_DEADSOLID))
-
 	#define G_OC_DefaultAlienPowered() \
 	do \
 	{ \
@@ -2657,6 +2655,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PLAYERMASK ((BG_OC_OCMode()) ? (MASK_PLAYERSOLID | CONTENTS_CORPSE) : (MASK_PLAYERSOLID))  // use this instead of MASK_PLAYERSOLID when traces should always hit players.  In OC mode, MASK_PLAYERSOLID will not interact with clients.
 	#define BG_OC_SHOTMASK ((BG_OC_OCMode()) ? (MASK_SHOT | CONTENTS_CORPSE) : (MASK_SHOT))  // same as above, but for shots
 	#define BG_OC_CLIENTCONTENTS ((BG_OC_OCMode()) ? (CONTENTS_CORPSE) : (CONTENTS_BODY))
+
+	#define BG_OC_BUILDABLEPOSITIONMASK ((BG_OC_OCMode()) ? (MASK_PLAYERSOLID) : (MASK_DEADSOLID))
 
 	//<+===============================================+>
 	// pmove
