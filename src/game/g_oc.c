@@ -777,7 +777,6 @@ typedef struct
 
 typedef struct
 {
-	int active;
 	int buildable;
 	vec3_t origin;
 	vec3_t angles;
@@ -870,7 +869,6 @@ void G_OC_LayoutLoad(char *layout)
 			l->groupID = groupID;
 			l->reserved = reserved;
 			l->reserved2 = reserved2;
-			l->active = 1;
 			l++;
 			if(++j >= sizeof(layoutTable) / sizeof(layoutTable[0]))
 			{
@@ -892,7 +890,7 @@ void G_OC_LayoutLoad(char *layout)
 	BG_Free(layoutPtr);
 
 	// build each buildable after ordering by position of Z axis
-	qsort(layoutTable, sizeof(layoutTable) / sizeof(layoutTable[0]), sizeof(layoutTable[0]), (int(*)())G_OC_CompareLayoutBuildables);
+	qsort(layoutTable, j, sizeof(layoutTable[0]), (int(*)())G_OC_CompareLayoutBuildables);
 	for(i = 0; i < j; i++)
 	{
 		l = &layoutTable[i];

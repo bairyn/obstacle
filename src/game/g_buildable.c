@@ -1743,7 +1743,7 @@ void HSpawn_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
   if( !self->powered )
     return;
 
-  if( other && ( dest = G_SelectHumanSpawnPoint( self->s.origin, 0, self->groupID, self ) ) )
+  if( other && ( dest = G_SelectHumanSpawnPoint( self->s.origin, 0, self->groupID, activator ) ) )
   {
     VectorCopy( dest->s.origin, spawn_origin );
     if( !other->client->pers.autoAngleDisabled )
@@ -3720,7 +3720,7 @@ void G_LayoutSave( char *name )
     if( ent->s.eType != ET_BUILDABLE )
       continue;
 
-    s = va( "%i %f %f %f %f %f %f %f %f %f %f %f %f\n",
+    s = va( "%i %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
       ent->s.modelindex,
       ent->s.pos.trBase[ 0 ],
       ent->s.pos.trBase[ 1 ],
@@ -3733,7 +3733,10 @@ void G_LayoutSave( char *name )
       ent->s.origin2[ 2 ],
       ent->s.angles2[ 0 ],
       ent->s.angles2[ 1 ],
-      ent->s.angles2[ 2 ] );
+      ent->s.angles2[ 2 ],
+	  ent->groupID,
+	  ent->reserved,
+	  ent->reserved2 );
     trap_FS_Write( s, strlen( s ), f );
   }
   trap_FS_FCloseFile( f );

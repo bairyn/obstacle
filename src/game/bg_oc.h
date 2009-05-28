@@ -61,6 +61,7 @@ extern int oc_gameMode;
 // TODO: fix strange viewing while quickrestarting with an upside-down egg
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
+// TODO: restore OC stuff on ptrc
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -549,6 +550,12 @@ extern int oc_gameMode;
 	do \
 	{ \
 		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		if(not)  /* a telenode */ \
+			break; \
+ \
+		if(!ent) \
 			break; \
  \
 		if(ent->client->pers.scrimTeam) \
