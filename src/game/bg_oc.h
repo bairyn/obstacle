@@ -1179,6 +1179,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	} \
 	while(0)
 
+	#define BG_OC_BUILDABLEPOSITIONMASK ((BG_OC_OCMode()) ? (MASK_PLAYERSOLID) : (MASK_DEADSOLID))
+
 	#define G_OC_DefaultAlienPowered() \
 	do \
 	{ \
