@@ -455,14 +455,14 @@ G_SelectTremulousSpawnPoint
 Chooses a player start, deathmatch start, etc
 ============
 */
-gentity_t *G_SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t origin, vec3_t angles, gentity_t *ent )
+gentity_t *G_SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t origin, vec3_t angles, gentity_t *ent, gentity_t *not )
 {
   gentity_t *spot = NULL;
 
   if( team == TEAM_ALIENS )
-    spot = G_SelectAlienSpawnPoint( preference, ent, GROUP_SPAWN, NULL );
+    spot = G_SelectAlienSpawnPoint( preference, ent, GROUP_SPAWN, not );
   else if( team == TEAM_HUMANS )
-    spot = G_SelectHumanSpawnPoint( preference, ent, GROUP_SPAWN, NULL );
+    spot = G_SelectHumanSpawnPoint( preference, ent, GROUP_SPAWN, not );
 
   //no available spots
   if( !spot )

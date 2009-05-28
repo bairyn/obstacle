@@ -1058,7 +1058,7 @@ void G_SpawnClients( team_t team )
 
     if( ( spawn = G_SelectTremulousSpawnPoint( team,
             ent->client->pers.lastDeathLocation,
-            spawn_origin, spawn_angles, ent ) ) )
+            spawn_origin, spawn_angles, ent, NULL ) ) )
     {
       clientNum = G_PopSpawnQueue( sq );
 

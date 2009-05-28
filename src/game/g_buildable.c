@@ -1743,7 +1743,7 @@ void HSpawn_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
   if( !self->powered )
     return;
 
-  if( other && ( dest = G_SelectHumanSpawnPoint( self->s.origin, 0, self->groupID, activator ) ) )
+  if( other && ( dest = G_SelectHumanSpawnPoint( self->s.origin, 0, self->groupID, self ) ) )
   {
     VectorCopy( dest->s.origin, spawn_origin );
     if( !other->client->pers.autoAngleDisabled )
