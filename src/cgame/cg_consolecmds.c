@@ -208,6 +208,10 @@ static void CG_UIMenu_f( void )
   trap_SendConsoleCommand( va( "menu %s\n", CG_Argv( 1 ) ) );
 }
 
+static void CG_Boost_f( void )
+{
+}
+
 static consoleCommand_t commands[ ] =
 {
   { "ui_menu", CG_UIMenu_f },
@@ -234,6 +238,7 @@ static consoleCommand_t commands[ ] =
   { "testTS", CG_TestTS_f },
   { "destroyTestTS", CG_DestroyTestTS_f },
   { "clientlist", CG_ClientList_f },
+  { "boost", CG_Boost_f },  // TODO: remove me.  This is only here while 1.1 clients and cfg's are common
 };
 
 
