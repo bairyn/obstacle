@@ -46,7 +46,7 @@ itemDef
   background "ui/assets/neutral/circle.tga"
 }
 
-//RIGHT RING CIRCLE
+RIGHT RING CIRCLE
 itemDef
 {
   name "right-ring-circle"
@@ -192,6 +192,19 @@ itemDef
   decoration
   forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B .5
   ownerdraw CG_PLAYER_CREDITS_VALUE_NOPAD
+}
+
+//RIGHT RING CIRCLE
+itemDef
+{
+  name "credits-background"
+  rect 567 410 25 25
+  aspectBias ALIGN_RIGHT
+  visible MENU_TRUE
+  decoration
+  forecolor 0.375 0 0 0.375
+  background "ui/assets/neutral/circle.tga"
+  ownerdraw CG_PLAYER_CREDITS_FRACTION
 }
 
 //ALIENSENSE
