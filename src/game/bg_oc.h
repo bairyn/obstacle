@@ -64,6 +64,7 @@ extern int oc_gameMode;
 // TODO: restore OC stuff on ptrc
 // TODO: add !info
 // TODO: fix model bbox mismatch (bbox needs to stay 1.1)
+// TODO: secondary-fire with ckit cancels current buildable
 
 //<+===============================================+><+===============================================+>
 // game only stuff
