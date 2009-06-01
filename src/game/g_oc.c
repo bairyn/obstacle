@@ -3883,6 +3883,10 @@ char *G_OC_WinStats(gentity_t *ent, int count, int time)
 	int l;
 	int records;
 
+	// never have any differences in count if ONEARM is on
+	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+		count = 1;
+
 	// stats disabled?
 	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer > G_OC_STAT_MAXRECORDS)
 		return "";
