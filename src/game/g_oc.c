@@ -1377,7 +1377,7 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 		return 0;
 
 	// heal all players
-	player->client->ps.stats[STAT_STATE] |= SS_HEALING_ACTIVE;
+	ent->client->ps.stats[STAT_STATE] |= SS_HEALING_ACTIVE;
 
 	// medi can be used
 
