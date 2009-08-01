@@ -1275,10 +1275,12 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			  {
 				VectorCopy(dest->s.angles, spawn_angles);
 				VectorInverse(spawn_angles);
+				spawn_angles[ROLL] = 0;
 			  }
 			  else
 			  {
 				VectorCopy(ent->s.angles, spawn_angles);
+				spawn_angles[ROLL] = 0;
 			  }
 			  if(G_CheckSpawnPoint(dest->s.number, dest->s.origin, dest->s.origin2, BA_A_SPAWN, spawn_origin) == NULL)
 			  {
