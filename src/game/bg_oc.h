@@ -58,13 +58,14 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix strange viewing while quickrestarting with an upside-down egg
+// TODO: fix strange viewing while quickrestarting with an upside-down egg  -- fixed; confirm?
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
 // TODO: add !info
 // TODO: fix model bbox mismatch (bbox needs to stay 1.1)
 // TODO: secondary-fire with ckit cancels current buildable
+// TODO: medi heals multiple people in OC mode
 
 //<+===============================================+><+===============================================+>
 // game only stuff
