@@ -48,8 +48,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define BG_OC_OCMode() ((oc_gameMode) ? (1) : (0))
 
-#define BG_OC_OCMisc() qfalse
-
 #define TREMULOUS_VALUE(d, o) ((BG_OC_OCMode()) ? (o) : (d))
 
 extern int oc_gameMode;
@@ -60,6 +58,7 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: fix bbox
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
@@ -73,13 +72,6 @@ extern int oc_gameMode;
 
 #ifdef GAME
 	#include "../qcommon/q_shared.h"
-
-	//<+===============================================+>
-	// both game misc
-	//<+===============================================+>
-
-	#undef BG_OC_OCMisc
-	#define BG_OC_OCMisc() qtrue
 
 	//<+===============================================+>
 	// admin
