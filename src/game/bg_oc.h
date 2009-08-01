@@ -62,7 +62,6 @@ extern int oc_gameMode;
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
-// TODO: secondary-fire with ckit cancels current buildable
 // TODO: medi heals multiple people in OC mode (fixed; confirm?)
 
 //<+===============================================+><+===============================================+>
@@ -726,7 +725,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			break; \
  \
 		if(!ent->client->pers.scrimTeam || ent->client->pers.override || G_admin_canEditOC(ent)) \
-			return; \
+		{ \
+			if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD) \
+			{ \
+				cancelBuildFire(ent); \
+			} \
+ \
+			break; \
+		} \
  \
 		if(ent->client->pers.teamSelection == TEAM_ALIENS) \
 		{ \
