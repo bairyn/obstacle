@@ -3340,6 +3340,7 @@ funnies[] =
 	{"The word 'genius' isn't applicable in football.  A genius is a guy like Norman Einstein.", "", ""},
 	{"We are ready for any unforeseen event that may or may not occur.", "", ""},
 	{"Eating is unhealthy.", "", ""},
+	{"<Khalsa> Hi\n<Khalsa> anyone with windows + some smarts around?\n<bob0> doubt it", "", ""},
 	{NULL, NULL, NULL}
 };
 

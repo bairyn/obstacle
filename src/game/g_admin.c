@@ -85,6 +85,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "(^5command^7)"
     },
 
+    {"info", G_admin_info, "h",
+      "display the contents of server info files",
+      "(^5subject^7)"
+    },
+
     {"kick", G_admin_kick, "k",
       "kick a player with an optional reason",
       "[^3name|slot#^7] (^5reason^7)"
@@ -3080,6 +3085,296 @@ qboolean G_admin_unlock( gentity_t *ent, int skiparg )
     BG_TeamName( team ),
     ( ent ) ? ent->client->pers.netname : "console" ) );
   return qtrue;
+}
+
+void G_Unescape( char *input, char *output, int len );
+qboolean G_StringReplaceCvars( char *input, char *output, int len );
+
+qboolean G_admin_info( gentity_t *ent, int skiparg )
+{/*
+  fileHandle_t infoFile;
+  int length, i;
+#define MESSAGEBUF_LEN 1000
+  char *message, filename[ MAX_OSPATH ], messagebuf[ MESSAGEBUF_LEN ];
+  for( i = 0; i < MESSAGEBUF_LEN; i++ )
+    messagebuf[ i ] = '\0';
+  if( G_SayArgc() == 2 + skiparg )
+    G_SayArgv( 1 + skiparg, filename, sizeof( filename ) );
+  else if( G_SayArgc() == 1 + skiparg )
+    Q_strncpyz( filename, "default", sizeof( filename ) );
+  else
+  {
+    ADMP( "^3!info: ^7usage: ^3!info ^7(^5subject^7)\n" );
+    return qfalse;
+  }
+  Com_sprintf( filename, sizeof( filename ), "info/info-%s.txt", filename );
+  length = trap_FS_FOpenFile( filename, &infoFile, FS_READ );
+  message = G_Alloc( length * 2 + 1 );
+  if( length <= 0 || !infoFile )
+  {
+    G_Free( message );
+    trap_FS_FCloseFile( infoFile );
+    ADMP( "^3!info: ^7no relevant information is available\n" );
+    return qfalse;
+  }
+  else
+  {
+    int i;
+    char *cr;
+    trap_FS_Read( message, length, infoFile );
+    *( message + length ) = '\0';
+    trap_FS_FCloseFile( infoFile );
+    // strip carriage returns for windows platforms
+    while( ( cr = strchr( message, '\r' ) ) )
+      memmove( cr, cr + 1, strlen( cr + 1 ) + 1 );
+#define MAX_INFO_PARSE_LOOPS 100
+    for( i = 0; i < MAX_INFO_PARSE_LOOPS &&
+        G_StringReplaceCvars( message, message, sizeof( message ) ); i++ );
+    G_Unescape( message, message, sizeof( message ) );
+    if( i >= MAX_INFO_PARSE_LOOPS )
+      G_Printf( S_COLOR_YELLOW "WARNING: %s exceeds MAX_INFO_PARSE_LOOPS\n", filename );
+    i = 0;
+    while( i < length && *( message + i ) )
+    {
+      if( i + 1 % ( MESSAGEBUF_LEN ) )
+      {
+        *( messagebuf + ( i % MESSAGEBUF_LEN ) ) = *( message + i );
+      }
+      else
+      {
+        *( messagebuf + ( MESSAGEBUF_LEN - 1 ) ) = '\0';
+        ADMP( va( "%s", messagebuf ) );
+      }
+      i++;
+      ADMP( va( "messagebuf: %s\nmessage[ 0 ]: %d\nmessage[ 1 ]: %d\nmessage[ 2 ]: %d\nmessage[ 3 ]: %d\nmessage[ 4 ]: %d\nmessage[ 5 ]: %d\nmessage0: %d\nmessage1: %d\nmessage2: %d\nmessage3: %d\n", messagebuf, message[ 0 ], message[ 1 ], message[ 2 ], message[ 3 ], message[ 4 ], message[ 5 ], *(message+0), *(message+1), *(message+2), *(message+3) ) );
+    }
+    G_Free( message );
+    *( messagebuf + i ) = '\0';
+    ADMP( va( "%s", messagebuf ) );
+    return qtrue;
+  }
+*/
+
+
+
+
+  fileHandle_t f;
+  int  len, i=0;
+  char *info, *infoPtr, *cr;
+  char fileName[ MAX_OSPATH ];
+  char line[ MAX_STRING_CHARS ], linebuf[ MAX_STRING_CHARS ];
+
+  if( g_floodMinTime.integer && ent && ent->client )
+    if ( G_Flood_Limited( ent ) )
+    {
+      trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
+      return qfalse;
+    }
+
+  if( G_SayArgc() == 2 + skiparg )
+    G_SayArgv( 1 + skiparg, fileName, MAX_OSPATH );
+  else if( G_SayArgc() == 1 + skiparg )
+    strcpy( fileName, "default" );
+  else
+  {
+    ADMP( "^3!info: ^7usage: ^3!info ^7(^5subject^7)\n" );
+    return qfalse;
+  }
+  Com_sprintf( fileName, sizeof( fileName ), "info/info-%s.txt", fileName );
+
+  len = trap_FS_FOpenFile( fileName, &f, FS_READ );
+  if( len < 0 )
+  {
+    trap_FS_FCloseFile( f );
+    ADMP( "^3!info: ^7no relevant information is available\n" );
+    return qfalse;
+  }
+  info = G_Alloc( len + 1 );
+  infoPtr = info;
+  trap_FS_Read( info, len, f );
+  *( info + len ) = '\0';
+  trap_FS_FCloseFile( f );
+
+  // strip carriage returns for windows platforms
+  while( ( cr = strchr( info, '\r' ) ) )
+    memmove( cr, cr + 1, strlen( cr + 1 ) + 1 );
+#define MAX_INFO_PARSE_LOOPS 100
+  for( i = 0; i < MAX_INFO_PARSE_LOOPS && G_StringReplaceCvars( info, info, len ); i++ );
+  G_Unescape( info, info, len );
+
+  strcpy( linebuf, "" );
+
+  while( *info )
+  {
+    if( i >= sizeof( line ) - 1 )
+    {
+      G_Free( info );
+      G_Printf( S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
+       fileName, line );
+      return qfalse;
+    }
+    line[ i++ ] = *info;
+    line[ i ] = '\0';
+    if( *info == '\n' )
+    {
+      i = 0;
+//      if( *( info - 1 ) != '\n' )  // nice formatting - implementation somewhat hackish
+      if( qtrue )
+      {
+        if( strlen( linebuf ) + strlen( line ) < MAX_STRING_CHARS - 12 )  // send 24 lines or up to max_string_chars at a time
+        {
+          strcat( linebuf, line );
+        }
+        else
+        {
+          trap_SendServerCommand( ent - g_entities, va( "print \"%s\n\"", linebuf ) );
+          strcpy( linebuf, line );
+        }
+      }
+    }
+    info++;
+  }
+
+  info = infoPtr;
+
+  if( linebuf[0] )
+    trap_SendServerCommand( ent - g_entities, va( "print \"%s\n\"", linebuf ) );
+
+  G_Free( info );
+  return qtrue;
+}
+
+void G_Unescape( char *input, char *output, int len )
+{
+  // \n -> newline, \%c -> %c
+  // output is terminated at output[len - 1]
+  // it's OK for input to equal output, because our position in input is always
+  // equal or greater than our position in output
+  // however, if output is later in the same string as input, a crash is pretty
+  // much inevitable
+  int i, j;
+  for( i = j = 0; input[i] && j + 1 < len; i++, j++ )
+  {
+    if( input[i] == '\\' )
+    {
+      if( !input[++i] )
+      {
+        output[j] = '\0';
+        return;
+      }
+      else if( input[i] == 'n' )
+        output[j] = '\n';
+      else
+        output[j] = input[i];
+    }
+    else
+      output[j] = input[i];
+  }
+  output[j] = '\0';
+}
+
+qboolean G_StringReplaceCvars( char *input, char *output, int len )
+{
+  int i, outNum = 0;
+  char tmp;
+  char cvarName[ 64 ], cvarValue[ MAX_CVAR_VALUE_STRING ];
+  char *outputBuffer;
+  qboolean doneAnything = qfalse;
+  if( len <= 0 )
+    return qfalse;
+  // use our own internal buffer in case output == input
+  outputBuffer = G_Alloc( len );
+  len -= 1; // fit in a terminator
+  while( *input && outNum < len )
+  {
+    if( *input == '\\' && input[1] && outNum < len - 1 )
+    {
+      outputBuffer[ outNum++ ] = *input++;
+      outputBuffer[ outNum++ ] = *input++;
+    }
+    else if( *input == '$' )
+    {
+      qboolean brackets = qfalse;
+      doneAnything = qtrue;
+      input++;
+      if( *input == '{' )
+      {
+        brackets = qtrue;
+        input++;
+      }
+      for( i = 0; *input && ( isalnum( *input ) || *input == '_' || ( brackets && *input != '}' ) ) &&
+          i < 63; i++ )
+        cvarName[ i ] = *input++;
+      cvarName[ i ] = '\0';
+      if( *input == '}' )
+      {
+        input++;
+      }
+
+      tmp = cvarName[strlen("oc-rating")];
+      cvarName[strlen("oc-rating")] = 0;
+      if(strcmp(cvarName, "oc-rating") == 0)
+      {
+        // ${oc-rating,atcs,oc}
+        char *s;
+        char map[ MAX_STRING_CHARS ] = {""};
+        char layout[ MAX_STRING_CHARS ] = {""};
+
+        cvarValue[0] = 0;
+        cvarName[strlen("oc-rating")] = tmp;
+        s = cvarName + strlen("oc-rating");
+        while(*s == ',') s++;
+        i = 0;
+        while(*s != ',')
+        {
+            if(!*s)
+            {
+                break;
+            }
+
+            map[i++] = *s;
+            map[i] = 0;
+
+            s++;
+        }
+        i = 0;
+        while(*s == ',') s++;
+        while(*s != ',')
+        {
+            if(!*s)
+            {
+                break;
+            }
+
+            layout[i++] = *s;
+            layout[i] = 0;
+
+            s++;
+        }
+        if(s && map[0] && layout[0] && (s = G_LayoutRating(map, layout)) && s[0])
+        {
+            Q_strncpyz(cvarValue, s, sizeof(cvarValue));
+        }
+      }
+      else
+      {
+        cvarName[strlen("oc-rating")] = tmp;
+        trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
+      }
+
+      if( cvarValue[ 0 ] )
+      {
+        for( i = 0; cvarValue[ i ] && outNum < len; i++ )
+          outputBuffer[ outNum++ ] = cvarValue[ i ];
+      }
+    }
+    else
+      outputBuffer[ outNum++ ] = *input++;
+  }
+  outputBuffer[ outNum ] = '\0';
+  Q_strncpyz( output, outputBuffer, len );
+  G_Free( outputBuffer );
+  return doneAnything;
 }
 
 /*

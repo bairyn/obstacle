@@ -58,11 +58,9 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix strange viewing while quickrestarting with an upside-down egg  -- fixed; confirm?
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
-// TODO: add !info
 // TODO: fix model bbox mismatch (bbox needs to stay 1.1)
 // TODO: secondary-fire with ckit cancels current buildable
 // TODO: medi heals multiple people in OC mode
@@ -73,6 +71,12 @@ extern int oc_gameMode;
 
 #ifdef GAME
 	#include "../qcommon/q_shared.h"
+
+	//<+===============================================+>
+	// both game misc
+	//<+===============================================+>
+
+	#define BG_OC_OCMisc() qtrue
 
 	//<+===============================================+>
 	// admin
@@ -2532,6 +2536,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 #ifdef CGAME
 	/* TODO: move some toggles such as hide to a client-side cvar */
+
+	#define BG_OC_OCMisc() qfalse
 
 	#define CG_OC_OCTIMER ((unsigned int) ((unsigned int) ((unsigned int) ((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER]) & (unsigned int) 0x0000FFFF) | ((unsigned int) (((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER + 1]) << 16))))  /* only 16 bits are sent */
 
