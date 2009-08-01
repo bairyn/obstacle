@@ -48,6 +48,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define BG_OC_OCMode() ((oc_gameMode) ? (1) : (0))
 
+#define BG_OC_OCMisc() qfalse
+
 #define TREMULOUS_VALUE(d, o) ((BG_OC_OCMode()) ? (o) : (d))
 
 extern int oc_gameMode;
@@ -76,6 +78,7 @@ extern int oc_gameMode;
 	// both game misc
 	//<+===============================================+>
 
+	#undef BG_OC_OCMisc()
 	#define BG_OC_OCMisc() qtrue
 
 	//<+===============================================+>
@@ -2536,8 +2539,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 #ifdef CGAME
 	/* TODO: move some toggles such as hide to a client-side cvar */
-
-	#define BG_OC_OCMisc() qfalse
 
 	#define CG_OC_OCTIMER ((unsigned int) ((unsigned int) ((unsigned int) ((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER]) & (unsigned int) 0x0000FFFF) | ((unsigned int) (((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER + 1]) << 16))))  /* only 16 bits are sent */
 
