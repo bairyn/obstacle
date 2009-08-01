@@ -78,7 +78,7 @@ extern int oc_gameMode;
 	// both game misc
 	//<+===============================================+>
 
-	#undef BG_OC_OCMisc()
+	#undef BG_OC_OCMisc
 	#define BG_OC_OCMisc() qtrue
 
 	//<+===============================================+>
