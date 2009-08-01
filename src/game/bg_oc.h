@@ -62,9 +62,8 @@ extern int oc_gameMode;
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
-// TODO: fix model bbox mismatch (bbox needs to stay 1.1)
 // TODO: secondary-fire with ckit cancels current buildable
-// TODO: medi heals multiple people in OC mode
+// TODO: medi heals multiple people in OC mode (fixed; confirm?)
 
 //<+===============================================+><+===============================================+>
 // game only stuff

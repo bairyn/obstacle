@@ -1376,6 +1376,9 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 	if(!level.totalMedistations)  // this shouldn't happen for obvious reasons
 		return 0;
 
+	// heal all players
+	player->client->ps.stats[STAT_STATE] |= SS_HEALING_ACTIVE;
+
 	// medi can be used
 
 	// if the player is on a scrim team
