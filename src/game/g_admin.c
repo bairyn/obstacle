@@ -3165,7 +3165,7 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
   char line[ MAX_STRING_CHARS ], linebuf[ MAX_STRING_CHARS ];
 
   if( g_floodMinTime.integer && ent && ent->client )
-    if ( G_Flood_Limited( ent ) )
+    if ( G_FloodLimited( ent ) )
     {
       trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
       return qfalse;
@@ -3351,7 +3351,7 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
 
             s++;
         }
-        if(s && map[0] && layout[0] && (s = G_LayoutRating(map, layout)) && s[0])
+        if(s && map[0] && layout[0] && (s = G_OC_Rating(map, layout)) && s[0])
         {
             Q_strncpyz(cvarValue, s, sizeof(cvarValue));
         }
