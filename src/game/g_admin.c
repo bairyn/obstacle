@@ -3189,7 +3189,7 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
     ADMP( "^3!info: ^7no relevant information is available\n" );
     return qfalse;
   }
-  info = G_Alloc( len + 1 );
+  info = BG_Alloc( len + 1 );
   infoPtr = info;
   trap_FS_Read( info, len, f );
   *( info + len ) = '\0';
@@ -3208,7 +3208,7 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
   {
     if( i >= sizeof( line ) - 1 )
     {
-      G_Free( info );
+      BG_Free( info );
       G_Printf( S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
        fileName, line );
       return qfalse;
@@ -3240,7 +3240,7 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
   if( linebuf[0] )
     trap_SendServerCommand( ent - g_entities, va( "print \"%s\n\"", linebuf ) );
 
-  G_Free( info );
+  BG_Free( info );
   return qtrue;
 }
 
@@ -3283,7 +3283,7 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
   if( len <= 0 )
     return qfalse;
   // use our own internal buffer in case output == input
-  outputBuffer = G_Alloc( len );
+  outputBuffer = BG_Alloc( len );
   len -= 1; // fit in a terminator
   while( *input && outNum < len )
   {
@@ -3373,7 +3373,7 @@ qboolean G_StringReplaceCvars( char *input, char *output, int len )
   }
   outputBuffer[ outNum ] = '\0';
   Q_strncpyz( output, outputBuffer, len );
-  G_Free( outputBuffer );
+  BG_Free( outputBuffer );
   return doneAnything;
 }
 
