@@ -1377,16 +1377,11 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 		return 0;
 
 	// heal all players
-	if((player->client && player->client->ps.stats[STAT_TEAM] == TEAM_HUMANS && player->health < player->client->ps.stats[STAT_MAX_HEALTH] && player->client->ps.pm_type != PM_DEAD) && (!medi->occupied || ent != medi->enemy))
+	if(ent->client && ent->client->ps.stats[STAT_TEAM] == TEAM_HUMANS && ent->health < ent->client->ps.stats[STAT_MAX_HEALTH] && ent->client->ps.pm_type != PM_DEAD && ent != medi->enemy)
 	{
 		ent->client->ps.stats[STAT_STATE] |= SS_HEALING_ACTIVE;
 
-		interval = 1000 / ( regenRate * modifier );
-		// if recovery interval is less than frametime, compensate
-		count = 1 + ( level.time - ent->nextRegenTime ) / interval;
-
-		ent->health += count;
-		ent->nextRegenTime += count * interval;
+		ent->health++;
 	}
 
 	// medi can be used
