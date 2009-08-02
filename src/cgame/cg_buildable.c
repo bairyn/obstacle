@@ -613,13 +613,13 @@ void CG_GhostBuildable( buildable_t buildable )
     ent.customShader = cgs.media.redBuildShader;
 
   //rescale the model
-  scale = BG_BuildableConfig( buildable )->modelScale;
+  scale = BG_BuildableConfig( buildable )->modelScale * CG_OC_BUILDABLESCALE;
 
   if( scale != 1.0f )
   {
-    VectorScale( ent.axis[ 0 ], scale, ent.axis[ 0 ] );
-    VectorScale( ent.axis[ 1 ], scale, ent.axis[ 1 ] );
-    VectorScale( ent.axis[ 2 ], scale, ent.axis[ 2 ] );
+    VectorScale( ent.axis[ 0 ], scale, ent.axis[ 0 ] ) * CG_OC_BUILDABLESCALEX;
+    VectorScale( ent.axis[ 1 ], scale, ent.axis[ 1 ] ) * CG_OC_BUILDABLESCALEY;
+    VectorScale( ent.axis[ 2 ], scale, ent.axis[ 2 ] ) * CG_OC_BUILDABLESCALEZ;
 
     ent.nonNormalizedAxes = qtrue;
   }

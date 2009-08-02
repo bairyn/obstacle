@@ -58,7 +58,7 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix bbox / stacked buildables / turret falling on client side
+// TODO: fix bbox / stacked buildables / turret falling on client side (fixed; confirm?)
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades (fixed; confirm?)
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
@@ -2617,6 +2617,11 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				break; \
 		} \
 	} while(0)
+
+	#define CG_OC_BUILDABLESCALE  ((BG_OC_OCMode()) ? (1.0f) : (1.0f))
+	#define CG_OC_BUILDABLESCALEX ((BG_OC_OCMode()) ? (1.2f) : (1.0f))
+	#define CG_OC_BUILDABLESCALEY ((BG_OC_OCMode()) ? (1.2f) : (1.0f))
+	#define CG_OC_BUILDABLESCALEZ ((BG_OC_OCMode()) ? (1.0f) : (1.0f))
 #endif /* ifdef CGAME */
 
 //<+===============================================+><+===============================================+>
