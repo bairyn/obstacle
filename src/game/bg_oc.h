@@ -58,11 +58,12 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix bbox
-// TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades
+// TODO: fix bbox / stacked buildables / turret falling on client side
+// TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades (fixed; confirm?)
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
 // TODO: medi heals multiple people in OC mode (fixed; confirm?)
+// TODO: add OC menu to ui for binds for toggle hide, and etc, and cg_drawTimer cvars etc
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -685,6 +686,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			return; \
 		} \
 	} while(0)
+
+	#define G_OC_RADIUSDAMAGE \
+	if(ent != attacker) \
+		continue; \
 
 	#define G_OC_CloseRangeWeaponFired(x) \
 	do \

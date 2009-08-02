@@ -1302,6 +1302,8 @@ qboolean G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
     if( ent == ignore )
       continue;
 
+	G_OC_RADIUSDAMAGE
+
     if( !ent->takedamage )
       continue;
 
