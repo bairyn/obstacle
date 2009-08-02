@@ -564,6 +564,8 @@ static void CG_PositionAndOrientateBuildable( const vec3_t angles, const vec3_t 
   CG_CapTrace( &tr, start, mins, maxs, end, skipNumber,
                CONTENTS_SOLID | CONTENTS_PLAYERCLIP );
 
+  CG_OC_PositionBuildable();
+
   if( tr.fraction == 1.0f )
   {
     //erm we missed completely - try again with a box trace

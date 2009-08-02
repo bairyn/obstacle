@@ -58,7 +58,6 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix bbox / stacked buildables / turret falling on client side
 // TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades (fixed; confirm?)
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
@@ -2574,6 +2573,33 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			CG_CenterPrint(va("^2XY: %d^7ups", (int) VectorLength(cg.snap->ps.velocity)), "XY:", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH); \
 			cg.snap->ps.velocity[2] = tmp; \
 		} \
+	} while(0)
+
+	#define CG_OC_STATICANGLE 0.3f
+	#define CG_OC_STATICLEN 15.0f
+
+	#define CG_OC_PositionBuildable() \
+	do \
+	{ \
+		if(!(BG_OC_OCMode())) \
+			break; \
+ \
+		/*if((BG_Buildable(buildable)->minNormal >= CG_OC_STATICANGLE) || (sqrt(DotProduct(angles, angles)) <= CG_OC_STATICLEN))*/ \
+		if(sqrt(DotProduct(angles, angles)) <= CG_OC_STATICLEN) \
+			VectorCopy(inOrigin, outOrigin); \
+ \
+		return; \
+	} while(0)
+
+	#define BG_OC_BuildablePositionMissed \
+	do \
+	{ \
+		if(!(BG_OC_OCMode())) \
+			break; \
+ \
+		VectorCopy(inOrigin, outOrigin); \
+ \
+		return; \
 	} while(0)
 
 	#define CG_OC_CVARS \
