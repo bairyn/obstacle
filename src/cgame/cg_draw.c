@@ -2574,7 +2574,7 @@ static void CG_ScanForCrosshairEntity( void )
   VectorMA( start, 131072, cg.refdef.viewaxis[ 0 ], end );
 
   CG_Trace( &trace, start, vec3_origin, vec3_origin, end,
-    cg.snap->ps.clientNum, CONTENTS_SOLID|BG_OC_CLIENTCONTENTS );
+    cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY|BG_OC_CLIENTCONTENTS );
 
   // if the player is in fog, don't show it
   content = trap_CM_PointContents( trace.endpos, 0 );
@@ -2597,7 +2597,7 @@ static void CG_ScanForCrosshairEntity( void )
   if( cg.snap->ps.persistant[ PERS_SPECSTATE ] == SPECTATOR_NOT )
   {
     //only display team names of those on the same team as this player
-    if( team != cg.snap->ps.stats[ STAT_TEAM ] )
+    if( team != cg.snap->ps.stats[ STAT_TEAM ] && !CG_OC_OCNameOtherTeams() )
       return;
   }
 

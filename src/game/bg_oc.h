@@ -2560,6 +2560,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define CG_OC_CanSetPlayerTimer() ((BG_OC_OCMode()) ? (1) : (0))
 
+	#define CG_OC_OCNameOtherTeams() ((BG_OC_OCmode()) ? (1) : (0))
+
 	#define CG_OC_Frame() \
 	do \
 	{ \
