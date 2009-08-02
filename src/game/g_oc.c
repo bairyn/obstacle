@@ -1319,6 +1319,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		ent->client->pers.aliveTime = 0;
 		ent->client->pers.lastAliveTime = trap_Milliseconds();
 		ent->client->pers.hasCheated = 0;
+		ent->client->pers.grenadeUsed = 0;
 		G_OC_PlayerSpawn(ent);
 	}
 	else
@@ -1340,6 +1341,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 //        memset(ent->client->pers.arms, 0, sizeof(gentity_t *) * (level.totalArmouries+1));
 //        memset(ent->client->pers.armsLastCheckpoint, 0, sizeof(gentity_t *) * (level.totalArmouries+1));
 		ent->client->pers.hasCheated = 0;
+		ent->client->pers.grenadeUsed = 0;
 		VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);
 	}
 }
@@ -2744,16 +2746,29 @@ int G_OC_CanUseBonus(gentity_t *ent)
 
 	if(ent->client->pers.hasCheated)
 	{
+		// silently fail
 		return 0;
 	}
 	if(G_admin_canEditOC(ent))
 	{
+		// silently fail
 		return 0;
 	}
 	if(BG_InventoryContainsUpgrade(UP_JETPACK, ent->client->ps.stats))
 	{
-		G_ClientCP(ent, G_OC_NOBONUSMESSAGE, NULL, CLIENT_SPECTATORS);
-		return 0;
+		G_ClientCP(ent, G_OC_NOBONUSJETPACKMESSAGE, NULL, CLIENT_SPECTATORS);
+	}
+	if(BG_InventoryContainsWeapon(WP_LUCIFER_CANNON, ent->client->ps.stats))
+	{
+		G_ClientCP(ent, G_OC_NOBONUSLCANNONMESSAGE, NULL, CLIENT_SPECTATORS);
+	}
+	if(BG_InventoryContainsWeapon(WP_FLAMER_CANNON, ent->client->ps.stats))
+	{
+		G_ClientCP(ent, G_OC_NOBONUSFLAMERMESSAGE, NULL, CLIENT_SPECTATORS);
+	}
+	if(ent->client->pers.grenadeUsed)
+	{
+		G_ClientCP(ent, G_OC_NOBONUSGRENADEMESSAGE, NULL, CLIENT_SPECTATORS);
 	}
 
 	return 1;

@@ -1302,8 +1302,6 @@ qboolean G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
     if( ent == ignore )
       continue;
 
-	G_OC_RADIUSDAMAGE
-
     if( !ent->takedamage )
       continue;
 
@@ -1326,6 +1324,8 @@ qboolean G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
 
     if( CanDamage( ent, origin ) )
     {
+      G_OC_RADIUSDAMAGE
+
       VectorSubtract( ent->r.currentOrigin, origin, dir );
       // push the center of mass higher than the origin so players
       // get knocked into the air more

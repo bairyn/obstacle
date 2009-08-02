@@ -58,11 +58,12 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: enable knockback for luci and flamer, but only to self.  Also disable bonuses with luci and flamer.  Also check grenades (fixed; confirm?)
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
-// TODO: medi heals multiple people in OC mode (fixed; confirm?)
 // TODO: add OC menu to ui for binds for toggle hide, and etc, and cg_drawTimer cvars etc
+// TODO: in UI, add layout options (aliens, etc)
+// TODO: add sectorb7 granger OC
+// TODO: add flag so that bonuses can be used on the first armoury.  This will open the opportunity for a two-armoury luci-jump course
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -405,7 +406,8 @@ extern int oc_gameMode;
 	/* frame checking to ease CPU usage */ \
 	int       nextWeaponCheckTime; \
 	int       nextOverrideCheckTime; \
-	int       buildableOverride;
+	int       buildableOverride; \
+	int       grenadeUsed;
 
 	#define G_OC_FRAMETIMEWEAPON 1000
 	#define G_OC_FRAMETIMEOVERRIDE 1500
@@ -687,8 +689,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	} while(0)
 
 	#define G_OC_RADIUSDAMAGE \
-	if(ent != attacker) \
-		continue; \
+	if((BG_OC_OCMode())) \
+	{ \
+		if(ent != attacker) \
+			continue; \
+ \
+		if(mod == MOD_GRENADE && ent->client) \
+			ent->client->pers.grenadeUsed = 1; \
+	}
 
 	#define G_OC_CloseRangeWeaponFired(x) \
 	do \
@@ -1450,7 +1458,11 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	qboolean verifyUnpowered;
 
 	#define G_OC_RESTARTOC_TIME 3000  // time after a restartoc before a checkpoint can be used
-	#define G_OC_NOBONUSMESSAGE "Cannot collect bonuses using\na jetpack"
+	#define G_OC_NOBONUSMESSAGE "Cannot use bonuses while using\na jetpack, lucifer cannon,\nflamer, or\ngrenade\n(did you use a grenade on yourself?)"
+	#define G_OC_NOBONUSJETPACKMESSAGE "Cannot use bonuses while using\na jetpack"
+	#define G_OC_NOBONUSLCANNONMESSAGE "Cannot use bonuses while holding\na lucifer cannon"
+	#define G_OC_NOBONUSFLAMERMESSAGE  "Cannot use bonuses while holding\na flamer"
+	#define G_OC_NOBONUSGRENADEMESSAGE "Cannot use bonuses after using\na grenade on yourself\n(restart the course to regain the ability to use bonuses)"
 	#define G_OC_EVOLVEBLOCK_TIME 2000
 
 	#define G_OC_HumanNameForWeapon(x) (BG_Weapon((x)) ? (BG_Weapon((x))->humanName) : ("NULL"))
