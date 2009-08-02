@@ -1755,7 +1755,7 @@ void BG_InitClassConfigs( void )
     cc = BG_ClassConfig( i );
 
     BG_ParseClassFile( va( "configs%s/classes/%s.cfg",
-                           BG_OC_OCMode() "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
+                           BG_OC_OCMode() ? "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
   }
 }
 
