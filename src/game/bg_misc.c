@@ -902,7 +902,7 @@ void BG_InitBuildableConfigs( void )
     Com_Memset( bc, 0, sizeof( buildableConfig_t ) );
 
     BG_ParseBuildableFile( va( "configs%s/buildables/%s.cfg",
-                               BG_OC_OCMode() && BG_OC_OCMisc() ? "/oc" : "", BG_Buildable( i )->name ), bc, BG_Buildable( i )->name );
+                               BG_OC_OCMode() ? "/oc" : "", BG_Buildable( i )->name ), bc, BG_Buildable( i )->name );
   }
 }
 
@@ -1755,7 +1755,7 @@ void BG_InitClassConfigs( void )
     cc = BG_ClassConfig( i );
 
     BG_ParseClassFile( va( "configs%s/classes/%s.cfg",
-                           BG_OC_OCMode() && BG_OC_OCMisc() ? "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
+                           BG_OC_OCMode() "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
   }
 }
 
@@ -2584,7 +2584,7 @@ void BG_InitWeaponConfigs( void )
 {
   int  i;
 
-  if( BG_OC_OCMode() && BG_OC_OCMisc() )
+  if( BG_OC_OCMode() )
   {
     for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
     {
