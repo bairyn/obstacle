@@ -620,13 +620,9 @@ static void CG_DrawPlayerAmmoValue( rectDef_t *rect, vec4_t color )
 
     case WP_ABUILD:
     case WP_ABUILD2:
-      // BP remaining
-      value = cgs.alienBuildPoints;
-      break;
-
     case WP_HBUILD:
       // BP remaining
-      value = cgs.humanBuildPoints;
+      value = cg.snap->ps.persistant[ PERS_BP ];
       break;
 
     default:
@@ -2449,7 +2445,7 @@ void CG_DrawWeaponIcon( rectDef_t *rect, vec4_t color )
 
   cent = &cg_entities[ cg.snap->ps.clientNum ];
   ps = &cg.snap->ps;
-  weapon = BG_GetPlayerWeapon( ps );
+  weapon = ps->weapon;
 
   // don't display if dead
   if( cg.predictedPlayerState.stats[ STAT_HEALTH ] <= 0 )
