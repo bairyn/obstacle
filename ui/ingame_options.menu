@@ -1076,7 +1076,7 @@
         play "sound/misc/menu1.wav";
         hide optionsGrp;
         show controls;
-        show upgrades
+        show oc
       }
     }
 
