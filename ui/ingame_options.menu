@@ -1056,6 +1056,228 @@
       }
     }
 
+//////// OC
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_BIND
+      text "Restart Obstacle Course:"
+      cvar "newRestartOC"
+      rect SCONTENT_X (SCONTENT_Y+(0*ELEM_H)) SCONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_BIND
+      text "Teleport to Checkpoint:"
+      cvar "teleportToCheckpoint"
+      rect SCONTENT_X (SCONTENT_Y+(1*ELEM_H)) SCONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_BIND
+      text "Hide / Unhide:"
+      cvar "hide"
+      rect SCONTENT_X (SCONTENT_Y+(2*ELEM_H)) SCONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name upgrades
+      group optionsGrp
+      type ITEM_TYPE_BIND
+      text "Buy Ammo (and win):"
+      cvar "buy ammo"
+      rect SCONTENT_X (SCONTENT_Y+(3*ELEM_H)) SCONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_BIND
+      text "Show Stats of Current Obstacle Course:"
+      cvar "stats"
+      rect SCONTENT_X (SCONTENT_Y+(4*ELEM_H)) SCONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_BIND
+      text "Show Current Player Stats:"
+      cvar "myStats"
+      rect SCONTENT_X (SCONTENT_Y+(5*ELEM_H)) SCONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_BIND
+      text "Use Structure/Evolve (and Teleport):"
+      cvar "+button7"
+      rect SCONTENT_X (SCONTENT_Y+(6*ELEM_H)) SCONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_YESNO
+      text "Show Player Timer:"
+      cvar "cg_drawPlayerTimer"
+      rect CONTENT_X (CONTENT_Y+(7*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_YESNO
+      text "Show Speedometer:"
+      cvar "cg_drawSpeedometer"
+      rect CONTENT_X (CONTENT_Y+(8*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_YESNO
+      text "Print Timer in Center of Screen:"
+      cvar "cg_printTimer"
+      rect CONTENT_X (CONTENT_Y+(9*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_CENTEr
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name oc
+      group optionsGrp
+      type ITEM_TYPE_YESNO
+      text "Print Speedometer in Center of Screen:"
+      cvar "cg_printSpeedometer"
+      rect CONTENT_X (CONTENT_Y+(10*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx SCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
 //////// MISC
 
     itemDef
