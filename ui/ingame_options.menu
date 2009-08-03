@@ -1060,6 +1060,28 @@
 
     itemDef
     {
+      name controls
+      text "Upgrades"
+      group optionsGrp
+      style WINDOW_STYLE_EMPTY
+      rect 0 ((2*BORDER)+TOPBUTT_H+(3*SIDEBUTT_H)) SIDEBUTT_W SIDEBUTT_H
+      type ITEM_TYPE_BUTTON
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+        hide optionsGrp;
+        show controls;
+        show upgrades
+      }
+    }
+
+    itemDef
+    {
       name oc
       group optionsGrp
       type ITEM_TYPE_BIND
@@ -1286,7 +1308,7 @@
       text "Misc"
       group optionsGrp
       style WINDOW_STYLE_EMPTY
-      rect 0 ((2*BORDER)+TOPBUTT_H+(3*SIDEBUTT_H)) SIDEBUTT_W SIDEBUTT_H
+      rect 0 ((2*BORDER)+TOPBUTT_H+(4*SIDEBUTT_H)) SIDEBUTT_W SIDEBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
