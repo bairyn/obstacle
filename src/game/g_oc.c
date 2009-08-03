@@ -2762,7 +2762,7 @@ int G_OC_CanUseBonus(gentity_t *ent)
 	{
 		G_ClientCP(ent, G_OC_NOBONUSLCANNONMESSAGE, NULL, CLIENT_SPECTATORS);
 	}
-	if(BG_InventoryContainsWeapon(WP_FLAMER_CANNON, ent->client->ps.stats))
+	if(BG_InventoryContainsWeapon(WP_FLAMER, ent->client->ps.stats))
 	{
 		G_ClientCP(ent, G_OC_NOBONUSFLAMERMESSAGE, NULL, CLIENT_SPECTATORS);
 	}
