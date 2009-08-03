@@ -45,7 +45,6 @@ typedef struct
 gentity_t   g_entities[ MAX_GENTITIES ];
 gclient_t   g_clients[ MAX_CLIENTS ];
 
-vmCvar_t  g_listEntity;
 vmCvar_t  g_fraglimit;
 vmCvar_t  g_timelimit;
 vmCvar_t  g_suddenDeathTime;
@@ -2733,6 +2732,7 @@ void G_RunFrame( int levelTime )
   CheckTeamVote( TEAM_HUMANS );
   CheckTeamVote( TEAM_ALIENS );
 
+<<<<<<< HEAD
   if( g_listEntity.integer )
   {
     for( i = 0; i < MAX_GENTITIES; i++ )
@@ -2742,7 +2742,9 @@ void G_RunFrame( int levelTime )
   }
 
   level.frameMsec = trap_Milliseconds();
+=======
   // for tracking changes
   CheckCvars( );
+>>>>>>> tremulous
 }
 
