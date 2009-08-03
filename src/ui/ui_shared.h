@@ -283,15 +283,7 @@ typedef struct itemDef_s
   colorRangeDef_t colorRanges[MAX_COLOR_RANGES];
   float special;                 // used for feeder id's etc.. diff per type
   int cursorPos;                 // cursor position in characters
-  union
-  {
-    void           *data;
-    listBoxDef_t   *list;
-    editFieldDef_t *edit;
-    multiDef_t     *multi;
-    comboBoxDef_t  *combo;
-    modelDef_t     *model;
-  } typeData;                    // type specific data pointers
+  void *typeData;                 // type specific data ptr's
 }
 itemDef_t;
 

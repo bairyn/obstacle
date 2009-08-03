@@ -1041,12 +1041,7 @@ void ClientUserinfoChanged( int clientNum )
 
   // check for malformed or illegal info strings
   if( !Info_Validate(userinfo) )
-  {
-    trap_SendServerCommand( ent - g_entities,
-        "disconnect \"illegal or malformed userinfo\n\"" );
-    trap_DropClient( ent - g_entities, 
-        "dropped: illegal or malformed userinfo");
-  }
+    strcpy( userinfo, "\\name\\badinfo" );
 
   // stickyspec toggle
   s = Info_ValueForKey( userinfo, "cg_stickySpec" );  
@@ -1183,14 +1178,6 @@ void ClientUserinfoChanged( int clientNum )
   else
     client->pers.flySpeed = BG_Class( PCL_NONE )->speed;
 
-  // disable blueprint errors
-  s = Info_ValueForKey( userinfo, "cg_disableBlueprintErrors" );
-
-  if( atoi( s ) )
-    client->pers.disableBlueprintErrors = qtrue;
-  else
-    client->pers.disableBlueprintErrors = qfalse;
-
   // teamInfo
   s = Info_ValueForKey( userinfo, "teamoverlay" );
 
@@ -1287,12 +1274,8 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   for( i = 0; i < sizeof( client->pers.guid ) - 1 &&
               isxdigit( client->pers.guid[ i ] ); i++ );
   if( i < sizeof( client->pers.guid ) - 1 )
-  {
-    //return "Invalid GUID";
-    Com_Memset( &client->pers.guid, 'X', 32 );
-    client->pers.guid[ 32 ] = '\0';
-  }
-  else for( i = 0; i < level.maxclients; i++ )
+    return "Invalid GUID";
+  for( i = 0; i < level.maxclients; i++ )
   {
     if( level.clients[ i ].pers.connected == CON_DISCONNECTED )
       continue;
@@ -1452,12 +1435,6 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
     client->sess.spectatorState = SPECTATOR_FREE;
   else if( client->pers.classSelection == PCL_NONE )
     client->sess.spectatorState = SPECTATOR_LOCKED;
-
-  //if client is dead and following teammate, stop following before spawning
-  if(ent->client->sess.spectatorState == SPECTATOR_FOLLOW)
-  {
-    G_StopFollowing( ent );
-  }
 
   if( origin != NULL )
     VectorCopy( origin, spawn_origin );
@@ -1660,8 +1637,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
     trap_LinkEntity( ent );
 
     // force the base weapon up
-    if( client->pers.teamSelection == TEAM_HUMANS )
-      G_ForceWeaponChange( ent, weapon );
+    client->ps.weapon = WP_NONE;
     client->ps.weaponstate = WEAPON_READY;
   }
 

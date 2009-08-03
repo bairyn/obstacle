@@ -1424,7 +1424,7 @@ void ClientThink_real( gentity_t *ent )
 
         if( modifier < BOOSTER_REGEN_MOD && boost->s.eType == ET_BUILDABLE &&
             boost->s.modelindex == BA_A_BOOSTER && boost->spawned &&
-            boost->health > 0 && boost->powered )
+            boost->health > 0 && level.overmindPresent )
         {
           modifier = BOOSTER_REGEN_MOD;
           continue;
@@ -1509,7 +1509,7 @@ void ClientThink_real( gentity_t *ent )
     }
 
     //switch jetpack off if no reactor
-    if( !G_Reactor( ) && !G_OC_NeverUnpowerJetpack() )
+    if( !level.reactorPresent && !G_OC_NeverUnpowerJetpack() )
       BG_DeactivateUpgrade( UP_JETPACK, client->ps.stats );
   }
 
@@ -1741,12 +1741,8 @@ void ClientThink_real( gentity_t *ent )
     }
   }
 
-  client->ps.persistant[ PERS_BP ] = G_GetBuildPoints( client->ps.origin, client->ps.stats[ STAT_TEAM ], BG_Class( client->ps.stats[ STAT_CLASS ] )->buildDist );
-  if( client->ps.persistant[ PERS_BP ] < 0 )
-    client->ps.persistant[ PERS_BP ] = 0;
-
   // Give clients some credit periodically
-  if( ent->client->lastKillTime + g_freeKillPeriod.integer < level.time && G_OC_NeedFreeCash() )
+  if( ent->client->lastKillTime + FREEKILL_PERIOD < level.time && G_OC_NeedFreeCash() )
   {
     if( G_TimeTilSuddenDeath( ) <= 0 && !G_OC_NoSuddenDeath() )
     {

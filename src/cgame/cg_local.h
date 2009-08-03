@@ -1411,6 +1411,12 @@ typedef struct
 
   qboolean      newHud;
 
+  int           alienBuildPoints;
+  int           alienBuildPointsTotal;
+  int           humanBuildPoints;
+  int           humanBuildPointsTotal;
+  int           humanBuildPointsPowered;
+
   int           alienStage;
   int           humanStage;
   int           alienCredits;
@@ -1550,7 +1556,6 @@ extern  vmCvar_t    cg_drawSurfNormal;
 extern  vmCvar_t    cg_drawBBOX;
 extern  vmCvar_t    cg_wwSmoothTime;
 extern  vmCvar_t    cg_flySpeed;
-extern  vmCvar_t    cg_disableBlueprintErrors;
 extern  vmCvar_t    cg_depthSortParticles;
 extern  vmCvar_t    cg_bounceParticles;
 extern  vmCvar_t    cg_consoleLatency;

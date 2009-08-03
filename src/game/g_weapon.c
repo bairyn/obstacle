@@ -38,6 +38,9 @@ void G_ForceWeaponChange( gentity_t *ent, weapon_t weapon )
 {
   playerState_t *ps = &ent->client->ps;
 
+  if( !ent )
+    return;
+
   // stop a reload in progress
   if( ps->weaponstate == WEAPON_RELOADING )
   {
@@ -823,7 +826,7 @@ void CheckCkitRepair( gentity_t* ent )
       }
       else
         G_AddEvent( ent, EV_BUILD_REPAIR, 0 );
-      ent->client->ps.weaponTime += BG_Weapon( ent->client->ps.weapon )->repeatRate1;
+      ent->client->ps.weaponTime += BG_Weapon( ent->client->ps.weapon )->repeatRate2;
     }
   }
 }
@@ -1235,6 +1238,7 @@ void G_UpdateZaps( int msec )
 {
   int   i, j;
   zap_t *zap;
+  int   damage;
 
   for( i = 0; i < MAX_ZAPS; i++ )
   {
@@ -1263,7 +1267,7 @@ void G_UpdateZaps( int msec )
       /*
       if( zap->numTargets )
       {
-        int damage = ceil( ( (float)msec / LEVEL2_AREAZAP_TIME ) *
+        damage = ceil( ( (float)msec / LEVEL2_AREAZAP_TIME ) *
             LEVEL2_AREAZAP_DMG );
         // don't let a high msec value inflate the total damage
         if( damage + zap->damageUsed > LEVEL2_AREAZAP_DMG )

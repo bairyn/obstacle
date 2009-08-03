@@ -160,6 +160,12 @@ Called on load to set the initial values from configure strings
 */
 void CG_SetConfigValues( void )
 {
+  sscanf( CG_ConfigString( CS_BUILDPOINTS ),
+          "%d %d %d %d", &cgs.alienBuildPoints,
+                            &cgs.alienBuildPointsTotal,
+                            &cgs.humanBuildPoints,
+                            &cgs.humanBuildPointsTotal );
+
   sscanf( CG_ConfigString( CS_STAGES ), "%d %d %d %d %d %d", &cgs.alienStage, &cgs.humanStage,
       &cgs.alienCredits, &cgs.humanCredits, &cgs.alienNextStageThreshold, &cgs.humanNextStageThreshold );
 
@@ -274,6 +280,11 @@ static void CG_ConfigStringModified( void )
     CG_ParseServerinfo( );
   else if( num == CS_WARMUP )
     CG_ParseWarmup( );
+  else if( num == CS_BUILDPOINTS )
+    sscanf( str, "%d %d %d %d", &cgs.alienBuildPoints,
+                                   &cgs.alienBuildPointsTotal,
+                                   &cgs.humanBuildPoints,
+                                   &cgs.humanBuildPointsTotal );
   else if( num == CS_STAGES )
   {
     stage_t oldAlienStage = cgs.alienStage;
@@ -781,7 +792,7 @@ void CG_Menu( int menu, int arg )
     case MN_A_TOOCLOSE:
       longMsg   = "This location is too close to the enemy to evolve. Move away "
                   "from the enemy's presence and try again.";
-      shortMsg  = "This location is too close to the enemy to evolve";
+      shortMsg  = "This location is too close to the enemy to evolve\n";
       type      = DT_ARMOURYEVOLVE;
       break;
 

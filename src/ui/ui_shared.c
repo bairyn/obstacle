@@ -1780,8 +1780,9 @@ void Script_Reset( itemDef_t *item, char **args )
     {
       if( resetItem->type == ITEM_TYPE_LISTBOX )
       {
+        listBoxDef_t * listPtr = ( listBoxDef_t* )resetItem->typeData;
         resetItem->cursorPos = 0;
-        resetItem->typeData.list->startPos = 0;
+        listPtr->startPos = 0;
         DC->feederSelection( resetItem->special, 0 );
       }
     }
@@ -2674,7 +2675,7 @@ qboolean Item_SetFocus( itemDef_t *item, float x, float y )
 
 int Item_ListBox_MaxScroll( itemDef_t *item )
 {
-  listBoxDef_t *listPtr = item->typeData.list;
+  listBoxDef_t *listPtr = ( listBoxDef_t* )item->typeData;
   int count = DC->feederCount( item->special );
   int max;
 
@@ -2692,7 +2693,7 @@ int Item_ListBox_MaxScroll( itemDef_t *item )
 int Item_ListBox_ThumbPosition( itemDef_t *item )
 {
   float max, pos, size;
-  int startPos = item->typeData.list->startPos;
+  listBoxDef_t *listPtr = ( listBoxDef_t* )item->typeData;
 
   max = Item_ListBox_MaxScroll( item );
 
@@ -2705,7 +2706,7 @@ int Item_ListBox_ThumbPosition( itemDef_t *item )
     else
       pos = 0;
 
-    pos *= startPos;
+    pos *= listPtr->startPos;
     return item->window.rect.x + 1 + SCROLLBAR_WIDTH + pos;
   }
   else
@@ -2717,7 +2718,7 @@ int Item_ListBox_ThumbPosition( itemDef_t *item )
     else
       pos = 0;
 
-    pos *= startPos;
+    pos *= listPtr->startPos;
     return item->window.rect.y + 1 + SCROLLBAR_HEIGHT + pos;
   }
 }
@@ -2756,7 +2757,7 @@ int Item_ListBox_ThumbDrawPosition( itemDef_t *item )
 float Item_Slider_ThumbPosition( itemDef_t *item )
 {
   float value, range, x;
-  editFieldDef_t *editDef = item->typeData.edit;
+  editFieldDef_t *editDef = item->typeData;
 
   if( item->text )
     x = item->textRect.x + item->textRect.w + ITEM_VALUE_OFFSET;
@@ -2810,10 +2811,12 @@ int Item_Slider_OverSlider( itemDef_t *item, float x, float y )
 int Item_ListBox_OverLB( itemDef_t *item, float x, float y )
 {
   rectDef_t r;
+  listBoxDef_t *listPtr;
   int thumbstart;
   int count;
 
   count = DC->feederCount( item->special );
+  listPtr = ( listBoxDef_t* )item->typeData;
 
   if( item->window.flags & WINDOW_HORIZONTAL )
   {
@@ -2893,7 +2896,7 @@ int Item_ListBox_OverLB( itemDef_t *item, float x, float y )
 void Item_ListBox_MouseEnter( itemDef_t *item, float x, float y )
 {
   rectDef_t r;
-  listBoxDef_t *listPtr = item->typeData.list;
+  listBoxDef_t *listPtr = ( listBoxDef_t* )item->typeData;
 
   item->window.flags &= ~( WINDOW_LB_LEFTARROW | WINDOW_LB_RIGHTARROW | WINDOW_LB_THUMB |
                            WINDOW_LB_PGUP | WINDOW_LB_PGDN );
@@ -3047,7 +3050,7 @@ qboolean Item_OwnerDraw_HandleKey( itemDef_t *item, int key )
 
 qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboolean force )
 {
-  listBoxDef_t *listPtr = item->typeData.list;
+  listBoxDef_t *listPtr = ( listBoxDef_t* )item->typeData;
   int count = DC->feederCount( item->special );
   int max, viewmax;
 
@@ -3366,10 +3369,12 @@ qboolean Item_YesNo_HandleKey( itemDef_t *item, int key )
 
 int Item_Multi_CountSettings( itemDef_t *item )
 {
-  if( item->typeData.multi == NULL )
+  multiDef_t *multiPtr = ( multiDef_t* )item->typeData;
+
+  if( multiPtr == NULL )
     return 0;
 
-  return item->typeData.multi->count;
+  return multiPtr->count;
 }
 
 int Item_Multi_FindCvarByValue( itemDef_t *item )
@@ -3377,7 +3382,7 @@ int Item_Multi_FindCvarByValue( itemDef_t *item )
   char buff[1024];
   float value = 0;
   int i;
-  multiDef_t *multiPtr = item->typeData.multi;
+  multiDef_t *multiPtr = ( multiDef_t* )item->typeData;
 
   if( multiPtr )
   {
@@ -3409,7 +3414,7 @@ const char *Item_Multi_Setting( itemDef_t *item )
   char buff[1024];
   float value = 0;
   int i;
-  multiDef_t *multiPtr = item->typeData.multi;
+  multiDef_t *multiPtr = ( multiDef_t* )item->typeData;
 
   if( multiPtr )
   {
@@ -3438,7 +3443,7 @@ const char *Item_Multi_Setting( itemDef_t *item )
 
 qboolean Item_Combobox_HandleKey( itemDef_t *item, int key )
 {
-  comboBoxDef_t *comboPtr = item->typeData.combo;
+  comboBoxDef_t *comboPtr = (comboBoxDef_t *)item->typeData;
   qboolean mouseOver = Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory );
   int count = DC->feederCount( item->special );
 
@@ -3474,11 +3479,12 @@ qboolean Item_Combobox_HandleKey( itemDef_t *item, int key )
 
 qboolean Item_Multi_HandleKey( itemDef_t *item, int key )
 {
+  multiDef_t *multiPtr = ( multiDef_t* )item->typeData;
   qboolean mouseOver = Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory );
   int max = Item_Multi_CountSettings( item );
   qboolean changed = qfalse;
 
-  if( item->typeData.multi )
+  if( multiPtr )
   {
     if( item->window.flags & WINDOW_HASFOCUS && item->cvar && max > 0 )
     {
@@ -3499,11 +3505,11 @@ qboolean Item_Multi_HandleKey( itemDef_t *item, int key )
 
       if( changed )
       {
-        if( item->typeData.multi->strDef )
-          DC->setCVar( item->cvar, item->typeData.multi->cvarStr[current] );
+        if( multiPtr->strDef )
+          DC->setCVar( item->cvar, multiPtr->cvarStr[current] );
         else
         {
-          float value = item->typeData.multi->cvarValue[current];
+          float value = multiPtr->cvarValue[current];
 
           if( ( ( float )( ( int ) value ) ) == value )
             DC->setCVar( item->cvar, va( "%i", ( int ) value ) );
@@ -3524,7 +3530,7 @@ qboolean Item_Multi_HandleKey( itemDef_t *item, int key )
 
 static void Item_TextField_CalcPaintOffset( itemDef_t *item, char *buff )
 {
-  editFieldDef_t  *editPtr = item->typeData.edit;
+  editFieldDef_t  *editPtr = ( editFieldDef_t* )item->typeData;
 
   if( item->cursorPos < editPtr->paintOffset )
     editPtr->paintOffset = item->cursorPos;
@@ -3560,7 +3566,7 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
   char buff[1024];
   int len;
   itemDef_t *newItem = NULL;
-  editFieldDef_t *editPtr = item->typeData.edit;
+  editFieldDef_t *editPtr = ( editFieldDef_t* )item->typeData;
   qboolean releaseFocus = qtrue;
 
   if( item->cvar )
@@ -3749,6 +3755,8 @@ static void Scroll_ListBox_ThumbFunc( void *p )
   rectDef_t r;
   int pos, max;
 
+  listBoxDef_t *listPtr = ( listBoxDef_t* )si->item->typeData;
+
   if( si->item->window.flags & WINDOW_HORIZONTAL )
   {
     if( DC->cursorx == si->xStart )
@@ -3767,7 +3775,7 @@ static void Scroll_ListBox_ThumbFunc( void *p )
     else if( pos > max )
       pos = max;
 
-    si->item->typeData.list->startPos = pos;
+    listPtr->startPos = pos;
     si->xStart = DC->cursorx;
   }
   else if( DC->cursory != si->yStart )
@@ -3785,7 +3793,7 @@ static void Scroll_ListBox_ThumbFunc( void *p )
     else if( pos > max )
       pos = max;
 
-    si->item->typeData.list->startPos = pos;
+    listPtr->startPos = pos;
     si->yStart = DC->cursory;
   }
 
@@ -3811,6 +3819,7 @@ static void Scroll_Slider_ThumbFunc( void *p )
 {
   float x, value, cursorx;
   scrollInfo_t *si = ( scrollInfo_t* )p;
+  editFieldDef_t *editDef = si->item->typeData;
 
   if( si->item->text )
     x = si->item->textRect.x + si->item->textRect.w + ITEM_VALUE_OFFSET;
@@ -3826,8 +3835,8 @@ static void Scroll_Slider_ThumbFunc( void *p )
 
   value = cursorx - x;
   value /= SLIDER_WIDTH;
-  value *= si->item->typeData.edit->maxVal - si->item->typeData.edit->minVal;
-  value += si->item->typeData.edit->minVal;
+  value *= ( editDef->maxVal - editDef->minVal );
+  value += editDef->minVal;
   DC->setCVar( si->item->cvar, va( "%f", value ) );
 }
 
@@ -3897,34 +3906,42 @@ void Item_StopCapture( itemDef_t *item )
 
 qboolean Item_Slider_HandleKey( itemDef_t *item, int key, qboolean down )
 {
-  float x, value, width;
+  float x, value, width, work;
 
   if( item->window.flags & WINDOW_HASFOCUS && item->cvar &&
       Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) )
   {
-    if( item->typeData.edit && ( key == K_ENTER ||
-        key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3 ) )
+    if( key == K_MOUSE1 || key == K_ENTER || key == K_MOUSE2 || key == K_MOUSE3 )
     {
-      rectDef_t testRect;
-      width = SLIDER_WIDTH;
+      editFieldDef_t *editDef = item->typeData;
 
-      if( item->text )
-        x = item->textRect.x + item->textRect.w + ITEM_VALUE_OFFSET;
-      else
-        x = item->window.rect.x;
-
-      testRect = item->window.rect;
-      value = ( float )SLIDER_THUMB_WIDTH / 2;
-      testRect.x = x - value;
-      testRect.w = SLIDER_WIDTH + value;
-
-      if( Rect_ContainsPoint( &testRect, DC->cursorx, DC->cursory ) )
+      if( editDef )
       {
-        value = ( float )( DC->cursorx - x ) / width;
-        value *= ( item->typeData.edit->maxVal - item->typeData.edit->minVal );
-        value += item->typeData.edit->minVal;
-        DC->setCVar( item->cvar, va( "%f", value ) );
-        return qtrue;
+        rectDef_t testRect;
+        width = SLIDER_WIDTH;
+
+        if( item->text )
+          x = item->textRect.x + item->textRect.w + ITEM_VALUE_OFFSET;
+        else
+          x = item->window.rect.x;
+
+        testRect = item->window.rect;
+        testRect.x = x;
+        value = ( float )SLIDER_THUMB_WIDTH / 2;
+        testRect.x -= value;
+        testRect.w = ( SLIDER_WIDTH + ( float )SLIDER_THUMB_WIDTH / 2 );
+
+        if( Rect_ContainsPoint( &testRect, DC->cursorx, DC->cursory ) )
+        {
+          work = DC->cursorx - x;
+          value = work / width;
+          value *= ( editDef->maxVal - editDef->minVal );
+          // vm fuckage
+          // value = (((float)(DC->cursorx - x)/ SLIDER_WIDTH) * (editDef->maxVal - editDef->minVal));
+          value += editDef->minVal;
+          DC->setCVar( item->cvar, va( "%f", value ) );
+          return qtrue;
+        }
       }
     }
   }
@@ -4149,14 +4166,16 @@ void  Menus_Activate( menuDef_t *menu )
     {
       if( menu->items[ i ]->type == ITEM_TYPE_LISTBOX )
       {
+        listBoxDef_t *listPtr = ( listBoxDef_t* )menu->items[ i ]->typeData;
         menu->items[ i ]->cursorPos = 0;
-        menu->items[ i ]->typeData.list->startPos = 0;
+        listPtr->startPos = 0;
         DC->feederSelection( menu->items[ i ]->special, 0 );
       }
       else if( menu->items[ i ]->type == ITEM_TYPE_COMBO )
       {
-        menu->items[ i ]->typeData.combo->cursorPos =
-          DC->feederInitialise( menu->items[ i ]->special );
+        comboBoxDef_t *comboPtr = (comboBoxDef_t *)menu->items[ i ]->typeData;
+
+        comboPtr->cursorPos = DC->feederInitialise( menu->items[ i ]->special );
       }
 
     }
@@ -4447,15 +4466,6 @@ void Rect_ToWindowCoords( rectDef_t *rect, windowDef_t *window )
 void Item_SetTextExtents( itemDef_t *item, int *width, int *height, const char *text )
 {
   const char *textPtr = ( text ) ? text : item->text;
-  qboolean cvarContent;
-
-  // it's hard to make a policy on what should be aligned statically and what
-  // should be aligned dynamically; there are reasonable cases for both. If
-  // it continues to be a problem then there should probably be an item keyword
-  // for it; but for the moment only adjusting the alignment of ITEM_TYPE_TEXT
-  // seems to suffice.
-  cvarContent = ( item->cvar && item->textalignment != ALIGN_LEFT &&
-                  item->type == ITEM_TYPE_TEXT );
 
   if( textPtr == NULL )
     return;
@@ -4465,15 +4475,15 @@ void Item_SetTextExtents( itemDef_t *item, int *width, int *height, const char *
 
   // as long as the item isn't dynamic content (ownerdraw or cvar), this
   // keeps us from computing the widths and heights more than once
-  if( *width == 0 || cvarContent || ( item->type == ITEM_TYPE_OWNERDRAW &&
+  if( *width == 0 || item->cvar || ( item->type == ITEM_TYPE_OWNERDRAW &&
       item->textalignment != ALIGN_LEFT ) )
   {
     int originalWidth;
 
-    if( cvarContent )
+    if( item->cvar && item->textalignment != ALIGN_LEFT )
     {
-      char buff[ MAX_CVAR_VALUE_STRING ];
-      DC->getCVarString( item->cvar, buff, sizeof( buff ) );
+      char buff[256];
+      DC->getCVarString( item->cvar, buff, 256 );
       originalWidth = UI_Text_Width( item->text, item->textscale, 0 ) +
                       UI_Text_Width( buff, item->textscale, 0 );
     }
@@ -4969,7 +4979,7 @@ void Item_TextField_Paint( itemDef_t *item )
   vec4_t          newColor;
   int             offset = ( item->text && *item->text ) ? ITEM_VALUE_OFFSET : 0;
   menuDef_t       *parent = ( menuDef_t* )item->parent;
-  editFieldDef_t  *editPtr = item->typeData.edit;
+  editFieldDef_t  *editPtr = ( editFieldDef_t* )item->typeData;
   char            cursor = DC->getOverstrikeMode() ? '|' : '_';
   qboolean        editing = ( item->window.flags & WINDOW_HASFOCUS && g_editingField );
   const int       cursorWidth = editing ? EDIT_CURSOR_WIDTH : 0;
@@ -5079,15 +5089,15 @@ void Item_Combobox_Paint( itemDef_t *item )
   vec4_t newColor;
   const char *text = "";
   menuDef_t *parent = (menuDef_t *)item->parent;
+  comboBoxDef_t *comboPtr = (comboBoxDef_t *)item->typeData;
 
   if( item->window.flags & WINDOW_HASFOCUS )
     memcpy( newColor, &parent->focusColor, sizeof( vec4_t ) );
   else
     memcpy( &newColor, &item->window.foreColor, sizeof( vec4_t ) );
 
-  if( item->typeData.combo )
-    text = DC->feederItemText( item->special, item->typeData.combo->cursorPos,
-                               0, NULL );
+  if( comboPtr )
+    text = DC->feederItemText( item->special, comboPtr->cursorPos, 0, NULL );
 
   if( item->text )
   {
@@ -5371,9 +5381,10 @@ void Item_Bind_Paint( itemDef_t *item )
   float value;
   int maxChars = 0;
   menuDef_t *parent = ( menuDef_t* )item->parent;
+  editFieldDef_t *editPtr = ( editFieldDef_t* )item->typeData;
 
-  if( item->typeData.edit )
-    maxChars = item->typeData.edit->maxPaintChars;
+  if( editPtr )
+    maxChars = editPtr->maxPaintChars;
 
   value = ( item->cvar ) ? DC->getCVarValue( item->cvar ) : 0;
 
@@ -5540,7 +5551,7 @@ void Item_Model_Paint( itemDef_t *item )
   refEntity_t   ent;
   vec3_t      mins, maxs, origin;
   vec3_t      angles;
-  modelDef_t *modelPtr = item->typeData.model;
+  modelDef_t *modelPtr = ( modelDef_t* )item->typeData;
 
   if( modelPtr == NULL )
     return;
@@ -5640,7 +5651,7 @@ void Item_ListBox_Paint( itemDef_t *item )
   int i, count;
   qhandle_t image;
   qhandle_t optionalImage;
-  listBoxDef_t *listPtr = item->typeData.list;
+  listBoxDef_t *listPtr = ( listBoxDef_t* )item->typeData;
   menuDef_t *menu = ( menuDef_t * )item->parent;
   float one, two;
 
@@ -6319,8 +6330,9 @@ void Menu_SetFeederSelection( menuDef_t *menu, int feeder, int index, const char
       {
         if( index == 0 )
         {
-          menu->items[ i ]->typeData.list->cursorPos = 0;
-          menu->items[ i ]->typeData.list->startPos = 0;
+          listBoxDef_t *listPtr = ( listBoxDef_t* )menu->items[i]->typeData;
+          listPtr->cursorPos = 0;
+          listPtr->startPos = 0;
         }
 
         menu->items[i]->cursorPos = index;
@@ -6505,50 +6517,43 @@ void Menu_Paint( menuDef_t *menu, qboolean forcePaint )
 /*
 ===============
 Item_ValidateTypeData
-
-If the typeData pointer is null, allocate it a memory block appropriate to the
-item type and memset it to 0
 ===============
 */
 void Item_ValidateTypeData( itemDef_t *item )
 {
-  if( item->typeData.data )
+  if( item->typeData )
     return;
 
-  switch( item->type )
+  if( item->type == ITEM_TYPE_LISTBOX )
   {
-    case ITEM_TYPE_LISTBOX:
-      item->typeData.list = UI_Alloc( sizeof( listBoxDef_t ) );
-      memset( item->typeData.list, 0, sizeof( listBoxDef_t ) );
-      break;
-
-    case ITEM_TYPE_COMBO:
-      item->typeData.combo = UI_Alloc( sizeof( comboBoxDef_t ) );
-      memset( item->typeData.combo, 0, sizeof( comboBoxDef_t ) );
-      break;
-
-    case ITEM_TYPE_EDITFIELD:
-    case ITEM_TYPE_NUMERICFIELD:
-    case ITEM_TYPE_YESNO:
-    case ITEM_TYPE_BIND:
-    case ITEM_TYPE_SLIDER:
-    case ITEM_TYPE_TEXT:
-      item->typeData.edit = UI_Alloc( sizeof( editFieldDef_t ) );
-      memset( item->typeData.edit, 0, sizeof( editFieldDef_t ) );
-
-      if( item->type == ITEM_TYPE_EDITFIELD )
-        item->typeData.edit->maxPaintChars = MAX_EDITFIELD;
-      break;
-
-    case ITEM_TYPE_MULTI:
-      item->typeData.multi = UI_Alloc( sizeof( multiDef_t ) );
-      memset( item->typeData.multi, 0, sizeof( multiDef_t ) );
-      break;
-
-    case ITEM_TYPE_MODEL:
-      item->typeData.model = UI_Alloc( sizeof( modelDef_t ) );
-      memset( item->typeData.model, 0, sizeof( modelDef_t ) );
+    item->typeData = UI_Alloc( sizeof( listBoxDef_t ) );
+    memset( item->typeData, 0, sizeof( listBoxDef_t ) );
   }
+  else if( item->type == ITEM_TYPE_COMBO )
+  {
+    item->typeData = UI_Alloc( sizeof( comboBoxDef_t ) );
+    memset( item->typeData, 0, sizeof( comboBoxDef_t ) );
+  }
+  else if( item->type == ITEM_TYPE_EDITFIELD ||
+           item->type == ITEM_TYPE_NUMERICFIELD ||
+           item->type == ITEM_TYPE_YESNO ||
+           item->type == ITEM_TYPE_BIND ||
+           item->type == ITEM_TYPE_SLIDER ||
+           item->type == ITEM_TYPE_TEXT )
+  {
+    item->typeData = UI_Alloc( sizeof( editFieldDef_t ) );
+    memset( item->typeData, 0, sizeof( editFieldDef_t ) );
+
+    if( item->type == ITEM_TYPE_EDITFIELD )
+    {
+      if( !( ( editFieldDef_t * ) item->typeData )->maxPaintChars )
+        ( ( editFieldDef_t * ) item->typeData )->maxPaintChars = MAX_EDITFIELD;
+    }
+  }
+  else if( item->type == ITEM_TYPE_MULTI )
+    item->typeData = UI_Alloc( sizeof( multiDef_t ) );
+  else if( item->type == ITEM_TYPE_MODEL )
+    item->typeData = UI_Alloc( sizeof( modelDef_t ) );
 }
 
 /*
@@ -6665,13 +6670,15 @@ qboolean ItemParse_group( itemDef_t *item, int handle )
 qboolean ItemParse_asset_model( itemDef_t *item, int handle )
 {
   const char *temp;
+  modelDef_t *modelPtr;
   Item_ValidateTypeData( item );
+  modelPtr = ( modelDef_t* )item->typeData;
 
   if( !PC_String_Parse( handle, &temp ) )
     return qfalse;
 
   item->asset = DC->registerModel( temp );
-  item->typeData.model->angle = rand() % 360;
+  modelPtr->angle = rand() % 360;
   return qtrue;
 }
 
@@ -6690,43 +6697,72 @@ qboolean ItemParse_asset_shader( itemDef_t *item, int handle )
 // model_origin <number> <number> <number>
 qboolean ItemParse_model_origin( itemDef_t *item, int handle )
 {
+  modelDef_t *modelPtr;
   Item_ValidateTypeData( item );
+  modelPtr = ( modelDef_t* )item->typeData;
 
-  return ( PC_Float_Parse( handle, &item->typeData.model->origin[0] ) &&
-           PC_Float_Parse( handle, &item->typeData.model->origin[1] ) &&
-           PC_Float_Parse( handle, &item->typeData.model->origin[2] ) );
+  if( PC_Float_Parse( handle, &modelPtr->origin[0] ) )
+  {
+    if( PC_Float_Parse( handle, &modelPtr->origin[1] ) )
+    {
+      if( PC_Float_Parse( handle, &modelPtr->origin[2] ) )
+        return qtrue;
+    }
+  }
+
+  return qfalse;
 }
 
 // model_fovx <number>
 qboolean ItemParse_model_fovx( itemDef_t *item, int handle )
 {
+  modelDef_t *modelPtr;
   Item_ValidateTypeData( item );
+  modelPtr = ( modelDef_t* )item->typeData;
 
-  return PC_Float_Parse( handle, &item->typeData.model->fov_x );
+  if( !PC_Float_Parse( handle, &modelPtr->fov_x ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 // model_fovy <number>
 qboolean ItemParse_model_fovy( itemDef_t *item, int handle )
 {
+  modelDef_t *modelPtr;
   Item_ValidateTypeData( item );
+  modelPtr = ( modelDef_t* )item->typeData;
 
-  return PC_Float_Parse( handle, &item->typeData.model->fov_y );
+  if( !PC_Float_Parse( handle, &modelPtr->fov_y ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 // model_rotation <integer>
 qboolean ItemParse_model_rotation( itemDef_t *item, int handle )
 {
+  modelDef_t *modelPtr;
   Item_ValidateTypeData( item );
+  modelPtr = ( modelDef_t* )item->typeData;
 
-  return PC_Int_Parse( handle, &item->typeData.model->rotationSpeed );
+  if( !PC_Int_Parse( handle, &modelPtr->rotationSpeed ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 // model_angle <integer>
 qboolean ItemParse_model_angle( itemDef_t *item, int handle )
 {
+  modelDef_t *modelPtr;
   Item_ValidateTypeData( item );
+  modelPtr = ( modelDef_t* )item->typeData;
 
-  return PC_Int_Parse( handle, &item->typeData.model->angle );
+  if( !PC_Int_Parse( handle, &modelPtr->angle ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 // rect <rectangle>
@@ -6768,7 +6804,7 @@ qboolean ItemParse_notselectable( itemDef_t *item, int handle )
 {
   listBoxDef_t *listPtr;
   Item_ValidateTypeData( item );
-  listPtr = item->typeData.list;
+  listPtr = ( listBoxDef_t* )item->typeData;
 
   if( item->type == ITEM_TYPE_LISTBOX && listPtr )
     listPtr->notselectable = qtrue;
@@ -6781,7 +6817,7 @@ qboolean ItemParse_noscrollbar( itemDef_t *item, int handle )
 {
   listBoxDef_t *listPtr;
   Item_ValidateTypeData( item );
-  listPtr = item->typeData.list;
+  listPtr = ( listBoxDef_t* )item->typeData;
 
   if( item->type == ITEM_TYPE_LISTBOX && listPtr )
     listPtr->noscrollbar = qtrue;
@@ -6818,18 +6854,30 @@ qboolean ItemParse_type( itemDef_t *item, int handle )
 // uses textalignx for storage
 qboolean ItemParse_elementwidth( itemDef_t *item, int handle )
 {
-  Item_ValidateTypeData( item );
+  listBoxDef_t *listPtr;
 
-  return PC_Float_Parse( handle, &item->typeData.list->elementWidth );
+  Item_ValidateTypeData( item );
+  listPtr = ( listBoxDef_t* )item->typeData;
+
+  if( !PC_Float_Parse( handle, &listPtr->elementWidth ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 // elementheight, used for listbox image elements
 // uses textaligny for storage
 qboolean ItemParse_elementheight( itemDef_t *item, int handle )
 {
-  Item_ValidateTypeData( item );
+  listBoxDef_t *listPtr;
 
-  return PC_Float_Parse( handle, &item->typeData.list->elementHeight );
+  Item_ValidateTypeData( item );
+  listPtr = ( listBoxDef_t* )item->typeData;
+
+  if( !PC_Float_Parse( handle, &listPtr->elementHeight ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 // feeder <float>
@@ -6845,39 +6893,59 @@ qboolean ItemParse_feeder( itemDef_t *item, int handle )
 // uses textstyle for storage
 qboolean ItemParse_elementtype( itemDef_t *item, int handle )
 {
+  listBoxDef_t *listPtr;
+
   Item_ValidateTypeData( item );
 
-  return ( item->typeData.list &&
-           PC_Int_Parse( handle, &item->typeData.list->elementStyle ) );
+  if( !item->typeData )
+    return qfalse;
+
+  listPtr = ( listBoxDef_t* )item->typeData;
+
+  if( !PC_Int_Parse( handle, &listPtr->elementStyle ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 // columns sets a number of columns and an x pos and width per..
 qboolean ItemParse_columns( itemDef_t *item, int handle )
 {
-  int i;
+  int num, i;
+  listBoxDef_t *listPtr;
 
   Item_ValidateTypeData( item );
 
-  if( !item->typeData.list ||
-      !PC_Int_Parse( handle, &item->typeData.list->numColumns ) )
+  if( !item->typeData )
     return qfalse;
 
-  if( item->typeData.list->numColumns > MAX_LB_COLUMNS )
-    item->typeData.list->numColumns = MAX_LB_COLUMNS;
+  listPtr = ( listBoxDef_t* )item->typeData;
 
-  for( i = 0; i < item->typeData.list->numColumns; i++ )
+  if( PC_Int_Parse( handle, &num ) )
   {
-    int pos, width, align;
+    if( num > MAX_LB_COLUMNS )
+      num = MAX_LB_COLUMNS;
 
-    if( !PC_Int_Parse( handle, &pos ) ||
-        !PC_Int_Parse( handle, &width ) ||
-        !PC_Int_Parse( handle, &align ) )
-      return qfalse;
+    listPtr->numColumns = num;
 
-    item->typeData.list->columnInfo[i].pos = pos;
-    item->typeData.list->columnInfo[i].width = width;
-    item->typeData.list->columnInfo[i].align = align;
+    for( i = 0; i < num; i++ )
+    {
+      int pos, width, align;
+
+      if( PC_Int_Parse( handle, &pos ) &&
+          PC_Int_Parse( handle, &width ) &&
+          PC_Int_Parse( handle, &align ) )
+      {
+        listPtr->columnInfo[i].pos = pos;
+        listPtr->columnInfo[i].width = width;
+        listPtr->columnInfo[i].align = align;
+      }
+      else
+        return qfalse;
+    }
   }
+  else
+    return qfalse;
 
   return qtrue;
 }
@@ -7054,10 +7122,19 @@ qboolean ItemParse_cinematic( itemDef_t *item, int handle )
 
 qboolean ItemParse_doubleClick( itemDef_t *item, int handle )
 {
+  listBoxDef_t *listPtr;
+
   Item_ValidateTypeData( item );
 
-  return ( item->typeData.list &&
-           PC_Script_Parse( handle, &item->typeData.list->doubleClick ) );
+  if( !item->typeData )
+    return qfalse;
+
+  listPtr = ( listBoxDef_t* )item->typeData;
+
+  if( !PC_Script_Parse( handle, &listPtr->doubleClick ) )
+    return qfalse;
+
+  return qtrue;
 }
 
 qboolean ItemParse_onFocus( itemDef_t *item, int handle )
@@ -7142,16 +7219,19 @@ qboolean ItemParse_cvarTest( itemDef_t *item, int handle )
 
 qboolean ItemParse_cvar( itemDef_t *item, int handle )
 {
+  editFieldDef_t *editPtr;
+
   Item_ValidateTypeData( item );
 
   if( !PC_String_Parse( handle, &item->cvar ) )
     return qfalse;
 
-  if( item->typeData.edit )
+  if( item->typeData )
   {
-    item->typeData.edit->minVal = -1;
-    item->typeData.edit->maxVal = -1;
-    item->typeData.edit->defVal = -1;
+    editPtr = ( editFieldDef_t* )item->typeData;
+    editPtr->minVal = -1;
+    editPtr->maxVal = -1;
+    editPtr->defVal = -1;
   }
 
   return qtrue;
@@ -7159,30 +7239,59 @@ qboolean ItemParse_cvar( itemDef_t *item, int handle )
 
 qboolean ItemParse_maxChars( itemDef_t *item, int handle )
 {
+  editFieldDef_t *editPtr;
+  int maxChars;
+
   Item_ValidateTypeData( item );
 
-  return ( item->typeData.edit &&
-           PC_Int_Parse( handle, &item->typeData.edit->maxChars ) );
+  if( !item->typeData )
+    return qfalse;
+
+  if( !PC_Int_Parse( handle, &maxChars ) )
+    return qfalse;
+
+  editPtr = ( editFieldDef_t* )item->typeData;
+  editPtr->maxChars = maxChars;
+  return qtrue;
 }
 
 qboolean ItemParse_maxPaintChars( itemDef_t *item, int handle )
 {
+  editFieldDef_t *editPtr;
+  int maxChars;
+
   Item_ValidateTypeData( item );
 
-  return ( item->typeData.edit &&
-           PC_Int_Parse( handle, &item->typeData.edit->maxPaintChars ) );
+  if( !item->typeData )
+    return qfalse;
+
+  if( !PC_Int_Parse( handle, &maxChars ) )
+    return qfalse;
+
+  editPtr = ( editFieldDef_t* )item->typeData;
+  editPtr->maxPaintChars = maxChars;
+  return qtrue;
 }
 
 qboolean ItemParse_maxFieldWidth( itemDef_t *item, int handle )
 {
+  editFieldDef_t *editPtr;
+  int maxFieldWidth;
+
   Item_ValidateTypeData( item );
 
-  if( !item->typeData.edit ||
-      !PC_Int_Parse( handle, &item->typeData.edit->maxFieldWidth ) )
+  if( !item->typeData )
     return qfalse;
 
-  if( item->typeData.edit->maxFieldWidth < MIN_FIELD_WIDTH )
-    item->typeData.edit->maxFieldWidth = MIN_FIELD_WIDTH;
+  if( !PC_Int_Parse( handle, &maxFieldWidth ) )
+    return qfalse;
+
+  editPtr = ( editFieldDef_t* )item->typeData;
+
+  if( maxFieldWidth < MIN_FIELD_WIDTH )
+    editPtr->maxFieldWidth = MIN_FIELD_WIDTH;
+  else
+    editPtr->maxFieldWidth = maxFieldWidth;
 
   return qtrue;
 }
@@ -7191,13 +7300,22 @@ qboolean ItemParse_maxFieldWidth( itemDef_t *item, int handle )
 
 qboolean ItemParse_cvarFloat( itemDef_t *item, int handle )
 {
+  editFieldDef_t *editPtr;
+
   Item_ValidateTypeData( item );
 
-  return ( item->typeData.edit &&
-           PC_String_Parse( handle, &item->cvar ) &&
-           PC_Float_Parse( handle, &item->typeData.edit->defVal ) &&
-           PC_Float_Parse( handle, &item->typeData.edit->minVal ) &&
-           PC_Float_Parse( handle, &item->typeData.edit->maxVal ) );
+  if( !item->typeData )
+    return qfalse;
+
+  editPtr = ( editFieldDef_t* )item->typeData;
+
+  if( PC_String_Parse( handle, &item->cvar ) &&
+      PC_Float_Parse( handle, &editPtr->defVal ) &&
+      PC_Float_Parse( handle, &editPtr->minVal ) &&
+      PC_Float_Parse( handle, &editPtr->maxVal ) )
+    return qtrue;
+
+  return qfalse;
 }
 
 qboolean ItemParse_cvarStrList( itemDef_t *item, int handle )
@@ -7208,11 +7326,13 @@ qboolean ItemParse_cvarStrList( itemDef_t *item, int handle )
 
   Item_ValidateTypeData( item );
 
-  if( !item->typeData.multi )
+  if( !item->typeData )
     return qfalse;
 
-  multiPtr = item->typeData.multi;
+  multiPtr = ( multiDef_t* )item->typeData;
+
   multiPtr->count = 0;
+
   multiPtr->strDef = qtrue;
 
   if( !trap_Parse_ReadToken( handle, &token ) )
@@ -7264,11 +7384,13 @@ qboolean ItemParse_cvarFloatList( itemDef_t *item, int handle )
 
   Item_ValidateTypeData( item );
 
-  if( !item->typeData.multi )
+  if( !item->typeData )
     return qfalse;
 
-  multiPtr = item->typeData.multi;
+  multiPtr = ( multiDef_t* )item->typeData;
+
   multiPtr->count = 0;
+
   multiPtr->strDef = qfalse;
 
   if( !trap_Parse_ReadToken( handle, &token ) )
@@ -7527,14 +7649,15 @@ void Item_InitControls( itemDef_t *item )
 
   if( item->type == ITEM_TYPE_LISTBOX )
   {
+    listBoxDef_t *listPtr = ( listBoxDef_t* )item->typeData;
     item->cursorPos = 0;
 
-    if( item->typeData.list )
+    if( listPtr )
     {
-      item->typeData.list->cursorPos = 0;
-      item->typeData.list->startPos = 0;
-      item->typeData.list->endPos = 0;
-      item->typeData.list->cursorPos = 0;
+      listPtr->cursorPos = 0;
+      listPtr->startPos = 0;
+      listPtr->endPos = 0;
+      listPtr->cursorPos = 0;
     }
   }
 }
