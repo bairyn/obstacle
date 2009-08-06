@@ -2939,7 +2939,7 @@ int G_OC_EndScrim(void)
 //            si = tmp;
 			BG_Free(si->medis);
 			BG_Free(si->arms);
-			si->medis = si->arm = NULL;
+			si->medis = si->arms = NULL;
 			si->active = 0;
 		}
 	}
