@@ -2939,6 +2939,7 @@ int G_OC_EndScrim(void)
 //            si = tmp;
 			BG_Free(si->medis);
 			BG_Free(si->arms);
+			si->medis = si->arm = NULL;
 			si->active = 0;
 		}
 	}
@@ -3337,11 +3338,11 @@ static struct funnies_s
 funnies[] = 
 {
 	{"PC's are like air conditioners.  If you open Windows(R) they don't work.", "", ""},
-	{"The top 10 ways to amuse a geek--\n\n1: Make a list of the top 10 ways to amuse a geek.\n10: Use binary.", "", ""},
+	{"There are 10 kinds of people in this world: those who understand binary, and those who don't.", "", ""},
 	{"If I had one dollar for every brain you didn't have, I'd have one dollar.", "", ""},
 	{"I'm going to join in and turn this game around 360 degrees!", "", ""},
 	{"If we don't succeed, we run the risk of failure.", "", ""},
-	{"Man was predistined to have free will.", "", ""},
+	{"Man was predestined to have free will.", "", ""},
 	{"PC's are like air conditioners.  If you open Windows(R) they don't work.", "", ""},
 	{"What's one of the most well known oxymorons?  One on wikipedia: Microsoft Works.", "", ""},
 	{"If life is without walls, who needs windows and gates?", "", ""},

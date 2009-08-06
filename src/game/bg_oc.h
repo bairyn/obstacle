@@ -58,6 +58,7 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: height is not lost jumping down ramps?
 // TODO: fix player names not showing
 // TODO: restore OC stuff on ptrc
 // TODO: add OC menu to ui for binds for toggle hide, and etc, and cg_drawTimer cvars etc
@@ -2560,7 +2561,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define CG_OC_CanSetPlayerTimer() ((BG_OC_OCMode()) ? (1) : (0))
 
-	#define CG_OC_OCNameOtherTeams() ((BG_OC_OCmode()) ? (1) : (0))
+	#define CG_OC_OCNameOtherTeams() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define CG_OC_Frame() \
 	do \
