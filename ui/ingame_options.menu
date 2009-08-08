@@ -1061,7 +1061,7 @@
     itemDef
     {
       name controls
-      text "Upgrades"
+      text "OC"
       group optionsGrp
       style WINDOW_STYLE_EMPTY
       rect 0 ((2*BORDER)+TOPBUTT_H+(3*SIDEBUTT_H)) SIDEBUTT_W SIDEBUTT_H
