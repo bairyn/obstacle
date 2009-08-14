@@ -114,7 +114,7 @@ if ! cd pak_tmp/; then
 	exit 1
 fi
 
-if ! zip -9r ../${build_pakname}.pk3 vm/cgame.qvm vm/ui.qvm ui configs scripts sound models emoticons gfx armour fonts GPL; then
+if ! zip -9r ${build_pakname}.pk3 vm/cgame.qvm vm/ui.qvm ui configs scripts sound models emoticons gfx armour fonts GPL; then
 	exit 1
 fi
 
