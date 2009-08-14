@@ -59,13 +59,13 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: height is not lost jumping down ramps?
-// TODO: fix player names not showing
-// TODO: restore OC stuff on ptrc
-// TODO: add OC menu to ui for binds for toggle hide, and etc, and cg_drawTimer cvars etc
-// TODO: in UI, add layout options (aliens, etc)
-// TODO: add listlayouts to callvote section
+// TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
+// TODO: server responds to askLayout and askForLayout, etc; add commands
+// TODO: buildables cannot be built inside of each other while buildableOverride is disabled
 // TODO: add sectorb7 granger OC
-// TODO: add flag so that bonuses can be used on the first armoury.  This will open the opportunity for a two-armoury luci-jump course
+// TODO: add flag so that bonuses can be used on the first armoury.  This will open the opportunity for a two-armoury luci-jump course.  This flag is 'a'.
+// TODO: fix player names not showing (can be post-2.0)
+// TODO: add listlayouts to callvote section (post-2.0)
 
 //<+===============================================+><+===============================================+>
 // game only stuff
