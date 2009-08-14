@@ -63,6 +63,7 @@ extern int oc_gameMode;
 // TODO: restore OC stuff on ptrc
 // TODO: add OC menu to ui for binds for toggle hide, and etc, and cg_drawTimer cvars etc
 // TODO: in UI, add layout options (aliens, etc)
+// TODO: add listlayouts to callvote section
 // TODO: add sectorb7 granger OC
 // TODO: add flag so that bonuses can be used on the first armoury.  This will open the opportunity for a two-armoury luci-jump course
 
