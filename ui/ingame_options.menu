@@ -1111,7 +1111,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .15
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1151,7 +1151,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .15
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1171,7 +1171,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .1
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1191,7 +1191,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .15
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1211,7 +1211,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .15
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1231,7 +1231,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .20
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1251,7 +1251,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .20
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1271,7 +1271,7 @@
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .20
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -1291,7 +1291,7 @@
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
-      textscale .25
+      textscale .20
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
