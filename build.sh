@@ -16,16 +16,16 @@ if [ $# -lt 1 ]; then
 	exit 0
 fi
 
-if [ $# -ge 1 ]; then
-	build_serverdir=${1}
-fi
-
 if [ $# -ge 2 ]; then
-	build_webdir=${2}
+	build_serverdir=${2}
 fi
 
 if [ $# -ge 3 ]; then
-	if [ "$3" == "y" ] || [ "$3" == "-y" ] || [ "$3" == "yes" ] || [ "$3" == "--yes" ] || [ "$3" == "-yes" ] || [ "$3" == "1" ] || [ "$3" == "true" ]; then
+	build_webdir=${3}
+fi
+
+if [ $# -ge 4 ]; then
+	if [ "$4" == "y" ] || [ "$4" == "-y" ] || [ "$4" == "yes" ] || [ "$4" == "--yes" ] || [ "$4" == "-yes" ] || [ "$4" == "1" ] || [ "$4" == "true" ]; then
 		build_pakonly=1
 	fi
 fi
