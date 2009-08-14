@@ -24,7 +24,7 @@
 #define SCONTENT_W    (W-(SIDEBUTT_W+(2*BORDER)))
 #define SCONTENT_OFF  (0-(SCONTENT_W/2))
 
-#define SCONTENT_X    (SIDEBUTT_W+BORDER+16)
+#define OCONTENT_X    (SIDEBUTT_W+BORDER+16)
 
 #define ELEM_H        16
 
