@@ -1268,7 +1268,7 @@
       text "Print Timer in Center of Screen:"
       cvar "cg_printTimer"
       rect CONTENT_X (CONTENT_Y+(9*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
       textscale .25
@@ -1288,7 +1288,7 @@
       text "Print Speedometer in Center of Screen:"
       cvar "cg_printSpeedometer"
       rect CONTENT_X (CONTENT_Y+(10*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
       textscale .25
