@@ -1288,7 +1288,7 @@
       text "Print Speedometer in Center of Screen:"
       cvar "cg_printSpeedometer"
       rect CONTENT_X (CONTENT_Y+(10*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx SCONTENT_OFF
       textscale .25
