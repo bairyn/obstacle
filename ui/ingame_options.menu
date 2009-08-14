@@ -24,7 +24,10 @@
 #define SCONTENT_W    (W-(SIDEBUTT_W+(2*BORDER)))
 #define SCONTENT_OFF  (0-(SCONTENT_W/2))
 
-#define OCONTENT_X    (SIDEBUTT_W+BORDER+16)
+#define OCONTENT_X    CONTENT_X
+#define OCONTENT_Y    SCONTENT_Y
+#define OCONTENT_W    SCONTENT_W
+#define OCONTENT_OFF  SCONTENT_OFF
 
 #define ELEM_H        16
 
@@ -1089,10 +1092,10 @@
       type ITEM_TYPE_BIND
       text "Restart Obstacle Course:"
       cvar "newRestartOC"
-      rect OCONTENT_X (SCONTENT_Y+(0*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(0*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1109,10 +1112,10 @@
       type ITEM_TYPE_BIND
       text "Teleport to Checkpoint:"
       cvar "teleportToCheckpoint"
-      rect OCONTENT_X (SCONTENT_Y+(1*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(1*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1129,10 +1132,10 @@
       type ITEM_TYPE_BIND
       text "Hide / Unhide:"
       cvar "hide"
-      rect OCONTENT_X (SCONTENT_Y+(2*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(2*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1144,15 +1147,15 @@
 
     itemDef
     {
-      name upgrades
+      name oc
       group optionsGrp
       type ITEM_TYPE_BIND
       text "Buy Ammo (and win):"
       cvar "buy ammo"
-      rect OCONTENT_X (SCONTENT_Y+(3*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(3*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1169,10 +1172,10 @@
       type ITEM_TYPE_BIND
       text "Show Stats of Current Obstacle Course:"
       cvar "stats"
-      rect OCONTENT_X (SCONTENT_Y+(4*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(4*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1189,10 +1192,10 @@
       type ITEM_TYPE_BIND
       text "Show Current Player Stats:"
       cvar "myStats"
-      rect OCONTENT_X (SCONTENT_Y+(5*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(5*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1209,10 +1212,10 @@
       type ITEM_TYPE_BIND
       text "Show Current Layout and Options:"
       cvar "askLayout"
-      rect OCONTENT_X (SCONTENT_Y+(6*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(6*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1229,10 +1232,10 @@
       type ITEM_TYPE_BIND
       text "Use Structure/Evolve (and Teleport):"
       cvar "+button7"
-      rect OCONTENT_X (SCONTENT_Y+(7*ELEM_H)) SCONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(7*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1249,10 +1252,10 @@
       type ITEM_TYPE_YESNO
       text "Show Player Timer:"
       cvar "cg_drawPlayerTimer"
-      rect OCONTENT_X (CONTENT_Y+(8*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(8*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1269,10 +1272,10 @@
       type ITEM_TYPE_YESNO
       text "Show Speedometer:"
       cvar "cg_drawSpeedometer"
-      rect OCONTENT_X (CONTENT_Y+(9*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(9*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1289,10 +1292,10 @@
       type ITEM_TYPE_YESNO
       text "Print Timer in Center of Screen:"
       cvar "cg_printTimer"
-      rect OCONTENT_X (CONTENT_Y+(10*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(10*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
@@ -1309,10 +1312,10 @@
       type ITEM_TYPE_YESNO
       text "Print Speedometer in Center of Screen:"
       cvar "cg_printSpeedometer"
-      rect OCONTENT_X (CONTENT_Y+(11*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (OCONTENT_Y+(11*ELEM_H)) OCONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
-      textalignx SCONTENT_OFF
+      textalignx OCONTENT_OFF
       textscale .25
       forecolor 1 1 1 1
       visible MENU_FALSE
