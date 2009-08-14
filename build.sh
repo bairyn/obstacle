@@ -16,15 +16,15 @@ if [ $# -lt 1 ]; then
 	exit 0
 fi
 
-if [ $# -ge 2 ]; then
+if [ $# -ge 1 ]; then
 	build_serverdir=${2}
 fi
 
-if [ $# -ge 3 ]; then
+if [ $# -ge 2 ]; then
 	build_webdir=${3}
 fi
 
-if [ $# -ge 4 ]; then
+if [ $# -ge 3 ]; then
 	if [ "$4" == "y" ] || [ "$4" == "-y" ] || [ "$4" == "yes" ] || [ "$4" == "--yes" ] || [ "$4" == "-yes" ] || [ "$4" == "1" ] || [ "$4" == "true" ]; then
 		build_pakonly=1
 	fi
@@ -120,6 +120,11 @@ fi
 
 if ! cd ../; then
 	exit 1
+fi
+
+# pak only?
+if ! [ $build_pakonly -eq 0 ]; then
+	exit 0
 fi
 
 # copy into server
