@@ -118,6 +118,10 @@ if ! zip -9r ${build_pakname}.pk3 vm/cgame.qvm vm/ui.qvm ui configs scripts soun
 	exit 1
 fi
 
+if ! cp zip -9r ${build_pakname}.pk3 ../; then
+	exit 1
+fi
+
 if ! cd ../; then
 	exit 1
 fi
