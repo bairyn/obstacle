@@ -3136,11 +3136,20 @@ static void UI_RunMenuScript( char **args )
         trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote hide %d\n",
                                                uiInfo.clientNums[ uiInfo.playerIndex ] ) );
       }
+    }
     else if( Q_stricmp( name, "voteUnhide" ) == 0 )
     {
       if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
       {
         trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote unhide %d\n",
+                                               uiInfo.clientNums[ uiInfo.playerIndex ] ) );
+      }
+    }
+    else if( Q_stricmp( name, "testHidden" ) == 0 )
+    {
+      if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
+      {
+        trap_Cmd_ExecuteText( EXEC_APPEND, va( "testHidden %d\n",
                                                uiInfo.clientNums[ uiInfo.playerIndex ] ) );
       }
     }
