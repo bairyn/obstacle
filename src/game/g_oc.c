@@ -3620,9 +3620,10 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 		{
 			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
 			{
-				r = &records[record++];
 				char buf[MAX_STRING_CHARS];
 				char *p;
+
+				r = &records[record++];
 
 				strncpy(buf, line, sizeof(buf));
 
@@ -3631,9 +3632,9 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 				#define LOADBUF \
 				do \
 				{ \
-					p = buf; \
+					p = line; \
  \
-					while(*p > 0x01 && p - buf < sizeof(buf) - 1) \
+					while(*p > 0x01 && p - buf < MAX(sizeof(buf), sizeof(line) - 1) \
 					{ \
 						buf[p - buf] = *p; \
  \
