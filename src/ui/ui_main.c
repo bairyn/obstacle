@@ -3129,11 +3129,18 @@ static void UI_RunMenuScript( char **args )
                                                uiInfo.clientNums[ uiInfo.playerIndex ] ) );
       }
     }
-    else if( Q_stricmp( name, "voteMute" ) == 0 )
+    else if( Q_stricmp( name, "voteHide" ) == 0 )
     {
       if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
       {
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote mute %d\n",
+        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote hide %d\n",
+                                               uiInfo.clientNums[ uiInfo.playerIndex ] ) );
+      }
+    else if( Q_stricmp( name, "voteUnhide" ) == 0 )
+    {
+      if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
+      {
+        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote unhide %d\n",
                                                uiInfo.clientNums[ uiInfo.playerIndex ] ) );
       }
     }
