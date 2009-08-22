@@ -60,7 +60,6 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: height is not lost jumping down ramps?
 // TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
 // TODO: add sectorb7 granger OC
 // TODO: add flag 'l' for luci-jump course (players (humans?) spawn with luci?  Players will have to reload ammo at a reactor)
@@ -2970,10 +2969,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		dp = -DotProduct(pm->ps->velocity, normal); \
+		dp = DotProduct(pm->ps->velocity, normal); \
  \
 		if(DotProduct(pm->ps->velocity, normal) < 0) \
-			VectorMA(pm->ps->velocity, dp, normal, pm->ps->velocity); \
+			VectorMA(pm->ps->velocity, -dp, normal, pm->ps->velocity); \
 	} while(0)
 
 	#define BG_OC_PMNeedAlternateStopSprintCheck() ((BG_OC_OCMode()) ? (1) : (0))
