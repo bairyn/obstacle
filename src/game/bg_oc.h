@@ -63,7 +63,6 @@ extern int oc_gameMode;
 // TODO: height is not lost jumping down ramps?
 // TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
 // TODO: buildables cannot be built inside of each other while buildableOverride is disabled
-// TODO: Fix need for extra newline in g_connectMessage, and add it if it doesn't exist
 // TODO: add sectorb7 granger OC
 // TODO: add flag so that bonuses can be used on the first armoury.  This will open the opportunity for a two-armoury luci-jump course.  This flag is 'a'.
 // TODO: fix player names not showing (can be post-2.0)
