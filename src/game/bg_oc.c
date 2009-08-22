@@ -34,7 +34,6 @@ enum
 
 // several states or flags that aren't used only by game
 int oc_gameMode = gameMode_none;  // this is global to help speed up some common checks
-static int oc_heightNeverLost = 0;  // if the layout being played has a certain flag then this will be set.
 static int oc_noWallWalk = 0;  // if the layout being played has a certain flag then this will be set.
 
 //======================================================
