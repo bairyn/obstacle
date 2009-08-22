@@ -1026,8 +1026,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			override = 1; \
  \
 		/* Stop all buildables from interacting with traces */ \
-		//if(!override) \
-		  //G_SetBuildableLinkState(qfalse); /* in OC mode, stackables ae allowed if buildable override is on for the client */ \
+		/*if(!override)*/ \
+		  /*G_SetBuildableLinkState(qfalse);*/  /* in OC mode, stackables ae allowed if buildable override is on for the client */ \
  \
 		BG_BuildableBoundingBox(buildable, mins, maxs); \
  \
@@ -1186,8 +1186,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		*/ \
  \
 		/* Relink buildables */ \
-		//if(!override) \
-			//G_SetBuildableLinkState(qtrue); \
+		/*if(!override)*/ \
+			/*G_SetBuildableLinkState(qtrue);*/ \
  \
 		/*check there is enough room to spawn from (presuming this is a spawn) */ \
 		/* no matter if they do have buildable override, players should always be able to spawn from it */ \
