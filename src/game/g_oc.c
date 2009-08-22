@@ -3383,7 +3383,7 @@ void G_OC_Lol(gentity_t *ent)
 }
 
 
-//// STATS \\\\
+//// STATS ////
 
 static void G_SanitiseNameWhitespaceColor(char *in, char *out, int len)
 {
@@ -3513,7 +3513,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	char date[MAX_CVAR_VALUE_STRING] = {""};
 	qtime_t qt;
 	int t;
-	char *ip, *statsPos;
+	char *ip;
 	char userinfo[MAX_INFO_STRING];
 	char pureName[MAX_NAME_LENGTH] = {""};  // tmp
 	char cleanName[MAX_NAME_LENGTH] = {""};  // tmp
@@ -3529,7 +3529,8 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 
 	if(g_cheats.integer)
 	{
-		G_ClientPrint(client - level.clients, "Cannot store record with cheats enabled", CLIENT_NULL);
+		trap_SendServerCommand(client - level.clients, "print \"Cannot store record with cheats enable\n\"");
+
 		return "";
 	}
 
@@ -3579,20 +3580,20 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	G_SanitiseNameWhitespaceColor(client->pers.netname, name, sizeof(name));
 
 	/// load stats file ///
-	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
+	len = trap_FS_FOpenFile(filename, &f, FS_READ);
 	if( len < 0 )
 	{
 		trap_FS_FCloseFile(f);
-		if(trap_FS_FOpenFile(fileName, &f, FS_APPEND) < 0)
+		if(trap_FS_FOpenFile(filename, &f, FS_APPEND) < 0)
 		{
 			trap_FS_FCloseFile(f);
-			G_LogPrintf("G_OC_Stats: could not open %s\n", fileName);
+			G_LogPrintf("G_OC_Stats: could not open %s\n", filename);
 			return "";
 		}
 		else
 		{
 			trap_FS_FCloseFile(f);
-			len = trap_FS_FOpenFile(fileName, &f, FS_READ);
+			len = trap_FS_FOpenFile(filename, &f, FS_READ);
 		}
 	}
 	statHead = stat = BG_Alloc(len + 1);
@@ -3606,16 +3607,16 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 		if( i >= sizeof( line ) - 1 )
 		{
 			G_LogPrintf( S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
-			fileName, line );
+			filename, line );
 
 			BG_Free(statHead);
 
 			return "";
 		}
 
-		line[i++] = *layout;
+		line[i++] = *stat;
 		line[i] = '\0';
-		if(*layout == '\n' && record < numRecords)
+		if(*stat == '\n' && record < numRecords)
 		{
 			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
 			{
@@ -3737,16 +3738,16 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 		int j; \
 		i = 0; \
  \
-		len = trap_FS_FOpenFile(fileName, &f, FS_WRITE); \
+		len = trap_FS_FOpenFile(filename, &f, FS_WRITE); \
 		if(len < 0) \
 		{ \
-			G_Printf("G_OC_Stats: could not open %s\n", fileName); \
+			G_Printf("G_OC_Stats: could not open %s\n", filename); \
 			return ""; \
 		} \
  \
-		strncpy(numString, va("%d %d\n", level.totalArmouries, level.totalMedistations), sizeof(numstring)); \
+		strncpy(numString, va("%d %d\n", level.totalArmouries, level.totalMedistations), sizeof(numString)); \
  \
-		G_Printf("G_OC_Stats: saving stats to %s\n", fileName); \
+		G_Printf("G_OC_Stats: saving stats to %s\n", filename); \
  \
 		trap_FS_Write(numString, strlen(numString), f); \
  \
@@ -3768,7 +3769,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 
 		if(G_OC_StatsEqual(r, &currentRecord))
 		{
-			static  char s[MAX_STRING_CHARS];
+			static char s[MAX_STRING_CHARS];
 
 			WRITEFILE;
 
@@ -4919,10 +4920,10 @@ char *G_OC_ParseLayoutFlags(char *layout)
 //	if(!BG_OC_OCMode())
 //		return;
 	if(!layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c')  // must be an oc
-		return;
+		return "";
 
 	if(!G_OC_LayoutExtraFlags(layout))  // no extra flags
-		return;
+		return "";
 
 	strcpy(ret, " (layout uses options '");
 
