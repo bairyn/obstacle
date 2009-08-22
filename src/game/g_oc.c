@@ -1117,8 +1117,6 @@ char *G_OC_Rating(char *mapname, char *layoutname)
 
 void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 {
-	// this is really crappy
-
 	if(!ent)
 	{
 		return;
@@ -1139,6 +1137,8 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 
 	if(quick)
 	{
+		// this is really crappy
+
 		int i;
 		gentity_t *dest;
 		vec3_t spawn_origin, spawn_angles, infestOrigin;
@@ -3601,7 +3601,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	stat[len] = '\0';
 	trap_FS_FCloseFile(f);
 
-	i = 0;
+	i = record = 0;
 	while( *stat )
 	{
 		if( i >= sizeof( line ) - 1 )
@@ -4911,7 +4911,7 @@ Used to cat onto vote strings
 char *G_OC_ParseLayoutFlags(char *layout)
 {
 	int  num = 0;
-	char ret[MAX_STRING_CHARS];
+	static char ret[MAX_STRING_CHARS];
 
 	static char out[4 * MAX_STRING_CHARS];
 
@@ -5040,7 +5040,8 @@ char *G_OC_ParseLayoutFlags(char *layout)
 	}
 
 	strcat(ret, "')");
-	strcpy(out, ret);
+
+	return ret;
 }
 
 /*
