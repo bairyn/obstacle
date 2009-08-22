@@ -63,7 +63,7 @@ extern int oc_gameMode;
 // TODO: height is not lost jumping down ramps?
 // TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
 // TODO: add sectorb7 granger OC
-// TODO: add flag so that bonuses can be used on the first armoury.  This will open the opportunity for a two-armoury luci-jump course.  This flag is 'a'.
+// TODO: add flag 'l' for luci-jump course (players (humans?) spawn with luci?  Players will have to reload ammo at a reactor)
 // TODO: fix player names not showing (can be post-2.0)
 // TODO: add listlayouts to callvote section (post-2.0)
 
