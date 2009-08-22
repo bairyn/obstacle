@@ -3796,7 +3796,7 @@ G_OC_MediStats
 Medi stats
 ================
 */
-char *G_OC_MediStats(gclient_t *client, int count, int time)
+char *G_OC_MediStats(void *client, int count, int time)
 {
 	char map[MAX_QPATH];
 
@@ -3808,7 +3808,7 @@ char *G_OC_MediStats(gclient_t *client, int count, int time)
 	}
 	G_StrToLower(level.layout);
 
-	return G_OC_Stats(va("stats/%s/%s/med.dat", map, level.layout), client, count, time);
+	return G_OC_Stats(va("stats/%s/%s/med.dat", map, level.layout), (client_t *) client, count, time);
 }
 
 /*
@@ -3818,7 +3818,7 @@ G_OC_WinStats
 Armoury stats
 ================
 */
-char *G_OC_WinStats(gclient_t *client, int count, int time)
+char *G_OC_WinStats(void *client, int count, int time)
 {
 	char map[MAX_QPATH];
 
@@ -3834,7 +3834,7 @@ char *G_OC_WinStats(gclient_t *client, int count, int time)
 	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
 		count = 1;
 
-	return G_OC_Stats(va("stats/%s/%s/win.dat", map, level.layout), client, count, time);
+	return G_OC_Stats(va("stats/%s/%s/win.dat", map, level.layout), (client_t *) client, count, time);
 }
 
 

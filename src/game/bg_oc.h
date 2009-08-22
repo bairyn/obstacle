@@ -531,8 +531,10 @@ extern int oc_gameMode;
 	// game and balance stuff
 	//<+===============================================+>
 
-	char *G_OC_MediStats(gclient_t *client, int count, int time);
-	char *G_OC_WinStats(gclient_t *client, int count, int time);
+	//char *G_OC_MediStats(gclient_t *client, int count, int time);
+	//char *G_OC_WinStats(gclient_t *client, int count, int time);
+	char *G_OC_MediStats(void *client, int count, int time);
+	char *G_OC_WinStats(void *client, int count, int time);
 
 	typedef struct stat_s stat_t;
 	struct stat_s
