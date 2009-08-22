@@ -3634,7 +3634,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 				{ \
 					p = line; \
  \
-					while(*p > 0x01 && p - buf < MAX(sizeof(buf), sizeof(line) - 1) \
+					while(*p > 0x01 && p - buf < MAX(sizeof(buf), sizeof(line) - 1)) \
 					{ \
 						buf[p - buf] = *p; \
  \
