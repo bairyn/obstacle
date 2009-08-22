@@ -3508,15 +3508,15 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	int record;
 
 	/// Userinfo variables ///
-	char name[MAX_NAME_LENGTH] = {""};
-	char realName[MAX_NAME_LENGTH] = {""};  // realname
-	char date[MAX_CVAR_VALUE_STRING] = {""};
+	static char name[MAX_NAME_LENGTH];
+	static char realName[MAX_NAME_LENGTH];
+	static char date[MAX_CVAR_VALUE_STRING];
 	qtime_t qt;
 	int t;
 	char *ip;
-	char userinfo[MAX_INFO_STRING];
-	char pureName[MAX_NAME_LENGTH] = {""};  // tmp
-	char cleanName[MAX_NAME_LENGTH] = {""};  // tmp
+	static char userinfo[MAX_INFO_STRING];
+	static char pureName[MAX_NAME_LENGTH];
+	static char cleanName[MAX_NAME_LENGTH];
 	qboolean firstNewlineReached = qfalse;
 
 	/// stats disabled? ///
@@ -3601,7 +3601,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	stat[len] = '\0';
 	trap_FS_FCloseFile(f);
 
-	i = record = 0;
+	i = record = line[0] = 0;
 	while( *stat )
 	{
 		if( i >= sizeof( line ) - 1 )
