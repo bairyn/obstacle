@@ -3529,7 +3529,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 
 	if(g_cheats.integer)
 	{
-		G_ClientPrint(ent, "Cannot store record with cheats enabled", CLIENT_NULL);
+		G_ClientPrint(client - level.clients, "Cannot store record with cheats enabled", CLIENT_NULL);
 		return "";
 	}
 
@@ -3549,7 +3549,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	{
 		if(!Q_stricmp(g_admin_admins[i]->guid, client->pers.guid))
 		{
-			l = g_admin_admins[i]->level;
+			//l = g_admin_admins[i]->level;
 			G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
 			if(Q_stricmp(cleanName, pureName))
 			{
@@ -3566,7 +3566,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	else
 		strcpy(realName, "noname");
 
-	trap_GetUserinfo(ent - g_entities, userinfo, sizeof(userinfo));
+	trap_GetUserinfo(client - level.clients, userinfo, sizeof(userinfo));
 	ip = Info_ValueForKey(userinfo, "ip");
 	if(!ip)
 		return " - ip error";
@@ -3576,7 +3576,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	strcat(date, va(" %d:%02i", qt.tm_hour, qt.tm_min));
 
 	// set name
-	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name, sizeof(name));
+	G_SanitiseNameWhitespaceColor(client->pers.netname, name, sizeof(name));
 
 	/// load stats file ///
 	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
@@ -3595,10 +3595,10 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 			len = trap_FS_FOpenFile(fileName, &f, FS_READ);
 		}
 	}
-	statHead = layout = BG_Alloc( len + 1 );
-	trap_FS_Read( layout, len, f );
-	stat[ len ] = '\0';
-	trap_FS_FCloseFile( f );
+	statHead = stat = BG_Alloc(len + 1);
+	trap_FS_Read(stat, len, f);
+	stat[len] = '\0';
+	trap_FS_FCloseFile(f);
 
 	i = 0;
 	while( *stat )
@@ -3683,7 +3683,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 
 	/// add record ///
 	r = &records[record++];
-	Com_sprintf(stat, sizeof(stat), "%d%c%d%c%s%c%s%c%s%c%s%c%s\n", count, '\1', time, '\1', name, '\1', date, '\1', ent->client->pers.guid, '\1', ((ip) ? (ip) : ("noip")), '\1', realName);
+	Com_sprintf(stat, sizeof(stat), "%d%c%d%c%s%c%s%c%s%c%s%c%s\n", count, '\1', time, '\1', name, '\1', date, '\1', client->pers.guid, '\1', ((ip) ? (ip) : ("noip")), '\1', realName);
 
 	r->count = count;
 	r->time  = time;
@@ -3808,7 +3808,7 @@ char *G_OC_MediStats(void *client, int count, int time)
 	}
 	G_StrToLower(level.layout);
 
-	return G_OC_Stats(va("stats/%s/%s/med.dat", map, level.layout), (client_t *) client, count, time);
+	return G_OC_Stats(va("stats/%s/%s/med.dat", map, level.layout), (gclient_t *) client, count, time);
 }
 
 /*
@@ -3834,7 +3834,7 @@ char *G_OC_WinStats(void *client, int count, int time)
 	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
 		count = 1;
 
-	return G_OC_Stats(va("stats/%s/%s/win.dat", map, level.layout), (client_t *) client, count, time);
+	return G_OC_Stats(va("stats/%s/%s/win.dat", map, level.layout), (gclient_t *) client, count, time);
 }
 
 
@@ -4771,7 +4771,7 @@ void Cmd_AskLayout_f(gentity_t *ent)
 	}
 	else
 	{
-		strncpy(layout, trap_Argv(1), sizeof(layout));
+		trap_Argv(1, layout, sizeof(layout));
 	}
 
 	G_ClientPrint(ent, G_OC_ParseLayoutFlags(layout), CLIENT_NULL);
@@ -5031,13 +5031,6 @@ char *G_OC_ParseLayoutFlags(char *layout)
 		strcat(ret, G_OC_OCFLAG_ATYRANT_NAME);
 	}
 
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOHEIGHTLOST))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_NOHEIGHTLOST_NAME);
-	}
-
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_LUCIJUMP))
 	{
 		if(num++)
@@ -5162,9 +5155,6 @@ qboolean G_OC_LayoutExtraFlags(char *layout)
 		return qtrue;
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ATYRANT))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOHEIGHTLOST))
 		return qtrue;
 
 	return qfalse;
