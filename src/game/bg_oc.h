@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _G_OC_H
 #define _G_OC_H
 
+/* Nasty preprocessor (ab|over-)use begins here. */
+
 /*
  * bg_oc.h
  *
@@ -60,7 +62,6 @@ extern int oc_gameMode;
 
 // TODO: height is not lost jumping down ramps?
 // TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
-// TODO: server responds to askLayout and askForLayout, etc; add commands
 // TODO: buildables cannot be built inside of each other while buildableOverride is disabled
 // TODO: Fix need for extra newline in g_connectMessage, and add it if it doesn't exist
 // TODO: add sectorb7 granger OC
@@ -1578,7 +1579,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_OCFLAG_ATYRANT_NAME      "Tyrants"
 	#define G_OC_OCFLAG_NOHEIGHTLOST_NAME "OptimizeJumps"
 
-	void     G_OC_ParseLayoutFlags(char *layout, char *out);
+	char     *G_OC_ParseLayoutFlags(char *layout);
 	qboolean G_OC_TestLayoutFlag(char *layout, char *flag);
 	qboolean G_OC_LayoutExtraFlags(char *layout);
 
@@ -1688,7 +1689,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			level.votePassThreshold = g_mapVotePercent.value + percentAddition; \
 			Com_sprintf(level.voteString, sizeof(level.voteString), "!map %s %s", arg2, arg3); \
 			Com_sprintf(level.voteDisplayString, \
-			sizeof(level.voteDisplayString), "Change to map '%s^7' using layout '%s^7'", arg2, arg3); \
+			sizeof(level.voteDisplayString), "Change to map '%s^7' using layout '%s^7'%s", arg2, arg3, G_OC_ParseLayoutFlags(arg3)); \
 		} \
 		else \
 		{ \
@@ -2386,6 +2387,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	void Cmd_Hide_f(gentity_t *ent);
 	void Cmd_TestHidden_f(gentity_t *ent);
 	void Cmd_QuickRestartOC_f(gentity_t *ent);
+	void Cmd_AskLayout_f(gentity_t *ent);
 	void Cmd_AutoAngle_f(gentity_t *ent);
 	void Cmd_AutoUnAngle_f(gentity_t *ent);
 
@@ -2468,6 +2470,18 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{"autoAngleEnable", 0, Cmd_AutoAngle_f}, \
 	{"disableAutoAngle", 0, Cmd_AutoUnAngle_f}, \
 		{"autoAngleDisable", 0, Cmd_AutoUnAngle_f}, \
+	{"askLayout", 0, Cmd_AskLayout_f}, \
+		{"askForLayout", 0, Cmd_AskLayout_f}, \
+		{"layoutInfo", 0, Cmd_AskLayout_f}, \
+		{"layoutInformation", 0, Cmd_AskLayout_f}, \
+		{"getLayoutInfo", 0, Cmd_AskLayout_f}, \
+		{"getLayoutInformation", 0, Cmd_AskLayout_f}, \
+		{"askForLayoutInfo", 0, Cmd_AskLayout_f}, \
+		{"askForLayoutInformation", 0, Cmd_AskLayout_f}, \
+		{"askLayoutInfo", 0, Cmd_AskLayout_f}, \
+		{"askLayoutInformation", 0, Cmd_AskLayout_f}, \
+		{"layoutOptions", 0, Cmd_AskLayout_f}, \
+		{"getLayoutOptions", 0, Cmd_AskLayout_f}, \
 	{"lol", CMD_MESSAGE, G_OC_Lol},
 
 	#define G_OC_PTRCRestore() \

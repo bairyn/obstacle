@@ -5098,6 +5098,34 @@ void Cmd_QuickRestartOC_f(gentity_t *ent)
 	G_OC_RestartClient(ent, 1, 1);
 }
 
+void Cmd_AskLayout_f(gentity_t *ent)
+{
+	static char layout[MAX_STRING_CHARS];
+
+	if(!ent)
+	{
+		ADMP("Cannot be run as console\n");
+		return;
+	}
+
+	if(!BG_OC_OCMode())
+	{
+		ADMP("Can only be used during an obstacle course\n");
+		return;
+	}
+
+	if(trap_Argc() > 1)
+	{
+		strncpy(layout, level.layout, sizeof(layout));
+	}
+	else
+	{
+		strncpy(layout, trap_Argv(1), sizeof(layout));
+	}
+
+	G_ClientPrint(ent, G_OC_ParseLayoutFlags(layout), CLIENT_NULL);
+}
+
 void Cmd_TeleportToCheckpoint_f(gentity_t *ent)
 {
 	gentity_t *dest;
@@ -5228,14 +5256,14 @@ Used to cat onto vote strings
 ==================
 */
 
-void G_OC_ParseLayoutFlags(char *layout, char *out)
+char *G_OC_ParseLayoutFlags(char *layout)
 {
-	// TODO: add length to avoid overflows
-
 	int  num = 0;
 	char ret[MAX_STRING_CHARS];
 
-	strcpy(out, "");
+	static char out[4 * MAX_STRING_CHARS];
+
+	out[0] = 0;
 
 //	if(!BG_OC_OCMode())
 //		return;
@@ -5245,7 +5273,7 @@ void G_OC_ParseLayoutFlags(char *layout, char *out)
 	if(!G_OC_LayoutExtraFlags(layout))  // no extra flags
 		return;
 
-	strcpy(ret, " (layout has options '");
+	strcpy(ret, " (layout uses options '");
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ONEARM))
 	{
