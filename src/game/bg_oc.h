@@ -63,9 +63,10 @@ extern int oc_gameMode;
 // TODO: height is not lost jumping down ramps !! (ABSOLUTELY MUST FIX BEFORE 2.0)
 // TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
 // TODO: add sectorb7 granger OC
-// TODO: add flag 'l' for luci-jump course (players (humans?) spawn with luci?  Players will have to reload ammo at a reactor)
+
 // TODO: fix player names not showing (can be post-2.0)
 // TODO: add listlayouts to callvote section (post-2.0)
+// TODO: 'x' is building 'x', if it's worth adding (post-2.0)
 
 //<+===============================================+><+===============================================+>
 // game only stuff
@@ -1557,7 +1558,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_OCFLAG_ADRAGOON          "h"
 	#define G_OC_OCFLAG_ADRAGOONUPG       "^h"
 	#define G_OC_OCFLAG_ATYRANT           "t"
-	#define G_OC_OCFLAG_NOHEIGHTLOST      "j"
+	#define G_OC_OCFLAG_LUCIJUMP          "u"
 
 	// oc flag names
 	#define G_OC_OCFLAG_ONEARM_NAME       "UseOneArm"
@@ -1575,7 +1576,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_OCFLAG_ADRAGOON_NAME     "Dragoons"
 	#define G_OC_OCFLAG_ADRAGOONUPG_NAME  "AdvDragoons"
 	#define G_OC_OCFLAG_ATYRANT_NAME      "Tyrants"
-	#define G_OC_OCFLAG_NOHEIGHTLOST_NAME "OptimizeJumps"
+	#define G_OC_OCFLAG_LUCIJUMP_NAME     "LuciferCannons"
 
 	char     *G_OC_ParseLayoutFlags(char *layout);
 	qboolean G_OC_TestLayoutFlag(char *layout, char *flag);
@@ -2183,7 +2184,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			if(pm.cmd.upmove < 0) \
 				pm.cmd.upmove = 0; \
  \
-			/* find the first class to evolve to */ \
+			/* find the first class to which to evolve */ \
 			if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGER)) \
 				newClass = PCL_ALIEN_BUILDER0; \
 			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGERUPG)) \
@@ -2205,7 +2206,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			else if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ATYRANT)) \
 				newClass = PCL_ALIEN_LEVEL4; \
  \
-			/* furthur unnecessary checks for wallwaking and some other checks */ \
+			/* further unnecessary checks for wallwaking and some other checks */ \
 			if(!(client->ps.stats[STAT_STATE] & SS_WALLCLIMBING) && client->pers.teamSelection == TEAM_ALIENS && !(client->ps.stats[STAT_STATE] & SS_HOVELING) && client->ps.stats[STAT_HEALTH] > 0 && G_RoomForClassChange(ent, newClass, infestOrigin)) \
 			{ \
 				if(currentClass != newClass) \
@@ -2302,6 +2303,13 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 						(G_OC_AllArms(client->pers.arms) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(client->pers.arms))) \
 					))  /* messy mess of tests if client can buy equipment */ \
 					{ \
+						int commonWeapon = WP_MACHINEGUN; \
+ \
+						if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_LUCIJUMP)) \
+						{ \
+							commonWeapon = WP_LUCIFER_CANNON; \
+						} \
+ \
 						if(client->ps.stats[STAT_WEAPON] != WP_MACHINEGUN) \
 						{ \
 							client->ps.stats[STAT_WEAPON] = WP_MACHINEGUN; \

@@ -2758,9 +2758,12 @@ int G_OC_CanUseBonus(gentity_t *ent)
 	{
 		G_ClientCP(ent, G_OC_NOBONUSJETPACKMESSAGE, NULL, CLIENT_SPECTATORS);
 	}
-	if(BG_InventoryContainsWeapon(WP_LUCIFER_CANNON, ent->client->ps.stats))
+	if(!G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_LUCIJUMP))
 	{
-		G_ClientCP(ent, G_OC_NOBONUSLCANNONMESSAGE, NULL, CLIENT_SPECTATORS);
+		if(BG_InventoryContainsWeapon(WP_LUCIFER_CANNON, ent->client->ps.stats))
+		{
+			G_ClientCP(ent, G_OC_NOBONUSLCANNONMESSAGE, NULL, CLIENT_SPECTATORS);
+		}
 	}
 	if(BG_InventoryContainsWeapon(WP_FLAMER, ent->client->ps.stats))
 	{
@@ -3072,8 +3075,16 @@ int G_OC_ValidScrimWeapon(int weapon)
 	if(weapon == WP_BLASTER)
 		return 0;
 
-	if(weapon == WP_MACHINEGUN)
-		return 0;
+	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_LUCIJUMP))
+	{
+		if(weapon == WP_LUCIFER_CANNON)
+			return 0;
+	}
+	else
+	{
+		if(weapon == WP_MACHINEGUN)
+			return 0;
+	}
 
 	if(weapon == WP_HBUILD)
 		return 0;
@@ -5387,6 +5398,13 @@ char *G_OC_ParseLayoutFlags(char *layout)
 		strcat(ret, G_OC_OCFLAG_NOHEIGHTLOST_NAME);
 	}
 
+	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_LUCIJUMP))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, G_OC_OCFLAG_LUCIJUMP_NAME);
+	}
+
 	strcat(ret, "')");
 	strcpy(out, ret);
 }
@@ -5483,6 +5501,9 @@ qboolean G_OC_LayoutExtraFlags(char *layout)
 		return qtrue;
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ABASILISK))
+		return qtrue;
+
+	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_LUCIJUMP))
 		return qtrue;
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ABASILISKUPG))
