@@ -418,6 +418,7 @@ extern int oc_gameMode;
 	#define G_OC_PTRCDATA
 
 	#define G_OC_CVARS \
+	vmCvar_t g_alwaysSaveStats; \
 	vmCvar_t g_ocOnly; \
 	vmCvar_t g_ocWarmup; /* warmup time for scrims */ \
 	vmCvar_t g_statsEnabled; \
@@ -433,6 +434,7 @@ extern int oc_gameMode;
 	vmCvar_t g_endScrimVotePercent;
 
 	#define G_OC_EXTERNCVARS \
+	extern vmCvar_t g_alwaysSaveStats; \
 	extern vmCvar_t g_ocOnly; \
 	extern vmCvar_t g_ocWarmup; \
 	extern vmCvar_t g_statsEnabled; \
@@ -448,6 +450,7 @@ extern int oc_gameMode;
 	extern vmCvar_t g_endScrimVotePercent;
 
 	#define G_OC_CVARTABLE \
+	{ &g_alwaysSaveStats, "g_alwaysSaveStats", "0", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_ocOnly, "g_ocOnly", "0", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_ocWarmup, "g_ocWarmup", "20", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_statsEnabled, "g_statsEnabled", "1", CVAR_ARCHIVE, 0, qtrue  }, \
@@ -528,8 +531,20 @@ extern int oc_gameMode;
 	// game and balance stuff
 	//<+===============================================+>
 
-	char *G_OC_MediStats(gentity_t *ent, int count, int time);
-	char *G_OC_WinStats(gentity_t *ent, int count, int time);
+	char *G_OC_MediStats(gclient_t *client, int count, int time);
+	char *G_OC_WinStats(gclient_t *client, int count, int time);
+
+	typedef struct stat_s stat_t;
+	struct stat_s
+	{
+		int count;
+		int time;  // in ms
+		char name[MAX_STRING_CHARS];
+		char date[MAX_STRING_CHARS];
+		char guid[33];
+		char ip[MAX_STRING_CHARS];
+		char adminName[MAX_STRING_CHARS];
+	};
 
 	#define G_OC_NoDamageAlert() ((BG_OC_OCMode()) ? (1) : (0))
 	#define G_OC_CanBuildableBeDestoryedOnOtherTeam() ((BG_OC_OCMode()) ? (1) : (0))

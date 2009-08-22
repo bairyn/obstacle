@@ -1444,14 +1444,12 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 
 					if(!(t->flags & G_OC_SCRIMFLAG_NOTSINGLETEAM))
 					{
-						char *record = G_OC_MediStats(ent, level.totalMedistations, G_OC_SCRIMTIME);
+						char *record = G_OC_MediStats(ent->client, level.totalMedistations, G_OC_SCRIMTIME);
 						if(record && *record)
 						{
 							G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record), CLIENT_NULL);
 							G_LogPrintf(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s\n", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record));
 						}
-						if(strstr(record, "^s^f^r^e^e"))
-							BG_Free(record);
 					}
 				}
 			}
@@ -1515,25 +1513,20 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 				// player has won
 				G_OC_AppendMedi(ent->client->pers.medis, medi);
 				ent->client->pers.mediTime = ent->client->pers.aliveTime;
-				record = G_OC_MediStats(ent, level.totalMedistations, ent->client->pers.mediTime);
+				record = G_OC_MediStats(ent->client, level.totalMedistations, ent->client->pers.mediTime);
 				AP(va("print \"^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s\n\"", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
 				G_LogPrintf(va("^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s\n", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
 				G_ClientCP(ent, va("Medical Stations: %d/%d\n^2You Win!", level.totalMedistations, level.totalMedistations), NULL, CLIENT_SPECTATORS);
-				if(strstr(record, "^s^f^r^e^e"))
-					BG_Free(record);
 				return 0;
 			}
 			G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
 			G_ClientCP(ent, va("Medical Stations: %d/%d", G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations), "Medical Stations", CLIENT_SPECTATORS);
 			G_ClientPrint(ent, va("New Medi! (%d/%d)", G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations), CLIENT_SPECTATORS);
-			record = G_OC_MediStats(ent, G_OC_NumberOfMedis(ent->client->pers.medis), ent->client->pers.aliveTime);
+			record = G_OC_MediStats(ent->client, G_OC_NumberOfMedis(ent->client->pers.medis), ent->client->pers.aliveTime);
 			if(record && *record)
 			{
 				AP(va("print \"^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n\"", ent->client->pers.netname, G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record));
 				G_LogPrintf("^7%s^7 has used a new medi! (%d^7/%d^7) (%dm%ds%dms)%s\n", ent->client->pers.netname, G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations, MINS(ent->client->pers.aliveTime), SECS(ent->client->pers.aliveTime), MSEC(ent->client->pers.aliveTime), record);
-
-				if(strstr(record, "^s^f^r^e^e"))
-					BG_Free(record);
 			}
 		}
 	}
@@ -1816,14 +1809,12 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 
 					if(!(t->flags & G_OC_SCRIMFLAG_NOTSINGLETEAM))
 					{
-						char *record = G_OC_WinStats(ent, level.totalArmouries, G_OC_SCRIMTIME);
+						char *record = G_OC_WinStats(ent->client, level.totalArmouries, G_OC_SCRIMTIME);
 						if(record && *record)
 						{
 							G_ClientPrint(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record), CLIENT_NULL);
 							G_LogPrintf(NULL, va("^7%s^7 (%ss^7)^2 wins a record!%s\n", ent->client->pers.netname, G_OC_HumanNameForWeapon(t->weapon), record));
 						}
-						if(strstr(record, "^s^f^r^e^e"))
-							BG_Free(record);
 					}
 				}
 			}
@@ -1955,7 +1946,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 				char *record;
 				G_OC_AppendArm(ent->client->pers.arms, arm);
 				ent->client->pers.winTime = ent->client->pers.aliveTime;
-				record = G_OC_WinStats(ent, level.totalArmouries, ent->client->pers.winTime);
+				record = G_OC_WinStats(ent->client, level.totalArmouries, ent->client->pers.winTime);
 				if(level.totalArmouries == 1 || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
 				{
 					G_ClientCP(ent, va("^a^r^m^2You Win!"), "^a^r^m", CLIENT_SPECTATORS);
@@ -1977,8 +1968,6 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 						G_ClientCP(ent, va("^a^r^m^2You Win!"), "^a^r^m", CLIENT_SPECTATORS);
 					}
 				}
-				if(strstr(record, "^s^f^r^e^e"))
-					BG_Free(record);
 				return 0;
 			}
 			G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
@@ -3393,7 +3382,8 @@ void G_OC_Lol(gentity_t *ent)
 		G_ClientCP(ent, f->text3, NULL, CLIENT_SPECTATORS | CLIENT_NOTARGET | CLIENT_NEVERREPLACE);
 }
 
-// TODO: G_OC_*Stats are really, really crappy.  But they work for the most part, so they'll be OK for now
+
+//// STATS \\\\
 
 static void G_SanitiseNameWhitespaceColor(char *in, char *out, int len)
 {
@@ -3445,758 +3435,408 @@ static void G_SanitiseNameWhitespaceColor(char *in, char *out, int len)
 	*out = 0;
 }
 
-/*
-=================
-G_OC_CompareStats
-=================
-*/
-static int G_OC_CompareStats(const char *a, const char *b)
+static int G_OC_CompareStats(stat_t *a, stat_t *b)
 {
-    int countA;
-    int countB;
-    int scoreA;
-    int scoreB;
-    sscanf(a, "%d %d", &countA, &scoreA);
-    sscanf(b, "%d %d", &countB, &scoreB);
-    if(countA != countB)
-        return countB - countA;
-    else if(scoreA != scoreB)
-        return scoreA - scoreB;
-    else
-        return strcmp(a, b);  // alpha-order: count, time, name, date, guid, ip, adminname
-//    return 0;
+	if(a->count != b->count)
+		return b->count - a->count;
+
+	if(a->time != b->time)
+		return a->time  - b->time;
+
+	return 0;
+}
+
+static qboolean G_OC_StatsEqual(stat_t *a, stat_t *b)
+{
+	// return *a == *b
+
+	if(a->count != b->count)
+		return qfalse;
+
+	if(a->time  != b->time)
+		return qfalse;
+
+	if(strcmp(a->name,      b->name)      != 0)
+		return qfalse;
+
+	if(strcmp(a->date,      b->date)      != 0)
+		return qfalse;
+
+	if(strcmp(a->guid,      b->guid)      != 0)
+		return qfalse;
+
+	if(strcmp(a->ip,        b->ip)        != 0)
+		return qfalse;
+
+	if(strcmp(a->adminName, b->adminName) != 0)
+		return qfalse;
+
+	return qtrue;
+}
+
+static qboolean G_OC_SameGuy(stat_t *a, stat_t *b)
+{
+	if(a->guid      == b->guid)
+		return qtrue;
+
+	if(a->ip        == b->ip)
+		return qtrue;
+
+	if(a->adminName == b->adminName)
+		return qtrue;
+
+	return qfalse;
 }
 
 /*
 =================
-G_OC_SameGuy
+G_OC_Stats
 
-Test for another instance (test for guid, ip and admin name)
-=================
+Possible insert record into stats
+================
 */
-static int G_OC_SameGuy(gentity_t *ent, char *stats)  // there's a segfault somewhere in here
+static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int time)
 {
-    char *statsPtr, *ip;
-    char linebuf[MAX_STRING_CHARS];
-    char toTest[MAX_STRING_CHARS];
-    char realName[MAX_NAME_LENGTH] = {""};
-    char pureName[MAX_NAME_LENGTH] = {""};
-    char cleanName[MAX_NAME_LENGTH] = {""};
-    char userinfo[MAX_INFO_STRING];
-    int i = 0, j = 0, l = 0;
+	fileHandle_t f;
+	char line[ MAX_STRING_CHARS ];
+	int numRecords;
+	stat_t records[G_OC_STAT_MAXRECORDS + 1];  // there needs to be room for one more slot so that the new record can be compared
+	char *stat, *statHead;
+	int i, len;
+	stat_t *r;
+	stat_t currentRecord;
+	int record;
 
-    statsPtr = stats;
+	/// Userinfo variables ///
+	char name[MAX_NAME_LENGTH] = {""};
+	char realName[MAX_NAME_LENGTH] = {""};  // realname
+	char date[MAX_CVAR_VALUE_STRING] = {""};
+	qtime_t qt;
+	int t;
+	char *ip, *statsPos;
+	char userinfo[MAX_INFO_STRING];
+	char pureName[MAX_NAME_LENGTH] = {""};  // tmp
+	char cleanName[MAX_NAME_LENGTH] = {""};  // tmp
+	qboolean firstNewlineReached = qfalse;
 
-    trap_GetUserinfo(ent-g_entities, userinfo, sizeof(userinfo));
+	/// stats disabled? ///
+	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer >= G_OC_STAT_MAXRECORDS)
+		return "";
 
-    if(!(ip = Info_ValueForKey(userinfo, "ip")))
-      return 1;  // if for some reason ip cannot be parsed, return same guy
+	/// other checks ///
+	if(!BG_OC_OCMode() || !level.layout || !*level.layout)
+		return "";
 
-    G_SanitiseString(ent->client->pers.netname, cleanName, sizeof(cleanName));
-    realName[0] = '\0';
-    pureName[0] = '\0';
-    cleanName[0] = '\0';
-    for(i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[i]; i++)
-    {
-        if(!Q_stricmp(g_admin_admins[i]->guid, ent->client->pers.guid))
-        {
-            l = g_admin_admins[i]->level;
-            G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
-            if(Q_stricmp(cleanName, pureName))
-            {
-                Q_strncpyz(realName, g_admin_admins[i]->name, sizeof(realName));
-            }
-            break;
-        }
-    }
-    i = 0;
-    if(realName[0] && pureName[0])
-        strcpy(realName, pureName);
-    else if(cleanName[0])
-        strcpy(realName, cleanName);
-    else
-        strcpy(realName, "UnnamedPlayer");  // How can this happen?
+	if(g_cheats.integer)
+	{
+		G_ClientPrint(ent, "Cannot store record with cheats enabled", CLIENT_NULL);
+		return "";
+	}
 
-    while(*statsPtr)
-    {
-      if(i >= sizeof(linebuf) - 1)
-      {
-        G_Printf(S_COLOR_RED "ERROR: line overflow");
-        return 0;
-      }
-      linebuf[i++] = *statsPtr;
-      linebuf[i]   = '\0';
-      if(*statsPtr == '\n')
-      {
-        i = 0;
-        while(linebuf[i++] > 1);  // skip the count
-        while(linebuf[i++] > 1);  // skip the time
-        while(linebuf[i++] > 1);  // skip the (aliased) name
-        while(linebuf[i++] > 1);  // skip the date
+	numRecords = g_statsRecords.integer;
+	if(numRecords < 0)
+		return "";
+	if(numRecords >= G_OC_STAT_MAXRECORDS)
+		numRecords = G_OC_STAT_MAXRECORDS;
 
-        while(linebuf[i] > 1)     // parse and test for the guid
-        {
-            toTest[j++] = linebuf[i++];
-            toTest[j]   = '\0';
-        }
-        if(!Q_stricmp(ent->client->pers.guid, toTest))
-          return 1;
-        toTest[0] = j = 0;
-        while(linebuf[i++] > 1);  // skip the ip
-//        while(linebuf[i] > 1)     // parse and test for the ip
-//        {
-//            toTest[j++] = linebuf[i++];
-//            toTest[j]   = '\0';
-//        }
-        if(!Q_stricmp(ip, toTest))
-          return 1;
-        toTest[0] = j = 0;
-        while(linebuf[i] > 1)     // parse and test for admin name
-        {
-            toTest[j++] = linebuf[i++];
-            toTest[j]   = '\0';
-        }
-        if(!Q_stricmp(realName, toTest))
-          return 1;
-        toTest[0] = i = j = 0;
-      }
-      statsPtr++;
-    }
-    return 0;
-}
+	/// set userdata stuff ///
 
-/*
-=================
-strlcmp
-=================
-*/
-static int strlcmp(const char *a, const char *b, int len)
-{
-  const char *string1 = a;
-  const char *string2 = b;
+	G_SanitiseString(client->pers.netname, cleanName, sizeof(cleanName));
+	realName[0] = '\0';
+	pureName[0] = '\0';
+	cleanName[0] = '\0';
+	for(i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[i]; i++)
+	{
+		if(!Q_stricmp(g_admin_admins[i]->guid, client->pers.guid))
+		{
+			l = g_admin_admins[i]->level;
+			G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
+			if(Q_stricmp(cleanName, pureName))
+			{
+				Q_strncpyz(realName, g_admin_admins[i]->name, sizeof(realName));
+			}
+			break;
+		}
+	}
+	i = 0;
+	if(realName[0] && pureName[0])
+		strcpy(realName, pureName);
+	else if(cleanName[0])
+		strcpy(realName, cleanName);
+	else
+		strcpy(realName, "noname");
 
-  while(string1 - a < len && string2 - b < len && *string1 && *string2 && *string1 == *string2 && *string1 != '\n' && *string2 != '\n')
-  {
-    string1++;
-    string2++;
-  }
+	trap_GetUserinfo(ent - g_entities, userinfo, sizeof(userinfo));
+	ip = Info_ValueForKey(userinfo, "ip");
+	if(!ip)
+		return " - ip error";
 
-  return *string1 - *string2;
+	t = trap_RealTime(&qt);
+	trap_Cvar_VariableStringBuffer("gamedate", date, sizeof(date));
+	strcat(date, va(" %d:%02i", qt.tm_hour, qt.tm_min));
+
+	// set name
+	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name, sizeof(name));
+
+	/// load stats file ///
+	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
+	if( len < 0 )
+	{
+		trap_FS_FCloseFile(f);
+		if(trap_FS_FOpenFile(fileName, &f, FS_APPEND) < 0)
+		{
+			trap_FS_FCloseFile(f);
+			G_LogPrintf("G_OC_Stats: could not open %s\n", fileName);
+			return "";
+		}
+		else
+		{
+			trap_FS_FCloseFile(f);
+			len = trap_FS_FOpenFile(fileName, &f, FS_READ);
+		}
+	}
+	statHead = layout = BG_Alloc( len + 1 );
+	trap_FS_Read( layout, len, f );
+	stat[ len ] = '\0';
+	trap_FS_FCloseFile( f );
+
+	i = 0;
+	while( *stat )
+	{
+		if( i >= sizeof( line ) - 1 )
+		{
+			G_LogPrintf( S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
+			fileName, line );
+
+			BG_Free(statHead);
+
+			return "";
+		}
+
+		line[i++] = *layout;
+		line[i] = '\0';
+		if(*layout == '\n' && record < numRecords)
+		{
+			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
+			{
+				r = &records[record++];
+				char buf[MAX_STRING_CHARS];
+				char *p;
+
+				strncpy(buf, line, sizeof(buf));
+
+				memset(r, 0, sizeof(stat_t));
+
+				#define LOADBUF \
+				do \
+				{ \
+					p = buf; \
+ \
+					while(*p > 0x01 && p - buf < sizeof(buf) - 1) \
+					{ \
+						buf[p - buf] = *p; \
+ \
+						p++; \
+					} \
+ \
+					buf[p - buf] = 0; \
+				} while(0)
+
+				// count
+				LOADBUF;
+				r->count = atoi(buf);
+
+				// time
+				LOADBUF;
+				r->time  = atoi(buf);
+
+				// name
+				LOADBUF;
+				Com_sprintf(r->name, sizeof(r->name), "%s", buf);
+
+				// date
+				LOADBUF;
+				Com_sprintf(r->date, sizeof(r->date), "%s", buf);
+
+				// guid
+				LOADBUF;
+				Com_sprintf(r->guid, sizeof(r->guid), "%s", buf);
+
+				// ip
+				LOADBUF;
+				Com_sprintf(r->ip, sizeof(r->ip), "%s", buf);
+
+				// adminName
+				LOADBUF;
+				Com_sprintf(r->adminName, sizeof(r->adminName), "%s", buf);
+
+				#undef LOADBUF
+			}
+			else
+			{
+				firstNewlineReached = qtrue;
+			}
+		}
+
+		++stat;
+	}
+
+	/// add record ///
+	r = &records[record++];
+	Com_sprintf(stat, sizeof(stat), "%d%c%d%c%s%c%s%c%s%c%s%c%s\n", count, '\1', time, '\1', name, '\1', date, '\1', ent->client->pers.guid, '\1', ((ip) ? (ip) : ("noip")), '\1', realName);
+
+	r->count = count;
+	r->time  = time;
+	Com_sprintf(r->name, sizeof(r->name), "%s", name);
+	Com_sprintf(r->date, sizeof(r->date), "%s", date);
+	Com_sprintf(r->date, sizeof(r->date), "%s", client->pers.guid);
+	Com_sprintf(r->date, sizeof(r->date), "%s", ((ip) ? (ip) : ("noip")));
+	Com_sprintf(r->name, sizeof(r->name), "%s", realName);
+
+	memcpy(&currentRecord, r, sizeof(currentRecord));
+
+	qsort(records, record + 1, MAX_STRING_CHARS, (int(*)()) G_OC_CompareStats);
+
+	/// remove the worse stats from duplicate users ///
+	for(i = 0; i < record; i++)
+	{
+		int j;
+
+		for(j = i + 1; j < record; j++)
+		{
+			stat_t *a = &records[i], *b = &records[j];
+
+			if(G_OC_SameGuy(a, b))
+			{
+				if(G_OC_CompareStats(a, b) > 0)
+				{
+					// remove b
+					memmove(b - 1, b, numRecords - (b - records));
+
+					--record;
+				}
+				else
+				{
+					// remove a
+					memmove(a, a + 1, numRecords - 1 - (a - records));
+
+					--record;
+				}
+			}
+		}
+	}
+
+	record = MAX(record, numRecords - 1);  // truncate
+
+	#define WRITETHING(s) trap_FS_Write((s), strlen((s)), f)
+
+	#define WRITEFILE \
+	do \
+	{ \
+		char numString[MAX_STRING_CHARS]; \
+		int j; \
+		i = 0; \
+ \
+		len = trap_FS_FOpenFile(fileName, &f, FS_WRITE); \
+		if(len < 0) \
+		{ \
+			G_Printf("G_OC_Stats: could not open %s\n", fileName); \
+			return ""; \
+		} \
+ \
+		strncpy(numString, va("%d %d\n", level.totalArmouries, level.totalMedistations), sizeof(numstring)); \
+ \
+		G_Printf("G_OC_Stats: saving stats to %s\n", fileName); \
+ \
+		trap_FS_Write(numString, strlen(numString), f); \
+ \
+		/* Write file */ \
+		for(j = 0; j < record; j++) \
+		{ \
+			r = &records[j]; \
+ \
+			WRITETHING(va("%d\x01%d\x01%s\x01%s\x01%s\x01%s\x01%s\n", r->count, r->time, r->name, r->date, r->guid, r->ip, r->adminName)); \
+		} \
+ \
+		trap_FS_FCloseFile(f); \
+	} while(0)
+
+	/// Finish up ///
+	for(i = 0; i < record; i++)
+	{
+		r = &records[i];
+
+		if(G_OC_StatsEqual(r, &currentRecord))
+		{
+			static  char s[MAX_STRING_CHARS];
+
+			WRITEFILE;
+
+			Com_sprintf(s, MAX_STRING_CHARS, " ^2New Record!: #%d^7", record + 1);
+
+			return s;
+		}
+	}
+
+	if(g_alwaysSaveStats.integer)
+	{
+		WRITEFILE;
+	}
+
+	#undef WRITEFILE
+	#undef WRITETHING
+
+	return "";
 }
 
 /*
 =================
 G_OC_MediStats
 
-'type: variable': a variable of type type
-*seperator*: the seperator char, 0x01
-
-First line is:
-
-'totalArmouries' 'totalMedistations'
-
-The following lines represent a player record:
-
-'num: count'*seperator*'num: timeInMS'*seperator*'str: date'*seperator*'str: guid'*seperator*'str: ip'*seperator*'str: adminName'
-=================
+Medi stats
+================
 */
-char *G_OC_MediStats(gentity_t *ent, int count, int time)
+char *G_OC_MediStats(gclient_t *client, int count, int time)
 {
-	int worstCount = level.totalMedistations;
-	int worstTime = 0;
 	char map[MAX_QPATH];
-	char fileName[MAX_OSPATH];
-	char stat[MAX_STRING_CHARS];
-	char stats[MAX_STRING_CHARS * 8];
-	fileHandle_t f;
-	int len, line = 0, record = 0, i = 0, j = 0, k = 0, ssss;
-	char *statsh, *stats2, *statsh2;
-	char buf[G_OC_STAT_MAXRECORDS][MAX_STRING_CHARS];
-	char data[G_OC_STAT_MAXRECORDS];
-	char name[MAX_NAME_LENGTH] = {""};
-	char realName[MAX_NAME_LENGTH] = {""};
-	char pureName[MAX_NAME_LENGTH] = {""};
-	char cleanName[MAX_NAME_LENGTH] = {""};
-	char date[MAX_CVAR_VALUE_STRING] = {""};
-	qtime_t qt;
-	int t;
-	char *ip, *statsPos;
-	char userinfo[MAX_INFO_STRING];
-	int l;
-	int records;
-
-	// stats disabled?
-	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer >= G_OC_STAT_MAXRECORDS)
-		return "";
-
-	// other checks
-	if(!BG_OC_OCMode() || !level.layout || !*level.layout)
-		return "";
-
-	if(g_cheats.integer)
-	{
-		G_ClientPrint(ent, "Cannot store record with cheats enabled", CLIENT_NULL);
-		return "";
-	}
-
-	// initialize values
-
-	l = 0;
-	records = ((g_statsRecords.integer > 0) ? (g_statsRecords.integer) : (1));
-	G_SanitiseString(ent->client->pers.netname, cleanName, sizeof(cleanName));
-	realName[0] = '\0';
-	pureName[0] = '\0';
-	cleanName[0] = '\0';
-	for(i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[i]; i++)
-	{
-		if(!Q_stricmp(g_admin_admins[i]->guid, ent->client->pers.guid))
-		{
-			l = g_admin_admins[i]->level;
-			G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
-			if(Q_stricmp(cleanName, pureName))
-			{
-				Q_strncpyz(realName, g_admin_admins[i]->name, sizeof(realName));
-			}
-			break;
-		}
-	}
-	i = 0;
-	if(realName[0] && pureName[0])
-		strcpy(realName, pureName);
-	else if(cleanName[0])
-		strcpy(realName, cleanName);
-	else
-		strcpy(realName, "noname");
-
-	trap_GetUserinfo(ent - g_entities, userinfo, sizeof(userinfo));
-	ip = Info_ValueForKey(userinfo, "ip");
-	if(!ip)
-		return " - ip error";
-
-	t = trap_RealTime(&qt);
-	trap_Cvar_VariableStringBuffer("gamedate", date, sizeof(date));
-	strcat(date, va(" %d:%02i", qt.tm_hour, qt.tm_min));
-
-	strcpy(name, ent->client->pers.netname);
-	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name, sizeof(name));
 
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
 	{
-		G_Printf("MediStats(): no map is loaded\n");
+		G_LogPrintf("G_OC_MediStats: no map is loaded\n");
 		return "";
 	}
 	G_StrToLower(level.layout);
-	Com_sprintf(fileName, sizeof(fileName), "stats/%s/%s/med.dat", map, level.layout);
 
-	if(!ip || !Q_stricmp(ip, "noip") || !Q_stricmp(ent->client->pers.guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
-	{
-		G_ClientPrint(ent, "^3Your client is out of date.  You will ^1NOT^3 be able to set records.  Please replace your client executable with the one at ^2http://trem.tjw.org/backport/^3 and reconnect.", CLIENT_SPECTATORS);
-		return "";
-	}
-
-	// input into stats
-
-	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
-	if(len < 0)
-	{
-		trap_FS_FCloseFile(f);
-		if(trap_FS_FOpenFile(fileName, &f, FS_APPEND) < 0)
-		{
-			trap_FS_FCloseFile(f);
-			G_Printf("medistats: could not open %s\n", fileName);
-			return "";
-		}
-		else
-		{
-			trap_FS_FCloseFile(f);
-			len = trap_FS_FOpenFile(fileName, &f, FS_READ);
-		}
-	}
-
-	strcpy(stats, va("%d %d\n", level.totalArmouries, level.totalMedistations));
-	statsh    = BG_Alloc(len + 1);
-	trap_FS_Read(statsh, len, f);
-	*(statsh + len) = '\0';
-	if(len >= MAX_STRING_CHARS * 7)
-	{
-	BG_Free(statsh);
-	return " - overflow caught: file too big";
-	}
-	statsh2 = statsh;
-	while(*statsh2 && *statsh2++ != '\n');
-	strcat(stats, (len) ? (statsh2) : (""));
-	BG_Free(statsh);
-	stats2 = statsPos = stats + strlen(va("%d %d\n", level.totalArmouries, level.totalMedistations));
-
-	trap_FS_FCloseFile(f);
-
-	// update stats in buffer
-	// add the new stat
-	Com_sprintf(stat, sizeof(stat), "%d%c%d%c%s%c%s%c%s%c%s%c%s\n", count, '\1', time, '\1', name, '\1', date, '\1', ent->client->pers.guid, '\1', ((ip) ? (ip) : ("noip")), '\1', realName);
-
-	// explode into buf
-	while(*stats2)
-	{
-		buf[line][i++] = *stats2;
-		buf[line][i] = '\0';
-		if(*stats2 == '\n')
-		{
-			i = 0;
-			if(++line >= records)
-			{
-				break;
-			}
-		}
-		stats2++;
-	}
-	stats2 = statsPos;
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
-	// if the same guy has another stat..
-	if(G_OC_SameGuy(ent, stats2))
-	{
-		// iterate through each stat, and return if there is a better time
-		for(i = 0; i < line; i++)
-		{
-			if(G_OC_SameGuy(ent, buf[i]))
-			{
-				k = 0;
-				data[0] = j = 0;
-				while(buf[i][k] > 1)  // parse count
-				{
-					data[j++] = buf[i][k++];
-					data[j]   = '\0';
-				} k++;
-				ssss = atoi(data);
-				if(ssss > count)
-					return "";
-
-				data[0] = j = 0;
-				while(buf[i][k] > 1)  // parse time
-				{
-					data[j++] = buf[i][k++];
-					data[j]   = '\0';
-				}  k++;
-				if(atoi(data) < time && ssss == count)
-					return "";
-			}
-		} i = k = 0;
-		// guy broke his own record, so remove all old records
-		test:  // JMP for duplicates
-		for(i = 0; i < line; i++)
-		{
-			if(G_OC_SameGuy(ent, buf[i]))
-			{
-	//                while(*stats2 && strlcmp(buf[i], *stats2++, MAX_STRING_CHARS));
-	//                if(!*stats2--)
-	//                    return " - ^1Error removing duplicate stats";  // marker
-	//                memmove(stats2, stats2 + strlen(buf[i]) + 1, strlen(buf[i]) + 1);  // this line is no longer needed
-				memmove(buf[i], buf[i + 1], (line - i) * sizeof(buf[0]));
-				memset(buf[line--], 0, sizeof(buf[0]));
-				goto test;
-			}
-		}
-	}
-	stats2 = statsPos;
-	// if the guy isn't on the top x, return -- NOTE: removing / beating old records will bypass the list not full check, but if the guy beat a record that's already on the list, the new record is also going to be on the list; changing g_statsRecords will also not affect it, because the old stats have either been truncated before parsing, or more room for records is open anyway; and, if the order is wrong, which should only be possible by manually editing the files, and g_statsRecords is lowered, this will still not be affected just as the previous, but loss of some records data is possible: the records, regardless of order, up to g_statsRecords are going to be parsed and handled. If the order is correct, this would not be a problem, because the worse times will be truncated. Thus manual resorting is hazardous, and not advised.
-	if(line >= records)
-	{
-		for(i = 0; i < line; i++)
-		{
-			k = 0;
-			data[0] = j = 0;
-			while(buf[i][k] > 1)  // parse count
-			{
-				data[j++] = buf[i][k++];
-				data[j]   = '\0';
-			} k++;
-			if(atoi(data) <= worstCount)
-				worstCount = atoi(data);
-		} i = k = 0;
-
-		for(i = 0; i < line; i++)
-		{
-			k = 0;
-			data[0] = j = 0;
-			while(buf[i][k] > 1)  // parse count
-			{
-				data[j++] = buf[i][k++];
-				data[j]   = '\0';
-			} k++;
-			data[0] = j = 0;
-			if(atoi(data) <= worstCount)
-			{
-			  while(buf[i][k] > 1)  // parse time
-			  {
-				  data[j++] = buf[i][k++];
-				  data[j]   = '\0';
-			  } k++;
-			  if(atoi(data) >= worstTime)
-				  worstTime = atoi(data);
-			}
-		} i = k = 0;
-
-		if(count < worstCount)
-			return "";
-		if(count == worstCount && time > worstTime)
-			return "";
-	}
-	// add the record - if there's no space, remove the last records until there is (since the list was sorted, old scores can be truncated.  See previous comment for data loss details)
-	while(line >= records)
-	{
-		memset(buf[--line], 0, sizeof(buf[0]));
-	}
-	strcpy(buf[line++], stat);
-	// truncate -- Not needed
-	// sort
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
-	// parse for the record # - if not found, return
-	record = 0;
-	for(i = 0; i < line; i++)
-	{
-		record++;
-		if(!strlcmp(buf[i], stat, sizeof(buf[0])))
-		{
-			break;
-		}
-	}
-	if(record <= 0)
-		return " - ^1Error retrieving record id, not saving stat";
-	// implode buf into stats
-	stats2 = statsPos;
-	memset(stats2, 0, sizeof(stats) - (stats2 - stats));
-	for(i = 0; i < line; i++)
-	{
-		strcat(stats2, buf[i]);
-	}
-	//
-	// output updated stats
-	len = trap_FS_FOpenFile(fileName, &f, FS_WRITE);
-	if(len < 0)
-	{
-		G_Printf("medistats: could not open %s\n", fileName);
-		return "";
-	}
-	stats2 = statsPos;
-
-	G_Printf("medistats: saving stats to %s\n", fileName);
-
-	trap_FS_Write(stats, strlen(stats), f);
-
-	trap_FS_FCloseFile(f);
-
-	if(record)
-	{
-		char *s = BG_Alloc(MAX_STRING_CHARS);
-		Com_sprintf(s, MAX_STRING_CHARS, " ^s^f^r^e^e^2New Record!: #%d^7", record);
-		return s;
-	}
-	return "";
+	return G_OC_Stats(va("stats/%s/%s/med.dat", map, level.layout), client, count, time);
 }
 
 /*
 =================
 G_OC_WinStats
-=================
+
+Armoury stats
+================
 */
-char *G_OC_WinStats(gentity_t *ent, int count, int time)
+char *G_OC_WinStats(gclient_t *client, int count, int time)
 {
-	int worstCount = level.totalArmouries;
-	int worstTime = 0;
 	char map[MAX_QPATH];
-	char fileName[MAX_OSPATH];
-	char stat[MAX_STRING_CHARS];
-	char stats[MAX_STRING_CHARS * 8];
-	fileHandle_t f;
-	int len, line = 0, record = 0, i = 0, j = 0, k = 0, ssss;
-	char *statsh, *stats2, *statsh2;
-	char buf[G_OC_STAT_MAXRECORDS][MAX_STRING_CHARS];
-	char data[G_OC_STAT_MAXRECORDS];
-	char name[MAX_NAME_LENGTH] = {""};
-	char realName[MAX_NAME_LENGTH] = {""};
-	char pureName[MAX_NAME_LENGTH] = {""};
-	char cleanName[MAX_NAME_LENGTH] = {""};
-	char date[MAX_CVAR_VALUE_STRING] = {""};
-	qtime_t qt;
-	int t;
-	char *ip, *statsPos;
-	char userinfo[MAX_INFO_STRING];
-	int l;
-	int records;
-
-	// never have any differences in count if ONEARM is on
-	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
-		count = 1;
-
-	// stats disabled?
-	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer > G_OC_STAT_MAXRECORDS)
-		return "";
-
-	// other checks
-	if(!BG_OC_OCMode() || !level.layout || !*level.layout)
-		return "";
-
-	if(g_cheats.integer)
-	{
-		G_ClientPrint(ent, "Cannot store record with cheats enabled", CLIENT_NULL);
-		return "";
-	}
-
-	// initialize values
-
-	l = 0;
-	records = ((g_statsRecords.integer > 0) ? (g_statsRecords.integer) : (1));
-	G_SanitiseString(ent->client->pers.netname, cleanName, sizeof(cleanName));
-	realName[0] = '\0';
-	pureName[0] = '\0';
-	cleanName[0] = '\0';
-	for(i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[i]; i++)
-	{
-		if(!Q_stricmp(g_admin_admins[i]->guid, ent->client->pers.guid))
-		{
-			l = g_admin_admins[i]->level;
-			G_SanitiseString(g_admin_admins[i]->name, pureName, sizeof(pureName));
-			if(Q_stricmp(cleanName, pureName))
-			{
-				Q_strncpyz(realName, g_admin_admins[i]->name, sizeof(realName));
-			}
-			break;
-		}
-	}
-	i = 0;
-	if(realName[0] && pureName[0])
-		strcpy(realName, pureName);
-	else if(cleanName[0])
-		strcpy(realName, cleanName);
-	else
-		strcpy(realName, "noname");
-
-	trap_GetUserinfo(ent - g_entities, userinfo, sizeof(userinfo));
-	ip = Info_ValueForKey(userinfo, "ip");
-	if(!ip)
-		return " - ip error";
-
-	t = trap_RealTime(&qt);
-	trap_Cvar_VariableStringBuffer("gamedate", date, sizeof(date));
-	strcat(date, va(" %d:%02i", qt.tm_hour, qt.tm_min));
-
-	strcpy(name, ent->client->pers.netname);
-	G_SanitiseNameWhitespaceColor(ent->client->pers.netname, name, sizeof(name));
 
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
 	{
-		G_Printf("WinStats(): no map is loaded\n");
+		G_LogPrintf("G_OC_WinStats: no map is loaded\n");
 		return "";
 	}
 	G_StrToLower(level.layout);
-	Com_sprintf(fileName, sizeof(fileName), "stats/%s/%s/win.dat", map, level.layout);
 
-	if(!ip || !Q_stricmp(ip, "noip") || !Q_stricmp(ent->client->pers.guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
-	{
-		G_ClientPrint(ent, "^3Your client is out of date.  You will ^1NOT^3 be able to set records.  Please replace your client executable with the one at ^2http://trem.tjw.org/backport/^3 and reconnect.", CLIENT_SPECTATORS);
-		return "";
-	}
+	// if ONEARM is set, always treat count as 1
+	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+		count = 1;
 
-	// input into stats
-
-	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
-	if(len < 0)
-	{
-		trap_FS_FCloseFile(f);
-		if(trap_FS_FOpenFile(fileName, &f, FS_APPEND) < 0)
-		{
-			trap_FS_FCloseFile(f);
-			G_Printf("winstats: could not open %s\n", fileName);
-			return "";
-		}
-		else
-		{
-			trap_FS_FCloseFile(f);
-			len = trap_FS_FOpenFile(fileName, &f, FS_READ);
-		}
-	}
-
-	strcpy(stats, va("%d %d\n", level.totalArmouries, level.totalMedistations));
-	statsh = BG_Alloc(len + 1);
-	trap_FS_Read(statsh, len, f);
-	*(statsh + len) = '\0';
-	if(len >= MAX_STRING_CHARS * 7)
-	{
-		BG_Free(statsh);
-		return " - overflow caught: file too big";
-	}
-	statsh2 = statsh;
-	while(*statsh2 && *statsh2++ != '\n');
-	strcat(stats, (len) ? (statsh2) : (""));
-	BG_Free(statsh);
-	stats2 = statsPos = stats + strlen(va("%d %d\n", level.totalArmouries, level.totalMedistations));
-
-	trap_FS_FCloseFile(f);
-
-	// update stats in buffer
-	// add the new stat
-	Com_sprintf(stat, sizeof(stat), "%d%c%d%c%s%c%s%c%s%c%s%c%s\n", count, '\1', time, '\1', name, '\1', date, '\1', ent->client->pers.guid, '\1', ((ip) ? (ip) : ("noip")), '\1', realName);
-
-	// explode into buf
-	while(*stats2)
-	{
-		buf[line][i++] = *stats2;
-		buf[line][i] = '\0';
-		if(*stats2 == '\n')
-		{
-			i = 0;
-			if(++line >= records)
-			{
-				break;
-			}
-		}
-		stats2++;
-	}
-	stats2 = statsPos;
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
-	// if the same guy has another stat..
-	if(G_OC_SameGuy(ent, stats2))
-	{
-		// iterate through each stat, and return if there is a better time
-		for(i = 0; i < line; i++)
-		{
-			if(G_OC_SameGuy(ent, buf[i]))
-			{
-				k = 0;
-				data[0] = j = 0;
-				while(buf[i][k] > 1)  // parse count
-				{
-					data[j++] = buf[i][k++];
-					data[j]   = '\0';
-				} k++;
-				ssss = atoi(data);
-				if(ssss > count)
-					return "";
-
-				data[0] = j = 0;
-				while(buf[i][k] > 1)  // parse time
-				{
-					data[j++] = buf[i][k++];
-					data[j]   = '\0';
-				} k++;
-				if(atoi(data) < time && ssss == count)
-					return "";
-			}
-		} i = k = 0;
-		// guy broke his own record, so remove all old records
-		test:  // JMP for duplicates
-		for(i = 0; i < line; i++)
-		{
-			if(G_OC_SameGuy(ent, buf[i]))
-			{
-	//                while(*stats2 && strlcmp(buf[i], *stats2++, MAX_STRING_CHARS));
-	//                if(!*stats2--)
-	//                    return " - ^1Error removing duplicate stats";  // marker
-	//                memmove(stats2, stats2 + strlen(buf[i]) + 1, strlen(buf[i]) + 1);  // this line is no longer needed
-				memmove(buf[i], buf[i + 1], (line - i) * sizeof(buf[0]));
-				memset(buf[line--], 0, sizeof(buf[0]));
-				goto test;
-			}
-		}
-	}
-	stats2 = statsPos;
-	// if the guy isn't on the top x, return -- NOTE: removing / beating old records will bypass the list not full check, but if the guy beat a record that's already on the list, the new record is also going to be on the list; changing g_statsRecords will also not affect it, because the old stats have either been truncated before parsing, or more room for records is open anyway; and, if the order is wrong, which should only be possible by manually editing the files, and g_statsRecords is lowered, this will still not be affected just as the previous, but loss of some records data is possible: the records, regardless of order, up to g_statsRecords are going to be parsed and handled. If the order is correct, this would not be a problem, because the worse times will be truncated. Thus manual resorting is hazardous, and not advised.
-	if(line >= records)
-	{
-		for(i = 0; i < line; i++)
-		{
-			k = 0;
-			data[0] = j = 0;
-			while(buf[i][k] > 1)  // parse count
-			{
-				data[j++] = buf[i][k++];
-				data[j]   = '\0';
-			} k++;
-			if(atoi(data) <= worstCount)
-				worstCount = atoi(data);
-		} i = k = 0;
-
-		for(i = 0; i < line; i++)
-		{
-			k = 0;
-			data[0] = j = 0;
-			while(buf[i][k] > 1)  // parse count
-			{
-				data[j++] = buf[i][k++];
-				data[j]   = '\0';
-			} k++;
-			data[0] = j = 0;
-			if(atoi(data) <= worstCount)
-			{
-			  while(buf[i][k] > 1)  // parse time
-			  {
-				  data[j++] = buf[i][k++];
-				  data[j]   = '\0';
-			  } k++;
-			  if(atoi(data) >= worstTime)
-				  worstTime = atoi(data);
-			}
-		} i = k = 0;
-
-		if(count < worstCount)
-			return "";
-		if(count == worstCount && time > worstTime)
-			return "";
-	}
-	// add the record - if there's no space, remove the last records until there is (since the list was sorted, old scores can be truncated.  See previous comment for data loss details)
-	while(line >= records)
-	{
-		memset(buf[--line], 0, sizeof(buf[0]));
-	}
-	strcpy(buf[line++], stat);
-	// truncate -- Not needed
-	// sort
-	qsort(buf, line, MAX_STRING_CHARS, (int(*)())G_OC_CompareStats);
-	// parse for the record # - if not found, return
-	record = 0;
-	for(i = 0; i < line; i++)
-	{
-		record++;
-		if(!strlcmp(buf[i], stat, sizeof(buf[0])))
-		{
-			break;
-		}
-	}
-	if(record <= 0)
-		return " - ^1Error retrieving record id, not saving stat";
-	// implode buf into stats
-	stats2 = statsPos;
-	memset(stats2, 0, sizeof(stats) - (stats2 - stats));
-	for(i = 0; i < line; i++)
-	{
-		strcat(stats2, buf[i]);
-	}
-	//
-	// output updated stats
-
-	len = trap_FS_FOpenFile(fileName, &f, FS_WRITE);
-	if(len < 0)
-	{
-		G_Printf("winstats: could not open %s\n", fileName);
-		return "";
-	}
-	stats2 = statsPos;
-
-	G_Printf("winstats: saving stats to %s\n", fileName);
-
-	trap_FS_Write(stats, strlen(stats), f);
-
-	trap_FS_FCloseFile(f);
-
-	if(record)
-	{
-		char *s = BG_Alloc(MAX_STRING_CHARS);
-		Com_sprintf(s, MAX_STRING_CHARS, " ^s^f^r^e^e^2New Record!: #%d^7", record);
-		return s;
-	}
-	return "";
+	return G_OC_Stats(va("stats/%s/%s/win.dat", map, level.layout), client, count, time);
 }
+
 
 /*
 =================
