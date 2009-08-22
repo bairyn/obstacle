@@ -57,20 +57,6 @@ int BG_OC_GetOCMode(void)  // should use faster BG_OC_OCMode() instead
 }
 
 //======================================================
-// height never lost
-//======================================================
-
-void BG_OC_SetHeightNeverLost(int c)
-{
-	oc_heightNeverLost = c;
-}
-
-int BG_OC_GetHeightNeverLost(void)
-{
-	return oc_heightNeverLost;
-}
-
-//======================================================
 // no wallwalk
 //======================================================
 

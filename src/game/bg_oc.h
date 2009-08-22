@@ -520,11 +520,6 @@ extern int oc_gameMode;
 			BG_OC_SetNoWallWalk(1); \
 		else \
 			BG_OC_SetNoWallWalk(0); \
- \
-		if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_NOHEIGHTLOST)) \
-			BG_OC_SetHeightNeverLost(1); \
-		else \
-			BG_OC_SetHeightNeverLost(0); \
 	} while(0)
 
 	//<+===============================================+>
@@ -3012,8 +3007,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	// special modes
 	//<+===============================================+>
 
-	void BG_OC_SetHeightNeverLost(int c);
-	int BG_OC_GetHeightNeverLost(void);
 	void BG_OC_SetNoWallWalk(int c);
 	int BG_OC_GetNoWallWalk(void);
 #endif /* if defined CGAME || defined GAME */
