@@ -3722,14 +3722,14 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 				if(G_OC_CompareStats(a, b) > 0)
 				{
 					// remove b
-					memmove(b - 1, b, (numRecords - (b - records)) * sizeof(stat_t));
+					memmove(b - 1, b, (record - (b - records)) * sizeof(stat_t));
 
 					--record;
 				}
 				else
 				{
 					// remove a
-					memmove(a, a + 1, (numRecords - 1 - (a - records)) * sizeof(stat_t));
+					memmove(a, a + 1, (record - 1 - (a - records)) * sizeof(stat_t));
 
 					--record;
 				}
