@@ -3717,21 +3717,19 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		{
 			stat_t *a = &records[i], *b = &records[j];
 
-			if(G_OC_SameGuy(a, b))
+			//if(G_OC_SameGuy(a, b))
+if(0)/////////////////////////////////////////////*********************************************************************TODO XXX XXX FIXME XXX XXX TODO****************************************************************************************************************************************///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* ============================ */
 			{
 				if(G_OC_CompareStats(a, b) > 0)
 				{
 					// remove b
-					memmove(b - 1, b, (record - (b - records)) * sizeof(stat_t));
-
-					--record;
+					memmove(b - 1, b, ((record--) - (b - records)) * sizeof(stat_t));
 				}
 				else
 				{
 					// remove a
-					memmove(a, a + 1, (record - 1 - (a - records)) * sizeof(stat_t));
-
-					--record;
+					memmove(a, a + 1, ((record--) - 1 - (a - records)) * sizeof(stat_t));
 				}
 			}
 		}
@@ -3927,6 +3925,8 @@ void Cmd_Stats_f(gentity_t *ent)
 		trap_FS_FCloseFile(f);
 
 		G_ClientPrint(ent, "stats: layout doesn't exist", CLIENT_NULL);
+
+		return;
 	}
 	else
 	{
@@ -4016,7 +4016,7 @@ void Cmd_Stats_f(gentity_t *ent)
 			line[i] = '\0';
 			if(*statsMediPtr == '\n')
 			{
-				char *prefix, *suffix;
+				char *prefix, *suffix, *prefix2, *suffix2;
 				char sanName[MAX_NAME_LENGTH];
 				char statString[MAX_STRING_CHARS];
 				i = j = 0;
@@ -4064,45 +4064,55 @@ void Cmd_Stats_f(gentity_t *ent)
 				record++;
 				if(record > 20)
 				{
-					prefix = "^7";
-					suffix = "^7";
+					prefix  = "^7";
+					suffix  = "^7";
+					prefix2 = "^7";
+					suffix2 = "^7";
 				}
 				else if(record > 9)
 				{
-					prefix = "^1";
-					suffix = "^7";
+					prefix  = "^1";
+					suffix  = "^7";
+					prefix2 = "^1";
+					suffix2 = "^7";
 				}
 				else if(record > 5)
 				{
-					prefix = "^4";
-					suffix = "^7 ";
+					prefix  = "^4";
+					suffix  = "^7 ";
+					prefix2 = "^4";
+					suffix2 = "^7";
 				}
 				else if(record > 1)
 				{
-					prefix = "^3";
-					suffix = "^7 ";
+					prefix  = "^3";
+					suffix  = "^7 ";
+					prefix2 = "^3";
+					suffix2 = "^7";
 				}
 				else
 				{
-					prefix = "^2";
-					suffix = "^7 ";
+					prefix  = "^2";
+					suffix  = "^7 ";
+					prefix2 = "^2";
+					suffix2 = "^7";
 				}
 				G_SanitiseString(name, sanName, sizeof(sanName));
 				if(trap_Argc() < 4)
 				{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%03d/%%03d ^7%%03dm:%%02ds:%%03dms^7\n\"", 32 + (strlen(name) - strlen(sanName)));
-					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score)));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03d/%%03d%%s %%s%%03dm:%%02ds:%%03dms%%s\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, count, medis, suffix2, prefix2, MINS(score), SECS(score), MSEC(score), suffix2));
 				}
 				else
 				{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%03d/%%03d ^7%%03dm:%%02ds:%%03dms^7 - %%s\n\"", 32 + (strlen(name) - strlen(sanName)));
-					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03d/%%03d%%s %%s%%03dm:%%02ds:%%03dms%%s - %%s\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, count, medis, suffix2, prefix2, MINS(score), SECS(score), MSEC(score), suffix2, dateTime));
 				}
 			}
 			statsMediPtr++;
 		}
 	}
-	else
+	else if(medis > -1)
 	{
 		trap_SendServerCommand(ent-g_entities, va("print \"No Medical Stations\n\""));
 	}
@@ -4135,7 +4145,7 @@ void Cmd_Stats_f(gentity_t *ent)
 			line[i] = '\0';
 			if(*statsWinPtr == '\n')
 			{
-				char *prefix, *suffix;
+				char *prefix, *suffix, *prefix2, *suffix2;
 				char sanName[MAX_NAME_LENGTH];
 				char statString[MAX_STRING_CHARS];
 				i = j = 0;
@@ -4183,45 +4193,55 @@ void Cmd_Stats_f(gentity_t *ent)
 				record++;
 				if(record > 20)
 				{
-					prefix = "^7";
-					suffix = "^7";
+					prefix  = "^7";
+					suffix  = "^7";
+					prefix2 = "^7";
+					suffix2 = "^7";
 				}
 				else if(record > 9)
 				{
-					prefix = "^1";
-					suffix = "^7";
+					prefix  = "^1";
+					suffix  = "^7";
+					prefix2 = "^1";
+					suffix2 = "^7";
 				}
 				else if(record > 5)
 				{
-					prefix = "^4";
-					suffix = "^7 ";
+					prefix  = "^4";
+					suffix  = "^7 ";
+					prefix2 = "^4";
+					suffix2 = "^7";
 				}
 				else if(record > 1)
 				{
-					prefix = "^3";
-					suffix = "^7 ";
+					prefix  = "^3";
+					suffix  = "^7 ";
+					prefix2 = "^3";
+					suffix2 = "^7";
 				}
 				else
 				{
-					prefix = "^2";
-					suffix = "^7 ";
+					prefix  = "^2";
+					suffix  = "^7 ";
+					prefix2 = "^2";
+					suffix2 = "^7";
 				}
 				G_SanitiseString(name, sanName, sizeof(sanName));
 				if(trap_Argc() < 4)
 				{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - ^7%%03dm:%%02ds:%%03dms^7\n\"", 32 + (strlen(name) - strlen(sanName)));
-					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score)));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03dm:%%02ds:%%03dms%%s\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, MINS(score), SECS(score), MSEC(score), suffix2));
 				}
 				else
 				{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - ^7%%03dm:%%02ds:%%03dms^7 - %%s^7\n\"", 32 + (strlen(name) - strlen(sanName)));
-					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score), dateTime));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03dm:%%02ds:%%03dms^7 - %%s%%s\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, MINS(score), SECS(score), MSEC(score), suffix2, dateTime));
 				}
 			}
 			statsWinPtr++;
 		}
 	}
-	else
+	else if(arms > -1);
 	{
 		trap_SendServerCommand(ent-g_entities, va("print \"No Armouries\n\""));
 	}
