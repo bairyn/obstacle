@@ -3736,7 +3736,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		}
 	}
 
-	record = MAX(record, numRecords - 1);  // truncate
+	record = MIN(record, numRecords - 1);  // truncate
 
 	#define WRITETHING(s) trap_FS_Write((s), strlen((s)), f)
 
