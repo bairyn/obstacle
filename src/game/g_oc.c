@@ -3703,7 +3703,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	memcpy(&currentRecord, r, sizeof(currentRecord));
 
-	qsort(records, record + 1, MAX_STRING_CHARS, (int(*)()) G_OC_CompareStats);
+	qsort(records, record - 1, MAX_STRING_CHARS, (int(*)()) G_OC_CompareStats);
 
 	/// remove the worse stats from duplicate users ///
 	for(i = 0; i < record; i++)
@@ -3734,7 +3734,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		}
 	}
 
-	record = MIN(record, numRecords + 1) - 1;  // truncate
+	record = MIN(record, numRecords);  // truncate
 
 	#define WRITETHING(s) trap_FS_Write((s), strlen((s)), f)
 
