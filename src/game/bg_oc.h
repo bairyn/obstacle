@@ -367,6 +367,18 @@ extern int oc_gameMode;
 	char *G_OC_Rating(char *mapname, char *layoutname);
 	void G_OC_LayoutLoad(char *layout);
 
+	typedef struct stat_s stat_t;
+	struct stat_s
+	{
+		int count;
+		int time;  // in ms
+		char name[MAX_NAME_LENGTH];
+		char date[512];
+		char guid[33];
+		char ip[MAX_STRING_CHARS];
+		char adminName[MAX_NAME_LENGTH];
+	};
+
 	//<+===============================================+>
 	// editoc
 	//<+===============================================+>
@@ -530,18 +542,6 @@ extern int oc_gameMode;
 	//char *G_OC_WinStats(gclient_t *client, int count, int time);
 	char *G_OC_MediStats(void *client, int count, int time);
 	char *G_OC_WinStats(void *client, int count, int time);
-
-	typedef struct stat_s stat_t;
-	struct stat_s
-	{
-		int count;
-		int time;  // in ms
-		char name[MAX_STRING_CHARS];
-		char date[MAX_STRING_CHARS];
-		char guid[33];
-		char ip[MAX_STRING_CHARS];
-		char adminName[MAX_STRING_CHARS];
-	};
 
 	#define G_OC_NoDamageAlert() ((BG_OC_OCMode()) ? (1) : (0))
 	#define G_OC_CanBuildableBeDestoryedOnOtherTeam() ((BG_OC_OCMode()) ? (1) : (0))

@@ -3506,18 +3506,19 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	stat_t *r;
 	stat_t currentRecord;
 	int record;
+	qboolean firstNewlineReached = qfalse;
+	qtime_t qt;
+	int t;
+	char *ip;
 
 	/// Userinfo variables ///
 	static char name[MAX_NAME_LENGTH];
 	static char realName[MAX_NAME_LENGTH];
 	static char date[MAX_CVAR_VALUE_STRING];
-	qtime_t qt;
-	int t;
-	char *ip;
 	static char userinfo[MAX_INFO_STRING];
 	static char pureName[MAX_NAME_LENGTH];
 	static char cleanName[MAX_NAME_LENGTH];
-	qboolean firstNewlineReached = qfalse;
+
 
 	/// stats disabled? ///
 	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer >= G_OC_STAT_MAXRECORDS)
@@ -3620,7 +3621,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 		{
 			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
 			{
-				char buf[MAX_STRING_CHARS];
+				static char buf[MAX_STRING_CHARS];
 				char *p;
 
 				r = &records[record++];
@@ -3735,7 +3736,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	#define WRITEFILE \
 	do \
 	{ \
-		char numString[MAX_STRING_CHARS]; \
+		static char numString[MAX_STRING_CHARS]; \
 		int j; \
 		i = 0; \
  \
