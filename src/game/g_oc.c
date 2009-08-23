@@ -3692,7 +3692,6 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	/// add record ///
 	r = &records[record++];
-	Com_sprintf(stat, sizeof(stat), "%d%c%d%c%s%c%s%c%s%c%s%c%s\n", count, '\1', time, '\1', name, '\1', date, '\1', client->pers.guid, '\1', ((ip) ? (ip) : ("noip")), '\1', realName);
 
 	r->count = count;
 	r->time  = time;
@@ -4141,9 +4140,9 @@ void Cmd_Stats_f(gentity_t *ent)
 				} i = j = 0;
 				record++;
 				if(trap_Argc() < 4)
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%s^7 - ^7%dm:%ds:%dms^7\n\"", record, name, MINS(score), SECS(score), MSEC(score)));
+					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7\n\"", record, name, MINS(score), SECS(score), MSEC(score)));
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%s^7 - ^7%dm:%ds:%dms^7 - %s^7\n\"", record, name, MINS(score), SECS(score), MSEC(score), dateTime));
+					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", record, name, MINS(score), SECS(score), MSEC(score), dateTime));
 			}
 			statsWinPtr++;
 		}
