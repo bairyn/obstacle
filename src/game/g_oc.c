@@ -3619,6 +3619,8 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		line[i] = '\0';
 		if(*stat == '\n' && record < numRecords)
 		{
+			i = 0;
+
 			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
 			{
 				static char buf[MAX_STRING_CHARS];
@@ -3638,11 +3640,9 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 				{ \
 					j = 0; \
  \
-					while(*p > 0x01 && *p != '\r' && *p != '\n' && p - buf < MAX(sizeof(buf), sizeof(line) - 1)) \
+					while(*p > 0x01 && j < MAX(sizeof(buf), sizeof(line)) - 1) \
 					{ \
-						buf[j++] = *p; \
- \
-						p++; \
+						buf[j++] = *p++; \
 					} \
  \
 					p++; \
@@ -3684,8 +3684,6 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 			{
 				firstNewlineReached = qtrue;
 			}
-
-			i = 0;
 		}
 
 		++stat;
@@ -3736,7 +3734,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		}
 	}
 
-	record = MIN(record, numRecords - 1);  // truncate
+	record = MIN(record, numRecords + 1) - 1;  // truncate
 
 	#define WRITETHING(s) trap_FS_Write((s), strlen((s)), f)
 
