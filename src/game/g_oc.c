@@ -4028,6 +4028,8 @@ void Cmd_Stats_f(gentity_t *ent)
 			if(*statsMediPtr == '\n')
 			{
 				char *prefix, *suffix;
+				char sanName[MAX_NAME_LENGTH];
+				char statString[MAX_STRING_CHARS];
 				i = j = 0;
 //				sscanf(line, "%d %d", &count, &score);
 				linePtr = line;
@@ -4096,10 +4098,17 @@ void Cmd_Stats_f(gentity_t *ent)
 					prefix = "^2";
 					suffix = "^7 ";
 				}
+				G_SanitiseString(name, sanName, sizeof(sanName));
 				if(trap_Argc() < 4)
-					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score)));
+				{
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%03d/%%03d ^7%%03dm:%%02ds:%%03dms^7\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score)));
+				}
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
+				{
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%03d/%%03d ^7%%03dm:%%02ds:%%03dms^7 - %s\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
+				}
 			}
 			statsMediPtr++;
 		}
@@ -4134,6 +4143,8 @@ void Cmd_Stats_f(gentity_t *ent)
 			if(*statsWinPtr == '\n')
 			{
 				char *prefix, *suffix;
+				char sanName[MAX_NAME_LENGTH];
+				char statString[MAX_STRING_CHARS];
 				i = j = 0;
 //				sscanf(line, "%d %d", &count, &score);
 				linePtr = line;
@@ -4202,10 +4213,17 @@ void Cmd_Stats_f(gentity_t *ent)
 					prefix = "^2";
 					suffix = "^7 ";
 				}
+				G_SanitiseString(name, sanName, sizeof(sanName));
 				if(trap_Argc() < 4)
-					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score)));
+				{
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - ^7%%03dm:%%02ds:%%03dms^7\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score)));
+				}
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score), dateTime));
+				{
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - ^7%%03dm:%%02ds:%%03dms^7 - %s^7\n\"", 32 + (strlen(name) - strlen(sanName)));
+					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score), dateTime));
+				}
 			}
 			statsWinPtr++;
 		}
