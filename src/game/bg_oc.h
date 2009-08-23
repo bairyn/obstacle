@@ -60,11 +60,13 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: fix memory corruption or whatever is causing G_OC_Stats() to behave funny
 // TODO: fix +button8 so that +button8 is sprint and +button6 is dodge and not visa versa  ---- this will be fixed by merging with mgdev
 // TODO: rewrite !info (!info faq hides one of the most important faq's: 3, and it truncates the lines)
 // TODO: height is not lost jumping down ramps !! (ABSOLUTELY MUST FIX BEFORE 2.0)
 // TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
 // TODO: add sectorb7 granger OC
+// TODO: add 'u'oc
 
 // TODO: fix player names not showing (can be post-2.0)
 // TODO: add listlayouts to callvote section (post-2.0)
@@ -362,7 +364,7 @@ extern int oc_gameMode;
 	// oc stats, ratings and layouts
 	//<+===============================================+>
 
-	#define G_OC_STAT_MAXRECORDS 16
+	#define G_OC_STAT_MAXRECORDS 32
 	#define G_OC_MAX_LAYOUT_RATINGS 1024
 
 	void G_OC_LoadRatings(void);
@@ -375,9 +377,9 @@ extern int oc_gameMode;
 		int count;
 		int time;  // in ms
 		char name[MAX_NAME_LENGTH];
-		char date[512];
+		char date[256];
 		char guid[33];
-		char ip[MAX_STRING_CHARS];
+		char ip[33];
 		char adminName[MAX_NAME_LENGTH];
 	};
 

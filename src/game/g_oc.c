@@ -4024,6 +4024,7 @@ void Cmd_Stats_f(gentity_t *ent)
 			line[i] = '\0';
 			if(*statsMediPtr == '\n')
 			{
+				char *prefix, *suffix;
 				i = j = 0;
 //				sscanf(line, "%d %d", &count, &score);
 				linePtr = line;
@@ -4067,11 +4068,35 @@ void Cmd_Stats_f(gentity_t *ent)
 					dateTime[j] = '\0';
 				} i = j = 0;
 				record++;
-				if(trap_Argc() < 4)
-//, score / 60000, (score - ((score / 60000) * 60000)) / 1000, score - ((score / 1000) * 1000))
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7\n\"", record, name, count, medis, MINS(score), SECS(score), MSEC(score)));
+				if(record > 20)
+				{
+					prefix = "^7";
+					suffix = "^7";
+				}
+				else if(record > 9)
+				{
+					prefix = "^1";
+					suffix = "^7";
+				}
+				else if(record > 5)
+				{
+					prefix = "^4";
+					suffix = "^7 ";
+				}
+				else if(record > 1)
+				{
+					prefix = "^3";
+					suffix = "^7 ";
+				}
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", record, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
+				{
+					prefix = "^2";
+					suffix = "^7 ";
+				}
+				if(trap_Argc() < 4)
+					trap_SendServerCommand(ent - g_entities, va("print \"#%s^7%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score)));
+				else
+					trap_SendServerCommand(ent - g_entities, va("print \"#%s^7%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
 			}
 			statsMediPtr++;
 		}
@@ -4105,6 +4130,7 @@ void Cmd_Stats_f(gentity_t *ent)
 			line[i] = '\0';
 			if(*statsWinPtr == '\n')
 			{
+				char *prefix, *suffix;
 				i = j = 0;
 //				sscanf(line, "%d %d", &count, &score);
 				linePtr = line;
@@ -4148,6 +4174,31 @@ void Cmd_Stats_f(gentity_t *ent)
 					dateTime[j] = '\0';
 				} i = j = 0;
 				record++;
+				if(record > 20)
+				{
+					prefix = "^7";
+					suffix = "^7";
+				}
+				else if(record > 9)
+				{
+					prefix = "^1";
+					suffix = "^7";
+				}
+				else if(record > 5)
+				{
+					prefix = "^4";
+					suffix = "^7 ";
+				}
+				else if(record > 1)
+				{
+					prefix = "^3";
+					suffix = "^7 ";
+				}
+				else
+				{
+					prefix = "^2";
+					suffix = "^7 ";
+				}
 				if(trap_Argc() < 4)
 					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7\n\"", record, name, MINS(score), SECS(score), MSEC(score)));
 				else
