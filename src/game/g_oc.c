@@ -4097,9 +4097,9 @@ void Cmd_Stats_f(gentity_t *ent)
 					suffix = "^7 ";
 				}
 				if(trap_Argc() < 4)
-					trap_SendServerCommand(ent - g_entities, va("print \"#%s^7%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score)));
+					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score)));
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"#%s^7%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
+					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
 			}
 			statsMediPtr++;
 		}
@@ -4203,9 +4203,9 @@ void Cmd_Stats_f(gentity_t *ent)
 					suffix = "^7 ";
 				}
 				if(trap_Argc() < 4)
-					trap_SendServerCommand(ent - g_entities, va("print \"%s#^7%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score)));
+					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score)));
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"%s#^7%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score), dateTime));
+					trap_SendServerCommand(ent - g_entities, va("print \"#%s%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score), dateTime));
 			}
 			statsWinPtr++;
 		}
