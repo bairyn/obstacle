@@ -3684,6 +3684,8 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 			{
 				firstNewlineReached = qtrue;
 			}
+
+			i = 0;
 		}
 
 		++stat;
