@@ -1493,7 +1493,10 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
                             ( cg.chaseFollow && cg.snap->ps.pm_flags & PMF_FOLLOW) );
 
   // update speedometer
-  CG_AddSpeed( VectorLength( cg.snap->ps.velocity ) );
+  if( cg_speedometerXYZ.integer )
+    CG_AddSpeed( VectorLength( cg.snap->ps.velocity ) );
+  else
+    CG_AddSpeed( sqrt( cg.snap->ps.velocity[ 0 ] * cg.snap->ps.velocity[ 1 ] ) );
 
   // build cg.refdef
   inwater = CG_CalcViewValues( );
