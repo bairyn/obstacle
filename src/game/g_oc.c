@@ -3620,6 +3620,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		line[i] = '\0';
 		if(*stat == '\n' && record < numRecords)
 		{
+			line[i - 1] = 0;
 			i = 0;
 
 			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
