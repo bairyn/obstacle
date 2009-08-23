@@ -1478,7 +1478,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_NOBONUSJETPACKMESSAGE "Cannot use bonuses while using\na jetpack"
 	#define G_OC_NOBONUSLCANNONMESSAGE "Cannot use bonuses while holding\na lucifer cannon"
 	#define G_OC_NOBONUSFLAMERMESSAGE  "Cannot use bonuses while holding\na flamer"
-	#define G_OC_NOBONUSGRENADEMESSAGE "Cannot use bonuses after using\na grenade on yourself\n(restart the course to regain the ability to use bonuses)"
+	#define G_OC_NOBONUSGRENADEMESSAGE "Cannot use bonuses after using\na grenade on yourself\n(restart the course to regain the ability\nto use bonuses)"
 	#define G_OC_EVOLVEBLOCK_TIME 2000
 
 	#define G_OC_HumanNameForWeapon(x) (BG_Weapon((x)) ? (BG_Weapon((x))->humanName) : ("NULL"))

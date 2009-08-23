@@ -3782,7 +3782,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 
 			WRITEFILE;
 
-			Com_sprintf(s, MAX_STRING_CHARS, " ^2New Record!: #%d^7", record + 1);
+			Com_sprintf(s, MAX_STRING_CHARS, " ^2New Record!: #%d^7", i + 1);
 
 			return s;
 		}
