@@ -752,9 +752,9 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
       ( ent ) && ( ent->client->pers.teamSelection == TEAM_NONE ) && 
       ( !G_admin_permission( ent, ADMF_NOCENSORFLOOD ) ) ) 
   {
-    trap_SendServerCommand( ent-g_entities, va( "print \"Global chatting for "
-      "spectators has been disabled. You may only use team chat.\n\"") );
-    return;
+    trap_SendServerCommand( ent-g_entities, "print \"say: Global chatting for "
+      "spectators has been disabled. You may only use team chat.\n\"" );
+    mode = SAY_TEAM;
   }
 
   switch( mode )
@@ -1892,11 +1892,11 @@ void Cmd_Class_f( gentity_t *ent )
     if( ent->client->pers.classSelection != PCL_NONE )
     {
       int cost;
-    
+
       //check that we have an overmind
       if( !G_OC_NeverOvermindAbsent() )  // &&
       if( !ent->client->pers.override )  // &&
-      if( !level.overmindPresent )
+      if( !G_Overmind( ) )
       {
         G_TriggerMenu( clientNum, MN_A_NOOVMND_EVOLVE );
         return;
@@ -1914,7 +1914,7 @@ void Cmd_Class_f( gentity_t *ent )
           other = &g_entities[ entityList[ i ] ];
 
           if( ( other->client && other->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS ) ||
-              ( other->s.eType == ET_BUILDABLE && other->buildableTeam == TEAM_HUMANS ) )
++             ( other->s.eType == ET_BUILDABLE && other->buildableTeam == TEAM_HUMANS && other->powered ) )
           {
             G_TriggerMenu( clientNum, MN_A_TOOCLOSE );
             return;
@@ -2085,15 +2085,22 @@ void Cmd_Destroy_f( gentity_t *ent )
     if( G_TimeTilSuddenDeath( ) <= 0 && !G_OC_NoSuddenDeath() )
       return;
 
-    if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) && ent->client->ps.stats[ STAT_MISC ] > 0 && !G_OC_NoBuildTimer() )
+    if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) ||
+        ( ent->client->pers.teamSelection == TEAM_HUMANS &&
+          !G_FindPower( traceEnt ) ) )
     {
-      G_AddEvent( ent, EV_BUILD_DELAY, ent->client->ps.clientNum );
-      return;
+      if( ent->client->ps.stats[ STAT_MISC ] > 0 )
+      {
+        G_AddEvent( ent, EV_BUILD_DELAY, ent->client->ps.clientNum );
+        return;
+      }
     }
 
     if( traceEnt->health > 0 )
     {
-      if( !deconstruct )
+      else if( g_markDeconstruct.integer &&
+               ( ent->client->pers.teamSelection != TEAM_HUMANS ||
+                 G_FindPower( traceEnt ) ) )
         G_Damage( traceEnt, ent, ent, forward, tr.endpos,
                   traceEnt->health, 0, MOD_SUICIDE );
       else if( g_markDeconstruct.integer && !G_OC_NoMarkDeconstruct() )
@@ -2730,7 +2737,10 @@ void Cmd_Build_f( gentity_t *ent )
       ( ( team == TEAM_ALIENS && BG_BuildableAllowedInStage( buildable, ( G_OC_NeedAlternateStageTest() ) ? ( G_OC_AlternateStageTest() ) : ( g_alienStage.integer ) ) ) ||
         ( team == TEAM_HUMANS && BG_BuildableAllowedInStage( buildable, ( G_OC_NeedAlternateStageTest() ) ? ( G_OC_AlternateStageTest() ) : ( g_humanStage.integer ) ) ) ) )
   {
+    dynMenu_t err;
     dist = BG_Class( ent->client->ps.stats[ STAT_CLASS ] )->buildDist;
+
+    ent->client->ps.stats[ STAT_BUILDABLE ] = 0;
 
     //these are the errors displayed when the builder first selects something to use
     switch( G_CanBuild( ent, buildable, dist, origin ) )
@@ -2741,7 +2751,9 @@ void Cmd_Build_f( gentity_t *ent )
       case IBE_RPTNOREAC:
       case IBE_RPTPOWERHERE:
       case IBE_SPWNWARN:
-        ent->client->ps.stats[ STAT_BUILDABLE ] = ( buildable | SB_VALID_TOGGLEBIT );
+        err = MN_NONE;
+        // we OR-in the selected builable later
+        ent->client->ps.stats[ STAT_BUILDABLE ] = SB_VALID_TOGGLEBIT;
         break;
 
       // can't place yet but maybe soon: start with valid togglebit off
@@ -2751,37 +2763,43 @@ void Cmd_Build_f( gentity_t *ent )
       case IBE_NOROOM:
       case IBE_NOOVERMIND:
       case IBE_NOPOWERHERE:
-        ent->client->ps.stats[ STAT_BUILDABLE ] = buildable;
+        err = MN_NONE;
         break;
 
       // more serious errors just pop a menu
       case IBE_NOALIENBP:
-        G_TriggerMenu( ent->client->ps.clientNum, MN_A_NOBP );
+        err = MN_A_NOBP;
         break;
 
       case IBE_ONEOVERMIND:
-        G_TriggerMenu( ent->client->ps.clientNum, MN_A_ONEOVERMIND );
+        err = MN_A_ONEOVERMIND;
         break;
 
       case IBE_ONEHOVEL:
-        G_TriggerMenu( ent->client->ps.clientNum, MN_A_ONEHOVEL );
+        err = MN_A_ONEHOVEL;
         break;
 
       case IBE_ONEREACTOR:
-        G_TriggerMenu( ent->client->ps.clientNum, MN_H_ONEREACTOR );
+        err = MN_H_ONEREACTOR;
         break;
 
       case IBE_NOHUMANBP:
-        G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOBP);
+        err = MN_H_NOBP;
         break;
 
       case IBE_NODCC:
-        G_TriggerMenu( ent->client->ps.clientNum, MN_H_NODCC );
+        err = MN_H_NODCC;
         break;
 
       default:
+        err = -1; // stop uninitialised warning
         break;
     }
+
+    if( err == MN_NONE || ent->client->pers.disableBlueprintErrors )
+      ent->client->ps.stats[ STAT_BUILDABLE ] |= buildable;
+    else
+      G_TriggerMenu( ent->client->ps.clientNum, err );
   }
   else
     G_TriggerMenu( ent->client->ps.clientNum, MN_B_CANNOT );
@@ -3640,20 +3658,9 @@ qboolean G_SayArgv( int n, char *buffer, int bufferLength )
     return qfalse;
   if( n < 0 )
     return qfalse;
-  s = ConcatArgs( 0 );
-  while( 1 )
-  {
-    while( *s == ' ' )
-      s++;
-    if( !*s || n == 0 )
-      break;
-    n--;
-    while( *s && *s != ' ' )
-      s++;
-  }
-  if( n > 0 )
+  s = G_SayConcatArgs( n );
+  if( !*s )
     return qfalse;
-  //memccpy( buffer, s, ' ', bufferLength );
   while( *s && *s != ' ' && bufferLength > 1 )
   {
     *buffer++ = *s++;
@@ -3687,9 +3694,7 @@ void G_DecolorString( char *in, char *out, int len )
 
   while( *in && len > 0 ) {
     if( Q_IsColorString( in ) ) {
-      in++;
-      if( *in )
-        in++;
+      in += 2;
       continue;
     }
     *out++ = *in++;

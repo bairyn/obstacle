@@ -182,6 +182,7 @@ vmCvar_t  cg_drawSurfNormal;
 vmCvar_t  cg_drawBBOX;
 vmCvar_t  cg_wwSmoothTime;
 vmCvar_t  cg_flySpeed;
+vmCvar_t  cg_disableBlueprintErrors;
 vmCvar_t  cg_depthSortParticles;
 vmCvar_t  cg_bounceParticles;
 vmCvar_t  cg_consoleLatency;
@@ -305,6 +306,7 @@ static cvarTable_t cvarTable[ ] =
   { NULL, "cg_wwFollow", "1", CVAR_ARCHIVE|CVAR_USERINFO },
   { NULL, "cg_wwToggle", "1", CVAR_ARCHIVE|CVAR_USERINFO },
   { NULL, "cg_flySpeed", "600", CVAR_ARCHIVE|CVAR_USERINFO },
+  { NULL, "cg_disableBlueprintErrors", "0", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_flySpeed, "cg_flySpeed", "500", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_stickySpec, "cg_stickySpec", "1", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_alwaysSprint, "cg_alwaysSprint", "0", CVAR_ARCHIVE|CVAR_USERINFO },
@@ -355,8 +357,8 @@ static cvarTable_t cvarTable[ ] =
   { &cg_paused, "cl_paused", "0", CVAR_ROM },
   { &cg_blood, "com_blood", "1", CVAR_ARCHIVE },
   { &cg_synchronousClients, "g_synchronousClients", "0", 0 }, // communicated by systeminfo
-  { &cg_timescaleFadeEnd, "cg_timescaleFadeEnd", "1", 0},
-  { &cg_timescaleFadeSpeed, "cg_timescaleFadeSpeed", "0", 0},
+  { &cg_timescaleFadeEnd, "cg_timescaleFadeEnd", "1", CVAR_CHEAT },
+  { &cg_timescaleFadeSpeed, "cg_timescaleFadeSpeed", "0", CVAR_CHEAT },
   { &cg_timescale, "timescale", "1", 0},
   { &cg_smoothClients, "cg_smoothClients", "0", CVAR_USERINFO | CVAR_ARCHIVE},
   { &cg_cameraMode, "com_cameraMode", "0", CVAR_CHEAT},
@@ -1459,25 +1461,9 @@ static clientInfo_t * CG_InfoFromScoreIndex( int index, int team, int *scoreInde
 
 static qboolean CG_ClientIsReady( int clientNum )
 {
-  // each character of the hex string corresponds to 4 bits, which correspond
-  // to readiness for client (0, 1, 2, 3...) i.e. the highest order bit
-  // corresponds to the lowest clientnum
-  // so we only need one character for a given client
-  int val = clientNum / 4;
-  const char *s = CG_ConfigString( CS_CLIENTS_READY );
-  while( *s && val > 0 )
-    s++, val--;
-  if( !*s )
-    return qfalse;
-  if( isdigit( *s ) )
-    val = *s - '0';
-  else if( *s >= 'a' && *s <= 'f' )
-    val = 10 + *s - 'a';
-  else if( *s >= 'A' && *s <= 'F' )
-    val = 10 + *s - 'A';
-  else
-    return qfalse;
-  return ( ( val & 1 << ( 3 - clientNum % 4 ) ) != 0 );
+  clientList_t ready;
+  BG_ClientListParse( &ready, CG_ConfigString( CS_CLIENTS_READY ) );
+  return BG_ClientListTest( &ready, clientNum );
 }
 
 static const char *CG_FeederItemText( float feederID, int index, int column, qhandle_t *handle )

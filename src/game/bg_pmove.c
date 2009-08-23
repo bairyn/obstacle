@@ -294,11 +294,6 @@ static void PM_Friction( void )
         float stopSpeed = BG_Class( pm->ps->stats[ STAT_CLASS ] )->stopSpeed;
         float friction = BG_Class( pm->ps->stats[ STAT_CLASS ] )->friction;
 
-        // when landing a dodge, extra friction
-        if( pm->ps->pm_flags & PMF_TIME_LAND )
-          friction *= 1.f + HUMAN_LAND_FRICTION *
-                            pm->ps->pm_time / HUMAN_DODGE_TIMEOUT;
-
         control = speed < stopSpeed ? stopSpeed : speed;
         drop += control * friction * pml.frametime;
       }
@@ -390,13 +385,20 @@ static float PM_CmdScale( usercmd_t *cmd )
   float       total;
   float       scale;
   float       modifier = 1.0f;
-
+  
   if( pm->ps->stats[ STAT_TEAM ] == TEAM_HUMANS && pm->ps->pm_type == PM_NORMAL )
   {
-    if( pm->ps->stats[ STAT_STATE ] & SS_SPEEDBOOST )
+    //if( pm->ps->stats[ STAT_STATE ] & SS_SPEEDBOOST )
+    if( pm->ps->stats[ STAT_STAMINA ] > 0 && cmd->buttons & BUTTON_SPRINT )
+    {
       modifier *= HUMAN_SPRINT_MODIFIER;
+      pm->ps->stats[ STAT_STATE ] |= SS_SPEEDBOOST;
+    }
     else
+    {
       modifier *= HUMAN_JOG_MODIFIER;
+      pm->ps->stats[ STAT_STATE ] &= ~SS_SPEEDBOOST;
+    }
 
     if( cmd->forwardmove < 0 )
     {
@@ -924,6 +926,7 @@ static qboolean PM_CheckWaterJump( void )
   return qtrue;
 }
 
+
 /*
 ==================
 PM_CheckDodge
@@ -934,7 +937,7 @@ Checks the dodge key and starts a human dodge or sprint
 static qboolean PM_CheckDodge( void )
 {
   vec3_t right, forward, velocity = { 0.f, 0.f, 0.f };
-  float jump;
+  float jump, sideModifier;
   int i;
 
   if( BG_OC_PMOCDodge() )
@@ -962,20 +965,20 @@ static qboolean PM_CheckDodge( void )
     }
     else
     {
-      if( pm->cmd.forwardmove <= 0 || pm->cmd.upmove < 0 ||
+      /*if( pm->cmd.forwardmove <= 0 || pm->cmd.upmove < 0 ||
           pm->ps->pm_type != PM_NORMAL || pm->cmd.buttons & BUTTON_WALKING )
       {
         pm->ps->stats[ STAT_STATE ] &= ~SS_SPEEDBOOST;
-      }
+      }*/
     }
 
     // Reasons why we can't start a dodge or sprint
     if( pm->ps->pm_type != PM_NORMAL || pm->ps->stats[ STAT_STAMINA ] < 0 ||
-        ( pm->ps->pm_flags & PMF_CROUCH_HELD ) )
+        ( pm->ps->pm_flags & PMF_DUCKED ) )
       return qfalse;
 
     // Start a sprint instead of forward leaps
-    if( pm->cmd.forwardmove > 0 &&
+    /*if( pm->cmd.forwardmove > 0 &&
         ( ( pm->cmd.buttons & BUTTON_DODGE ) ||
           ( pm->ps->persistant[ PERS_STATE ] & PS_ALWAYSSPRINT ) ) )
     {
@@ -983,8 +986,11 @@ static qboolean PM_CheckDodge( void )
         return qfalse;
       pm->ps->stats[ STAT_STATE ] |= SS_SPEEDBOOST;
       return qfalse;
-    }
+    }*/
 
+    //can't dodge forward
+    if( pm->cmd.forwardmove > 0 )
+      return qfalse;
     // Reasons why we can't start a dodge only
     if( pm->ps->pm_flags & ( PMF_TIME_LAND | PMF_CHARGE ) ||
         pm->ps->groundEntityNum == ENTITYNUM_NONE ||
@@ -1007,18 +1013,26 @@ static qboolean PM_CheckDodge( void )
     if( pm->cmd.rightmove && pm->cmd.forwardmove )
       jump *= 0.707107; // sqrt(2) / 2
 
+    //weaken dodge if slowed
+    if( ( pm->ps->stats[ STAT_STATE ] & SS_SLOWLOCKED )  ||
+        ( pm->ps->stats[ STAT_STATE ] & SS_CREEPSLOWED ) ||
+        ( pm->ps->eFlags & EF_POISONCLOUDED ) )
+      sideModifier = HUMAN_DODGE_SLOWED_MODIFIER;
+    else
+      sideModifier = HUMAN_DODGE_SIDE_MODIFIER;
+
     // The dodge sets minimum velocity
     if( pm->cmd.rightmove )
     {
       if( pm->cmd.rightmove < 0 )
         VectorNegate( right, right );
-      VectorMA( velocity, jump * HUMAN_DODGE_SIDE_MODIFIER, right, velocity );
+      VectorMA( velocity, jump * sideModifier, right, velocity );
     }
     if( pm->cmd.forwardmove )
     {
       if( pm->cmd.forwardmove < 0 )
         VectorNegate( forward, forward );
-      VectorMA( velocity, jump * HUMAN_DODGE_SIDE_MODIFIER, forward, velocity );
+      VectorMA( velocity, jump * sideModifier, forward, velocity );
     }
     velocity[ 2 ] = jump * HUMAN_DODGE_UP_MODIFIER;
 
@@ -2820,7 +2834,6 @@ static void PM_BeginWeaponChange( int weapon )
   if( pm->ps->weapon == WP_LUCIFER_CANNON )
     pm->ps->stats[ STAT_MISC ] = 0;
 
-  PM_AddEvent( EV_CHANGE_WEAPON );
   pm->ps->weaponstate = WEAPON_DROPPING;
   pm->ps->weaponTime += 200;
   pm->ps->persistant[ PERS_NEWWEAPON ] = weapon;
@@ -2845,6 +2858,7 @@ static void PM_FinishWeaponChange( void )
 {
   int   weapon;
 
+  PM_AddEvent( EV_CHANGE_WEAPON );
   weapon = pm->ps->persistant[ PERS_NEWWEAPON ];
   if( weapon < WP_NONE || weapon >= WP_NUM_WEAPONS )
     weapon = WP_NONE;
@@ -3077,7 +3091,16 @@ static void PM_Weapon( void )
     if( pm->ps->pm_flags & PMF_WEAPON_SWITCH )
     {
       pm->ps->pm_flags &= ~PMF_WEAPON_SWITCH;
-      PM_BeginWeaponChange( pm->ps->persistant[ PERS_NEWWEAPON ] );
+      if( pm->ps->weapon != WP_NONE )
+      {
+        // drop the current weapon
+        PM_BeginWeaponChange( pm->ps->persistant[ PERS_NEWWEAPON ] );
+      }
+      else
+      {
+        // no current weapon, so just raise the new one
+        PM_FinishWeaponChange( );
+      }
     }
   }
 

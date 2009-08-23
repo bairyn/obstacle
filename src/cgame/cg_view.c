@@ -608,6 +608,7 @@ static void CG_StepOffset( void )
 #define PCLOUD_ROLL_FREQUENCY   0.4f
 #define PCLOUD_ZOOM_AMPLITUDE   15
 #define PCLOUD_ZOOM_FREQUENCY   0.7f
+#define PCLOUD_DISORIENT_DURATION 2500
 
 
 /*
@@ -815,6 +816,7 @@ void CG_OffsetFirstPersonView( void )
   }
 
   if( ( cg.predictedPlayerEntity.currentState.eFlags & EF_POISONCLOUDED ) &&
+      ( cg.time - cg.poisonedTime < PCLOUD_DISORIENT_DURATION) &&
       !( cg.snap->ps.pm_flags & PMF_FOLLOW ) )
   {
     float scale, fraction, pitchFraction;

@@ -229,7 +229,6 @@ struct gentity_s
   qboolean          locked;             // used for turret tracking
   qboolean          powered;            // for human buildables
   int               builtBy;            // clientNum of person that built this
-  gentity_t         *overmindNode;      // controlling overmind
   int               dcc;                // controlled by how many dccs
   qboolean          spawned;            // whether or not this buildable has finished spawning
   int               shrunkTime;         // time when a barricade shrunk or zero
@@ -282,6 +281,9 @@ struct gentity_s
   qboolean          ownerClear;                     // used for missle tracking
 
   qboolean          pointAgainstWorld;              // don't use the bbox for map collisions
+
+  int               zone;                           // index for zone
+  int               usesZone;                       // does it use a zone?
 
   int               groupID;  // extended buildable information
 #define GROUP_SPAWN 0  // 0 is always the group for player spawning
@@ -370,6 +372,7 @@ typedef struct
   int                 voteCount;          // to prevent people from constantly calling votes
   qboolean            teamInfo;           // send team overlay updates?
   float               flySpeed;           // for spectator/noclip moves
+  qboolean            disableBlueprintErrors; // should the buildable blueprint never be hidden from the players?
 
   class_t             classSelection;     // player class (copied to ent->client->ps.stats[ STAT_CLASS ] once spawned)
   float               evolveHealthFraction;
@@ -541,6 +544,16 @@ int       G_GetPosInSpawnQueue( spawnQueue_t *sq, int clientNum );
 #define MAX_DAMAGE_REGION_TEXT    8192
 #define MAX_DAMAGE_REGIONS 16
 
+// power zone
+typedef struct
+{
+  int active;
+
+  int totalBuildPoints;
+  int queuedBuildPoints;
+  int nextQueueTime;
+} zone_t;
+
 // store locational damage regions
 typedef struct damageRegion_s
 {
@@ -665,14 +678,14 @@ typedef struct
   int               humanBuildPointQueue;
   int               humanNextQueueTime;
 
+  zone_t            *powerZones;
+
   gentity_t         *markedBuildables[ MAX_GENTITIES ];
   int               numBuildablesForRemoval;
 
   int               alienKills;
   int               humanKills;
 
-  qboolean          reactorPresent;
-  qboolean          overmindPresent;
   qboolean          overmindMuted;
 
   int               humanBaseAttackTimer;
@@ -815,7 +828,8 @@ gentity_t         *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal
 buildable_t       G_IsPowered( vec3_t origin );
 qboolean          G_IsDCCBuilt( void );
 int               G_FindDCC( gentity_t *self );
-qboolean          G_FindOvermind( gentity_t *self );
+gentity_t         *G_Reactor( void );
+gentity_t         *G_Overmind( void );
 qboolean          G_FindCreep( gentity_t *self );
 
 void              G_BuildableThink( gentity_t *ent, int msec );
@@ -832,7 +846,14 @@ int               G_LayoutList( const char *map, char *list, int len );
 void              G_LayoutSelect( void );
 void              G_LayoutLoad( void );
 void              G_BaseSelfDestruct( team_t team );
+int               G_NextQueueTime( int queuedBP, int totalBP, int queueBaseRate );
 void              G_QueueBuildPoints( gentity_t *self );
+int               G_GetBuildPoints( const vec3_t pos, team_t team, int dist );
+qboolean          G_FindPower( gentity_t *self );
+gentity_t         *G_PowerEntityForPoint( const vec3_t origin );
+gentity_t         *G_PowerEntityForEntity( gentity_t *ent );
+gentity_t         *G_RepeaterEntityForPoint( vec3_t origin );
+qboolean          G_InPowerZone( gentity_t *self );
 
 //
 // g_utils.c
@@ -983,7 +1004,7 @@ void      G_UpdateZaps( int msec );
 // g_client.c
 //
 void      G_AddCreditToClient( gclient_t *client, short credit, qboolean cap );
-void      G_SetClientViewAngle( gentity_t *ent, vec3_t angle );
+void      SetClientViewAngle( gentity_t *ent, vec3_t angle );
 gentity_t *G_SelectTremulousSpawnPoint( team_t  team, vec3_t preference, vec3_t origin, vec3_t angles, gentity_t *ent, gentity_t *not );
 gentity_t *G_SelectSpawnPoint( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
 gentity_t *G_SelectAlienLockSpawnPoint( vec3_t origin, vec3_t angles );
@@ -1170,7 +1191,7 @@ void                G_DeletePTRConnection( connectionRecord_t *connection );
 extern  level_locals_t  level;
 extern  gentity_t       g_entities[ MAX_GENTITIES ];
 
-#define FOFS(x) ((int)&(((gentity_t *)0)->x))
+#define FOFS(x) ((size_t)&(((gentity_t *)0)->x))
 
 extern  vmCvar_t  g_dedicated;
 extern  vmCvar_t  g_cheats;
@@ -1222,10 +1243,13 @@ extern  vmCvar_t  g_enableDust;
 extern  vmCvar_t  g_enableBreath;
 extern  vmCvar_t  g_singlePlayer;
 
-extern  vmCvar_t  g_humanBuildPoints;
 extern  vmCvar_t  g_alienBuildPoints;
-extern  vmCvar_t  g_humanBuildQueueTime;
 extern  vmCvar_t  g_alienBuildQueueTime;
+extern  vmCvar_t  g_humanBuildPoints;
+extern  vmCvar_t  g_humanBuildQueueTime;
+extern  vmCvar_t  g_humanRepeaterBuildPoints;
+extern  vmCvar_t  g_humanRepeaterBuildQueueTime;
+extern  vmCvar_t  g_humanRepeaterMaxZones;
 extern  vmCvar_t  g_humanStage;
 extern  vmCvar_t  g_humanCredits;
 extern  vmCvar_t  g_humanMaxStage;
@@ -1236,6 +1260,7 @@ extern  vmCvar_t  g_alienCredits;
 extern  vmCvar_t  g_alienMaxStage;
 extern  vmCvar_t  g_alienStage2Threshold;
 extern  vmCvar_t  g_alienStage3Threshold;
+extern  vmCvar_t  g_freeKillPeriod;
 
 extern  vmCvar_t  g_unlagged;
 

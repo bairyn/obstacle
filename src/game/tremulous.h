@@ -57,7 +57,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL0_BITE_DMG             TREMULOUS_VALUE(ADM(36), ADM(48))
 #define LEVEL0_BITE_RANGE           64.0f
 #define LEVEL0_BITE_WIDTH           6.0f
-#define LEVEL0_BITE_REPEAT          700
+#define LEVEL0_BITE_REPEAT          500
 #define LEVEL0_BITE_K_SCALE         1.0f
 
 #define LEVEL1_CLAW_DMG             ADM(32)
@@ -301,7 +301,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define HIVE_REPEAT                 TREMULOUS_VALUE(3000, 5000)
 #define HIVE_K_SCALE                1.0f
 #define HIVE_DMG                    TREMULOUS_VALUE(100, 50)
-#define HIVE_SPEED                  TREMULOUS_VALUE(384.0f, 240.0f)
+#define HIVE_SPEED                  TREMULOUS_VALUE(320.0f, 240.0f)
 #define HIVE_DIR_CHANGE_PERIOD      500
 #define HIVE_VALUE                  ABVM(HIVE_BP)
 
@@ -432,7 +432,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MDRIVER_PRICE               350
 #define MDRIVER_CLIPSIZE            5
 #define MDRIVER_MAXCLIPS            4
-#define MDRIVER_DMG                 HDM(38)
+#define MDRIVER_DMG                 HDM(40)
 #define MDRIVER_REPEAT              1000
 #define MDRIVER_K_SCALE             1.0f
 #define MDRIVER_RELOAD              2000
@@ -445,8 +445,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CHAINGUN_DMG                HDM(5)
 
 #define PRIFLE_PRICE                400
-#define PRIFLE_CLIPS                50
-#define PRIFLE_MAXCLIPS             4
+#define PRIFLE_CLIPS                40
+#define PRIFLE_MAXCLIPS             5
 #define PRIFLE_REPEAT               100
 #define PRIFLE_K_SCALE              1.0f
 #define PRIFLE_RELOAD               2000
@@ -601,7 +601,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DC_SPLASHRADIUS             100
 #define DC_ATTACK_PERIOD            10000 // how often to spam "under attack"
 #define DC_HEALRATE                 3
-#define DC_RANGE                    10000
+#define DC_RANGE                    1000
 #define DC_VALUE                    HBVM(DC_BP)
 
 #define ARMOURY_BP                  10
@@ -624,12 +624,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define REACTOR_ATTACK_DCC_DAMAGE   40
 #define REACTOR_VALUE               HBVM(30)
 
-#define REPEATER_BP                 0
+#define REPEATER_BP                 4
 #define REPEATER_BT                 10000
 #define REPEATER_HEALTH             HBHM(250)
 #define REPEATER_SPLASHDAMAGE       50
 #define REPEATER_SPLASHRADIUS       100
-#define REPEATER_INACTIVE_TIME      90000
 #define REPEATER_VALUE              HBVM(2)
 
 /*
@@ -641,6 +640,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define HUMAN_BACK_MODIFIER         0.8f
 #define HUMAN_SIDE_MODIFIER         0.9f
 #define HUMAN_DODGE_SIDE_MODIFIER   2.9f
+#define HUMAN_DODGE_SLOWED_MODIFIER 0.9f
 #define HUMAN_DODGE_UP_MODIFIER     0.5f
 #define HUMAN_DODGE_TIMEOUT         500
 #define HUMAN_LAND_FRICTION         3.f
@@ -662,6 +662,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define HUMAN_BUILDER_SCOREINC      50       // builders receive this many points every 10 seconds
 #define ALIEN_BUILDER_SCOREINC      AVM(50)  // builders receive this many points every 10 seconds
 
+#define HUMAN_BUILDABLE_INACTIVE_TIME 90000
+
 /*
  * Misc
  */
@@ -670,17 +672,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MAX_FALL_DISTANCE           120.0f //the fall distance at which maximum damage is dealt
 #define AVG_FALL_DISTANCE           ((MIN_FALL_DISTANCE+MAX_FALL_DISTANCE)/2.0f)
 
-#define FREEKILL_PERIOD             120000 //msec
+#define DEFAULT_FREEKILL_PERIOD     "120000" //msec
 #define FREEKILL_ALIEN              ALIEN_CREDITS_PER_FRAG
 #define FREEKILL_HUMAN              LEVEL0_VALUE
 
-#define DEFAULT_ALIEN_BUILDPOINTS   "100"
-#define DEFAULT_ALIEN_QUEUE_TIME    "1250"
+#define DEFAULT_ALIEN_BUILDPOINTS   "150"
+#define DEFAULT_ALIEN_QUEUE_TIME    "12000"
 #define DEFAULT_ALIEN_STAGE2_THRESH "8000"
 #define DEFAULT_ALIEN_STAGE3_THRESH "16000"
 #define DEFAULT_ALIEN_MAX_STAGE     "2"
 #define DEFAULT_HUMAN_BUILDPOINTS   "100"
-#define DEFAULT_HUMAN_QUEUE_TIME    "1250"
+#define DEFAULT_HUMAN_QUEUE_TIME    "8000"
+#define DEFAULT_HUMAN_REPEATER_BUILDPOINTS "20"
+#define DEFAULT_HUMAN_REPEATER_QUEUE_TIME "0"
+#define DEFAULT_HUMAN_REPEATER_MAX_ZONES "500"
 #define DEFAULT_HUMAN_STAGE2_THRESH "4000"
 #define DEFAULT_HUMAN_STAGE3_THRESH "8000"
 #define DEFAULT_HUMAN_MAX_STAGE     "2"
