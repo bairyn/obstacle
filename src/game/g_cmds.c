@@ -2098,6 +2098,9 @@ void Cmd_Destroy_f( gentity_t *ent )
 
     if( traceEnt->health > 0 )
     {
+      if( !deconstruct )
+        G_Damage( traceEnt, ent, ent, forward, tr.endpos,
+                  traceEnt->health, 0, MOD_SUICIDE );
       else if( g_markDeconstruct.integer &&
                ( ent->client->pers.teamSelection != TEAM_HUMANS ||
                  G_FindPower( traceEnt ) ) )

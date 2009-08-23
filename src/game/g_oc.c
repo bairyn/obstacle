@@ -66,7 +66,7 @@ qboolean G_admin_canEditOC(void *ent)
 	if(level.ocEditMode == 0)
 		return qfalse;
 
-	if(level.ocEditMode == 1 && !G_admin_permission(ent, '('))
+	if(level.ocEditMode == 1 && !G_admin_permission(ent, "editoc"))
 		return qfalse;
 
 	return qtrue;
@@ -3871,7 +3871,7 @@ void Cmd_Stats_f(gentity_t *ent)
 	int	len, i=0, j=0;
 	char arg1[MAX_STRING_TOKENS];
 	char arg2[MAX_STRING_TOKENS];
-	char *statsWin, *statsMedi, *statsWinPtr, *statsMediPtr;
+	char *statsWin = NULL, *statsMedi = NULL, *statsWinPtr = NULL, *statsMediPtr = NULL;
 	char *linePtr;
 //	char *linePtr2;
 	char map[MAX_QPATH];
@@ -3918,37 +3918,35 @@ void Cmd_Stats_f(gentity_t *ent)
 		Q_strncpyz(layout, level.layout, sizeof(layout));
 	else
 		return;
+
+	// test if the layout exists
+	Com_sprintf(fileName, sizeof(fileName), "layouts/%s/%s/win.dat", map, layout);
+	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
+	if(len < 0)
+	{
+		trap_FS_FCloseFile(f);
+
+		G_ClientPrint(ent, "stats: layout doesn't exist", CLIENT_NULL);
+	}
+	else
+	{
+		trap_FS_FCloseFile(f);
+	}
+
 	Com_sprintf(fileName, sizeof(fileName), "stats/%s/%s/win.dat", map, layout);
 
 	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
 	if(len < 0)
 	{
-		trap_FS_FCloseFile(f);
-		if(level.totalArmouries <= 0 && trap_Argc() <= 2)
-		{
-				if(trap_FS_FOpenFile(fileName, &f, FS_APPEND) < 0)
-				{
-						trap_FS_FCloseFile(f);
-						ADMP("stat: No records (needs at least 1 medi record)\n");
-						return;
-				}
-				else
-				{
-					trap_FS_Write(va("%d %d\n", level.totalArmouries, level.totalMedistations), strlen(va("%d %d\n", level.totalArmouries, level.totalMedistations)), f);
-					trap_FS_FCloseFile(f);
-					len = trap_FS_FOpenFile(fileName, &f, FS_READ);
-				}
-		}
-		else
-		{
-			ADMP("stat: No records (needs at least 1 medi and arm record)\n");
-			return;
-		}
+		arms = -1;
 	}
-	statsWin = BG_Alloc(len + 1);
-	statsWinPtr = statsWin;
-	trap_FS_Read(statsWin, len, f);
-	*(statsWin + len) = '\0';
+	if(arms > -1)
+	{
+		statsWin = BG_Alloc(len + 1);
+		statsWinPtr = statsWin;
+		trap_FS_Read(statsWin, len, f);
+		*(statsWin + len) = '\0';
+	}
 	trap_FS_FCloseFile(f);
 
 	Com_sprintf(fileName, sizeof(fileName), "stats/%s/%s/med.dat", map, layout);
@@ -3956,54 +3954,44 @@ void Cmd_Stats_f(gentity_t *ent)
 	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
 	if(len < 0)
 	{
-		trap_FS_FCloseFile(f);
-		if(level.totalMedistations <= 0 && !level.ocLoadTime && trap_Argc() <= 2)
-		{
-				if(trap_FS_FOpenFile(fileName, &f, FS_APPEND) < 0)
-				{
-						trap_FS_FCloseFile(f);
-						ADMP("stat: No records (needs at least 1 arm record)\n");
-						return;
-				}
-				else
-				{
-					trap_FS_Write(va("%d %d\n", level.totalArmouries, level.totalMedistations), strlen(va("%d %d\n", level.totalArmouries, level.totalMedistations)), f);
-					trap_FS_FCloseFile(f);
-					len = trap_FS_FOpenFile(fileName, &f, FS_READ);
-				}
-		}
-		else
-		{
-			ADMP("stat: No records (needs at least 1 medi and arm record)\n");
-			return;
-		}
+		medis = -1;
 	}
-	statsMedi = BG_Alloc(len + 1);
-	statsMediPtr = statsMedi;
-	trap_FS_Read(statsMedi, len, f);
-	*(statsMedi + len) = '\0';
+	if(medis > -1)
+	{
+		statsMedi = BG_Alloc(len + 1);
+		statsMediPtr = statsMedi;
+		trap_FS_Read(statsMedi, len, f);
+		*(statsMedi + len) = '\0';
+	}
 	trap_FS_FCloseFile(f);
-
-	data[0] = i = j = 0;
-	while(*statsWinPtr > 1 && *statsWinPtr != ' ' && *statsWinPtr != '\n' && i < MAX_STRING_CHARS)	// parse total arms
+	
+	if(arms > -1)
 	{
-		data[i++] = *statsWinPtr++;
-		data[i] = 0;
-	} statsWinPtr++; i = j = 0;
-	while(*statsWinPtr > 1 && *statsWinPtr != ' ' && *statsWinPtr != '\n' && i < MAX_STRING_CHARS) statsWinPtr++;	// skip total medis
-	;;statsWinPtr++; i = j = 0;
-	arms = atoi(data);
+		data[0] = i = j = 0;
+		while(*statsWinPtr > 1 && *statsWinPtr != ' ' && *statsWinPtr != '\n' && i < MAX_STRING_CHARS)	// parse total arms
+		{
+			data[i++] = *statsWinPtr++;
+			data[i] = 0;
+		} statsWinPtr++; i = j = 0;
+		while(*statsWinPtr > 1 && *statsWinPtr != ' ' && *statsWinPtr != '\n' && i < MAX_STRING_CHARS) statsWinPtr++;	// skip total medis
+		;;statsWinPtr++; i = j = 0;
 
-	data[0] = i = j = 0;
-	while(*statsMediPtr > 1 && *statsMediPtr != ' ' && *statsMediPtr != '\n' && i < MAX_STRING_CHARS) statsMediPtr++;	// skip total arms
-	;;statsMediPtr++; i = j = 0;
-	while(*statsMediPtr > 1 && *statsMediPtr != ' ' && *statsMediPtr != '\n' && i < MAX_STRING_CHARS)	// parse total medis
+		arms = atoi(data);
+	}
+
+	if(medis > -1)
 	{
-		data[i++] = *statsMediPtr++;
-		data[i] = 0;
-	} statsMediPtr++; i = j = 0;
+		data[0] = i = j = 0;
+		while(*statsMediPtr > 1 && *statsMediPtr != ' ' && *statsMediPtr != '\n' && i < MAX_STRING_CHARS) statsMediPtr++;	// skip total arms
+		;;statsMediPtr++; i = j = 0;
+		while(*statsMediPtr > 1 && *statsMediPtr != ' ' && *statsMediPtr != '\n' && i < MAX_STRING_CHARS)	// parse total medis
+		{
+			data[i++] = *statsMediPtr++;
+			data[i] = 0;
+		} statsMediPtr++; i = j = 0;
 
-	medis = atoi(data);
+		medis = atoi(data);
+	}
 
 	if(medis > 0)
 	{
@@ -4017,7 +4005,8 @@ void Cmd_Stats_f(gentity_t *ent)
 		{
 			if(i >= sizeof(line) - 1)
 			{
-				BG_Free(statsWin);
+				if(arms > -1)
+					BG_Free(statsWin);
 				BG_Free(statsMedi);
 				G_Printf(S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
 				 va("stats/%s/%s/med.dat", map, layout), line);
@@ -4106,7 +4095,7 @@ void Cmd_Stats_f(gentity_t *ent)
 				}
 				else
 				{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%03d/%%03d ^7%%03dm:%%02ds:%%03dms^7 - %s\n\"", 32 + (strlen(name) - strlen(sanName)));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%03d/%%03d ^7%%03dm:%%02ds:%%03dms^7 - %%s\n\"", 32 + (strlen(name) - strlen(sanName)));
 					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
 				}
 			}
@@ -4117,6 +4106,9 @@ void Cmd_Stats_f(gentity_t *ent)
 	{
 		trap_SendServerCommand(ent-g_entities, va("print \"No Medical Stations\n\""));
 	}
+
+	if(medis > -1)
+		BG_Free(statsMedi);
 
 	if(arms > 0)
 	{
@@ -4133,7 +4125,8 @@ void Cmd_Stats_f(gentity_t *ent)
 			if(i >= sizeof(line) - 1)
 			{
 				BG_Free(statsWin);
-				BG_Free(statsMedi);
+				if(medis > -1)
+					BG_Free(statsMedi);
 				G_Printf(S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
 				 va("stats/%s/%s/win.dat", map, layout), line);
 				return;
@@ -4221,7 +4214,7 @@ void Cmd_Stats_f(gentity_t *ent)
 				}
 				else
 				{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - ^7%%03dm:%%02ds:%%03dms^7 - %s^7\n\"", 32 + (strlen(name) - strlen(sanName)));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - ^7%%03dm:%%02ds:%%03dms^7 - %%s^7\n\"", 32 + (strlen(name) - strlen(sanName)));
 					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score), dateTime));
 				}
 			}
@@ -4233,8 +4226,8 @@ void Cmd_Stats_f(gentity_t *ent)
 		trap_SendServerCommand(ent-g_entities, va("print \"No Armouries\n\""));
 	}
 
-	BG_Free(statsMedi);
-	BG_Free(statsWin);
+	if(medis > -1)
+		BG_Free(statsWin);
 }
 
 /*

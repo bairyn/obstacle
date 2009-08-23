@@ -70,7 +70,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "[^3name|slot#|IP^7] (^5duration^7) (^5reason^7)"
     },
 
-    {"cancelvote", G_admin_cancelvote, "c",
+    {"cancelvote", G_admin_endvote, "c",
       "cancel a vote taking place",
       ""
     },
@@ -135,7 +135,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
       ""
     },
 
-    {"passvote", G_admin_passvote, "V",
+    {"passvote", G_admin_endvote, "V",
       "pass a vote currently taking place",
       ""
     },
@@ -183,7 +183,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "[^3ban#^7]"
     },
 
-    {"unlock", G_admin_unlock, "K",
+    {"unlock", G_admin_lock, "K",
       "unlock a locked team",
       "[^3a|h^7]"
     },
@@ -373,7 +373,7 @@ static void admin_writeconfig_int( int v, fileHandle_t f )
 void admin_writeconfig( void )
 {
   fileHandle_t f;
-  int len, i, j;
+  int i;
   int t;
   char levels[ MAX_STRING_CHARS ] = {""};
 

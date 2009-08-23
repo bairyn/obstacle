@@ -114,7 +114,7 @@ extern int oc_gameMode;
 
 	#define G_OC_ADMINDEFS  /* FIXME: this causes the list to be out of order */ \
 	, \
-	{"adjusthide", (qboolean(*)(gentity_t *, int))(G_admin_adjusthide), "c", \
+	{"adjusthide", (qboolean(*)(gentity_t *, int))(G_admin_adjusthide), "hide", \
       "change the duration, hidden or reason of a hide.  time is specified as numbers " \
       "followed by units 'w' (weeks), 'd' (days), 'h' (hours) or 'm' (minutes)," \
       " or seconds if no units are specified - if hidden is only" \
@@ -124,37 +124,37 @@ extern int oc_gameMode;
       "[^3hide#^7] (^5time^7) (^5chidden hidden^7) (^5reason^7)" \
     }, \
  \
-    {"devmap", (qboolean(*)(gentity_t *, int))(G_admin_devmap), "C", \
+    {"devmap", (qboolean(*)(gentity_t *, int))(G_admin_devmap), "devmap", \
       "load a map with cheats (and optionally force layout)", \
       "[^3mapname^7] (^5layout^7)" \
     }, \
  \
-	{"editoc", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "(", \
+	{"editoc", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "editoc", \
 		"editoc", \
 		"[^30 - none|1 - admins|2 - all#^7]" \
 	}, \
  \
-	{"hide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "j", \
+	{"hide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "hide", \
 		"hide a player", \
 		"[^3name|slot#^7]" \
 	}, \
  \
-	{"layoutsave", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), ")", \
+	{"layoutsave", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), "layoutsave", \
 		"save a map layout", \
 		"[^3layoutname^7]" \
 	}, \
  \
-	{"layoutsavereview", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), "l", \
+	{"layoutsavereview", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), "editoc", \
 		"save a map layout", \
 		"[^3layoutname^7]" \
 	}, \
  \
-	{"showhides", (qboolean(*)(gentity_t *, int))(G_admin_showhides), "j", \
+	{"showhides", (qboolean(*)(gentity_t *, int))(G_admin_showhides), "hide", \
 		"display a (partial) list of active hides", \
 		"(^5start at hide#^7) (^5name|IP^7)" \
 	}, \
  \
-	{"unhide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "J", \
+	{"unhide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "hide", \
 		"Un-Hide a player", \
 		"[^3name|slot#^7]" \
 	}
