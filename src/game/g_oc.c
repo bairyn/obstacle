@@ -3428,7 +3428,8 @@ static void G_SanitiseNameWhitespaceColor(char *in, char *out, int len)
 			continue;
 		}
 
-		*out++ = tolower(*in++);
+		//*out++ = tolower(*in++);
+		*out++ = *in++;
 		len--;
 	}
 	out -= spaces;
@@ -3618,7 +3619,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		line[i++] = *stat;
 		line[i] = '\0';
 		if(*stat == '\n' && record < numRecords)
-		{
+
 			i = 0;
 
 			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
@@ -4060,9 +4061,9 @@ void Cmd_Stats_f(gentity_t *ent)
 				record++;
 				if(trap_Argc() < 4)
 //, score / 60000, (score - ((score / 60000) * 60000)) / 1000, score - ((score / 1000) * 1000))
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%s^7 - %d/%d ^7%dm:%ds:%dms^7\n\"", record, name, count, medis, MINS(score), SECS(score), MSEC(score)));
+					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7\n\"", record, name, count, medis, MINS(score), SECS(score), MSEC(score)));
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%s^7 - %d/%d ^7%dm:%ds:%dms^7 - %s^7\n\"", record, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
+					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - %03d/%03d ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", record, name, count, medis, MINS(score), SECS(score), MSEC(score), dateTime));
 			}
 			statsMediPtr++;
 		}
