@@ -3495,7 +3495,7 @@ G_OC_Stats
 Possible insert record into stats
 ================
 */
-static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int time)
+static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 {
 	fileHandle_t f;
 	char line[ MAX_STRING_CHARS ];
@@ -3808,7 +3808,7 @@ Medi stats
 */
 char *G_OC_MediStats(void *client, int count, int time)
 {
-	char map[MAX_QPATH];
+	static char map[MAX_QPATH];
 
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
@@ -3830,7 +3830,7 @@ Armoury stats
 */
 char *G_OC_WinStats(void *client, int count, int time)
 {
-	char map[MAX_QPATH];
+	static char map[MAX_QPATH];
 
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
