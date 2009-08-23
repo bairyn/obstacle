@@ -3531,7 +3531,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	if(g_cheats.integer)
 	{
-		trap_SendServerCommand(client - level.clients, "print \"Cannot store record with cheats enable\n\"");
+		trap_SendServerCommand(client - level.clients, "print \"Cannot store record with cheats enabled\n\"");
 
 		return "";
 	}
@@ -3673,7 +3673,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 				// ip
 				LOADBUF;
-				Com_sprintf(r->ip, sizeof(r->ip), "%s", buf);
+				Com_sprintf(r->ip,   sizeof(r->ip),   "%s", buf);
 
 				// adminName
 				LOADBUF;
@@ -3700,12 +3700,12 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 	Com_sprintf(r->name, sizeof(r->name), "%s", name);
 	Com_sprintf(r->date, sizeof(r->date), "%s", date);
 	Com_sprintf(r->guid, sizeof(r->guid), "%s", client->pers.guid);
-	Com_sprintf(r->ip,   sizeof(r->ip), "%s", ((ip) ? (ip) : ("noip")));
+	Com_sprintf(r->ip,   sizeof(r->ip),   "%s", ((ip) ? (ip) : ("noip")));
 	Com_sprintf(r->name, sizeof(r->name), "%s", realName);
 
 	memcpy(&currentRecord, r, sizeof(currentRecord));
 
-	qsort(records, record - 1, MAX_STRING_CHARS, (int(*)()) G_OC_CompareStats);
+	qsort(records, record, MAX_STRING_CHARS, (int(*)()) G_OC_CompareStats);
 
 	/// remove the worse stats from duplicate users ///
 	for(i = 0; i < record; i++)
@@ -3721,14 +3721,14 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 				if(G_OC_CompareStats(a, b) > 0)
 				{
 					// remove b
-					memmove(b - 1, b, numRecords - (b - records));
+					memmove(b - 1, b, (numRecords - (b - records)) * sizeof(stat_t));
 
 					--record;
 				}
 				else
 				{
 					// remove a
-					memmove(a, a + 1, numRecords - 1 - (a - records));
+					memmove(a, a + 1, (numRecords - 1 - (a - records)) * sizeof(stat_t));
 
 					--record;
 				}
@@ -3810,6 +3810,9 @@ char *G_OC_MediStats(void *client, int count, int time)
 {
 	static char map[MAX_QPATH];
 
+	if(!BG_OC_OCMode() || !level.layout || !*level.layout)
+		return "";
+
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
 	{
@@ -3831,6 +3834,9 @@ Armoury stats
 char *G_OC_WinStats(void *client, int count, int time)
 {
 	static char map[MAX_QPATH];
+
+	if(!BG_OC_OCMode() || !level.layout || !*level.layout)
+		return "";
 
 	trap_Cvar_VariableStringBuffer("mapname", map, sizeof(map));
 	if(!map[0])
