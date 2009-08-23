@@ -3698,11 +3698,11 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	r->count = count;
 	r->time  = time;
-	Com_sprintf(r->name, sizeof(r->name), "%s", name);
-	Com_sprintf(r->date, sizeof(r->date), "%s", date);
-	Com_sprintf(r->guid, sizeof(r->guid), "%s", client->pers.guid);
-	Com_sprintf(r->ip,   sizeof(r->ip),   "%s", ((ip) ? (ip) : ("noip")));
-	Com_sprintf(r->name, sizeof(r->name), "%s", realName);
+	Com_sprintf(r->name,     sizeof(r->name), "%s", name);
+	Com_sprintf(r->date,     sizeof(r->date), "%s", date);
+	Com_sprintf(r->guid,     sizeof(r->guid), "%s", client->pers.guid);
+	Com_sprintf(r->ip,       sizeof(r->ip),   "%s", ((ip) ? (ip) : ("noip")));
+	Com_sprintf(r->realName, sizeof(r->name), "%s", realName);
 
 	memcpy(&currentRecord, r, sizeof(currentRecord));
 
@@ -3745,6 +3745,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 	do \
 	{ \
 		static char numString[MAX_STRING_CHARS]; \
+		static char buf[MAX_STRING_CHARS]; \
 		int j; \
 		i = 0; \
  \
@@ -3757,7 +3758,9 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
  \
 		strncpy(numString, va("%d %d\n", level.totalArmouries, level.totalMedistations), sizeof(numString)); \
  \
-		G_Printf("G_OC_Stats: saving stats to %s\n", filename); \
+		Com_sprintf(buf, sizeof(buf), "G_OC_Stats: saving stats to %s\n", filename); \
+ \
+		G_Printf(buf); \
  \
 		trap_FS_Write(numString, strlen(numString), f); \
  \
@@ -4200,9 +4203,9 @@ void Cmd_Stats_f(gentity_t *ent)
 					suffix = "^7 ";
 				}
 				if(trap_Argc() < 4)
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7\n\"", record, name, MINS(score), SECS(score), MSEC(score)));
+					trap_SendServerCommand(ent - g_entities, va("print \"%s#^7%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score)));
 				else
-					trap_SendServerCommand(ent - g_entities, va("print \"^7#^7%d^7: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", record, name, MINS(score), SECS(score), MSEC(score), dateTime));
+					trap_SendServerCommand(ent - g_entities, va("print \"%s#^7%d%s: ^7%32s^7 - ^7%03dm:%02ds:%03dms^7 - %s^7\n\"", prefix, record, suffix, name, MINS(score), SECS(score), MSEC(score), dateTime));
 			}
 			statsWinPtr++;
 		}
