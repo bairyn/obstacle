@@ -3698,11 +3698,11 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	r->count = count;
 	r->time  = time;
-	Com_sprintf(r->name,     sizeof(r->name), "%s", name);
-	Com_sprintf(r->date,     sizeof(r->date), "%s", date);
-	Com_sprintf(r->guid,     sizeof(r->guid), "%s", client->pers.guid);
-	Com_sprintf(r->ip,       sizeof(r->ip),   "%s", ((ip) ? (ip) : ("noip")));
-	Com_sprintf(r->realName, sizeof(r->name), "%s", realName);
+	Com_sprintf(r->name,      sizeof(r->name),      "%s", name);
+	Com_sprintf(r->date,      sizeof(r->date),      "%s", date);
+	Com_sprintf(r->guid,      sizeof(r->guid),      "%s", client->pers.guid);
+	Com_sprintf(r->ip,        sizeof(r->ip),        "%s", ((ip) ? (ip) : ("noip")));
+	Com_sprintf(r->adminName, sizeof(r->adminName), "%s", realName);
 
 	memcpy(&currentRecord, r, sizeof(currentRecord));
 
