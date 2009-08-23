@@ -3690,6 +3690,8 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		++stat;
 	}
 
+	BG_Free(statHead);
+
 	/// add record ///
 	r = &records[record++];
 
