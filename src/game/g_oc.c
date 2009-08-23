@@ -3623,6 +3623,7 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 			{
 				static char buf[MAX_STRING_CHARS];
 				char *p;
+				int j;
 
 				r = &records[record++];
 
@@ -3630,19 +3631,23 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 
 				memset(r, 0, sizeof(stat_t));
 
+				p = line;
+
 				#define LOADBUF \
 				do \
 				{ \
-					p = line; \
+					j = 0; \
  \
-					while(*p > 0x01 && p - buf < MAX(sizeof(buf), sizeof(line) - 1)) \
+					while(*p > 0x01 && *p != '\r' && *p != '\n' && p - buf < MAX(sizeof(buf), sizeof(line) - 1)) \
 					{ \
-						buf[p - buf] = *p; \
+						buf[j++] = *p; \
  \
 						p++; \
 					} \
  \
-					buf[p - buf] = 0; \
+					p++; \
+ \
+					buf[j]= 0; \
 				} while(0)
 
 				// count
@@ -3692,8 +3697,8 @@ static char *G_OC_Stats(const char *filename, gclient_t *client, int count, int 
 	r->time  = time;
 	Com_sprintf(r->name, sizeof(r->name), "%s", name);
 	Com_sprintf(r->date, sizeof(r->date), "%s", date);
-	Com_sprintf(r->date, sizeof(r->date), "%s", client->pers.guid);
-	Com_sprintf(r->date, sizeof(r->date), "%s", ((ip) ? (ip) : ("noip")));
+	Com_sprintf(r->guid, sizeof(r->guid), "%s", client->pers.guid);
+	Com_sprintf(r->ip,   sizeof(r->ip), "%s", ((ip) ? (ip) : ("noip")));
 	Com_sprintf(r->name, sizeof(r->name), "%s", realName);
 
 	memcpy(&currentRecord, r, sizeof(currentRecord));
