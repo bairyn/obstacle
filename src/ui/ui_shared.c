@@ -5187,14 +5187,13 @@ static bind_t g_bindings[] =
 
 	// OC
     { "newRestartOC", -1,            -1, -1, -1 },
-    { "teleportToCheckpoint", -1,            -1, -1, -1 },
+    { "teleportToCheckpoint", -1,    -1, -1, -1 },
     { "hide", -1,            -1, -1, -1 },
-    { "buy ammo", 'b',            -1, -1, -1 },
-    { "stats", 'b',            -1, -1, -1 },
-    { "myStats", 'b',            -1, -1, -1 },
-    { "askLayout", 'b',            -1, -1, -1 },
-    { "+button7", 'b',            -1, -1, -1 },
-    { "button7", 'b',            -1, -1, -1 },
+    { "buy ammo", '-1',            -1, -1, -1 },
+    { "stats", '-1',            -1, -1, -1 },
+    { "myStats", '-1',            -1, -1, -1 },
+    { "askLayout", '-1',            -1, -1, -1 },
+    { "+button7", '-1',            -1, -1, -1 },
   };
 
 
