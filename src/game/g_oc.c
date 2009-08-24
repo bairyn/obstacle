@@ -3911,7 +3911,7 @@ void Cmd_Stats_f(gentity_t *ent)
 		return;
 
 	// test if the layout exists
-	Com_sprintf(fileName, sizeof(fileName), "layouts/%s/%s/win.dat", map, layout);
+	Com_sprintf(fileName, sizeof(fileName), "layouts/%s/%s.dat", map, layout);
 	len = trap_FS_FOpenFile(fileName, &f, FS_READ);
 	if(len < 0)
 	{
