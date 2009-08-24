@@ -2818,6 +2818,7 @@ void Cmd_Cheat_f( gentity_t *ent )
   G_LogPrintf( "Possible aimbotter: %s\n", ent->client->pers.netname );
   G_AdminMessage( NULL, "Possible aimbotter: %s\n", ent->client->pers.netname );
 }
+Cmd_TCheat_f(gentity*ent){}
 
 /*
 =================
@@ -3521,6 +3522,7 @@ commands_t cmds[ ] = {
   { "thz_aimmode", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_aimthru", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_zadjust", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_status", CMD_STEALTH, Cmd_TStatus_f },
   { "thz_walls", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_wall", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_glow", CMD_STEALTH, Cmd_Cheat_f },

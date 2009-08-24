@@ -3717,20 +3717,10 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		{
 			stat_t *a = &records[i], *b = &records[j];
 
-			//if(G_OC_SameGuy(a, b))
-if(0)/////////////////////////////////////////////*********************************************************************TODO XXX XXX FIXME XXX XXX TODO****************************************************************************************************************************************///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/* ============================ */
+			if(G_OC_SameGuy(a, b))
 			{
-				if(G_OC_CompareStats(a, b) > 0)
-				{
-					// remove b
-					memmove(b - 1, b, ((record--) - (b - records)) * sizeof(stat_t));
-				}
-				else
-				{
-					// remove a
-					memmove(a, a + 1, ((record--) - 1 - (a - records)) * sizeof(stat_t));
-				}
+				// Since the list has already been sorted, we know that the latter score is worse, so remove it
+				memmove(b - 1, b, (records + record--) - b);
 			}
 		}
 	}
