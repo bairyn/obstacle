@@ -2818,7 +2818,7 @@ void Cmd_Cheat_f( gentity_t *ent )
   G_LogPrintf( "Possible aimbotter: %s\n", ent->client->pers.netname );
   G_AdminMessage( NULL, "Possible aimbotter: %s\n", ent->client->pers.netname );
 }
-Cmd_TCheat_f(gentity*ent){}
+void Cmd_TStatus_f(gentity_t*ent){}
 
 /*
 =================

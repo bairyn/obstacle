@@ -789,8 +789,9 @@ typedef struct
 
 static ratings_table_t *ratings_table = NULL;
 
-static int G_OC_CompareLayoutBuildables(layout_table_t *a, layout_table_t *b)
+static int G_OC_CompareLayoutBuildables(const void *aa, const void *bb)
 {
+	const layout_table_t *a = (layout_table_t *) aa, *b = (layout_table_t *) bb;
 	return a->origin[2] - b->origin[2];
 }
 
@@ -890,7 +891,7 @@ void G_OC_LayoutLoad(char *layout)
 	BG_Free(layoutPtr);
 
 	// build each buildable after ordering by position of Z axis
-	qsort(layoutTable, j, sizeof(layoutTable[0]), (int(*)())G_OC_CompareLayoutBuildables);
+	qsort(layoutTable, j, sizeof(layoutTable[0]), G_OC_CompareLayoutBuildables);
 	for(i = 0; i < j; i++)
 	{
 		l = &layoutTable[i];
@@ -3436,8 +3437,10 @@ static void G_SanitiseNameWhitespaceColor(char *in, char *out, int len)
 	*out = 0;
 }
 
-static int G_OC_CompareStats(stat_t *a, stat_t *b)
+static int G_OC_CompareStats(const void *aa, const void *bb)
 {
+	const stat_t *a = aa, *b = bb;
+
 	if(a->count != b->count)
 		return b->count - a->count;
 
@@ -3706,7 +3709,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	memcpy(&currentRecord, r, sizeof(currentRecord));
 
-	qsort(records, record, MAX_STRING_CHARS, (int(*)()) G_OC_CompareStats);
+	qsort(records, record, MAX_STRING_CHARS, G_OC_CompareStats);
 
 	/// remove the worse stats from duplicate users ///
 	for(i = 0; i < record; i++)
