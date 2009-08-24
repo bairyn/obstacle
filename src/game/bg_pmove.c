@@ -389,7 +389,7 @@ static float PM_CmdScale( usercmd_t *cmd )
   if( pm->ps->stats[ STAT_TEAM ] == TEAM_HUMANS && pm->ps->pm_type == PM_NORMAL )
   {
     //if( pm->ps->stats[ STAT_STATE ] & SS_SPEEDBOOST )
-    if( pm->ps->stats[ STAT_STAMINA ] > 0 && cmd->buttons & BUTTON_SPRINT )
+    if( pm->ps->stats[ STAT_STAMINA ] > 0 && ( cmd->buttons & BUTTON_SPRINT || ( pm->ps->persistant[ PERS_STATE ] & PS_ALWAYSSPRINT ) ) )
     {
       modifier *= HUMAN_SPRINT_MODIFIER;
       pm->ps->stats[ STAT_STATE ] |= SS_SPEEDBOOST;
