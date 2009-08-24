@@ -107,6 +107,8 @@ extern int oc_gameMode;
 	qboolean G_admin_devmap(void *ent, int skiparg);
 	qboolean G_admin_layoutsave(void *ent, int skiparg);
 	qboolean G_admin_adjusthide(void *ent, int skiparg);
+	qboolean G_admin_startscrim(void *ent, int skiparg);
+	qboolean G_admin_endscrim(void *ent, int skiparg);
 
 	qboolean G_admin_canEditOC(void *ent);
 

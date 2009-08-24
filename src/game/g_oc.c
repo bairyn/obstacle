@@ -752,6 +752,75 @@ qboolean G_admin_adjusthide(void *ent, int skiparg)
   return qtrue;
 }
 
+qboolean G_admin_startscrim( void *entt, int skiparg )
+{
+  char win[ 7 ];
+  gentity_t *ent = (gentity_t *) entt;
+
+  if( !BG_OC_OCMode() )
+  {
+    ADMP( va( "Can only be used during an obstacle course\n" ) );
+    return qfalse;
+  }
+
+  if( G_SayArgc() < 2 + skiparg )
+  {
+    ADMP( "^3!startscrim: ^7usage: !startscrim [m/a] for all medis / armoury\n" );
+    return qfalse;
+  }
+  G_SayArgv( 1 + skiparg, win, sizeof( win ) );
+
+  if( !win[0] || !( win[0] == 'm' || win[0] == 'a' ) )
+  {
+    ADMP( "^3!startscrim: ^7usage: !startscrim [m/a] for all medis / armoury\n" );
+    return qfalse;
+  }
+
+  if( win[0] == 'a' )
+    level.ocScrimMode = G_OC_MODE_ARM;
+  else
+    level.ocScrimMode = G_OC_MODE_MEDI;
+
+  if( level.ocScrimMode == G_OC_MODE_ARM && level.totalArmouries <= 0 )
+  {
+    ADMP( "^3!startscrim: ^7there are no armouries for an arm scrim\n" );
+    return qfalse;
+  }
+  if( level.ocScrimMode == G_OC_MODE_MEDI && level.totalMedistations <= 0 )
+  {
+    ADMP( "^3!startscrim: ^7there are no medis for a medi scrim\n" );
+    return qfalse;
+  }
+
+  level.ocStartTime = level.time;
+  level.ocScrimState = G_OC_STATE_PREP;
+
+  AP( va( "print \"^3!startscrim: ^7%s^7 started the oc scrim - first team to use\n%s^7.^7\n\"", ( ent ) ? ent->client->pers.netname : "console", ( ( level.ocScrimMode == G_OC_MODE_ARM ) ? ( level.totalArmouries == 1 || G_OC_TestLayoutFlag( level.layout, G_OC_OCFLAG_ONEARM ) ? "the ^3armoury^7" : "every ^3armoury^7" ) : ( level.totalMedistations == 1 ? "the ^3medical station^7" : "every ^3medical station^7" ) ) ) );
+  return qtrue;
+}
+
+qboolean G_admin_endscrim( void *entt, int skiparg )
+{
+  gentity_t *ent = (gentity_t *) entt;
+
+  if( !BG_OC_OCMode() )
+  {
+    ADMP( va( "Can only be used during an obstacle course\n" ) );
+    return qfalse;
+  }
+
+  if( level.ocScrimState <= G_OC_STATE_NONE )
+  {
+    ADMP( va( "Can only be used during an OC scrim\n" ) );
+    return qfalse;
+  }
+
+  G_OC_EndScrim( );
+
+  AP( va( "print \"^3!endscrim: ^7%s^7 ended the scrim^7\n\"", ( ent ) ? ent->client->pers.netname : "console" ) );
+  return qtrue;
+}
+
 //======================================================
 // cvars
 //======================================================
@@ -3524,6 +3593,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 	static char cleanName[MAX_NAME_LENGTH];
 
 
+return "";
 	/// stats disabled? ///
 	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer >= G_OC_STAT_MAXRECORDS)
 		return "";
