@@ -2924,7 +2924,7 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
   if( g_floodMinTime.integer && ent && ent->client )
     if ( G_FloodLimited( ent ) )
     {
-      trap_SendServerCommand( ent-g_entities, "print \"Your chat is flood-limited; wait before chatting again\n\"" );
+      ADMP( "Your chat is flood-limited; wait before chatting again\n" );
       return qfalse;
     }
 
@@ -2959,8 +2959,6 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
   for( i = 0; i < MAX_INFO_PARSE_LOOPS && G_StringReplaceCvars( info, info, len ); i++ );
   G_Unescape( info, info, len );
 
-  strcpy( linebuf, "" );
-
   while( *info )
   {
     if( i >= sizeof( line ) - 1 )
@@ -2974,28 +2972,19 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
     line[ i ] = '\0';
     if( *info == '\n' )
     {
+      ADMP( line );
       i = 0;
-//      if( *( info - 1 ) != '\n' )  // nice formatting - implementation somewhat hackish
-      if( qtrue )
-      {
-        if( strlen( linebuf ) + strlen( line ) < MAX_STRING_CHARS - 12 )  // send 24 lines or up to max_string_chars at a time
-        {
-          strcat( linebuf, line );
-        }
-        else
-        {
-          trap_SendServerCommand( ent - g_entities, va( "print \"%s\n\"", linebuf ) );
-          strcpy( linebuf, line );
-        }
-      }
     }
     info++;
   }
 
   info = infoPtr;
 
-  if( linebuf[0] )
-    trap_SendServerCommand( ent - g_entities, va( "print \"%s\n\"", linebuf ) );
+  if( line[0] )
+  {
+    ADMP( linebuf );
+    ADMP( "\n" );
+  }
 
   BG_Free( info );
   return qtrue;

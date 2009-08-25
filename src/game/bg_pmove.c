@@ -846,15 +846,23 @@ static qboolean PM_CheckJump( void )
 
   if( BG_OC_PMNeedJumpChange() )
   {
-    BG_OC_PMJumpChange();
+    //BG_OC_PMJumpChange();
+
+	float dp=			 DotProduct(pm->ps->velocity, normal);;
+	if(abs(pm->ps->velocity[2] - normal[2]) <= 0.001)
+      pm->ps->velocity[ 2 ] = 0;
+
+    VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
+              normal, pm->ps->velocity );
   }
   else
   {
     if( pm->ps->velocity[ 2 ] < 0 )
       pm->ps->velocity[ 2 ] = 0;
+
+    VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
+              normal, pm->ps->velocity );
   }
-  VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
-            normal, pm->ps->velocity );
 
   PM_AddEvent( EV_JUMP );
 
