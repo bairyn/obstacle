@@ -60,12 +60,12 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix memory corruption or whatever is causing G_OC_Stats() to behave funny
+// TODO: fix memory corruption or whatever is causing G_OC_Stats() to behave funny (SAME AS BELOW)
 // TODO: height is not lost jumping down ramps !! (ABSOLUTELY MUST FIX BEFORE 2.0)
-// TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
 // TODO: add sectorb7 granger OC
 // TODO: add 'u'oc
 
+// TODO: restore OC stuff on ptrc (can be post-2.0, but highest priority)
 // TODO: fix player names not showing (can be post-2.0)
 // TODO: add listlayouts to callvote section (post-2.0)
 // TODO: 'x' is building 'x', if it's worth adding (post-2.0)
@@ -2989,15 +2989,31 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PMJumpChange() \
 	do \
 	{ \
-		float dp; \
+		float angle; \
+		vec3_t tmp, tmp2, tmp3; \
  \
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		dp = DotProduct(pm->ps->velocity, normal); \
+		VectorCopy(pm->ps->velocity, tmp); \
  \
-		if(dp < 0) \
-			VectorMA(pm->ps->velocity, -dp, normal, pm->ps->velocity); \
+		VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[ STAT_CLASS ])->jumpMagnitude, \
+				normal, pm->ps->velocity); \
+ \
+		VectorCopy(tmp, tmp2); \
+		VectorNormalize(tmp2); \
+		VectorCopy(normal, tmp3); \
+		VectorNormalize(tmp3); \
+		angle = acos(DotProduct(tmp2, tmp3)); \
+ \
+		if(abs(angle) >= M_PI / 2 && VectorLength(pm->ps->velocity) > 0.001f) \
+		{ \
+			VectorCopy(tmp, pm->ps->velocity); \
+			pm->ps->velocity[2] = 0; \
+ \
+			VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude, \
+					normal, pm->ps->velocity); \
+		} \
 	} while(0)
 
 	#define BG_OC_PMNeedAlternateStopSprintCheck() ((BG_OC_OCMode()) ? (1) : (0))

@@ -1782,7 +1782,7 @@ void Script_Reset( itemDef_t *item, char **args )
       {
         resetItem->cursorPos = 0;
         resetItem->typeData.list->startPos = 0;
-        DC->feederSelection( resetItem->special, 0 );
+        DC->feederSelection( resetItem->feederID, 0 );
       }
     }
   }
@@ -2675,7 +2675,7 @@ qboolean Item_SetFocus( itemDef_t *item, float x, float y )
 int Item_ListBox_MaxScroll( itemDef_t *item )
 {
   listBoxDef_t *listPtr = item->typeData.list;
-  int count = DC->feederCount( item->special );
+  int count = DC->feederCount( item->feederID );
   int max;
 
   if( item->window.flags & WINDOW_HORIZONTAL )
@@ -2813,7 +2813,7 @@ int Item_ListBox_OverLB( itemDef_t *item, float x, float y )
   int thumbstart;
   int count;
 
-  count = DC->feederCount( item->special );
+  count = DC->feederCount( item->feederID );
 
   if( item->window.flags & WINDOW_HORIZONTAL )
   {
@@ -3040,7 +3040,7 @@ void Item_SetMouseOver( itemDef_t *item, qboolean focus )
 qboolean Item_OwnerDraw_HandleKey( itemDef_t *item, int key )
 {
   if( item && DC->ownerDrawHandleKey )
-    return DC->ownerDrawHandleKey( item->window.ownerDraw, item->window.ownerDrawFlags, &item->special, key );
+    return DC->ownerDrawHandleKey( item->window.ownerDraw, key );
 
   return qfalse;
 }
@@ -3048,7 +3048,7 @@ qboolean Item_OwnerDraw_HandleKey( itemDef_t *item, int key )
 qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboolean force )
 {
   listBoxDef_t *listPtr = item->typeData.list;
-  int count = DC->feederCount( item->special );
+  int count = DC->feederCount( item->feederID );
   int max, viewmax;
 
   if( force || ( Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) &&
@@ -3076,7 +3076,7 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
             listPtr->startPos = listPtr->cursorPos - viewmax + 1;
 
           item->cursorPos = listPtr->cursorPos;
-          DC->feederSelection( item->special, item->cursorPos );
+          DC->feederSelection( item->feederID, item->cursorPos );
         }
         else
         {
@@ -3105,7 +3105,7 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
             listPtr->startPos = listPtr->cursorPos - viewmax + 1;
 
           item->cursorPos = listPtr->cursorPos;
-          DC->feederSelection( item->special, item->cursorPos );
+          DC->feederSelection( item->feederID, item->cursorPos );
         }
         else
         {
@@ -3138,7 +3138,7 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
             listPtr->startPos = listPtr->cursorPos - viewmax + 1;
 
           item->cursorPos = listPtr->cursorPos;
-          DC->feederSelection( item->special, item->cursorPos );
+          DC->feederSelection( item->feederID, item->cursorPos );
         }
         else
         {
@@ -3167,7 +3167,7 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
             listPtr->startPos = listPtr->cursorPos - viewmax + 1;
 
           item->cursorPos = listPtr->cursorPos;
-          DC->feederSelection( item->special, item->cursorPos );
+          DC->feederSelection( item->feederID, item->cursorPos );
         }
         else
         {
@@ -3226,7 +3226,7 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
         if( item->cursorPos != listPtr->cursorPos )
         {
           item->cursorPos = listPtr->cursorPos;
-          DC->feederSelection( item->special, item->cursorPos );
+          DC->feederSelection( item->feederID, item->cursorPos );
         }
 
         if( DC->realTime < lastListBoxClickTime && listPtr->doubleClick )
@@ -3300,7 +3300,7 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
           listPtr->startPos = listPtr->cursorPos - viewmax + 1;
 
         item->cursorPos = listPtr->cursorPos;
-        DC->feederSelection( item->special, item->cursorPos );
+        DC->feederSelection( item->feederID, item->cursorPos );
       }
       else
       {
@@ -3331,7 +3331,7 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
           listPtr->startPos = listPtr->cursorPos - viewmax + 1;
 
         item->cursorPos = listPtr->cursorPos;
-        DC->feederSelection( item->special, item->cursorPos );
+        DC->feederSelection( item->feederID, item->cursorPos );
       }
       else
       {
@@ -3440,7 +3440,7 @@ qboolean Item_Combobox_HandleKey( itemDef_t *item, int key )
 {
   comboBoxDef_t *comboPtr = item->typeData.combo;
   qboolean mouseOver = Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory );
-  int count = DC->feederCount( item->special );
+  int count = DC->feederCount( item->feederID );
 
   if( comboPtr )
   {
@@ -3452,7 +3452,7 @@ qboolean Item_Combobox_HandleKey( itemDef_t *item, int key )
         if( count > 0 )
           comboPtr->cursorPos = ( comboPtr->cursorPos + 1 ) % count;
 
-        DC->feederSelection( item->special, comboPtr->cursorPos );
+        DC->feederSelection( item->feederID, comboPtr->cursorPos );
 
         return qtrue;
       }
@@ -3462,7 +3462,7 @@ qboolean Item_Combobox_HandleKey( itemDef_t *item, int key )
         if( count > 0 )
           comboPtr->cursorPos = ( count + comboPtr->cursorPos - 1 ) % count;
 
-        DC->feederSelection( item->special, comboPtr->cursorPos );
+        DC->feederSelection( item->feederID, comboPtr->cursorPos );
 
         return qtrue;
       }
@@ -4151,12 +4151,12 @@ void  Menus_Activate( menuDef_t *menu )
       {
         menu->items[ i ]->cursorPos = 0;
         menu->items[ i ]->typeData.list->startPos = 0;
-        DC->feederSelection( menu->items[ i ]->special, 0 );
+        DC->feederSelection( menu->items[ i ]->feederID, 0 );
       }
       else if( menu->items[ i ]->type == ITEM_TYPE_COMBO )
       {
         menu->items[ i ]->typeData.combo->cursorPos =
-          DC->feederInitialise( menu->items[ i ]->special );
+          DC->feederInitialise( menu->items[ i ]->feederID );
       }
 
     }
@@ -5086,7 +5086,7 @@ void Item_Combobox_Paint( itemDef_t *item )
     memcpy( &newColor, &item->window.foreColor, sizeof( vec4_t ) );
 
   if( item->typeData.combo )
-    text = DC->feederItemText( item->special, item->typeData.combo->cursorPos,
+    text = DC->feederItemText( item->feederID, item->typeData.combo->cursorPos,
                                0, NULL );
 
   if( item->text )
@@ -5669,7 +5669,7 @@ void Item_ListBox_Paint( itemDef_t *item )
   // elements are enumerated from the DC and either text or image handles are acquired from the DC as well
   // textscale is used to size the text, textalignx and textaligny are used to size image elements
   // there is no clipping available so only the last completely visible item is painted
-  count = DC->feederCount( item->special );
+  count = DC->feederCount( item->feederID );
 
   // default is vertical if horizontal flag is not here
   if( item->window.flags & WINDOW_HORIZONTAL )
@@ -5713,7 +5713,7 @@ void Item_ListBox_Paint( itemDef_t *item )
       {
         // always draw at least one
         // which may overdraw the box if it is too small for the element
-        image = DC->feederItemImage( item->special, i );
+        image = DC->feederItemImage( item->feederID, i );
 
         if( image )
           DC->drawHandlePic( x + 1, y + 1, listPtr->elementWidth - 2, listPtr->elementHeight - 2, image );
@@ -5775,7 +5775,7 @@ void Item_ListBox_Paint( itemDef_t *item )
       {
         // always draw at least one
         // which may overdraw the box if it is too small for the element
-        image = DC->feederItemImage( item->special, i );
+        image = DC->feederItemImage( item->feederID, i );
 
         if( image )
           DC->drawHandlePic( x + one, y + 1, listPtr->elementWidth - two, listPtr->elementHeight - 2, image );
@@ -5833,7 +5833,7 @@ void Item_ListBox_Paint( itemDef_t *item )
 
             height = listPtr->columnInfo[ j ].width;
 
-            Q_strncpyz( text, DC->feederItemText( item->special, i, j, &optionalImage ), sizeof( text ) );
+            Q_strncpyz( text, DC->feederItemText( item->feederID, i, j, &optionalImage ), sizeof( text ) );
 
             if( optionalImage >= 0 )
             {
@@ -5888,7 +5888,7 @@ void Item_ListBox_Paint( itemDef_t *item )
           else
             offset = 4.0f;
 
-          Q_strncpyz( text, DC->feederItemText( item->special, i, 0, &optionalImage ), sizeof( text ) );
+          Q_strncpyz( text, DC->feederItemText( item->feederID, i, 0, &optionalImage ), sizeof( text ) );
 
           if( optionalImage >= 0 )
             DC->drawHandlePic( x + offset, y, listPtr->elementHeight, listPtr->elementHeight, optionalImage );
@@ -5997,7 +5997,7 @@ void Item_OwnerDraw_Paint( itemDef_t *item )
           item->textalignx, item->textaligny,
           item->window.ownerDraw, item->window.ownerDrawFlags,
           item->alignment, item->textalignment, item->textvalignment,
-          item->special, item->textscale, color, item->window.backColor,
+          item->window.borderSize, item->textscale, color, item->window.backColor,
           item->window.background, item->textStyle );
     }
   }
@@ -6298,7 +6298,7 @@ void Menu_ScrollFeeder( menuDef_t *menu, int feeder, qboolean down )
 
     for( i = 0; i < menu->itemCount; i++ )
     {
-      if( menu->items[i]->special == feeder )
+      if( menu->items[i]->feederID == feeder )
       {
         Item_ListBox_HandleKey( menu->items[i], ( down ) ? K_DOWNARROW : K_UPARROW, qtrue, qtrue );
         return;
@@ -6325,16 +6325,16 @@ void Menu_SetFeederSelection( menuDef_t *menu, int feeder, int index, const char
 
     for( i = 0; i < menu->itemCount; i++ )
     {
-      if( menu->items[i]->special == feeder )
+      if( menu->items[i]->feederID == feeder )
       {
-        if( index == 0 )
+        if( menu->items[i]->type == ITEM_TYPE_LISTBOX && index == 0 )
         {
           menu->items[ i ]->typeData.list->cursorPos = 0;
           menu->items[ i ]->typeData.list->startPos = 0;
         }
 
         menu->items[i]->cursorPos = index;
-        DC->feederSelection( menu->items[i]->special, menu->items[i]->cursorPos );
+        DC->feederSelection( menu->items[i]->feederID, menu->items[i]->cursorPos );
         return;
       }
     }
@@ -6842,10 +6842,10 @@ qboolean ItemParse_elementheight( itemDef_t *item, int handle )
   return PC_Float_Parse( handle, &item->typeData.list->elementHeight );
 }
 
-// feeder <float>
+// feeder <int>
 qboolean ItemParse_feeder( itemDef_t *item, int handle )
 {
-  if( !PC_Float_Parse( handle, &item->special ) )
+  if( !PC_Int_Parse( handle, &item->feederID ) )
     return qfalse;
 
   return qtrue;
@@ -7129,14 +7129,6 @@ qboolean ItemParse_onTextEntry( itemDef_t *item, int handle )
 qboolean ItemParse_action( itemDef_t *item, int handle )
 {
   if( !PC_Script_Parse( handle, &item->action ) )
-    return qfalse;
-
-  return qtrue;
-}
-
-qboolean ItemParse_special( itemDef_t *item, int handle )
-{
-  if( !PC_Float_Parse( handle, &item->special ) )
     return qfalse;
 
   return qtrue;
@@ -7443,7 +7435,6 @@ keywordHash_t itemParseKeywords[] = {
   {"mouseExitText", ItemParse_mouseExitText, NULL},
   {"onTextEntry", ItemParse_onTextEntry, NULL},
   {"action", ItemParse_action, NULL},
-  {"special", ItemParse_special, NULL},
   {"cvar", ItemParse_cvar, NULL},
   {"maxChars", ItemParse_maxChars, NULL},
   {"maxPaintChars", ItemParse_maxPaintChars, NULL},
