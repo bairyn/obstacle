@@ -61,7 +61,6 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix memory corruption or whatever is causing G_OC_Stats() to behave funny
-// TODO: fix +button8 so that +button8 is sprint and +button6 is dodge and not visa versa  ---- this will be fixed by merging with mgdev
 // TODO: rewrite !info (!info faq hides one of the most important faq's: 3, and it truncates the lines)
 // TODO: height is not lost jumping down ramps !! (ABSOLUTELY MUST FIX BEFORE 2.0)
 // TODO: restore OC stuff on ptrc (MUST BE WELL-TESTED BEFORE 2.0!!!)
