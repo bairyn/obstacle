@@ -3898,6 +3898,7 @@ Armoury stats
 */
 char *G_OC_WinStats(void *client, int count, int time)
 {
+	static char filename[MAX_QPATH];
 	static char map[MAX_QPATH];
 
 	if(!BG_OC_OCMode() || !level.layout || !*level.layout)
