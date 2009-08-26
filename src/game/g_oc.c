@@ -3592,8 +3592,6 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 	static char pureName[MAX_NAME_LENGTH];
 	static char cleanName[MAX_NAME_LENGTH];
 
-
-return "";
 	/// stats disabled? ///
 	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer >= G_OC_STAT_MAXRECORDS)
 		return "";
@@ -3805,8 +3803,8 @@ return "";
 	#define WRITEFILE \
 	do \
 	{ \
-		static char numString[MAX_STRING_CHARS]; \
-		static char buf[MAX_STRING_CHARS]; \
+		char numString[16]; \
+		char buf[128]; \
 		int j; \
 		i = 0; \
  \
@@ -3843,7 +3841,7 @@ return "";
 
 		if(G_OC_StatsEqual(r, &currentRecord))
 		{
-			static char s[MAX_STRING_CHARS];
+			static char s[256];
 
 			WRITEFILE;
 

@@ -1185,11 +1185,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		*/ \
  \
 		/* Relink buildables */ \
-		/*if(!override)*/ \
-			/*G_SetBuildableLinkState(qtrue);*/ \
+			G_SetBuildableLinkState(qtrue); \
  \
 		/*check there is enough room to spawn from (presuming this is a spawn) */ \
-		/* no matter if they do have buildable override, players should always be able to spawn from it */ \
+		/* even if they do have buildable override, players should always be able to spawn from it */ \
 		if(reason == IBE_NONE) \
 		{ \
 			G_SetBuildableMarkedLinkState(qfalse); \
@@ -2637,6 +2636,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!(BG_OC_OCMode())) \
 			break; \
  \
+		if(ghost) \
+			break; \
+ \
 		/*if((BG_Buildable(buildable)->minNormal >= CG_OC_STATICANGLE) || (sqrt(DotProduct(angles, angles)) <= CG_OC_STATICLEN))*/ \
 		if(sqrt(DotProduct(angles, angles)) <= CG_OC_STATICLEN) \
 			VectorCopy(inOrigin, outOrigin); \
@@ -2989,31 +2991,13 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PMJumpChange() \
 	do \
 	{ \
-		float angle; \
-		vec3_t tmp, tmp2, tmp3; \
+		/* TODO */ \
  \
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		VectorCopy(pm->ps->velocity, tmp); \
- \
-		VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[ STAT_CLASS ])->jumpMagnitude, \
+		VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[STAT_CLASS] )->jumpMagnitude, \
 				normal, pm->ps->velocity); \
- \
-		VectorCopy(tmp, tmp2); \
-		VectorNormalize(tmp2); \
-		VectorCopy(normal, tmp3); \
-		VectorNormalize(tmp3); \
-		angle = acos(DotProduct(tmp2, tmp3)); \
- \
-		if(abs(angle) >= M_PI / 2 && VectorLength(pm->ps->velocity) > 0.001f) \
-		{ \
-			VectorCopy(tmp, pm->ps->velocity); \
-			pm->ps->velocity[2] = 0; \
- \
-			VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude, \
-					normal, pm->ps->velocity); \
-		} \
 	} while(0)
 
 	#define BG_OC_PMNeedAlternateStopSprintCheck() ((BG_OC_OCMode()) ? (1) : (0))

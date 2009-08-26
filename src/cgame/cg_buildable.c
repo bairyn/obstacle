@@ -538,7 +538,8 @@ CG_PositionAndOrientateBuildable
 static void CG_PositionAndOrientateBuildable( const vec3_t angles, const vec3_t inOrigin,
                                               const vec3_t normal, const int skipNumber,
                                               const vec3_t mins, const vec3_t maxs,
-                                              vec3_t outAxis[ 3 ], vec3_t outOrigin )
+                                              vec3_t outAxis[ 3 ], vec3_t outOrigin,
+											  qboolean ghost )
 {
   vec3_t  forward, start, end;
   trace_t tr;
@@ -599,7 +600,7 @@ void CG_GhostBuildable( buildable_t buildable )
   BG_PositionBuildableRelativeToPlayer( ps, mins, maxs, CG_Trace, entity_origin, angles, &tr );
 
   CG_PositionAndOrientateBuildable( ps->viewangles, entity_origin, tr.plane.normal, ps->clientNum,
-                                    mins, maxs, ent.axis, ent.origin );
+                                    mins, maxs, ent.axis, ent.origin, qtrue );
 
   //offset on the Z axis if required
   VectorMA( ent.origin, BG_BuildableConfig( buildable )->zOffset, tr.plane.normal, ent.origin );
@@ -1245,7 +1246,7 @@ void CG_Buildable( centity_t *cent )
     {
       CG_PositionAndOrientateBuildable( angles, ent.origin, surfNormal,
                                         es->number, mins, maxs, ent.axis,
-                                        ent.origin );
+                                        ent.origin, qfalse );
       VectorCopy( ent.axis[ 0 ], cent->buildableCache.axis[ 0 ] );
       VectorCopy( ent.axis[ 1 ], cent->buildableCache.axis[ 1 ] );
       VectorCopy( ent.axis[ 2 ], cent->buildableCache.axis[ 2 ] );
