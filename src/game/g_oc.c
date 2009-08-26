@@ -3585,12 +3585,12 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 	char *ip;
 
 	/// Userinfo variables ///
-	static char name[MAX_NAME_LENGTH];
-	static char realName[MAX_NAME_LENGTH];
-	static char date[MAX_CVAR_VALUE_STRING];
-	static char userinfo[MAX_INFO_STRING];
-	static char pureName[MAX_NAME_LENGTH];
-	static char cleanName[MAX_NAME_LENGTH];
+	char name[MAX_NAME_LENGTH];
+	char realName[MAX_NAME_LENGTH];
+	char date[MAX_CVAR_VALUE_STRING];
+	char userinfo[MAX_INFO_STRING];
+	char pureName[MAX_NAME_LENGTH];
+	char cleanName[MAX_NAME_LENGTH];
 
 	/// stats disabled? ///
 	if(!g_statsEnabled.integer || g_statsRecords.integer <= 0 || g_statsRecords.integer >= G_OC_STAT_MAXRECORDS)
@@ -3696,7 +3696,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 			if(firstNewlineReached)  // ignore the header of the file (first line specifying number of arms and medis for /stats)
 			{
-				static char buf[MAX_STRING_CHARS];
+				char buf[MAX_STRING_CHARS];
 				char *p;
 				int j;
 
@@ -3806,7 +3806,6 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		char numString[16]; \
 		char buf[128]; \
 		int j; \
-		i = 0; \
  \
 		len = trap_FS_FOpenFile(filename, &f, FS_WRITE); \
 		if(len < 0) \
@@ -3871,6 +3870,7 @@ Medi stats
 */
 char *G_OC_MediStats(void *client, int count, int time)
 {
+	static char filename[MAX_QPATH];
 	static char map[MAX_QPATH];
 
 	if(!BG_OC_OCMode() || !level.layout || !*level.layout)
@@ -3884,7 +3884,9 @@ char *G_OC_MediStats(void *client, int count, int time)
 	}
 	G_StrToLower(level.layout);
 
-	return G_OC_Stats(va("stats/%s/%s/med.dat", map, level.layout), (gclient_t *) client, count, time);
+	Com_sprintf(filename, sizeof(filename), "stats/%s/%s/med.dat", map, level.layout);
+
+	return G_OC_Stats(filename, (gclient_t *) client, count, time);
 }
 
 /*
@@ -3913,7 +3915,9 @@ char *G_OC_WinStats(void *client, int count, int time)
 	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
 		count = 1;
 
-	return G_OC_Stats(va("stats/%s/%s/win.dat", map, level.layout), (gclient_t *) client, count, time);
+	Com_sprintf(filename, sizeof(filename), "stats/%s/%s/win.dat", map, level.layout);
+
+	return G_OC_Stats(filename, (gclient_t *) client, count, time);
 }
 
 
@@ -4309,7 +4313,7 @@ void Cmd_Stats_f(gentity_t *ent)
 		trap_SendServerCommand(ent-g_entities, va("print \"No Armouries\n\""));
 	}
 
-	if(medis > -1)
+	if(arms > -1)
 		BG_Free(statsWin);
 }
 
