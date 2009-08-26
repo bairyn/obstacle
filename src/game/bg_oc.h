@@ -60,7 +60,6 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix memory corruption or whatever is causing G_OC_Stats() to behave funny (SAME AS BELOW)
 // TODO: height is not lost jumping down ramps !! (ABSOLUTELY MUST FIX BEFORE 2.0)
 // TODO: add sectorb7 granger OC
 // TODO: add 'u'oc

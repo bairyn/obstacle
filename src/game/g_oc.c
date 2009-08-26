@@ -3511,7 +3511,7 @@ static int G_OC_CompareStats(const void *aa, const void *bb)
 	const stat_t *a = aa, *b = bb;
 
 	if(a->count != b->count)
-		return b->count - a->count;
+		return a->count - a->count;
 
 	if(a->time != b->time)
 		return a->time  - b->time;
@@ -3791,7 +3791,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 			if(G_OC_SameGuy(a, b))
 			{
 				// Since the list has already been sorted, we know that the latter score is worse, so remove it
-				memmove(b - 1, b, (records + record--) - b);
+				memmove(b, b - 1, (records + record--) - (b - 1));
 			}
 		}
 	}
