@@ -3572,7 +3572,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 {
 	fileHandle_t f;
 	char line[ MAX_STRING_CHARS ];
-	int numRecords;
+	int maxRecords;
 	stat_t records[G_OC_STAT_MAXRECORDS + 1];  // there needs to be room for one more slot so that the new record can be compared
 	char *stat, *statHead;
 	int i, len;
@@ -3607,11 +3607,11 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		return "";
 	}
 
-	numRecords = g_statsRecords.integer;
-	if(numRecords < 0)
+	maxRecords = g_statsRecords.integer;
+	if(maxRecords <= 0)
 		return "";
-	if(numRecords >= G_OC_STAT_MAXRECORDS)
-		numRecords = G_OC_STAT_MAXRECORDS;
+	if(maxRecords >= G_OC_STAT_MAXRECORDS)
+		maxRecords = G_OC_STAT_MAXRECORDS;
 
 	/// set userdata stuff ///
 
@@ -3777,7 +3777,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	memcpy(&currentRecord, r, sizeof(currentRecord));
 
-	qsort(records, record, MAX_STRING_CHARS, G_OC_CompareStats);
+	qsort(records, record, sizeof(stat_t), G_OC_CompareStats);
 
 	/// remove the worse stats from duplicate users ///
 	for(i = 0; i < record; i++)
