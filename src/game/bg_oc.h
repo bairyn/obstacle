@@ -2594,7 +2594,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define CG_OC_OCTIMER ((unsigned int) ((unsigned int) ((unsigned int) ((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER]) & (unsigned int) 0x0000FFFF) | ((unsigned int) (((unsigned int) cg.snap->ps.persistant[PERS_OCTIMER + 1]) << 16))))  /* only 16 bits are sent */
 
 	#define CG_OC_PLAYERTIMER (va("%dm:%ds:%3dms", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)))
-	#define CG_OC_PLAYERTIMERPRINT (va("^t^i^m^e%dm:%ds:%3d", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)))
+	#define CG_OC_PLAYERTIMERPRINT (va("^t^i^m^e%dm:%ds:%3dms", MINS(CG_OC_OCTIMER), SECS(CG_OC_OCTIMER), MSEC(CG_OC_OCTIMER)))
 
 	#define CG_OC_CanSetPlayerTimer() ((BG_OC_OCMode()) ? (1) : (0))
 

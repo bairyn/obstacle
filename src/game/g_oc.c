@@ -3689,7 +3689,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 		line[i++] = *stat;
 		line[i] = '\0';
-		if(*stat == '\n' && record < numRecords)
+		if(*stat == '\n' && record < maxRecords)
 		{
 			line[i - 1] = 0;
 			i = 0;
@@ -3796,7 +3796,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 		}
 	}
 
-	record = MIN(record, numRecords);  // truncate
+	record = MIN(record, maxRecords);  // truncate
 
 	#define WRITETHING(s) trap_FS_Write((s), strlen((s)), f)
 
