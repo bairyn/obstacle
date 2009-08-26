@@ -60,7 +60,6 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: height is not lost jumping down ramps !! (ABSOLUTELY MUST FIX BEFORE 2.0)
 // TODO: add sectorb7 granger OC
 // TODO: add 'u'oc
 
@@ -2990,10 +2989,11 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_PMJumpChange() \
 	do \
 	{ \
-		/* TODO */ \
- \
 		if(!BG_OC_OCMode()) \
 			break; \
+ \
+		if(pml.groundTrace.plane.normal[2] > 0.99995f && pm->ps->velocity[2] < 0) \
+			pm->ps->velocity[2] = 0; \
  \
 		VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[STAT_CLASS] )->jumpMagnitude, \
 				normal, pm->ps->velocity); \
