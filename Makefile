@@ -1509,6 +1509,7 @@ CGOBJ_ = \
   $(B)/base/cgame/cg_particles.o \
   $(B)/base/cgame/cg_ptr.o \
   $(B)/base/cgame/cg_tutorial.o \
+  $(B)/base/cgame/cg_oc.o \
   $(B)/base/ui/ui_shared.o \
   $(B)/base/game/bg_oc.o \
   \

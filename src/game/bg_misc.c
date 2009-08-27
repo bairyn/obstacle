@@ -291,7 +291,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     TR_GRAVITY,            //trType_t  traj;
     0.0,                   //float     bounce;
     HOVEL_BP,              //int       buildPoints;
-    0,  //can't build it   //int  stages
+    BG_OC_HOVELSTAGE,  //can't build it   //int  stages
     HOVEL_HEALTH,          //int       health;
     HOVEL_REGEN,           //int       regenRate;
     HOVEL_SPLASHDAMAGE,    //int       splashDamage;

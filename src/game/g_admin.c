@@ -196,7 +196,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
     {"unmute", G_admin_mute, "m",
       "unmute a muted player",
       "[^3name|slot#^7]"
-    }
+    },
 
     {"unoverride", G_admin_override, "o",
       "unoverride an overridden player",
@@ -1990,7 +1990,7 @@ qboolean G_admin_override( gentity_t *ent, int skiparg )
   char command[ MAX_ADMIN_CMD_LEN ], *cmd;
   gentity_t *vic;
 
-  if(!g_cheats.integer && !G_OC_CanOverride())
+  if(!g_cheats.integer && !G_OC_CanOverride(ent))
   {
 	  ADMP("Cheats are disabled.\n");
   }

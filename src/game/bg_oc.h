@@ -80,7 +80,7 @@ extern int oc_gameMode;
 	// admin
 	//<+===============================================+>
 
-	#define G_OC_CanOverride(ent) ((BG_OC_OCMode) ? ((G_admin_canEditOC((ent))) ? (1) : (0)) : (0))
+	#define G_OC_CanOverride(ent) ((BG_OC_OCMode()) ? ((G_admin_canEditOC((ent))) ? (1) : (0)) : (0))
 
 	#define MAX_ADMIN_HIDES 1024
 	#define MAX_ADMIN_HIDE_REASON 50
@@ -953,11 +953,11 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(BG_OC_GetNoWallWalk()) \
 		{ \
-			trap_SendServerCommand(clientnum, "noWallWalk 1"); \
+			trap_SendServerCommand(clientNum, "noWallWalk 1"); \
 		} \
 		else \
 		{ \
-			trap_SendServerCommand(clientnum, "noWallWalk 0"); \
+			trap_SendServerCommand(clientNum, "noWallWalk 0"); \
 		} \
 	} while(0)
 
@@ -1943,7 +1943,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_NeverRemoveCredits() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define G_OC_NeedAlternateStageTest() ((BG_OC_OCMode()) ? (1) : (0))
-	#define G_OC_AlternateStageTest() ((S3))  // maximum stage
+	#define G_OC_AlternateStageTest() ((S4))  // maximum stage
 
 	#define G_OC_Class() \
 	do \
@@ -2690,7 +2690,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	{ &cg_printTimer, "cg_printTimer", "0", CVAR_ARCHIVE }, \
 	{ &cg_printSpeedometer, "cg_printSpeedometer", "0", CVAR_ARCHIVE },
 
-	#define CG_OC_SERVERCMDS \
+	#define CG_OC_CONFIGSTRINGMODIFIED \
 	else if(num == CS_OCMODE) \
 	{ \
 		switch(atoi(str)) \
@@ -2704,13 +2704,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				break; \
 		} \
 	}
-
-	#define CG_OC_ECVARS \
-	extern vmCvar_t cg_printTimer; \
-	extern vmCvar_t cg_printSpeedometer;
-
-	#define CG_OC_SERVERCMDS \
-	, { "noWallWalk", CG_NoWallWalk_f}
 
 	#define CG_OC_SetConfigStrings() \
 	do \
@@ -2726,6 +2719,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				break; \
 		} \
 	} while(0)
+	#define CG_OC_ECVARS \
+	extern vmCvar_t cg_printTimer; \
+	extern vmCvar_t cg_printSpeedometer;
+
+	#define CG_OC_SERVERCMDS \
+	, { "noWallWalk", CG_NoWallWalk_f}
+
+	void CG_NoWallWalk_f(void);
 #endif /* ifdef CGAME */
 
 //<+===============================================+><+===============================================+>
@@ -2750,6 +2751,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define BG_OC_PERS \
 	,PERS_OCTIMER  // netcode now has room for 4 more
+
+	#define S4 3
+	#define BG_OC_HOVELSTAGE S4
 
 	#define BG_OC_NeedBuildableAppend() BG_OC_OCMode()
 	#define BG_OC_NeedClassAppend() BG_OC_OCMode()
