@@ -1176,6 +1176,7 @@ static consoleCommand_t svcommands[ ] =
   { "ptrcrequest", CG_PTRRequest_f },
   { "ptrcissue", CG_PTRIssue_f },
   { "ptrcconfirm", CG_PTRConfirm_f }
+  CG_OC_SERVERCMDS
 };
 
 /*

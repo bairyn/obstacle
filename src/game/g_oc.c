@@ -5073,11 +5073,11 @@ void Cmd_AutoUnAngle_f(gentity_t *ent)
 ==================
 G_OC_ParseLayoutFlags
 
-Used to cat onto vote strings
+Human readable options string
 ==================
 */
 
-char *G_OC_ParseLayoutFlags(char *layout)
+const char *G_OC_ParseLayoutFlags(char *layout)
 {
 	int  num = 0;
 	static char ret[MAX_STRING_CHARS];
@@ -5110,18 +5110,11 @@ char *G_OC_ParseLayoutFlags(char *layout)
 		strcat(ret, G_OC_OCFLAG_NOCREEP_NAME);
 	}
 
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ALIENONLY))
+	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_HUMANS))
 	{
 		if(num++)
 			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ALIENONLY_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_BOTHTEAMS))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_BOTHTEAMS_NAME);
+		strcat(ret, G_OC_OCFLAG_HUMANS_NAME);
 	}
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOWALLWALK))
@@ -5221,12 +5214,12 @@ Similar to G_admin_permission
 ==================
 */
 
-qboolean G_OC_TestLayoutFlag(char *layout, char *flag)
+qboolean G_OC_TestLayoutFlag(char *layout, const char *flag)
 {
-	char *flagPtr = flag;  // the flag to test
-	char *flags   = layout;  // the layout to test
+	const char *flagPtr = flag;  // the flag to test
+	const char *flags   = layout;  // the layout to test
 
-	G_StrToLower(flags);
+	//G_StrToLower(flags);
 	G_StrToLower(layout);
 
 //	if(!BG_OC_OCMode())
@@ -5280,16 +5273,13 @@ Test for any defined flags
 
 qboolean G_OC_LayoutExtraFlags(char *layout)
 {
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ALIENONLY))
-		return qtrue;
-
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ONEARM))
 		return qtrue;
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOCREEP))
 		return qtrue;
 
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_BOTHTEAMS))
+	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_HUMANS))
 		return qtrue;
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOWALLWALK))
@@ -5326,6 +5316,24 @@ qboolean G_OC_LayoutExtraFlags(char *layout)
 		return qtrue;
 
 	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ATYRANT))
+		return qtrue;
+
+	return qfalse;
+}
+
+qboolean G_OC_Aliens(char *layout)
+{
+	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGER) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGERUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRETCH) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISK) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISKUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDER) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDERUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOON) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOONUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ATYRANT))
+		return qtrue;
+
+	return qfalse;
+}
+
+qboolean G_OC_Humans(char *layout)
+{
+	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_HUMANS))
+		return qtrue;
+	if(!G_OC_Aliens(layout))
 		return qtrue;
 
 	return qfalse;

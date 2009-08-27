@@ -1914,7 +1914,7 @@ void Cmd_Class_f( gentity_t *ent )
           other = &g_entities[ entityList[ i ] ];
 
           if( ( other->client && other->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS ) ||
-+             ( other->s.eType == ET_BUILDABLE && other->buildableTeam == TEAM_HUMANS && other->powered ) )
+              ( other->s.eType == ET_BUILDABLE && other->buildableTeam == TEAM_HUMANS && other->powered ) )
           {
             G_TriggerMenu( clientNum, MN_A_TOOCLOSE );
             return;

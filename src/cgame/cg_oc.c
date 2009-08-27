@@ -24,9 +24,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * cg_oc.c
  *
  * OC code for cgame
- * this cgame also uses: nothing
  */
 
 #include "cg_local.h"
 
+void CG_NoWallWalk_f(void)
+{
+	if(trap_Argc() < 2)
+		return;
 
+	BG_OC_SetNoWallWalk(atoi(CG_Argv(1)));
+}

@@ -60,6 +60,7 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: convert flags
 // TODO: add sectorb7 granger OC
 // TODO: add 'u'oc
 
@@ -78,6 +79,8 @@ extern int oc_gameMode;
 	//<+===============================================+>
 	// admin
 	//<+===============================================+>
+
+	#define G_OC_CanOverride(ent) ((BG_OC_OCMode) ? ((G_admin_canEditOC((ent))) ? (1) : (0)) : (0))
 
 	#define MAX_ADMIN_HIDES 1024
 	#define MAX_ADMIN_HIDE_REASON 50
@@ -510,6 +513,7 @@ extern int oc_gameMode;
 	do \
 	{ \
 		unsigned int triggers = 0; \
+		int i; \
  \
 		G_StrToLower(level.layout); \
 		trap_Cvar_Set("g_humanBuildPoints", va("%d", INFINITE)); \
@@ -531,9 +535,23 @@ extern int oc_gameMode;
 		/* set some special BG modes */ \
  \
 		if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_NOWALLWALK)) \
-			BG_OC_SetNoWallWalk(1); \
+		{ \
+			BG_OC_SetNoWallWalk(qtrue); \
+ \
+			for(i = 0; i < level.maxclients; i++) \
+			{ \
+				trap_SendServerCommand(i, "noWallWalk 1"); \
+			} \
+		} \
 		else \
-			BG_OC_SetNoWallWalk(0); \
+		{ \
+			BG_OC_SetNoWallWalk(qfalse); \
+ \
+			for(i = 0; i < level.maxclients; i++) \
+			{ \
+				trap_SendServerCommand(i, "noWallWalk 0"); \
+			} \
+		} \
 	} while(0)
 
 	//<+===============================================+>
@@ -932,6 +950,15 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		client->pers.nextWeaponCheckTime = client->pers.nextOverrideCheckTime = level.time; \
+ \
+		if(BG_OC_GetNoWallWalk()) \
+		{ \
+			trap_SendServerCommand(clientnum, "noWallWalk 1"); \
+		} \
+		else \
+		{ \
+			trap_SendServerCommand(clientnum, "noWallWalk 0"); \
+		} \
 	} while(0)
 
 	#define BG_OC_NeedPreCreep() ((BG_OC_OCMode()) ? (1) :(0))
@@ -1539,8 +1566,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	// buildable optimization
 	//<+===============================================+>
 
-	#define G_OC_AlienBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ALIENONLY) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_BOTHTEAMS)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's an alien only OC, certain thinks can have more latency
-	#define G_OC_HumanBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((!G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ALIENONLY) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_BOTHTEAMS)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's a human only OC, certain thinks can have more latency
+	#define G_OC_AlienBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((G_OC_Humans(level.layout) && !G_OC_Aliens(level.layout)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's an alien only OC, certain thinks can have more latency
+	#define G_OC_HumanBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((G_OC_Aliens(level.layout) && !G_OC_Humans(level.layout)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's a human only OC, certain thinks can have more latency
 
 	#define G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET +4000  // save some processing power for tubes, hovels, barricades, trappers, turrets, teslas, DC's, and armouries
 
@@ -1556,44 +1583,44 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	//<+===============================================+>
 
 	// these need to be lowercase
-	#define G_OC_OCFLAG_ONEARM            "n"
-	#define G_OC_OCFLAG_NOCREEP           "p"
-	#define G_OC_OCFLAG_ALIENONLY         "a"
-	#define G_OC_OCFLAG_BOTHTEAMS         "b"
+	#define G_OC_OCFLAG_ONEARM            "o"
+	#define G_OC_OCFLAG_NOCREEP           "c"
+	#define G_OC_OCFLAG_HUMANS            "h"
 	#define G_OC_OCFLAG_NOWALLWALK        "w"
 	#define G_OC_OCFLAG_AGRANGER          "g"
 	#define G_OC_OCFLAG_AGRANGERUPG       "^g"
 	#define G_OC_OCFLAG_ADRETCH           "d"
-	#define G_OC_OCFLAG_ABASILISK         "l"
-	#define G_OC_OCFLAG_ABASILISKUPG      "^l"
+	#define G_OC_OCFLAG_ABASILISK         "b"
+	#define G_OC_OCFLAG_ABASILISKUPG      "^b"
 	#define G_OC_OCFLAG_AMARAUDER         "m"
 	#define G_OC_OCFLAG_AMARAUDERUPG      "^m"
-	#define G_OC_OCFLAG_ADRAGOON          "h"
-	#define G_OC_OCFLAG_ADRAGOONUPG       "^h"
+	#define G_OC_OCFLAG_ADRAGOON          "r"
+	#define G_OC_OCFLAG_ADRAGOONUPG       "^r"
 	#define G_OC_OCFLAG_ATYRANT           "t"
-	#define G_OC_OCFLAG_LUCIJUMP          "u"
+	#define G_OC_OCFLAG_LUCIJUMP          "l"
 
 	// oc flag names
-	#define G_OC_OCFLAG_ONEARM_NAME       "UseOneArm"
-	#define G_OC_OCFLAG_NOCREEP_NAME      "NoCreep"
-	#define G_OC_OCFLAG_ALIENONLY_NAME    "Aliens"
-	#define G_OC_OCFLAG_BOTHTEAMS_NAME    "BothTeams"
-	#define G_OC_OCFLAG_NOWALLWALK_NAME   "NoWallWalk"
+	#define G_OC_OCFLAG_ONEARM_NAME       "Only one armoury needs to be used"
+	#define G_OC_OCFLAG_NOCREEP_NAME      "No creep"
+	#define G_OC_OCFLAG_HUMANS_NAME       "Humans"
+	#define G_OC_OCFLAG_NOWALLWALK_NAME   "No wall walking"
 	#define G_OC_OCFLAG_AGRANGER_NAME     "Grangers"
-	#define G_OC_OCFLAG_AGRANGERUPG_NAME  "AdvGrangers"
+	#define G_OC_OCFLAG_AGRANGERUPG_NAME  "Advanced grangers"
 	#define G_OC_OCFLAG_ADRETCH_NAME      "Dretches"
 	#define G_OC_OCFLAG_ABASILISK_NAME    "Basilisks"
-	#define G_OC_OCFLAG_ABASILISKUPG_NAME "AdvBasilisks"
-	#define G_OC_OCFLAG_AMARAUDER_NAME    "Maradauders"
-	#define G_OC_OCFLAG_AMARAUDERUPG_NAME "AdvMaradauders"
+	#define G_OC_OCFLAG_ABASILISKUPG_NAME "Advanced basilisks"
+	#define G_OC_OCFLAG_AMARAUDER_NAME    "Marauders"
+	#define G_OC_OCFLAG_AMARAUDERUPG_NAME "Advanced marauders"
 	#define G_OC_OCFLAG_ADRAGOON_NAME     "Dragoons"
-	#define G_OC_OCFLAG_ADRAGOONUPG_NAME  "AdvDragoons"
+	#define G_OC_OCFLAG_ADRAGOONUPG_NAME  "Advanced dragoons"
 	#define G_OC_OCFLAG_ATYRANT_NAME      "Tyrants"
-	#define G_OC_OCFLAG_LUCIJUMP_NAME     "LuciferCannons"
+	#define G_OC_OCFLAG_LUCIJUMP_NAME     "Lucifer cannon mode"
 
-	char     *G_OC_ParseLayoutFlags(char *layout);
-	qboolean G_OC_TestLayoutFlag(char *layout, char *flag);
-	qboolean G_OC_LayoutExtraFlags(char *layout);
+	const char *G_OC_ParseLayoutFlags(char *layout);
+	qboolean   G_OC_TestLayoutFlag(char *layout, const char *flag);
+	qboolean   G_OC_LayoutExtraFlags(char *layout);
+	qboolean   G_OC_Aliens(char *layout);
+	qboolean   G_OC_Humans(char *layout);
 
 	//<+===============================================+>
 	// cmds
@@ -1608,15 +1635,15 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(G_admin_canEditOC(ent)) \
 			break; \
  \
-		if(team == TEAM_HUMANS && G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ALIENONLY) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_BOTHTEAMS)) \
+		if(team == TEAM_HUMANS && !G_OC_Humans(level.layout)) \
 		{ \
-			G_ClientPrint(ent, va("You cannot join humans with layout option '%s'", G_OC_OCFLAG_ALIENONLY_NAME), CLIENT_NULL); \
+			G_ClientPrint(ent, "Humans cannot join this course", CLIENT_NULL); \
 			return; \
 		} \
  \
-		if(team == TEAM_ALIENS && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ALIENONLY) && !G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_BOTHTEAMS)) \
+		if(team == TEAM_ALIENS && !G_OC_Aliens(level.layout)) \
 		{ \
-			G_ClientPrint(ent, va("You cannot join aliens without layout option '%s' or '%s'", G_OC_OCFLAG_ALIENONLY_NAME, G_OC_OCFLAG_BOTHTEAMS_NAME), CLIENT_NULL); \
+			G_ClientPrint(ent, "Aliens cannon join this course", CLIENT_NULL); \
 			return; \
 		} \
  \
@@ -2681,6 +2708,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define CG_OC_ECVARS \
 	extern vmCvar_t cg_printTimer; \
 	extern vmCvar_t cg_printSpeedometer;
+
+	#define CG_OC_SERVERCMDS \
+	, { "noWallWalk", CG_NoWallWalk_f}
 
 	#define CG_OC_SetConfigStrings() \
 	do \

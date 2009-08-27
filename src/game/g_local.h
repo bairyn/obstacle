@@ -1015,8 +1015,8 @@ void      BeginIntermission( void );
 void      ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles );
 void      player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod );
 qboolean  SpotWouldTelefrag( gentity_t *spot );
-void      G_ClientCP( gentity_t *ent, char *message, char *find, int mode );
-void      G_ClientPrint( gentity_t *ent, char *message, int mode );
+void      G_ClientCP( gentity_t *ent, const char *message, const char *find, int mode );
+void      G_ClientPrint( gentity_t *ent, const char *message, int mode );
 
 //
 // g_svcmds.c

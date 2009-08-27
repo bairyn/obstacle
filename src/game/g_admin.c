@@ -135,6 +135,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       ""
     },
 
+    {"override", G_admin_override, "override",
+      "override a player",
+      "[^3name|slot#^7]"
+    },
+
     {"passvote", G_admin_endvote, "V",
       "pass a vote currently taking place",
       ""
@@ -190,6 +195,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
 
     {"unmute", G_admin_mute, "m",
       "unmute a muted player",
+      "[^3name|slot#^7]"
+    }
+
+    {"unoverride", G_admin_override, "o",
+      "unoverride an overridden player",
       "[^3name|slot#^7]"
     }
 
@@ -1967,6 +1977,70 @@ qboolean G_admin_mute( gentity_t *ent, int skiparg )
     vic->client->pers.muted = qtrue;
     CPx( pids[ 0 ], "cp \"^1You've been muted\"" );
     AP( va( "print \"^3!mute: ^7%s^7 has been muted by ^7%s\n\"",
+            vic->client->pers.netname,
+            ( ent ) ? ent->client->pers.netname : "console" ) );
+  }
+  return qtrue;
+}
+
+qboolean G_admin_override( gentity_t *ent, int skiparg )
+{
+  int pids[ MAX_CLIENTS ], found;
+  char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
+  char command[ MAX_ADMIN_CMD_LEN ], *cmd;
+  gentity_t *vic;
+
+  if(!g_cheats.integer && !G_OC_CanOverride())
+  {
+	  ADMP("Cheats are disabled.\n");
+  }
+
+  G_SayArgv( skiparg, command, sizeof( command ) );
+  cmd = command;
+  if( cmd && *cmd == '!' )
+    cmd++;
+  if( G_SayArgc() < 2 + skiparg )
+  {
+    ADMP( va( "^3!%s: ^7usage: !%s [name|slot#]\n", cmd, cmd ) );
+    return qfalse;
+  }
+  G_SayArgv( 1 + skiparg, name, sizeof( name ) );
+  if( ( found = G_ClientNumbersFromString( name, pids, MAX_CLIENTS ) ) != 1 )
+  {
+    G_MatchOnePlayer( pids, found, err, sizeof( err ) );
+    ADMP( va( "^3!%s: ^7%s\n", cmd, err ) );
+    return qfalse;
+  }
+  if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
+  {
+    ADMP( va( "^3!%s: ^7sorry, but your intended victim has a higher admin"
+        " level than you\n", cmd ) );
+    return qfalse;
+  }
+  vic = &g_entities[ pids[ 0 ] ];
+  if( vic->client->pers.override == qtrue )
+  {
+    if( !Q_stricmp( cmd, "override" ) )
+    {
+      ADMP( "^3!override: ^7player is already overridden\n" );
+      return qtrue;
+    }
+    vic->client->pers.override = qfalse;
+    CPx( pids[ 0 ], "cp \"^1You have been un-overridden\"" );
+    AP( va( "print \"^3!unoverride: ^7%s^7 has been un-overridden by %s\n\"",
+            vic->client->pers.netname,
+            ( ent ) ? ent->client->pers.netname : "console" ) );
+  }
+  else
+  {
+    if( !Q_stricmp( cmd, "unoverride" ) )
+    {
+      ADMP( "^3!unoverride: ^7player is not currently overridden\n" );
+      return qtrue;
+    }
+    vic->client->pers.override = qtrue;
+    CPx( pids[ 0 ], "cp \"^1You've been overridden\"" );
+    AP( va( "print \"^3!override: ^7%s^7 has been overridden by ^7%s\n\"",
             vic->client->pers.netname,
             ( ent ) ? ent->client->pers.netname : "console" ) );
   }

@@ -1802,7 +1802,7 @@ void ClientDisconnect( int clientNum )
 // big buffer for the following communication functions
 static char buf[ MAX_STRING_CHARS ];
 
-void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
+void G_ClientCP( gentity_t *ent, const char *message, const char *find, int mode )
 {
     gentity_t *i;
     qboolean target;
@@ -1872,7 +1872,7 @@ void G_ClientCP( gentity_t *ent, char *message, char *find, int mode )
     }
 }
 
-void G_ClientPrint( gentity_t *ent, char *message, int mode )
+void G_ClientPrint( gentity_t *ent, const char *message, int mode )
 {
     gentity_t *i;
     qboolean target;
