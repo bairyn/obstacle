@@ -1943,6 +1943,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_NeverRemoveCredits() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define G_OC_BuildableStageAlwaysValid() ((BG_OC_OCMode()) ? (1) : (0))
+	#define G_OC_NeedAlternateStageTest() ((BG_OC_OCMode()) ? (1) : (0))
+	#define G_OC_AlternateStageTest() ((S3))  // maximum stage
 
 	#define G_OC_Class() \
 	do \
