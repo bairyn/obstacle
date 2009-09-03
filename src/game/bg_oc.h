@@ -875,6 +875,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
+		/* Normal grangers can't fire blobs in OC mode */ \
+		if(ent->client->pers.classSelection == PCL_ALIEN_BUILDER0) \
+			return; \
+ \
 		if(ent->client->pers.scrimTeam && !ent->client->pers.override && !G_admin_canEditOC(ent)) \
 			return; \
 	} while(0)
