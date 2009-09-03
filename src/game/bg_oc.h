@@ -973,15 +973,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		client->pers.nextWeaponCheckTime = client->pers.nextOverrideCheckTime = level.time; \
- \
-		if(BG_OC_GetNoWallWalk()) \
-		{ \
-			trap_SendServerCommand(clientNum, "noWallWalk 1"); \
-		} \
-		else \
-		{ \
-			trap_SendServerCommand(clientNum, "noWallWalk 0"); \
-		} \
 	} while(0)
 
 	#define BG_OC_NeedPreCreep() ((BG_OC_OCMode()) ? (1) :(0))
