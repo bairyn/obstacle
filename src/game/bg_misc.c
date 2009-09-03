@@ -4204,3 +4204,26 @@ char *BG_TeamName( team_t team )
   return "<team>";
 }
 
+/*
+===============
+BG_StrToLower
+
+Convert all characters in a string to lower case
+===============
+*/
+void BG_StrToLower( char *s )
+{
+    if(!s)
+        return;
+
+    while(*s)
+    {
+        if(*s >= 'A' && *s <= 'Z')
+        {
+            *s -= 'A' - 'a';
+        }
+
+        s++;
+    }
+}
+

@@ -1258,7 +1258,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
     else
     {
-      G_StrToLower( arg3 );
+      BG_StrToLower( arg3 );
 
       if( !G_MapExists( arg2 ) )
       {

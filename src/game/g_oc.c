@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * though, several non-OC things that this mod nedes: floating point votes,
  * CP mix and print system, teleporters, trigger count return on at least
  * G_Checktrigger_stages(), extended !info, G_MinorFormatNumber(), override,
- * G_StrToLower(), bg_misc overrides (in the current mod, bg_misc overrides are
+ * BG_StrToLower(), bg_misc overrides (in the current mod, bg_misc overrides are
  * tied into OC's to know which overrides to use), a small fix to allow a
  * dynamic vec3_t initializer for PCLOUD in g_weapon.c, G_BuildableRange returns
  * buildable in range, extended votes, pause, buildlog, revert, several small
@@ -153,7 +153,7 @@ qboolean G_admin_layoutsave(void *ent, int skiparg)
   }
 
   G_SayArgv(skiparg + 1, layout, sizeof(layout));
-  G_StrToLower(layout);
+  BG_StrToLower(layout);
 
   if(!(*layout == 'o' && *(layout + 1) == 'c') || !(g_ocReview.integer && Q_stricmp(cmd, "layoutsave")))
   {
@@ -795,7 +795,7 @@ qboolean G_admin_startscrim( void *entt, int skiparg )
   level.ocStartTime = level.time;
   level.ocScrimState = G_OC_STATE_PREP;
 
-  AP( va( "print \"^3!startscrim: ^7%s^7 started the oc scrim - first team to use\n%s^7.^7\n\"", ( ent ) ? ent->client->pers.netname : "console", ( ( level.ocScrimMode == G_OC_MODE_ARM ) ? ( level.totalArmouries == 1 || G_OC_TestLayoutFlag( level.layout, G_OC_OCFLAG_ONEARM ) ? "the ^3armoury^7" : "every ^3armoury^7" ) : ( level.totalMedistations == 1 ? "the ^3medical station^7" : "every ^3medical station^7" ) ) ) );
+  AP( va( "print \"^3!startscrim: ^7%s^7 started the oc scrim - first team to use\n%s^7.^7\n\"", ( ent ) ? ent->client->pers.netname : "console", ( ( level.ocScrimMode == G_OC_MODE_ARM ) ? ( level.totalArmouries == 1 || BG_OC_TestLayoutFlag( level.layout, BG_OC_OCFLAG_ONEARM ) ? "the ^3armoury^7" : "every ^3armoury^7" ) : ( level.totalMedistations == 1 ? "the ^3medical station^7" : "every ^3medical station^7" ) ) ) );
   return qtrue;
 }
 
@@ -1841,7 +1841,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 			}
 
 			// now continue testing the teams arms
-			if(G_OC_AllArms(tmp) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+			if(G_OC_AllArms(tmp) || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 			{
 				G_OC_AppendArm(ent->client->pers.arms, arm);
 				if(t->time)
@@ -1940,7 +1940,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 			}
 
 			// now continue testing the teams arms
-			if(G_OC_AllArms(tmp) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+			if(G_OC_AllArms(tmp) || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 			{
 				t->flags |= G_OC_SCRIMFLAG_EQUIPMENT;
 				G_OC_AppendArm(ent->client->pers.arms, arm);
@@ -1993,7 +1993,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 	// the player is not on a scrim team
 	else
 	{
-		if(G_OC_AllArms(ent->client->pers.arms) || (G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(ent->client->pers.arms)))
+		if(G_OC_AllArms(ent->client->pers.arms) || (BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(ent->client->pers.arms)))
 		{
 			// player has already won
 			if(level.totalArmouries == 1)
@@ -2010,14 +2010,14 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 		{
 			// new arm
 			G_OC_AppendArm(ent->client->pers.arms, arm);
-			if(G_OC_AllArms(ent->client->pers.arms) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+			if(G_OC_AllArms(ent->client->pers.arms) || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 			{
 				// player has won
 				char *record;
 				G_OC_AppendArm(ent->client->pers.arms, arm);
 				ent->client->pers.winTime = ent->client->pers.aliveTime;
 				record = G_OC_WinStats(ent->client, level.totalArmouries, ent->client->pers.winTime);
-				if(level.totalArmouries == 1 || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+				if(level.totalArmouries == 1 || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 				{
 					G_ClientCP(ent, va("^a^r^m^2You Win!"), "^a^r^m", CLIENT_SPECTATORS);
 					AP(va("print \"^7%s^7 wins! (%dm:%ds%dms)%s\n\"", ent->client->pers.netname, MINS(ent->client->pers.winTime), SECS(ent->client->pers.winTime), MSEC(ent->client->pers.winTime), record));
@@ -2721,7 +2721,7 @@ int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 				if(lost)
 				{
 					// see if the equipment flag needs to be reset
-					if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+					if(BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 					{
 						qboolean used = qfalse;
 						// iterate through each client and see if there's still at least 1 used arm
@@ -2765,7 +2765,7 @@ int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 						}
 						t->flags &= ~G_OC_SCRIMFLAG_EQUIPMENT;
 					}
-//					if(G_OC_AllArms(tmp) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+//					if(G_OC_AllArms(tmp) || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 //					{
 //					}
 					G_ClientPrint(ent, va("Your team lost %d armouries!", lost), CLIENT_SCRIMTEAM);
@@ -2817,7 +2817,7 @@ int G_OC_CanUseBonus(gentity_t *ent)
 	{
 		G_ClientCP(ent, G_OC_NOBONUSJETPACKMESSAGE, NULL, CLIENT_SPECTATORS);
 	}
-	if(!G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_LUCIJUMP))
+	if(!BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_LUCIJUMP))
 	{
 		if(BG_InventoryContainsWeapon(WP_LUCIFER_CANNON, ent->client->ps.stats))
 		{
@@ -3134,7 +3134,7 @@ int G_OC_ValidScrimWeapon(int weapon)
 	if(weapon == WP_BLASTER)
 		return 0;
 
-	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_LUCIJUMP))
+	if(BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_LUCIJUMP))
 	{
 		if(weapon == WP_LUCIFER_CANNON)
 			return 0;
@@ -3882,7 +3882,7 @@ char *G_OC_MediStats(void *client, int count, int time)
 		G_LogPrintf("G_OC_MediStats: no map is loaded\n");
 		return "";
 	}
-	G_StrToLower(level.layout);
+	BG_StrToLower(level.layout);
 
 	Com_sprintf(filename, sizeof(filename), "stats/%s/%s/med.dat", map, level.layout);
 
@@ -3910,10 +3910,10 @@ char *G_OC_WinStats(void *client, int count, int time)
 		G_LogPrintf("G_OC_WinStats: no map is loaded\n");
 		return "";
 	}
-	G_StrToLower(level.layout);
+	BG_StrToLower(level.layout);
 
 	// if ONEARM is set, always treat count as 1
-	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+	if(BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 		count = 1;
 
 	Com_sprintf(filename, sizeof(filename), "stats/%s/%s/win.dat", map, level.layout);
@@ -4365,7 +4365,7 @@ void Cmd_Mystats_f(gentity_t *ent)
 						Q_strncpyz(color, "^2", sizeof(color));
 					}
 
-					if(level.totalArmouries == 1 || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+					if(level.totalArmouries == 1 || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 					{
 							if(G_OC_NumberOfArms(tmp))
 							{
@@ -4438,7 +4438,7 @@ void Cmd_Mystats_f(gentity_t *ent)
 				Q_strncpyz(color, "^2", sizeof(color));
 			}
 
-			if(level.totalArmouries == 1 || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ONEARM))
+			if(level.totalArmouries == 1 || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM))
 			{
 				if(G_OC_NumberOfArms(ent->client->pers.arms))
 				{
@@ -5063,278 +5063,4 @@ void Cmd_AutoUnAngle_f(gentity_t *ent)
 	else
 		G_ClientPrint(ent, "AutoAngle already disabled.", CLIENT_NULL);
 	ent->client->pers.autoAngleDisabled = 1;
-}
-
-//======================================================
-// OC flags
-//======================================================
-
-/*
-==================
-G_OC_ParseLayoutFlags
-
-Human readable options string
-==================
-*/
-
-const char *G_OC_ParseLayoutFlags(char *layout)
-{
-	int  num = 0;
-	static char ret[MAX_STRING_CHARS];
-
-	static char out[4 * MAX_STRING_CHARS];
-
-	out[0] = 0;
-
-//	if(!BG_OC_OCMode())
-//		return;
-	if(!layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c')  // must be an oc
-		return "";
-
-	if(!G_OC_LayoutExtraFlags(layout))  // no extra flags
-		return "";
-
-	strcpy(ret, " (layout uses options '");
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ONEARM))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ONEARM_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOCREEP))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_NOCREEP_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_HUMANS))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_HUMANS_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOWALLWALK))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_NOWALLWALK_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AGRANGER))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_AGRANGER_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AGRANGERUPG))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_AGRANGERUPG_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ADRETCH))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ADRETCH_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ABASILISK))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ABASILISK_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ABASILISKUPG))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ABASILISKUPG_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AMARAUDER))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_AMARAUDER_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AMARAUDERUPG))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_AMARAUDERUPG_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ADRAGOON))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ADRAGOON_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ADRAGOONUPG))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ADRAGOONUPG_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ATYRANT))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_ATYRANT_NAME);
-	}
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_LUCIJUMP))
-	{
-		if(num++)
-			strcat(ret, ", ");
-		strcat(ret, G_OC_OCFLAG_LUCIJUMP_NAME);
-	}
-
-	strcat(ret, "')");
-
-	return ret;
-}
-
-/*
-==================
-G_OC_TestLayoutFlag
-
-Similar to G_admin_permission
-==================
-*/
-
-qboolean G_OC_TestLayoutFlag(char *layout, const char *flag)
-{
-	const char *flagPtr = flag;  // the flag to test
-	const char *flags   = layout;  // the layout to test
-
-	//G_StrToLower(flags);
-	G_StrToLower(layout);
-
-//	if(!BG_OC_OCMode())
-//		return qfalse;
-	if(!layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c')  // must be an oc
-		return qfalse;
-
-	flags += strlen("oc");
-
-	while(*flags)
-	{
-		if(*flags == '_')
-		{
-			break;
-		}
-		else if(*flags == *flagPtr)
-		{
-			if(*flagPtr != '^')
-				return qtrue;
-			while(*flags == '^' && *(flags++) == *(flagPtr++))
-				if(*flags == '_')
-					break;
-			if(*flags == '_')
-				break;
-			if(*flags == *flagPtr && *flags != '_' && *flagPtr != '_' && *flags != '^')
-				return qtrue;
-			else
-				break;
-		}
-		else if(*flags == '^')
-		{
-			while(*(flags++) == '^')
-				if(*flags == '_')
-					break;
-			continue;
-		}
-
-		flags++;
-	}
-
-	return qfalse;
-}
-
-/*
-==================
-G_OC_LayoutExtraFlags
-
-Test for any defined flags
-==================
-*/
-
-qboolean G_OC_LayoutExtraFlags(char *layout)
-{
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ONEARM))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOCREEP))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_HUMANS))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_NOWALLWALK))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AGRANGER))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AGRANGERUPG))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ADRETCH))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ABASILISK))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_LUCIJUMP))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ABASILISKUPG))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AMARAUDER))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_AMARAUDERUPG))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ADRAGOON))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ADRAGOONUPG))
-		return qtrue;
-
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_ATYRANT))
-		return qtrue;
-
-	return qfalse;
-}
-
-qboolean G_OC_Aliens(char *layout)
-{
-	if(G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGER) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AGRANGERUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRETCH) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISK) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ABASILISKUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDER) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_AMARAUDERUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOON) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ADRAGOONUPG) || G_OC_TestLayoutFlag(level.layout, G_OC_OCFLAG_ATYRANT))
-		return qtrue;
-
-	return qfalse;
-}
-
-qboolean G_OC_Humans(char *layout)
-{
-	if(G_OC_TestLayoutFlag(layout, G_OC_OCFLAG_HUMANS))
-		return qtrue;
-	if(!G_OC_Aliens(layout))
-		return qtrue;
-
-	return qfalse;
 }

@@ -74,3 +74,270 @@ int BG_OC_GetNoWallWalk(void)
 	return oc_noWallWalk;
 }
 
+//======================================================
+// OC flags
+//======================================================
+
+/*
+==================
+G_OC_ParseLayoutFlags
+
+Human readable options string
+==================
+*/
+
+const char *BG_OC_ParseLayoutFlags(char *layout)
+{
+	int num = 0;
+	static char ret[MAX_STRING_CHARS];
+
+	ret[0] = 0;
+
+	// Don't check for OC mode since this function can be called in non-OC mode
+
+	if(!layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c')  // must be an oc
+		return "";
+
+	if(!BG_OC_LayoutExtraFlags(layout))  // no extra flags
+		return "";
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ONEARM))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_ONEARM_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_NOCREEP))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_NOCREEP_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_HUMANS))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_HUMANS_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_NOWALLWALK))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_NOWALLWALK_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AGRANGER))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_AGRANGER_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AGRANGERUPG))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_AGRANGERUPG_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRETCH))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_ADRETCH_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ABASILISK))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_ABASILISK_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ABASILISKUPG))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_ABASILISKUPG_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AMARAUDER))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_AMARAUDER_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AMARAUDERUPG))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_AMARAUDERUPG_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRAGOON))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_ADRAGOON_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRAGOONUPG))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_ADRAGOONUPG_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ATYRANT))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_ATYRANT_NAME);
+	}
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_LUCIJUMP))
+	{
+		if(num++)
+			strcat(ret, ", ");
+		strcat(ret, BG_OC_OCFLAG_LUCIJUMP_NAME);
+	}
+
+	return ret;
+}
+
+/*
+==================
+BG_OC_TestLayoutFlag
+
+Similar to OC v1.4's G_admin_permission
+==================
+*/
+
+int BG_OC_TestLayoutFlag(char *layout, const char *flag)
+{
+	const char *flagPtr = flag;  // the flag to test
+	const char *flags   = layout;  // the layout to test
+
+	//BG_StrToLower(flags);
+	BG_StrToLower(layout);
+
+//	if(!BG_OC_OCMode())
+//		return qfalse;
+	if(!layout || !layout[0] || *(layout) != 'o' || *((layout) + 1) != 'c')  // must be an oc
+		return qfalse;
+
+	flags += strlen("oc");
+
+	while(*flags)
+	{
+		if(*flags == '_')
+		{
+			break;
+		}
+		else if(*flags == *flagPtr)
+		{
+			if(*flagPtr != '^')
+				return qtrue;
+			while(*flags == '^' && *(flags++) == *(flagPtr++))
+				if(*flags == '_')
+					break;
+			if(*flags == '_')
+				break;
+			if(*flags == *flagPtr && *flags != '_' && *flagPtr != '_' && *flags != '^')
+				return qtrue;
+			else
+				break;
+		}
+		else if(*flags == '^')
+		{
+			while(*(flags++) == '^')
+				if(*flags == '_')
+					break;
+			continue;
+		}
+
+		flags++;
+	}
+
+	return qfalse;
+}
+
+/*
+==================
+BG_OC_LayoutExtraFlags
+
+Test if any flags exist for a layout
+==================
+*/
+
+int BG_OC_LayoutExtraFlags(char *layout)
+{
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ONEARM))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_NOCREEP))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_HUMANS))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_NOWALLWALK))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AGRANGER))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AGRANGERUPG))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRETCH))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ABASILISK))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_LUCIJUMP))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ABASILISKUPG))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AMARAUDER))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AMARAUDERUPG))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRAGOON))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRAGOONUPG))
+		return qtrue;
+
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ATYRANT))
+		return qtrue;
+
+	return qfalse;
+}
+
+int BG_OC_Aliens(char *layout)
+{
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AGRANGER) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AGRANGERUPG) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRETCH) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ABASILISK) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ABASILISKUPG) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AMARAUDER) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_AMARAUDERUPG) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRAGOON) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ADRAGOONUPG) || BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_ATYRANT))
+		return qtrue;
+
+	return qfalse;
+}
+
+int BG_OC_Humans(char *layout)
+{
+	if(BG_OC_TestLayoutFlag(layout, BG_OC_OCFLAG_HUMANS))
+		return qtrue;
+	if(!BG_OC_Aliens(layout))
+		return qtrue;
+
+	return qfalse;
+}

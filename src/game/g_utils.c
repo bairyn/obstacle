@@ -864,29 +864,6 @@ void G_CloseMenus( int clientNum )
 
 /*
 ===============
-G_StrToLower
-
-Lower-case all uppercase characters in some string
-===============
-*/
-void G_StrToLower( char *s )
-{
-    if(!s)
-        return;
-
-    while(*s)
-    {
-        if(*s >= 'A' && *s <= 'Z')
-        {
-            *s -= 'A' - 'a';
-        }
-
-        s++;
-    }
-}
-
-/*
-===============
 G_MinorFormatNumber
 
 Strip all trailing and leading 0's.  eg 0043.500000 will be 43.5
