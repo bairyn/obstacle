@@ -358,7 +358,7 @@ qboolean G_admin_hide(void *ent, int skiparg)
     return qfalse;
   }
 //  // admins can still hide
-//  if(!g_allowHiding.integer)
+//  if(!g_allowHide.integer)
 //  {
 //    ADMP("^3!hide: ^7hiding has been disabled\n");
 //    return qfalse;
@@ -4835,9 +4835,9 @@ void Cmd_Hide_f(gentity_t *ent)
 		return;
 	}
 
-	if(!g_allowHiding.integer)
+	if(!g_allowHide.integer && !G_admin_permission(ent, "hide"))
 	{
-		ADMP("Server disabled non-admin hiding\n");
+		G_ClientPrint(ent,"Server disabled hiding\n", CLIENT_SPECTATORS);
 		return;
 	}
 
@@ -4849,12 +4849,12 @@ void Cmd_Hide_f(gentity_t *ent)
 			G_StopFromFollowing(ent, 0);
 			ent->r.svFlags |= SVF_SINGLECLIENT;
 			ent->r.singleClient = ent-g_entities;
-			ADMP("You have been hidden\n");
+			G_ClientPrint(ent, "You have been hidden", CLIENT_SPECTATORS);
 		}
 		else
 		{
 			ent->r.svFlags &= ~SVF_SINGLECLIENT;
-			ADMP("You have become visible\n");
+			G_ClientPrint(ent, "You have become visible", CLIENT_SPECTATORS);
 		}
 	}
 	else
@@ -4944,7 +4944,7 @@ void Cmd_AskLayout_f(gentity_t *ent)
 		trap_Argv(1, layout, sizeof(layout));
 	}
 
-	G_ClientPrint(ent, G_OC_ParseLayoutFlags(layout), CLIENT_NULL);
+	G_ClientPrint(ent, BG_OC_ParseLayoutFlags(layout), CLIENT_NULL);
 }
 
 void Cmd_TeleportToCheckpoint_f(gentity_t *ent)

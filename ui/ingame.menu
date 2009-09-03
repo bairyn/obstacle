@@ -102,7 +102,7 @@
 
     itemDef
     {
-      name leave
+      name help
       text "Help"
       type ITEM_TYPE_BUTTON
       style WINDOW_STYLE_EMPTY

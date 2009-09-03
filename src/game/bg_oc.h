@@ -61,6 +61,7 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: move vote count before message.  And (perhaps post-2.0?) maybe wrap the message if there's a lot of flags
+// TODO: g_forceHide
 // TODO: remove askLayout bind *from UI* (keep the command), and instead use a configstring to set layoutname so that the client can parse it in ESC->OC->Info
 // TODO: scrim team UI (preferably a dialouge such as team selection
 // TODO: move OC UI from controls and have it to the right of Options; sub-menus Options, Controls, Info (, etc?)
@@ -449,7 +450,8 @@ extern int oc_gameMode;
 	vmCvar_t g_statsEnabled; \
 	vmCvar_t g_statsRecords; \
 	vmCvar_t g_ocReview; \
-	vmCvar_t g_allowHiding; \
+	vmCvar_t g_allowHide; \
+	vmCvar_t g_forceHide; \
 	vmCvar_t g_allowHideVote; \
 	vmCvar_t g_allowUnhideVote; \
 	vmCvar_t g_hideTimeCallvoteMinutes; \
@@ -465,7 +467,8 @@ extern int oc_gameMode;
 	extern vmCvar_t g_statsEnabled; \
 	extern vmCvar_t g_statsRecords; \
 	extern vmCvar_t g_ocReview; \
-	extern vmCvar_t g_allowHiding; \
+	extern vmCvar_t g_allowHide; \
+	extern vmCvar_t g_forceHide; \
 	extern vmCvar_t g_allowHideVote; \
 	extern vmCvar_t g_allowUnhideVote; \
 	extern vmCvar_t g_hideTimeCallvoteMinutes; \
@@ -481,7 +484,8 @@ extern int oc_gameMode;
 	{ &g_statsEnabled, "g_statsEnabled", "1", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_statsRecords, "g_statsRecords", "10", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_ocReview, "g_ocReview", "1", CVAR_ARCHIVE, 0, qtrue  }, \
-	{ &g_allowHiding, "g_allowHiding", "1", CVAR_ARCHIVE, 0, qtrue  }, \
+	{ &g_allowHide, "g_allowHide", "1", CVAR_ARCHIVE, 0, qtrue  }, \
+	{ &g_forceHide, "g_forceHide", "0", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_allowHideVote, "g_allowHideVote", "1", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_allowUnhideVote, "g_allowUnhideVote", "1", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_hideTimeCallvoteMinutes, "g_hideTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  }, \
@@ -1621,11 +1625,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			G_ClientPrint(ent, "Aliens cannon join this course", CLIENT_NULL); \
 			return; \
 		} \
- \
-		if(!g_timelimit.integer) \
-			break; \
- \
-		percentAddition -= (((float) g_timelimitDrop.value) * ((float) (((int) ((int) (level.time - level.startTime) / (int) 60000) / (int) g_timelimit.integer)))); \
 	} while(0)
 
 	#define G_OC_CallvotePercentage() \
@@ -2158,6 +2157,18 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
+		if(g_forceHide.integer) \
+		{ \
+			if(!ent->client->pers.hidden) \
+			{ \
+				ent->client->pers.hidden = !ent->client->pers.hidden; \
+				G_StopFromFollowing(ent, 0); \
+				ent->r.svFlags |= SVF_SINGLECLIENT; \
+				ent->r.singleClient = ent-g_entities; \
+				G_ClientPrint(ent, "You have been hidden (g_forceHide set on server)\n", CLIENT_SPECTATORS); \
+			} \
+		} \
+ \
 		if(client->ps.stats[STAT_HEALTH] > 0 && client->sess.spectatorState == SPECTATOR_NOT) /* increment the timer if the player is alive and not spectating */ \
 		{ \
 			client->pers.aliveTime += trap_Milliseconds() - client->pers.lastAliveTime; \
@@ -2468,7 +2479,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{"restartOCQuickly", CMD_MESSAGE | CMD_TEAM | CMD_LIVING, Cmd_QuickRestartOC_f}, \
 		{"restartQuickOC", CMD_MESSAGE | CMD_TEAM | CMD_LIVING, Cmd_QuickRestartOC_f}, \
 		{"restartQuicklyOC", CMD_MESSAGE | CMD_TEAM | CMD_LIVING, Cmd_QuickRestartOC_f}, \
-	{"hide", 0, Cmd_Hide_f}, \
+	{"hide", CMD_MESSAGE, Cmd_Hide_f}, \
 	{"testHidden", 0, Cmd_TestHidden_f}, \
 		{"isHidden", 0, Cmd_TestHidden_f}, \
 		{"playerIsHidden", 0, Cmd_TestHidden_f}, \
