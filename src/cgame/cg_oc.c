@@ -28,10 +28,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
-void CG_NoWallWalk_f(void)
+void CG_OCMode_f(void)
 {
 	if(trap_Argc() < 2)
 		return;
 
-	BG_OC_SetNoWallWalk(atoi(CG_Argv(1)));
+	if(atoi(CG_Argv(1)))
+		BG_OC_SetOCModeOC();
+	else
+		BG_OC_SetOCModeNone();
 }

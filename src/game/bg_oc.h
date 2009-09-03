@@ -540,7 +540,7 @@ extern int oc_gameMode;
  \
 			for(i = 0; i < level.maxclients; i++) \
 			{ \
-				trap_SendServerCommand(i, "noWallWalk 1"); \
+				trap_SetConfigstring(CS_NOWALLWALK, "1"); \
 			} \
 		} \
 		else \
@@ -549,7 +549,7 @@ extern int oc_gameMode;
  \
 			for(i = 0; i < level.maxclients; i++) \
 			{ \
-				trap_SendServerCommand(i, "noWallWalk 0"); \
+				trap_SetConfigstring(CS_NOWALLWALK, "0"); \
 			} \
 		} \
 	} while(0)
@@ -2704,6 +2704,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				BG_OC_SetOCModeOC(); \
 				break; \
 		} \
+	} \
+	else if(num == CS_NOWALLWALK) \
+	{ \
+		BG_OC_SetNoWallWalk(atoi(str)); \
 	}
 
 	#define CG_OC_SetConfigStrings() \
@@ -2719,15 +2723,17 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				BG_OC_SetOCModeOC(); \
 				break; \
 		} \
+ \
+		BG_OC_SetNoWallWalk(atoi(CG_ConfigString(CS_NOWALLWALK))); \
 	} while(0)
 	#define CG_OC_ECVARS \
 	extern vmCvar_t cg_printTimer; \
 	extern vmCvar_t cg_printSpeedometer;
 
 	#define CG_OC_SERVERCMDS \
-	, { "noWallWalk", CG_NoWallWalk_f}
+	/*, { "command", function}*/
 
-	void CG_NoWallWalk_f(void);
+	/*void function(void);*/
 #endif /* ifdef CGAME */
 
 //<+===============================================+><+===============================================+>
@@ -2744,7 +2750,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	int  BG_OC_GetOCMode(void);
 
 	#define BG_OC_CS
-	#define CS_OCMODE 31
+	#define CS_OCMODE     31
+	#define CS_NOWALLWALK 32
 
 	//<+===============================================+>
 	// game and balance stuff

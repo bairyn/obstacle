@@ -1630,7 +1630,7 @@ void FireWeapon( gentity_t *ent )
                    LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW );
       break;
     case WP_ALEVEL3_UPG:
-      meleeAttack( ent, LEVEL3_CLAW_UPG_RANGE, LEVEL3_CLAW_WIDTH,
+      meleeAttack( ent, LEVEL3_CLAW_U_RANGE, LEVEL3_CLAW_WIDTH,
                    LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW );
       break;
     case WP_ALEVEL2:
