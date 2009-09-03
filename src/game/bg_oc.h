@@ -2701,6 +2701,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		BG_OC_SetNoWallWalk(atoi(CG_ConfigString(CS_NOWALLWALK))); \
+ \
+		trap_Cvar_Set("ui_layoutOptions", BG_OC_ParseLayoutFlags(CG_ConfigString(CS_LAYOUT))); \
 	} while(0)
 	#define CG_OC_ECVARS \
 	extern vmCvar_t cg_printTimer; \
