@@ -60,6 +60,7 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: fix bug where last slice is recorded (at least as granger)
 // TODO: convert flags
 // TODO: add sectorb7 granger OC
 // TODO: add 'u'oc
@@ -68,6 +69,7 @@ extern int oc_gameMode;
 // TODO: fix player names not showing (can be post-2.0)
 // TODO: add listlayouts to callvote section (post-2.0)
 // TODO: 'x' is building 'x', if it's worth adding (post-2.0)
+// TODO: fix advanced granger mispredictions (different bbox from server) and let the client know that it can wallwalk
 
 //<+===============================================+><+===============================================+>
 // game only stuff
