@@ -538,19 +538,13 @@ extern int oc_gameMode;
 		{ \
 			BG_OC_SetNoWallWalk(qtrue); \
  \
-			for(i = 0; i < level.maxclients; i++) \
-			{ \
-				trap_SetConfigstring(CS_NOWALLWALK, "1"); \
-			} \
+			trap_SetConfigstring(CS_NOWALLWALK, "1"); \
 		} \
 		else \
 		{ \
 			BG_OC_SetNoWallWalk(qfalse); \
  \
-			for(i = 0; i < level.maxclients; i++) \
-			{ \
-				trap_SetConfigstring(CS_NOWALLWALK, "0"); \
-			} \
+			trap_SetConfigstring(CS_NOWALLWALK, "0"); \
 		} \
 	} while(0)
 
