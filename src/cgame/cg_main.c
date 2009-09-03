@@ -1818,6 +1818,8 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 
   cg.loading = qtrue;   // force players to load instead of defer
 
+  CG_SetConfigValues( );  // set config values before misc is loaded
+
   CG_LoadTrailSystems( );
   CG_UpdateMediaFraction( 0.05f );
 
@@ -1851,7 +1853,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   cg.infoScreenText[ 0 ] = 0;
 
   // Make sure we have update values (scores)
-  CG_SetConfigValues( );
+  //CG_SetConfigValues( );
 
   CG_StartMusic( );
 
