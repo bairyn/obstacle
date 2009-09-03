@@ -66,6 +66,11 @@ void BG_OC_SetNoWallWalk(int c)
 
 int BG_OC_GetNoWallWalk(void)
 {
+	if(!BG_OC_GetOCMode())
+	{
+		return 0;
+	}
+
 	return oc_noWallWalk;
 }
 

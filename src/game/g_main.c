@@ -671,9 +671,14 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
 
   // load up a custom building layout if there is one
   if(G_OC_NeedLoadOC())
+  {
     G_OC_LoadOC();
+  }
   else
+  {
+    G_OC_NoLoadOC();
     G_LayoutLoad( );
+  }
 
   // the map might disable some things
   BG_InitAllowedGameElements( );

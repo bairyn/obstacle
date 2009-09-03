@@ -548,6 +548,11 @@ extern int oc_gameMode;
 		} \
 	} while(0)
 
+	#define G_OC_NoLoadOC() \
+	{ \
+		trap_SetConfigstring(CS_NOWALLWALK, "0"); \
+	} while(0)
+
 	//<+===============================================+>
 	// game and balance stuff
 	//<+===============================================+>
