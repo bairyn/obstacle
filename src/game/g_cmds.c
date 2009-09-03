@@ -1942,7 +1942,7 @@ void Cmd_Class_f( gentity_t *ent )
 
       cost = BG_ClassCanEvolveFromTo( currentClass, newClass,
                                       ent->client->ps.persistant[ PERS_CREDIT ],
-                                      G_OC_NeedAlternateStageTest() ? g_alienStage.integer : G_OC_AlternateStageTest(), 0 );
+                                      G_OC_NeedAlternateStageTest() ? G_OC_AlternateStageTest() : g_alienStage.integer, 0 );
 
       if( G_RoomForClassChange( ent, newClass, infestOrigin ) && G_OC_ClassChange() )
       {
