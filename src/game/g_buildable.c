@@ -2610,7 +2610,7 @@ void HTeslaGen_Think( gentity_t *self )
   //if not powered don't do anything and check again for power next think
   self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
-  if( !( self->powered = G_FindPower( self ) ) )
+  if( !self->powered )
   {
     self->s.eFlags &= ~EF_FIRING;
     self->nextthink = level.time + POWER_REFRESH_TIME;
