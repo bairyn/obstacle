@@ -1549,7 +1549,7 @@ void AHovel_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
 
   if( self->spawned && self->powered )
   {
-    if( self->active )
+    if( self->active && !G_OC_OCHovelNeverOccupied() )
     {
       //this hovel is in use
       G_TriggerMenu( activator->client->ps.clientNum, MN_A_HOVEL_OCCUPIED );

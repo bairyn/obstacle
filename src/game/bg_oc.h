@@ -577,6 +577,8 @@ extern int oc_gameMode;
 	// game and balance stuff
 	//<+===============================================+>
 
+	#define G_OC_OCHovelNeverOccupied ((BG_OC_OCMode()) ? (1) : (0))
+
 	//char *G_OC_MediStats(gclient_t *client, int count, int time);
 	//char *G_OC_WinStats(gclient_t *client, int count, int time);
 	char *G_OC_MediStats(void *client, int count, int time);
