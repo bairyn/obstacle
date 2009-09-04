@@ -60,6 +60,7 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: fix restartoc so that it teleports to spawn even if it's not valid (has to do with z axis += 1?);  and always reset timer (BUT NO SINCE THE PLAYER DIES AND IS MUCH CLEANER)
 // TODO: move vote count before message.  And (perhaps post-2.0?) maybe wrap the message if there's a lot of flags
 // TODO: g_forceHide
 // TODO: remove askLayout bind *from UI* (keep the command), and instead use a configstring to set layoutname so that the client can parse it in ESC->OC->Info
