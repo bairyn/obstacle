@@ -2330,10 +2330,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 							commonWeapon = WP_LUCIFER_CANNON; \
 						} \
  \
-						if(client->ps.stats[STAT_WEAPON] != WP_MACHINEGUN) \
+						if(client->ps.stats[STAT_WEAPON] != commonWeapon) \
 						{ \
-							client->ps.stats[STAT_WEAPON] = WP_MACHINEGUN; \
-							G_ForceWeaponChange(ent, WP_MACHINEGUN); \
+							client->ps.stats[STAT_WEAPON] = commonWeapon; \
+							G_ForceWeaponChange(ent, commonWeapon); \
 						} \
 					} \
 				} \
