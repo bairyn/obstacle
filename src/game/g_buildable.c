@@ -2412,7 +2412,7 @@ qboolean HMGTurret_CheckTarget( gentity_t *self, gentity_t *target,
   VectorNormalize( dir );
   VectorMA( self->s.pos.trBase, MGTURRET_RANGE, dir, end );
   trap_Trace( &tr, self->s.pos.trBase, NULL, NULL, end,
-              self->s.number, MASK_SHOT );
+              self->s.number, BG_OC_SHOTMASK );
   return tr.entityNum == target - g_entities;
 }
 

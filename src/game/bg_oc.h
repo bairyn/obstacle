@@ -2803,7 +2803,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define BG_OC_ClassAppend() Q_strcat(buf, sizeof(buf), "/oc");
 	#define BG_OC_WeaponAppend() Q_strcat(buf, sizeof(buf), "/oc");
 
-	#define BG_OC_PLAYERMASK ((BG_OC_OCMode()) ? (MASK_PLAYERSOLID | CONTENTS_CORPSE) : (MASK_PLAYERSOLID))  // use this instead of MASK_PLAYERSOLID when traces should always hit players.  In OC mode, MASK_PLAYERSOLID will not interact with clients.
+	#define BG_OC_PLAYERMASK ((BG_OC_OCMode()) ? (MASK_PLAYERSOLID | CONTENTS_CORPSE) : (MASK_PLAYERSOLID))  // use this instead of MASK_PLAYERSOLID when traces should always hit players.  In OC mode, MASK_PLAYERSOLID by itself will not interact with clients since their contents is CONTENTS_CORPSE.
 	#define BG_OC_SHOTMASK ((BG_OC_OCMode()) ? (MASK_SHOT | CONTENTS_CORPSE) : (MASK_SHOT))  // same as above, but for shots
 	#define BG_OC_CLIENTCONTENTS ((BG_OC_OCMode()) ? (CONTENTS_CORPSE) : (CONTENTS_BODY))
 
