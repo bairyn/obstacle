@@ -1583,8 +1583,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	// buildable optimization
 	//<+===============================================+>
 
-	#define G_OC_AlienBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((BG_OC_Humans(level.layout) && !BG_OC_Aliens(level.layout)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's an alien only OC, certain thinks can have more latency
-	#define G_OC_HumanBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((BG_OC_Aliens(level.layout) && !BG_OC_Humans(level.layout)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's a human only OC, certain thinks can have more latency
+	#define G_OC_AlienBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((BG_OC_Aliens(level.layout) && !BG_OC_Humans(level.layout)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's an alien only OC, certain thinks can have more latency
+	#define G_OC_HumanBuildableOptimizedThinkTime() (BG_OC_OCMode() ? ((BG_OC_Humans(level.layout) && !BG_OC_Aliens(level.layout)) ? (G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET) : (0)) : (0))  // if it's a human only OC, certain thinks can have more latency
 
 	#define G_OC_OPTIMIZED_BUILDABLE_THINK_OFFSET +4000  // save some processing power for tubes, hovels, barricades, trappers, turrets, teslas, DC's, and armouries
 
