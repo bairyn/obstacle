@@ -61,13 +61,8 @@ extern int oc_gameMode;
 #define weapon_t int
 
 // TODO: fix restartoc so that it teleports to spawn even if it's not valid (has to do with z axis += 1?);  and always reset timer (BUT NO SINCE THE PLAYER DIES AND IS MUCH CLEANER)
-// TODO: move vote count before message.  And (perhaps post-2.0?) maybe wrap the message if there's a lot of flags
-// TODO: remove askLayout bind *from UI* (keep the command), and instead use a configstring to set layoutname so that the client can parse it in ESC->OC->Info
 // TODO: scrim team UI (preferably a dialouge such as team selection
-// TODO: move OC UI from controls and have it to the right of Options; sub-menus Options, Controls, Info (, etc?)
 // TODO: fix bug where last slice is recorded (at least as granger)
-// TODO: convert flags
-// TODO: add sectorb7 granger OC
 // TODO: add 'u'oc
 
 // these can be post-2.0
