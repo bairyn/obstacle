@@ -1,6 +1,6 @@
 {
   "^3Welcome to the OC server!^7"
   {
-	"^7See \"^2!info^7\""
+	"^7Say \"^2!info^7\""
   }
 }

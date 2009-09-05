@@ -43,7 +43,7 @@
     onopen
     {
       hide ocGrp;
-      show oc;
+      show options;
 
       setitemcolor gameBtn      forecolor 0.2 0.2 0.2 1.0;
       setitemcolor controlsBtn  forecolor 1.0 1.0 1.0 1.0;
@@ -149,7 +149,7 @@
       type ITEM_TYPE_YESNO
       text "Show Player Timer:"
       cvar "cg_drawPlayerTimer"
-      rect CONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
@@ -165,7 +165,7 @@
       type ITEM_TYPE_YESNO
       text "Show Speedometer:"
       cvar "cg_drawSpeedometer"
-      rect CONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
@@ -181,7 +181,7 @@
       type ITEM_TYPE_YESNO
       text "Print Timer in Center of Screen:"
       cvar "cg_printTimer"
-      rect CONTENT_X (CONTENT_Y+(2*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (CONTENT_Y+(2*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
@@ -197,7 +197,7 @@
       type ITEM_TYPE_YESNO
       text "Print Speedometer in Center of Screen:"
       cvar "cg_printSpeedometer"
-      rect CONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
