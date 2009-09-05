@@ -2691,7 +2691,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define CG_OC_SetConfigStrings() \
 	do \
 	{ \
-		static char buf[1024]; \
+		static char buf[1024], buf2[1024]; \
  \
 		switch(atoi(CG_ConfigString(CS_OCMODE))) \
 		{ \
@@ -2707,7 +2707,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		BG_OC_SetNoWallWalk(atoi(CG_ConfigString(CS_NOWALLWALK))); \
  \
 		strncpy(buf, CG_ConfigString(CS_LAYOUT), sizeof(buf)); \
-		trap_Cvar_Set("ui_layoutOptions", BG_OC_ParseLayoutFlags(buf)); \
+		strncpy(buf2, BG_OC_ParseLayoutFlags(buf), sizeof(buf2)); \
+		strncpy(buf, "Current Layout Options: ", sizeof(buf)); \
+		strncat(buf, buf2, sizeof(buf) - strlen(buf)); \
+		trap_Cvar_Set("ui_layoutOptions", buf); \
 	} while(0)
 	#define CG_OC_ECVARS \
 	extern vmCvar_t cg_printTimer; \

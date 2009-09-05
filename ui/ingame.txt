@@ -4,6 +4,7 @@
   loadMenu { "ui/ingame.menu" }
   loadMenu { "ui/ingame_game.menu" }
   loadMenu { "ui/ingame_options.menu" }
+  loadMenu { "ui/ingame_oc.menu" }
   loadMenu { "ui/ingame_leave.menu" }
   loadMenu { "ui/ingame_help.menu" }
 }
