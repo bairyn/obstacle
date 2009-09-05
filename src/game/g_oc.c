@@ -4891,9 +4891,9 @@ void Cmd_TestHidden_f(gentity_t *ent)
 	vic = &g_entities[pids[0]];
 
 	if(vic->client->pers.hidden)
-		G_ClientPrint(ent, va("%s: player ^2is^7 hidden", cmd), CLIENT_NULL);
+		G_ClientPrint(ent, va("%s: %s ^2is^7 hidden", cmd, vic->client->pers.netname), CLIENT_NULL);
 	else
-		G_ClientPrint(ent, va("%s: player ^3is not^7 hidden", cmd), CLIENT_NULL);
+		G_ClientPrint(ent, va("%s: %s ^3is not^7 hidden", cmd, vic->client->pers.netname), CLIENT_NULL);
 }
 
 void Cmd_QuickRestartOC_f(gentity_t *ent)
