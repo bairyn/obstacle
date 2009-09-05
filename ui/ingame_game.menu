@@ -428,7 +428,7 @@
       text "Hide Player"
       type ITEM_TYPE_BUTTON
       textscale .25
-      rect (PBUTT_X+(PBUTT_W/2)) (PBUTT_Y+(0.75*PBUTT_H)) (PBUTT_w/2) PBUTT_H
+      rect (PBUTT_X+(PBUTT_W/2)) (PBUTT_Y+(0.75*PBUTT_H)) (PBUTT_W/2) PBUTT_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       forecolor 1 1 1 1
@@ -448,7 +448,7 @@
       text "Unhide Player"
       type ITEM_TYPE_BUTTON
       textscale .25
-      rect PBUTT_X (PBUTT_Y+(1.5*PBUTT_H)) (PBUTT_w/2) PBUTT_H
+      rect PBUTT_X (PBUTT_Y+(1.5*PBUTT_H)) (PBUTT_W/2) PBUTT_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       forecolor 1 1 1 1
@@ -468,7 +468,7 @@
       text "Test If Hidden"
       type ITEM_TYPE_BUTTON
       textscale .25
-      rect (PBUTT_X+(PBUTT_W/2)) (PBUTT_Y+(1.5*PBUTT_H)) (PBUTT_w/2) PBUTT_H
+      rect (PBUTT_X+(PBUTT_W/2)) (PBUTT_Y+(1.5*PBUTT_H)) (PBUTT_W/2) PBUTT_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       forecolor 1 1 1 1
