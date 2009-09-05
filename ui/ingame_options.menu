@@ -1406,7 +1406,7 @@
       action
       {
         play "sound/misc/menu1.wav";
-        uiScript glCuston
+        uiScript glCustom
       }
     }
 
