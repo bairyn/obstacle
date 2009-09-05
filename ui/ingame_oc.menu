@@ -131,7 +131,7 @@
       action
       {
         play "sound/misc/menu1.wav";
-        hide ocGroup;
+        hide ocGrp;
         show misc;
 
         setitemcolor gameBtn      forecolor 1.0 1.0 1.0 1.0;
