@@ -150,7 +150,7 @@
       text "Show Player Timer:"
       cvar "cg_drawPlayerTimer"
       rect CONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -166,23 +166,7 @@
       text "Show Speedometer:"
       cvar "cg_drawSpeedometer"
       rect CONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
-      textvalign VALIGN_CENTER
-      textalignx OCONTENT_OFF
-      textscale .25
-      forecolor 1 1 1 1
-      visible MENU_FALSE
-    }
-
-    itemDef
-    {
-      name options
-      group ocGrp
-      type ITEM_TYPE_YESNO
-      text "Show Speedometer:"
-      cvar "cg_drawSpeedometer"
-      rect CONTENT_X (CONTENT_Y+(2*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -197,8 +181,8 @@
       type ITEM_TYPE_YESNO
       text "Print Timer in Center of Screen:"
       cvar "cg_printTimer"
-      rect CONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      rect CONTENT_X (CONTENT_Y+(2*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -213,8 +197,8 @@
       type ITEM_TYPE_YESNO
       text "Print Speedometer in Center of Screen:"
       cvar "cg_printSpeedometer"
-      rect CONTENT_X (CONTENT_Y+(4*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      rect CONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -232,7 +216,7 @@
       text "Restart Obstacle Course:"
       cvar "newRestartOC"
       rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -251,7 +235,7 @@
       text "Teleport to Checkpoint:"
       cvar "teleportToCheckpoint"
       rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -267,7 +251,7 @@
       text "Buy Ammo (and win):"
       cvar "buy ammo"
       rect OCONTENT_X (CONTENT_Y+(2*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -283,7 +267,7 @@
       text "Show Stats of Current Obstacle Course:"
       cvar "stats"
       rect OCONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -299,7 +283,7 @@
       text "Show Current Player Stats:"
       cvar "myStats"
       rect OCONTENT_X (CONTENT_Y+(4*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -315,7 +299,7 @@
       text "Use Structure/Evolve (and Teleport):"
       cvar "+button7"
       rect OCONTENT_X (CONTENT_Y+(5*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
