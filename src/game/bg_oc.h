@@ -2709,7 +2709,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		strncpy(buf, CG_ConfigString(CS_LAYOUT), sizeof(buf)); \
 		strncpy(buf2, BG_OC_ParseLayoutFlags(buf), sizeof(buf2)); \
 		strncpy(buf, "Current Layout Options: ", sizeof(buf)); \
-		strncat(buf, buf2, sizeof(buf) - strlen(buf)); \
+		Q_strcat(buf, sizeof(buf), buf2); \
 		trap_Cvar_Set("ui_layoutOptions", buf); \
 	} while(0)
 	#define CG_OC_ECVARS \

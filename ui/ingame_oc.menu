@@ -329,7 +329,7 @@
     {
       name misc
       group ocGrp
-      type ITEM_TYPE_BIND
+      type ITEM_TYPE_TEXT
       cvar "ui_layoutOptions"
       rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_RIGHT
