@@ -1,6 +1,6 @@
 {
   "^3Welcome to the OC server!^7"
   {
-	"^7Say \"^2!info^7\""
+	"^7Open your console by pressing '~' (tilde), and type \"^2!info^7\""
   }
 }
