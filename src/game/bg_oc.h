@@ -60,6 +60,7 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: no "New record!" message when a record is overwritten?
 // TODO: fix restartoc so that it teleports to spawn even if it's not valid (has to do with z axis += 1?);  and always reset timer (BUT NO SINCE THE PLAYER DIES AND IS MUCH CLEANER)
 // TODO: scrim team UI (preferably a dialouge such as team selection
 // TODO: fix bug where last slice is recorded (at least as granger)
