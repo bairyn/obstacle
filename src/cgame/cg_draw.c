@@ -3288,8 +3288,8 @@ static void CG_DrawVote( void )
     sec = 0;
   Q_strncpyz( yeskey, CG_KeyBinding( "vote yes" ), sizeof( yeskey ) ); 
   Q_strncpyz( nokey, CG_KeyBinding( "vote no" ), sizeof( nokey ) ); 
-  s = va( "VOTE(%i): \"%s\"  [%s]Yes:%i [%s]No:%i", sec, cgs.voteString,
-    yeskey, cgs.voteYes, nokey, cgs.voteNo );
+  s = va( "VOTE(%i): [%s]Yes:%i [%s]No:%i  \"%s\"", sec, yeskey, cgs.voteYes,
+          nokey, cgs.voteNo, cgs.voteString );
   UI_Text_Paint( 8, 340, 0.3f, white, s, 0, 0, ITEM_TEXTSTYLE_NORMAL );
 }
 
