@@ -2957,6 +2957,9 @@ static void G_OC_UpdateScrimTeamConfigString()
 
 			Q_strcat(buf, sizeof(buf), "\x02");
 
+			// output the team's gun
+			Q_strcat(buf, sizeof(buf), va("(^7%s^7)\n\n", G_OC_HumanNameForWeapon(si->weapon)));
+
 			for(i = 0; i < level.maxclients; i++)
 			{
 				client = &level.clients[i];
