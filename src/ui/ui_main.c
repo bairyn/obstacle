@@ -127,8 +127,8 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_developer, "ui_developer", "0", CVAR_ARCHIVE | CVAR_CHEAT },
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
   { &ui_winner, "ui_winner", "", CVAR_ROM },
-  { &ui_scrimTeamName, "ui_scrimTeamName", "", CVAR_ARCHIVE },
-  { &ui_scrimWeapon, "ui_scrimWeapon", "", CVAR_ARCHIVE },
+  { &ui_scrimTeamName, "ui_scrimTeamName", "UnnamedTeam", CVAR_ARCHIVE },
+  { &ui_scrimWeapon, "ui_scrimWeapon", "rifle", CVAR_ARCHIVE },
 };
 
 static int    cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -3056,7 +3056,7 @@ static void UI_RunMenuScript( char **args )
     }
     else if( Q_stricmp( name, "JoinScrimTeam" ) == 0 )
     {
-      if( ( cmd = uiInfo.scrimTeamList[ uiInfo.teamIndex ].cmd ) )
+      if( ( cmd = uiInfo.scrimTeamList[ uiInfo.scrimTeamIndex ].cmd ) )
         trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
     }
     else if( Q_stricmp( name, "LoadHumanItems" ) == 0 )
@@ -3994,8 +3994,7 @@ static void UI_FeederSelection( float feederID, int index )
   }
   else if( feederID == FEEDER_SCRIMWEAPONS )
   {
-    uiInfo.scrimWeaponIndex = index;
-    strncpy(ui_scrimWeapon.string, uiInfo.scrimWeaponList[index].v.text, sizeof(ui_scrimWeapon.string));
+	trap_Cvar_Set("ui_scrimWeapon", uiInfo.scrimWeaponList[index].v.text);
   }
 }
 
