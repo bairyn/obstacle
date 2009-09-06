@@ -83,6 +83,8 @@
 
 #define FEEDER_RESOLUTIONS                22    // display resolutions
 
+#define FEEDER_SCRIMTREMTEAMS              68    // scrim teams
+
 // display flags
 #define UI_SHOW_FAVORITESERVERS           0x00000001
 #define UI_SHOW_NOTFAVORITESERVERS        0x00000002

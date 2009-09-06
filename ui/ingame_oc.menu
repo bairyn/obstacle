@@ -354,8 +354,29 @@
       name misc
       group ocGrp
       type ITEM_TYPE_TEXT
-      cvar "ui_layoutOptions"
+      text "Join existing scrim team"
       rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_RIGHT
+      textvalign VALIGN_CENTER
+      textalignx OCONTENT_OFF
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+        uiScript closeingame
+        open tremulous_scrimteamselect
+      }
+    }
+
+    itemDef
+    {
+      name misc
+      group ocGrp
+      type ITEM_TYPE_TEXT
+      cvar "ui_layoutOptions"
+      rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF

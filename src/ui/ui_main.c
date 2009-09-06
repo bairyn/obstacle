@@ -2183,6 +2183,46 @@ static void UI_LoadTeams( void )
 
 /*
 ===============
+UI_LoadScrimTeams
+===============
+*/
+static void UI_LoadScrimTeams(void)
+{
+  char buf[1024]; int i = 0;
+  char *p = buf;
+
+  trap_GetConfigString(CS_SCRIMTEAMS, buf, sizeof(buf));
+
+  uiInfo.scrimTeamCount = 0;
+
+  while(*p && i < sizeof(buf) && uiInfo.scrimTeamCount < sizeof(uiInfo.scrimTeamList) / sizeof(uiInfo.scrimTeamList[0]))
+  {
+    if(*p > 0x02)
+    {
+      buf[i++] = *p++;
+      buf[i]   = 0;
+    }
+    else
+    {
+      if(*p == 0x01)
+      {
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].text = String_Alloc(buf);
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd = String_Alloc(va("cmd joinScrim \"The team doesn't exist\" %s\n", buf));
+
+        uiInfo.scrimTeamCount++;
+      }
+      else if(*p == 0x02)
+      {
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].v.text = String_Alloc(buf);
+      }
+
+      i = buf[0] = 0;
+    }
+  }
+}
+
+/*
+===============
 UI_AddClass
 ===============
 */
@@ -2889,6 +2929,8 @@ static void UI_RunMenuScript( char **args )
       UI_LoadMods();
     else if( Q_stricmp( name, "LoadTeams" ) == 0 )
       UI_LoadTeams( );
+    else if( Q_stricmp( name, "LoadScrimTeams" ) == 0 )
+      UI_LoadScrimTeams( );
     else if( Q_stricmp( name, "JoinTeam" ) == 0 )
     {
       if( ( cmd = uiInfo.teamList[ uiInfo.teamIndex ].cmd ) )
@@ -3384,6 +3426,8 @@ static int UI_FeederCount( float feederID )
     return uiInfo.demoCount;
   else if( feederID == FEEDER_TREMTEAMS )
     return uiInfo.teamCount;
+  else if( feederID == FEEDER_SCRIMTREMTEAMS )
+    return uiInfo.scrimTeamCount;
   else if( feederID == FEEDER_TREMHUMANITEMS )
     return uiInfo.humanItemCount;
   else if( feederID == FEEDER_TREMALIENCLASSES )
@@ -3586,6 +3630,11 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
     if( index >= 0 && index < uiInfo.teamCount )
       return uiInfo.teamList[ index ].text;
   }
+  else if( feederID == FEEDER_SCRIMTREMTEAMS )
+  {
+    if( index >= 0 && index < uiInfo.scrimTeamCount )
+      return uiInfo.scrimTeamList[ index ].text;
+  }
   else if( feederID == FEEDER_TREMHUMANITEMS )
   {
     if( index >= 0 && index < uiInfo.humanItemCount )
@@ -3750,6 +3799,8 @@ static void UI_FeederSelection( float feederID, int index )
   else if( feederID == FEEDER_DEMOS )
     uiInfo.demoIndex = index;
   else if( feederID == FEEDER_TREMTEAMS )
+    uiInfo.teamIndex = index;
+  else if( feederID == FEEDER_SCRIMTREMTEAMS )
     uiInfo.teamIndex = index;
   else if( feederID == FEEDER_TREMHUMANITEMS )
     uiInfo.humanItemIndex = index;

@@ -2930,6 +2930,65 @@ int G_OC_IsSingleScrim(void)  // are no more than one players per team active?
 	return 1;
 }
 
+static void G_OC_UpdateScrimTeamConfigString()
+{
+	int i;
+	char buf[MIN(1024, MAX_CVAR_VALUE_STRING)] = "", buf2[MIN(1024, MAX_CVAR_VALUE_STRING)];
+	char *p;
+	gclient_t *client;
+	g_oc_scrimTeam_t *si;
+
+	for(si = level.scrimTeam + 1; si < level.scrimTeam + G_OC_MAX_SCRIM_TEAMS; si++)
+	{
+		if(si->active)
+		{
+			if(buf[0])
+				Q_strcat(buf, sizeof(buf), "\x01");
+
+			// team name
+			strncpy(buf2, si->name, sizeof(buf2));
+			p = buf2;
+			/* Remove all separator bytes from team name */
+			while(*p)
+			{
+				*p = MAX(*p, 0x03);
+				p++;
+			}
+			Q_strcat(buf, sizeof(buf), buf2);
+
+			// player names
+
+			Q_strcat(buf, sizeof(buf), "\x02");
+
+			for(i = 0; i < level.maxclients; i++)
+			{
+				client = &level.clients[i];
+
+				if(client->pers.scrimTeam == si - level.scrimTeam)
+				{
+					strncpy(buf2, client->pers.netname, sizeof(buf2));
+					//G_SanitiseString(client->pers.netname, buf2, sizeof(buf2));
+					p = buf2;
+					while(*p)
+					{
+						*p = MAX(*p, 0x03);
+						*p = MAX(*p, 0x32);
+						p++;
+					}
+
+					Q_strcat(buf, sizeof(buf), buf2);
+					Q_strcat(buf, sizeof(buf), "\n");
+				}
+			}
+		}
+	}
+
+	if(buf[0])
+		Q_strcat(buf, sizeof(buf), "\x01");
+
+	trap_SetConfigstring(CS_SCRIMTEAMS, buf);
+}
+
 int G_OC_EndScrim(void)
 {
 	int i;
@@ -2946,6 +3005,10 @@ int G_OC_EndScrim(void)
 	level.scrimEndTime = 0;
 
 	G_ClientPrint(NULL, "The OC scrim ends", CLIENT_NULL);
+
+	// update scrim team CS
+	//G_OC_UpdateScrimTeamConfigString();
+	trap_SetConfigstring(CS_SCRIMTEAMS, "");  // reset scrim team list (quicker)
 
 	for(i = 0; i < level.maxclients; i++)
 	{
@@ -3093,7 +3156,7 @@ static g_oc_scrimTeam_t *G_OC_NewScrimTeam(char *name, weapon_t weapon, char *er
 				BG_Free(si->arms);
 			si->checkpoint = NULL;
 			si->flags = 0;
-			memset(si, 0x00000000, sizeof(g_oc_scrimTeam_t));
+			memset(si, 0x00, sizeof(g_oc_scrimTeam_t));
 
 			Q_strncpyz(si->name, buf, sizeof(si->name));
 			si->weapon = weapon;
@@ -3103,6 +3166,10 @@ static g_oc_scrimTeam_t *G_OC_NewScrimTeam(char *name, weapon_t weapon, char *er
 			if(level.totalArmouries)
 				si->arms = BG_Alloc((level.totalArmouries + 1) * sizeof(gentity_t *));
 			si->active = 1;
+
+			// update scrim team CS
+			G_OC_UpdateScrimTeamConfigString();
+
 			return si;
 		}
 	}
@@ -3224,6 +3291,9 @@ int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamN
 		t->flags |= G_OC_SCRIMFLAG_NOTSINGLETEAM;
 		ent->client->pers.scrimTeam = t - level.scrimTeam;
 		G_ClientPrint(NULL, va("%s^7 joined scrim team %s^7 (%ss^7)", ent->client->pers.netname, t->name, G_OC_HumanNameForWeapon(t->weapon)), CLIENT_NULL);
+
+		// update scrim team CS
+		G_OC_UpdateScrimTeamConfigString();
 	}
 	else
 	{
@@ -3252,6 +3322,9 @@ int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamN
 
 		ent->client->pers.scrimTeam = t - level.scrimTeam;
 		G_ClientPrint(NULL, va("%s^7 created and joined scrim team %s^7 (%ss^7)", ent->client->pers.netname, t->name, G_OC_HumanNameForWeapon(t->weapon)), CLIENT_NULL);
+
+		// update scrim team CS
+		G_OC_UpdateScrimTeamConfigString();
 	}
 
 	return 0;
@@ -3304,6 +3377,9 @@ int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
 				otherTeams = 1;
 		}
 
+		// update scrim team CS
+		G_OC_UpdateScrimTeamConfigString();
+
 
 		if(!otherTeams)
 		{
@@ -3343,6 +3419,7 @@ int G_OC_TooFewScrimTeams(void)
 	return 0;
 }
 
+// test if scrim is empty
 int G_OC_EmptyScrim(void)
 {
 	int i;
@@ -3396,6 +3473,7 @@ int G_OC_HasScrimFinished(void)  // have all teams beaten the OC?
 
 	return 1;
 }
+
 
 typedef struct funnies_s funnies_t;
 

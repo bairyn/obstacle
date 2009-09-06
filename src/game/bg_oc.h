@@ -558,6 +558,8 @@ extern int oc_gameMode;
 		} \
  \
 		trap_SetConfigstring(CS_OCMODE, "1"); \
+ \
+		trap_SetConfigstring(CS_SCRIMTEAMS, "");  /* Reset scrim-team list */ \
 	} while(0)
 
 	#define G_OC_NoLoadOC() \
@@ -567,6 +569,8 @@ extern int oc_gameMode;
  \
 		BG_StrToLower(level.layout); \
 		trap_SetConfigstring(CS_LAYOUT, level.layout); \
+ \
+		trap_SetConfigstring(CS_SCRIMTEAMS, "");  /* Reset scrim-team list */ \
 	} while(0)
 
 	//<+===============================================+>
@@ -1512,7 +1516,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_BUILDABLE_STRUCT_DEFS \
 	qboolean verifyUnpowered;
 
-	#define G_OC_RESTARTOC_TIME 3000  // time after a restartoc before a checkpoint can be used
+	#define G_OC_RESTARTOC_TIME 9000  // time after a restartoc before a checkpoint can be used
 	#define G_OC_NOBONUSMESSAGE "Cannot use bonuses while using\na jetpack, lucifer cannon,\nflamer, or\ngrenade\n(did you use a grenade on yourself?)"
 	#define G_OC_NOBONUSJETPACKMESSAGE "Cannot use bonuses while using\na jetpack"
 	#define G_OC_NOBONUSLCANNONMESSAGE "Cannot use bonuses while holding\na lucifer cannon"
@@ -2688,6 +2692,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	do \
 	{ \
 		static char buf[1024], buf2[1024]; \
+		char *p = buf; \
  \
 		switch(atoi(CG_ConfigString(CS_OCMODE))) \
 		{ \
@@ -2745,6 +2750,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	int        BG_OC_Humans(char *layout);
 
 	#define BG_OC_CS
+	#define CS_SCRIMTEAMS 28
 	#define CS_LAYOUT     30
 	#define CS_OCMODE     31
 	#define CS_NOWALLWALK 32
