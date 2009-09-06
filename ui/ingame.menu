@@ -87,7 +87,7 @@
       text "Options"
       type ITEM_TYPE_BUTTON
       style WINDOW_STYLE_EMPTY
-      rect (BUTT_BAR_X+BUTT_W) BUTT_BAR_Y BUTT_W BUTT_H
+      rect (BUTT_BAR_X+(0.75*BUTT_W)) BUTT_BAR_Y BUTT_W BUTT_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textscale .4
@@ -106,7 +106,7 @@
       text "OC"
       type ITEM_TYPE_BUTTON
       style WINDOW_STYLE_EMPTY
-      rect (BUTT_BAR_X+(2*BUTT_W)) BUTT_BAR_Y BUTT_W BUTT_H
+      rect (BUTT_BAR_X+(1.5*BUTT_W)) BUTT_BAR_Y BUTT_W BUTT_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx BUTT_TEXT_S
@@ -126,7 +126,7 @@
       text "Help"
       type ITEM_TYPE_BUTTON
       style WINDOW_STYLE_EMPTY
-      rect (BUTT_BAR_X+(3*BUTT_W)) BUTT_BAR_Y BUTT_W BUTT_H
+      rect (BUTT_BAR_X+((2.25)*BUTT_W)) BUTT_BAR_Y BUTT_W BUTT_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx BUTT_TEXT_S
@@ -146,7 +146,7 @@
       text "Exit"
       type ITEM_TYPE_BUTTON
       style WINDOW_STYLE_EMPTY
-      rect (BUTT_BAR_X+(4*BUTT_W)) BUTT_BAR_Y BUTT_W BUTT_H
+      rect (BUTT_BAR_X+((3)*BUTT_W)) BUTT_BAR_Y BUTT_W BUTT_H
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
       textalignx BUTT_TEXT_S

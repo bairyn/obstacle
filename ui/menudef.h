@@ -83,7 +83,8 @@
 
 #define FEEDER_RESOLUTIONS                22    // display resolutions
 
-#define FEEDER_SCRIMTREMTEAMS              68    // scrim teams
+#define FEEDER_SCRIMTREMTEAMS             68    // scrim teams
+#define FEEDER_SCRIMWEAPONS               69    // scrim weapons
 
 // display flags
 #define UI_SHOW_FAVORITESERVERS           0x00000001
@@ -181,6 +182,7 @@
 #define UI_ABUILDINFOPANE                 73
 #define UI_HBUILDINFOPANE                 74
 #define UI_HELPINFOPANE                   75
+#define UI_SCRIMTEAMINFOPANE              99
 
 #define CG_PLAYER_CHARGE_BAR_BG           76
 #define CG_PLAYER_CHARGE_BAR              77

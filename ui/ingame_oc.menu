@@ -43,11 +43,12 @@
     onopen
     {
       hide ocGrp;
-      show options;
+      show settings;
 
-      setitemcolor gameBtn      forecolor 0.2 0.2 0.2 1.0;
-      setitemcolor controlsBtn  forecolor 1.0 1.0 1.0 1.0;
-      setitemcolor systemBtn    forecolor 1.0 1.0 1.0 1.0
+      setitemcolor ocSettingsBtn forecolor 0.2 0.2 0.2 1.0;
+      setitemcolor ocControlsBtn forecolor 1.0 1.0 1.0 1.0;
+      setitemcolor ocScrimBtn    forecolor 1.0 1.0 1.0 1.0;
+      setitemcolor ocMiscBtn     forecolor 1.0 1.0 1.0 1.0;
     }
 
     itemDef
@@ -67,11 +68,11 @@
     //Section menus
     itemDef
     {
-      name GameBtn
-      text "Options"
+      name ocSettingsBtn
+      text "Settings"
       group menuGrp
       style WINDOW_STYLE_EMPTY
-      rect (W-((3*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      rect (W-(((3)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
@@ -82,21 +83,22 @@
       {
         play "sound/misc/menu1.wav";
         hide ocGrp;
-        show options;
+        show settings;
 
-        setitemcolor gameBtn      forecolor 0.2 0.2 0.2 1.0;
-        setitemcolor controlsBtn  forecolor 1.0 1.0 1.0 1.0;
-        setitemcolor systemBtn    forecolor 1.0 1.0 1.0 1.0
+        setitemcolor ocSettingsBtn forecolor 0.2 0.2 0.2 1.0;
+        setitemcolor ocControlsBtn forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocScrimBtn    forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocMiscBtn     forecolor 1.0 1.0 1.0 1.0;
       }
     }
 
     itemDef
     {
-      name controlsBtn
+      name ocControlsBtn
       text "Controls"
       group menuGrp
       style WINDOW_STYLE_EMPTY
-      rect (W-((2*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      rect (W-(((2.25)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
@@ -107,21 +109,49 @@
       {
         play "sound/misc/menu1.wav";
         hide ocGrp;
-        show controls;
+        show ocControls;
 
-        setitemcolor gameBtn      forecolor 1.0 1.0 1.0 1.0;
-        setitemcolor controlsBtn  forecolor 0.2 0.2 0.2 1.0;
-        setitemcolor systemBtn    forecolor 1.0 1.0 1.0 1.0
+        setitemcolor ocSettingsBtn forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocControlsBtn forecolor 0.2 0.2 0.2 1.0;
+        setitemcolor ocScrimBtn    forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocMiscBtn     forecolor 1.0 1.0 1.0 1.0;
       }
     }
 
     itemDef
     {
-      name systemBtn
+      name ocScrimBtn
+      text "Scrim"
+      group menuGrp
+      style WINDOW_STYLE_EMPTY
+      rect (W-(((1.5)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      type ITEM_TYPE_BUTTON
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .35
+      forecolor 1 1 1 1
+      visible MENU_TRUE
+      action
+      {
+        play "sound/misc/menu1.wav";
+        hide ocGrp;
+        show scrim;
+        uiScript LoadScrimWeapons;
+
+        setitemcolor ocSettingsBtn forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocControlsBtn forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocScrimBtn    forecolor 0.2 0.2 0.2 1.0;
+        setitemcolor ocMiscBtn     forecolor 1.0 1.0 1.0 1.0;
+      }
+    }
+
+    itemDef
+    {
+      name ocMiscBtn
       text "Misc"
       group menuGrp
       style WINDOW_STYLE_EMPTY
-      rect (W-((1*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      rect (W-(((0.75)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
@@ -134,17 +164,18 @@
         hide ocGrp;
         show misc;
 
-        setitemcolor gameBtn      forecolor 1.0 1.0 1.0 1.0;
-        setitemcolor controlsBtn  forecolor 1.0 1.0 1.0 1.0;
-        setitemcolor systemBtn    forecolor 0.2 0.2 0.2 1.0
+        setitemcolor ocSettingsBtn forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocControlsBtn forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocScrimBtn    forecolor 1.0 1.0 1.0 1.0;
+        setitemcolor ocMiscBtn     forecolor 0.2 0.2 0.2 1.0;
       }
     }
 
-//////// OPTIONS
+//////// SETTINGS
 
     itemDef
     {
-      name options
+      name settings
       group ocGrp
       type ITEM_TYPE_YESNO
       text "Show Player Timer:"
@@ -164,7 +195,7 @@
 
     itemDef
     {
-      name options
+      name settings
       group ocGrp
       type ITEM_TYPE_YESNO
       text "Show Speedometer:"
@@ -184,7 +215,7 @@
 
     itemDef
     {
-      name options
+      name settings
       group ocGrp
       type ITEM_TYPE_YESNO
       text "Print Timer in Center of Screen:"
@@ -204,7 +235,7 @@
 
     itemDef
     {
-      name options
+      name settings
       group ocGrp
       type ITEM_TYPE_YESNO
       text "Print Speedometer in Center of Screen:"
@@ -226,7 +257,7 @@
 
     itemDef
     {
-      name controls
+      name ocControls
       group ocGrp
       type ITEM_TYPE_BIND
       text "Restart Obstacle Course:"
@@ -246,7 +277,7 @@
 
     itemDef
     {
-      name controls
+      name ocControls
       group ocGrp
       type ITEM_TYPE_BIND
       text "Hide / Unhide:"
@@ -269,7 +300,7 @@
 
     itemDef
     {
-      name controls
+      name ocControls
       group ocGrp
       type ITEM_TYPE_BIND
       text "Buy Ammo (and win):"
@@ -289,7 +320,7 @@
 
     itemDef
     {
-      name controls
+      name ocControls
       group ocGrp
       type ITEM_TYPE_BIND
       text "Show Stats of Current Obstacle Course:"
@@ -309,7 +340,7 @@
 
     itemDef
     {
-      name controls
+      name ocControls
       group ocGrp
       type ITEM_TYPE_BIND
       text "Show Current Player Stats:"
@@ -329,7 +360,7 @@
 
     itemDef
     {
-      name controls
+      name ocControls
       group ocGrp
       type ITEM_TYPE_BIND
       text "Use Structure/Evolve (and Teleport):"
@@ -347,19 +378,18 @@
       }
     }
 
-//////// MISC
+//////// SCRIM
 
     itemDef
     {
-      name misc
+      name scrim
       group ocGrp
-      type ITEM_TYPE_TEXT
+      type ITEM_TYPE_BUTTON
       text "Join existing scrim team"
-      rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_RIGHT
+      rect CONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
-      textalignx OCONTENT_OFF
-      textscale .25
+      textscale .35
       forecolor 1 1 1 1
       visible MENU_FALSE
       action
@@ -377,11 +407,149 @@
 
     itemDef
     {
+      name scrim
+      group ocGrp
+      type ITEM_TYPE_BUTTON
+      text "Leave current scrim team"
+      rect CONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .35
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu3.wav";
+        uiScript leaveScrimTeam;
+        uiScript closeingame;
+      }
+    }
+
+    itemDef
+    {
+      name scrim
+      group ocGrp
+      type ITEM_TYPE_EDITFIELD
+      style WINDOW_STYLE_EMPTY
+      text "Team Name:"
+      cvar "ui_scrimTeamName"
+      maxchars 30
+      rect CONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+    }
+
+    itemDef
+    {
+      name scrim
+      group ocGrp
+      type ITEM_TYPE_COMBO
+      feeder FEEDER_SCRIMWEAPONS
+      text "Team Weapon:"
+      rect CONTENT_X (CONTENT_Y+(4*ELEM_H)) CONTENT_W ELEM_H
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+      }
+    }
+
+    itemDef
+    {
+      name scrim
+      text "Join New Scrim Team"
+      group ocGrp
+      rect CONTENT_X (CONTENT_Y+(5*ELEM_H)) CONTENT_W ELEM_H
+      type ITEM_TYPE_BUTTON
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .35
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+        uiScript joinNewScrimTeam;
+        uiScript closeingame;
+      }
+    }
+
+    itemDef
+    {
+      name scrim
+      text "Call a vote to start an armoury scrim"
+      group ocGrp
+      rect CONTENT_X (CONTENT_Y+(7*ELEM_H)) CONTENT_W ELEM_H
+      type ITEM_TYPE_BUTTON
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+        uiScript voteStartScrimA;
+        uiScript closeingame;
+      }
+    }
+
+    itemDef
+    {
+      name scrim
+      text "Call a vote to start a medical station scrim"
+      group ocGrp
+      rect CONTENT_X (CONTENT_Y+(8*ELEM_H)) CONTENT_W ELEM_H
+      type ITEM_TYPE_BUTTON
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+        uiScript voteStartScrimM;
+        uiScript closeingame;
+      }
+    }
+
+    itemDef
+    {
+      name scrim
+      text "Call a vote to end the scrim"
+      group ocGrp
+      rect CONTENT_X (CONTENT_Y+(9*ELEM_H)) CONTENT_W ELEM_H
+      type ITEM_TYPE_BUTTON
+      textalign ALIGN_CENTER
+      textvalign VALIGN_CENTER
+      textscale .25
+      forecolor 1 1 1 1
+      visible MENU_FALSE
+      action
+      {
+        play "sound/misc/menu1.wav";
+        uiScript voteEndScrim;
+        uiScript closeingame;
+      }
+    }
+
+//////// MISC
+
+    itemDef
+    {
       name misc
       group ocGrp
       type ITEM_TYPE_TEXT
       cvar "ui_layoutOptions"
-      rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
+      rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF

@@ -260,6 +260,10 @@ typedef struct
   int         scrimTeamCount;
   int         scrimTeamIndex;
 
+  menuItem_t  scrimWeaponList[ 32 ];
+  int         scrimWeaponCount;
+  int         scrimWeaponIndex;
+
   int         weapons;
   int         upgrades;
 

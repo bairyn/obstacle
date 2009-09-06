@@ -100,6 +100,9 @@ vmCvar_t  ui_winner;
 
 vmCvar_t  ui_emoticons;
 
+vmCvar_t  ui_scrimTeamName;
+vmCvar_t  ui_scrimWeapon;
+
 static cvarTable_t    cvarTable[ ] =
 {
   { &ui_browserShowFull, "ui_browserShowFull", "1", CVAR_ARCHIVE },
@@ -123,7 +126,9 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_textWrapCache, "ui_textWrapCache", "1", CVAR_ARCHIVE },
   { &ui_developer, "ui_developer", "0", CVAR_ARCHIVE | CVAR_CHEAT },
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
-  { &ui_winner, "ui_winner", "", CVAR_ROM }
+  { &ui_winner, "ui_winner", "", CVAR_ROM },
+  { &ui_scrimTeamName, "ui_scrimTeamName", "", CVAR_ARCHIVE },
+  { &ui_scrimWeapon, "ui_scrimWeapon", "", CVAR_ARCHIVE }
 };
 
 static int    cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -1900,6 +1905,11 @@ static void UI_OwnerDraw( float x, float y, float w, float h,
                        &rect, text_x, text_y, scale, textalign, textvalign, foreColor, textStyle );
       break;
 
+    case UI_SCRIMTEAMINFOPANE:
+      UI_DrawInfoPane( &uiInfo.scrimTeamList[ uiInfo.scrimTeamIndex ],
+                       &rect, text_x, text_y, scale, textalign, textvalign, foreColor, textStyle );
+      break;
+
     case UI_ACLASSINFOPANE:
       UI_DrawInfoPane( &uiInfo.alienClassList[ uiInfo.alienClassIndex ],
                        &rect, text_x, text_y, scale, textalign, textvalign, foreColor, textStyle );
@@ -2196,7 +2206,7 @@ static void UI_LoadScrimTeams(void)
 
   uiInfo.scrimTeamCount = 0;
 
-  while(*p && i < sizeof(buf) && uiInfo.scrimTeamCount < sizeof(uiInfo.scrimTeamList) / sizeof(uiInfo.scrimTeamList[0]))
+  while(*p && i < sizeof(buf) - 1 && uiInfo.scrimTeamCount < sizeof(uiInfo.scrimTeamList) / sizeof(uiInfo.scrimTeamList[0]))
   {
     if(*p > 0x02)
     {
@@ -2220,6 +2230,58 @@ static void UI_LoadScrimTeams(void)
 
       i = buf[0] = 0;
       p++;
+    }
+  }
+}
+
+/*
+===============
+UI_LoadScrimWeapons
+===============
+*/
+static void UI_LoadScrimWeapons(void)
+{
+  int i;
+
+  // arbitrary list of scrim weapons
+  uiInfo.scrimWeaponCount = 10;
+
+  uiInfo.scrimWeaponList[0].text = "Rifle";
+  uiInfo.scrimWeaponList[0].v.text = "rifle";
+
+  uiInfo.scrimWeaponList[1].text = "Shotgun";
+  uiInfo.scrimWeaponList[1].v.text = "shotgun";
+
+  uiInfo.scrimWeaponList[2].text = "Chaingun";
+  uiInfo.scrimWeaponList[2].v.text = "chaingun";
+
+  uiInfo.scrimWeaponList[3].text = "Las Gun";
+  uiInfo.scrimWeaponList[3].v.text = "lgun";
+
+  uiInfo.scrimWeaponList[4].text = "Mass Driver";
+  uiInfo.scrimWeaponList[4].v.text = "mdriver";
+
+  uiInfo.scrimWeaponList[5].text = "Pulse Rifle";
+  uiInfo.scrimWeaponList[5].v.text = "prifle";
+
+  uiInfo.scrimWeaponList[6].text = "Lucifer Cannon";
+  uiInfo.scrimWeaponList[6].v.text = "lcannon";
+
+  uiInfo.scrimWeaponList[7].text = "Flamer";
+  uiInfo.scrimWeaponList[7].v.text = "flamer";
+
+  uiInfo.scrimWeaponList[8].text = "Pain Saw";
+  uiInfo.scrimWeaponList[8].v.text = "psaw";
+
+  uiInfo.scrimWeaponList[9].text = "Grenade";
+  uiInfo.scrimWeaponList[9].v.text = "gren";
+
+  for(i = 0; i < uiInfo.scrimWeaponCount; i++)
+  {
+    uiInfo.scrimWeaponList[i].type = INFOTYPE_TEXT;
+    if(strcmp(uiInfo.scrimWeaponList[i].v.text, ui_scrimWeapon.string) == 0)
+    {
+      uiInfo.scrimWeaponIndex = i;
     }
   }
 }
@@ -2934,6 +2996,8 @@ static void UI_RunMenuScript( char **args )
       UI_LoadTeams( );
     else if( Q_stricmp( name, "LoadScrimTeams" ) == 0 )
       UI_LoadScrimTeams( );
+    else if( Q_stricmp( name, "LoadScrimWeapons" ) == 0 )
+      UI_LoadScrimWeapons( );
     else if( Q_stricmp( name, "JoinTeam" ) == 0 )
     {
       if( ( cmd = uiInfo.teamList[ uiInfo.teamIndex ].cmd ) )
@@ -3206,6 +3270,26 @@ static void UI_RunMenuScript( char **args )
                                                uiInfo.clientNums[ uiInfo.playerIndex ] ) );
       }
     }
+    else if( Q_stricmp( name, "leaveScrimTeam" ) == 0 )
+    {
+      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd leaveScrim\n" );
+    }
+    else if( Q_stricmp( name, "joinNewScrimTeam" ) == 0 )
+    {
+      trap_Cmd_ExecuteText( EXEC_APPEND, va( "cmd joinScrim \"%s\" \"%s\"\n", ui_scrimWeapon.string, ui_scrimTeamName.string ) );
+    }
+    else if( Q_stricmp( name, "voteStartScrimA" ) == 0 )
+    {
+      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd callvote startscrim a\n" );
+    }
+    else if( Q_stricmp( name, "voteStartScrimM" ) == 0 )
+    {
+      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd callvote startscrim m\n" );
+    }
+    else if( Q_stricmp( name, "voteEndScrim" ) == 0 )
+    {
+      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd callvote endscrim m\n" );
+    }
     else if( Q_stricmp( name, "voteUnMute" ) == 0 )
     {
       if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
@@ -3452,6 +3536,8 @@ static int UI_FeederCount( float feederID )
     return uiInfo.humanBuildCount;
   else if( feederID == FEEDER_RESOLUTIONS )
     return uiInfo.numResolutions;
+  else if( feederID == FEEDER_SCRIMWEAPONS )
+    return uiInfo.scrimWeaponCount;
 
   return 0;
 }
@@ -3696,6 +3782,11 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
     Com_sprintf( resolution, sizeof( resolution ), "Custom (%dx%d)", w, h );
     return resolution;
   }
+  else if( feederID == FEEDER_SCRIMWEAPONS )
+  {
+    if( index >= 0 && index < uiInfo.scrimWeaponCount )
+      return uiInfo.scrimWeaponList[ index ].text;
+  }
 
   return "";
 }
@@ -3809,7 +3900,7 @@ static void UI_FeederSelection( float feederID, int index )
   else if( feederID == FEEDER_TREMTEAMS )
     uiInfo.teamIndex = index;
   else if( feederID == FEEDER_SCRIMTREMTEAMS )
-    uiInfo.teamIndex = index;
+    uiInfo.scrimTeamIndex = index;
   else if( feederID == FEEDER_TREMHUMANITEMS )
     uiInfo.humanItemIndex = index;
   else if( feederID == FEEDER_TREMALIENCLASSES )
@@ -3828,6 +3919,11 @@ static void UI_FeederSelection( float feederID, int index )
   {
     trap_Cvar_Set( "r_width", va( "%d", uiInfo.resolutions[ index ].w ) );
     trap_Cvar_Set( "r_height", va( "%d", uiInfo.resolutions[ index ].h ) );
+  }
+  else if( feederID == FEEDER_SCRIMWEAPONS )
+  {
+    uiInfo.scrimWeaponIndex = index;
+    strncpy(ui_scrimWeapon.string, uiInfo.scrimWeaponList[index].v.text, sizeof(ui_scrimWeapon.string));
   }
 }
 

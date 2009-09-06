@@ -67,8 +67,9 @@ extern int oc_gameMode;
 // TODO: add 'u'oc
 
 // these can be post-2.0
+// TODO: layouts listed in map list
 // TODO: restore OC stuff on ptrc (can be post-2.0, but highest priority)
-// TODO: help reads !info directly
+// TODO: help reads !info directly, or have a client-side "info"
 // TODO: fix player names not showing (can be post-2.0)
 // TODO: add listlayouts to callvote section (post-2.0)
 // TODO: 'x' is building 'x', if it's worth adding (post-2.0)
@@ -2720,7 +2721,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		strncpy(buf, CG_ConfigString(CS_LAYOUT), sizeof(buf)); \
 		strncpy(buf2, BG_OC_ParseLayoutFlags(buf), sizeof(buf2)); \
 		strncpy(buf, "Current Layout Options: ", sizeof(buf)); \
-		Q_strcat(buf, sizeof(buf), buf2); \
+		if(buf2[0]) \
+			Q_strcat(buf, sizeof(buf), buf2); \
+		else \
+			Q_strcat(buf, sizeof(buf), "(none)"); \
 		trap_Cvar_Set("ui_layoutOptions", buf); \
 	} while(0)
 	#define CG_OC_ECVARS \
