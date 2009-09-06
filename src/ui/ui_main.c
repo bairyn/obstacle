@@ -2188,10 +2188,11 @@ UI_LoadScrimTeams
 */
 static void UI_LoadScrimTeams(void)
 {
-  char buf[1024]; int i = 0;
-  char *p = buf;
+  char cs[1024];
+  char buf[1024] = {""}; int i = 0;
+  char *p = cs;
 
-  trap_GetConfigString(CS_SCRIMTEAMS, buf, sizeof(buf));
+  trap_GetConfigString(CS_SCRIMTEAMS, cs, sizeof(cs));
 
   uiInfo.scrimTeamCount = 0;
 
@@ -2206,17 +2207,19 @@ static void UI_LoadScrimTeams(void)
     {
       if(*p == 0x01)
       {
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].text = String_Alloc(buf);
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd = String_Alloc(va("cmd joinScrim \"The team doesn't exist\" %s\n", buf));
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].v.text = String_Alloc(buf);
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].type = INFOTYPE_TEXT;
 
         uiInfo.scrimTeamCount++;
       }
       else if(*p == 0x02)
       {
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].v.text = String_Alloc(buf);
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].text = String_Alloc(buf);
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd  = String_Alloc(va("cmd joinScrim \"The team doesn't exist\" %s\n", buf));
       }
 
       i = buf[0] = 0;
+      p++;
     }
   }
 }
@@ -2934,6 +2937,11 @@ static void UI_RunMenuScript( char **args )
     else if( Q_stricmp( name, "JoinTeam" ) == 0 )
     {
       if( ( cmd = uiInfo.teamList[ uiInfo.teamIndex ].cmd ) )
+        trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
+    }
+    else if( Q_stricmp( name, "JoinScrimTeam" ) == 0 )
+    {
+      if( ( cmd = uiInfo.scrimTeamList[ uiInfo.teamIndex ].cmd ) )
         trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
     }
     else if( Q_stricmp( name, "LoadHumanItems" ) == 0 )

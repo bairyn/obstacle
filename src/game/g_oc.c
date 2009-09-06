@@ -2942,9 +2942,6 @@ static void G_OC_UpdateScrimTeamConfigString()
 	{
 		if(si->active)
 		{
-			if(buf[0])
-				Q_strcat(buf, sizeof(buf), "\x01");
-
 			// team name
 			strncpy(buf2, si->name, sizeof(buf2));
 			p = buf2;
@@ -2980,11 +2977,10 @@ static void G_OC_UpdateScrimTeamConfigString()
 					Q_strcat(buf, sizeof(buf), "\n");
 				}
 			}
+
+			Q_strcat(buf, sizeof(buf), "\x01");
 		}
 	}
-
-	if(buf[0])
-		Q_strcat(buf, sizeof(buf), "\x01");
 
 	trap_SetConfigstring(CS_SCRIMTEAMS, buf);
 }

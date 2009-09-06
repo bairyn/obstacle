@@ -108,7 +108,7 @@
       action
       {
         play "sound/misc/menu1.wav";
-        uiScript JoinTeam;
+        uiScript JoinScrimTeam;
         close tremulous_scrimteamselect
       }
     }

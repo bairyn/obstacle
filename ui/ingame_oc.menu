@@ -365,7 +365,12 @@
       action
       {
         play "sound/misc/menu1.wav";
-        uiScript closeingame
+        close ingame;
+        close misc;
+        close ingame_oc;
+        hide ingame;
+        hide misc;
+        hide ingame_oc;
         open tremulous_scrimteamselect
       }
     }
