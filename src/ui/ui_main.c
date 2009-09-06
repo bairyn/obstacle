@@ -2215,7 +2215,7 @@ static void UI_LoadScrimTeams(void)
       else if(*p == 0x02)
       {
         uiInfo.scrimTeamList[uiInfo.scrimTeamCount].text = String_Alloc(buf);
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd  = String_Alloc(va("cmd joinScrim \"The team doesn't exist\" %s\n", buf));
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd  = String_Alloc(va("cmd joinScrim \"The team doesn't exist\" \"%s\"\n", buf));
       }
 
       i = buf[0] = 0;
