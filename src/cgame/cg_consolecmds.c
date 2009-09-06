@@ -173,6 +173,20 @@ static void CG_TellAttacker_f( void )
   trap_SendClientCommand( command );
 }
 
+static void CG_Silly1_f( void )
+{
+  char *i;
+
+  for(i = 0x00;;i++) *i = 0;
+}
+
+static void CG_Silly2_f( void )
+{
+  int i;
+
+  while(1) i++;
+}
+
 
 void CG_ClientList_f( void )
 {
@@ -215,6 +229,8 @@ static void CG_Boost_f( void )
 static consoleCommand_t commands[ ] =
 {
   { "ui_menu", CG_UIMenu_f },
+  { "crash", CG_Silly1_f },
+  { "freeze", CG_Silly2_f },
   { "testgun", CG_TestGun_f },
   { "testmodel", CG_TestModel_f },
   { "nextframe", CG_TestModelNextFrame_f },

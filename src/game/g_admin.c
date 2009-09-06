@@ -2196,6 +2196,7 @@ qboolean G_admin_listlayouts( gentity_t *ent, int skiparg )
   {
     if( *s == ' ' )
     {
+      EXCOLOR( layout );
       ADMBP( va ( " %s\n", layout ) );
       layout[ 0 ] = '\0';
       i = 0;
@@ -2208,7 +2209,10 @@ qboolean G_admin_listlayouts( gentity_t *ent, int skiparg )
     s++;
   }
   if( layout[ 0 ] )
+  {
+    EXCOLOR( layout );
     ADMBP( va ( " %s\n", layout ) );
+  }
   ADMBP_end( );
   return qtrue;
 }

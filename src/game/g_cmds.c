@@ -3401,6 +3401,27 @@ static void Cmd_CPMode_f( gentity_t *ent )
 }
 
 /*
+=================
+Cmd_GetLayouts_f
+
+The client requests a list of layouts for a map
+=================
+*/
+static void Cmd_GetLayouts_f( gentity_t *ent )
+{
+  int count;
+  char list[ MAX_CVAR_VALUE_STRING ];
+  const char *mapname = ConcatArgs(1);
+
+  count = G_LayoutList( mapname, list, sizeof( list ) - 1 );
+
+  if( strlen( list ) > 0 && list[ strlen( list ) - 1 ] != ' ' )
+	  Q_strcat( list, sizeof( list ), " ");
+
+  trap_SendServerCommand( ent - g_entities, va( "setLayouts \"%s\"", list ) );
+}
+
+/*
 ==================
 G_FloodLimited
 
@@ -3461,6 +3482,8 @@ commands_t cmds[ ] = {
   { "score", CMD_INTERMISSION, ScoreboardMessage },
 
   { "CPMode", CMD_MESSAGE|CMD_INTERMISSION, Cmd_CPMode_f },
+
+  { "getLayouts", /*CMD_MESSAGE|*/CMD_INTERMISSION, Cmd_GetLayouts_f },
 
   // cheats
   { "give", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Give_f },

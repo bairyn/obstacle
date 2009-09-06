@@ -25,8 +25,13 @@
 #define MAPLIST_H   (H-((4*BORDER)+MAP_H+TOPBUTT_H))
 #define MAPBUTT_X   (MAP_X+MAP_W+BORDER)
 #define MAPBUTT_Y   MAP_Y
-#define MAPBUTT_W   (W-(MAPBUTT_X+BORDER))
+//#define MAPBUTT_W   (W-(MAPBUTT_X+BORDER))
 #define MAPBUTT_H   25
+#define LAYOUTLIST_W (MAP_W/2)
+#define LAYOUTLIST_H MAP_H
+#define LAYOUTLIST_X (MAPLIST_X+MAPLIST_W-LAYOUTLIST_W)
+#define LAYOUTLIST_Y MAP_Y
+#define MAPBUTT_W   (W-(MAPBUTT_X+BORDER+LAYOUTLIST_W))
 
 #define PBUTT_X     MAP_X
 #define PBUTT_Y     (H-((2*PBUTT_H)+BORDER))
@@ -70,6 +75,7 @@
     {
       uiScript InitIgnoreList;
       uiScript loadArenas;
+      uiScript loadLayouts;
       uiScript loadServerInfo;
       hide gameGrp;
       show vote;
@@ -266,6 +272,32 @@
       textscale .225
       elementtype LISTBOX_TEXT
       feeder FEEDER_MAPS
+      border WINDOW_BORDER_FULL
+      bordercolor   0.5 0.5 0.5 0.5
+      forecolor     1   1   1   1
+      backcolor     0.2 0.2 0.2 1
+      outlinecolor  0.1 0.1 0.1 0.5
+      visible MENU_FALSE
+      doubleclick
+      {
+        play "sound/misc/menu1.wav";
+        uiScript voteMap;
+        uiScript closeingame
+      }
+    }
+
+    itemDef
+    {
+      name mapvote
+      group gameGrp
+      rect LAYOUTLIST_X LAYOUTLIST_Y LAYOUTLIST_W LAYOUTLIST_H
+      type ITEM_TYPE_LISTBOX
+      style WINDOW_STYLE_EMPTY
+      elementwidth 120
+      elementheight 15
+      textscale .225
+      elementtype LISTBOX_TEXT
+      feeder FEEDER_LAYOUTS
       border WINDOW_BORDER_FULL
       bordercolor   0.5 0.5 0.5 0.5
       forecolor     1   1   1   1

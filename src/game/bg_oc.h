@@ -62,12 +62,10 @@ extern int oc_gameMode;
 
 // TODO: no "New record!" message when a record is overwritten?
 // TODO: fix restartoc so that it teleports to spawn even if it's not valid (has to do with z axis += 1?);  and always reset timer (BUT NO SINCE THE PLAYER DIES AND IS MUCH CLEANER)
-// TODO: scrim team UI (preferably a dialouge such as team selection
 // TODO: fix bug where last slice is recorded (at least as granger)
 // TODO: add 'u'oc
 
 // these can be post-2.0
-// TODO: layouts listed in map list
 // TODO: restore OC stuff on ptrc (can be post-2.0, but highest priority)
 // TODO: help reads !info directly, or have a client-side "info"
 // TODO: fix player names not showing (can be post-2.0)
@@ -2703,7 +2701,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	do \
 	{ \
 		static char buf[1024], buf2[1024]; \
-		char *p = buf; \
  \
 		switch(atoi(CG_ConfigString(CS_OCMODE))) \
 		{ \

@@ -9,7 +9,8 @@
 #define Y             60
 #define BORDER        10
 
-#define TOPBUTT_W     80
+//#define TOPBUTT_W     80
+#define TOPBUTT_W     60
 #define TOPBUTT_H     30
 
 #define CONTENT_X     BORDER
@@ -24,7 +25,8 @@
 #define SCONTENT_W    (W-(SIDEBUTT_W+(2*BORDER)))
 #define SCONTENT_OFF  (0-(SCONTENT_W/2))
 
-#define OCONTENT_X    (SCONTENT_X+32)
+//#define OCONTENT_X    (SCONTENT_X+32)
+#define OCONTENT_X    SCONTENT_X
 #define OCONTENT_Y    SCONTENT_Y
 #define OCONTENT_W    SCONTENT_W
 #define OCONTENT_OFF  SCONTENT_OFF
@@ -72,7 +74,7 @@
       text "Settings"
       group menuGrp
       style WINDOW_STYLE_EMPTY
-      rect (W-(((3)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      rect (W-((4*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
@@ -98,7 +100,7 @@
       text "Controls"
       group menuGrp
       style WINDOW_STYLE_EMPTY
-      rect (W-(((2.25)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      rect (W-((3*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
@@ -124,7 +126,7 @@
       text "Scrim"
       group menuGrp
       style WINDOW_STYLE_EMPTY
-      rect (W-(((1.5)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      rect (W-((2*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
@@ -151,7 +153,7 @@
       text "Misc"
       group menuGrp
       style WINDOW_STYLE_EMPTY
-      rect (W-(((0.75)*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
+      rect (W-((1*TOPBUTT_W)+BORDER)) BORDER TOPBUTT_W TOPBUTT_H
       type ITEM_TYPE_BUTTON
       textalign ALIGN_CENTER
       textvalign VALIGN_CENTER
@@ -181,7 +183,7 @@
       text "Show Player Timer:"
       cvar "cg_drawPlayerTimer"
       rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -201,7 +203,7 @@
       text "Show Speedometer:"
       cvar "cg_drawSpeedometer"
       rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -221,7 +223,7 @@
       text "Print Timer in Center of Screen:"
       cvar "cg_printTimer"
       rect OCONTENT_X (CONTENT_Y+(2*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -241,7 +243,7 @@
       text "Print Speedometer in Center of Screen:"
       cvar "cg_printSpeedometer"
       rect OCONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -263,7 +265,7 @@
       text "Restart Obstacle Course:"
       cvar "newRestartOC"
       rect OCONTENT_X (CONTENT_Y+(0*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -286,7 +288,7 @@
       text "Teleport to Checkpoint:"
       cvar "teleportToCheckpoint"
       rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -306,7 +308,7 @@
       text "Buy Ammo (and win):"
       cvar "buy ammo"
       rect OCONTENT_X (CONTENT_Y+(2*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -326,7 +328,7 @@
       text "Show Stats of Current Obstacle Course:"
       cvar "stats"
       rect OCONTENT_X (CONTENT_Y+(3*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -346,7 +348,7 @@
       text "Show Current Player Stats:"
       cvar "myStats"
       rect OCONTENT_X (CONTENT_Y+(4*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25
@@ -366,7 +368,7 @@
       text "Use Structure/Evolve (and Teleport):"
       cvar "+button7"
       rect OCONTENT_X (CONTENT_Y+(5*ELEM_H)) CONTENT_W ELEM_H
-      textalign ALIGN_CENTER
+      textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
       textalignx OCONTENT_OFF
       textscale .25

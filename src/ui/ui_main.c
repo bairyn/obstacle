@@ -128,7 +128,7 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
   { &ui_winner, "ui_winner", "", CVAR_ROM },
   { &ui_scrimTeamName, "ui_scrimTeamName", "", CVAR_ARCHIVE },
-  { &ui_scrimWeapon, "ui_scrimWeapon", "", CVAR_ARCHIVE }
+  { &ui_scrimWeapon, "ui_scrimWeapon", "", CVAR_ARCHIVE },
 };
 
 static int    cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -2288,6 +2288,55 @@ static void UI_LoadScrimWeapons(void)
 
 /*
 ===============
+UI_LoadLayouts
+===============
+*/
+static void UI_LoadLayouts(void)
+{
+  // reset layout list
+  uiInfo.layoutCount = 0;
+
+  // ask server for new layout list
+  trap_Cmd_ExecuteText(EXEC_APPEND, va("cmd getLayouts \"%s\"", uiInfo.mapList[ui_selectedMap.integer].mapLoadName));
+}
+
+/*
+===============
+UI_SetLayouts_f
+===============
+*/
+void UI_SetLayouts_f( void )
+{
+  char buf[1024] = {""}; int i = 0;
+  const char *layouts = UI_Argv(1);
+
+  uiInfo.layoutCount = 0;
+
+  while(*layouts && i < sizeof(buf) - 1)
+  {
+    if(*layouts == ' ')
+    {
+      menuItem_t *m = &uiInfo.layoutList[uiInfo.layoutCount++];
+
+      m->v.text = String_Alloc(buf);
+      EXCOLOR(buf);
+      m->text = String_Alloc(buf);
+      m->type = INFOTYPE_TEXT;
+
+      i = buf[0] = 0;
+    }
+    else
+    {
+      buf[i++] = *layouts;
+      buf[i]   = 0;
+    }
+
+    layouts++;
+  }
+}
+
+/*
+===============
 UI_AddClass
 ===============
 */
@@ -2940,6 +2989,8 @@ static void UI_RunMenuScript( char **args )
       UI_LoadArenas();
       Menu_SetFeederSelection( NULL, FEEDER_MAPS, 0, "createserver" );
     }
+    else if( Q_stricmp( name, "loadLayouts" ) == 0 )
+      UI_LoadLayouts();
     else if( Q_stricmp( name, "loadServerInfo" ) == 0 )
       UI_ServerInfo();
     else if( Q_stricmp( name, "saveControls" ) == 0 )
@@ -3234,8 +3285,17 @@ static void UI_RunMenuScript( char **args )
     {
       if( ui_selectedMap.integer >= 0 && ui_selectedMap.integer < uiInfo.mapCount )
       {
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote map %s\n",
-                              uiInfo.mapList[ui_selectedMap.integer].mapLoadName ) );
+        if( uiInfo.layoutIndex >= 0 && uiInfo.layoutIndex < uiInfo.layoutCount && strcmp(uiInfo.layoutList[uiInfo.layoutIndex].v.text, "*BUILTIN*") != 0 )
+        {
+          trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote map \"%s\" \"%s\"\n",
+                                uiInfo.mapList[ui_selectedMap.integer].mapLoadName,
+                                uiInfo.layoutList[uiInfo.layoutIndex].v.text ) );
+        }
+        else
+        {
+          trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote map %s\n",
+                                uiInfo.mapList[ui_selectedMap.integer].mapLoadName ) );
+        }
       }
     }
     else if( Q_stricmp( name, "voteKick" ) == 0 )
@@ -3482,6 +3542,8 @@ static int UI_FeederCount( float feederID )
     return uiInfo.movieCount;
   else if( feederID == FEEDER_MAPS )
     return uiInfo.mapCount;
+  else if( feederID == FEEDER_LAYOUTS )
+    return uiInfo.layoutCount;
   else if( feederID == FEEDER_SERVERS )
     return uiInfo.serverStatus.numDisplayServers;
   else if( feederID == FEEDER_SERVERSTATUS )
@@ -3578,6 +3640,11 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
   {
     int actual;
     return UI_SelectedMap( index, &actual );
+  }
+  else if( feederID == FEEDER_LAYOUTS )
+  {
+    if( index >= 0 && index < uiInfo.layoutCount )
+      return uiInfo.layoutList[index].text;
   }
   else if( feederID == FEEDER_SERVERS )
   {
@@ -3834,7 +3901,12 @@ static void UI_FeederSelection( float feederID, int index )
     uiInfo.mapList[ui_selectedMap.integer].cinematic =
       trap_CIN_PlayCinematic( va( "%s.roq", uiInfo.mapList[ui_selectedMap.integer].mapLoadName ),
                               0, 0, 0, 0, ( CIN_loop | CIN_silent ) );
+
+    // reload layouts
+    UI_LoadLayouts();
   }
+  else if( feederID == FEEDER_LAYOUTS )
+    uiInfo.layoutIndex = index;
   else if( feederID == FEEDER_SERVERS )
   {
     const char *mapName = NULL;

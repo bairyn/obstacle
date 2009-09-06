@@ -1158,6 +1158,11 @@ static void CG_PTRConfirm_f( void )
   trap_SendConsoleCommand( "menu ptrc_popmenu\n" );
 }
 
+static void CG_SetLayouts_f( void )
+{
+  trap_SendConsoleCommand( va( "ui_setLayouts \"%s\"", CG_Argv( 1 ) ) );
+}
+
 static consoleCommand_t svcommands[ ] =
 {
   { "cp", CG_CenterPrint_f },
@@ -1175,7 +1180,8 @@ static consoleCommand_t svcommands[ ] =
   { "voice", CG_ParseVoice },
   { "ptrcrequest", CG_PTRRequest_f },
   { "ptrcissue", CG_PTRIssue_f },
-  { "ptrcconfirm", CG_PTRConfirm_f }
+  { "ptrcconfirm", CG_PTRConfirm_f },
+  { "setLayouts", CG_SetLayouts_f }
   CG_OC_SERVERCMDS
 };
 

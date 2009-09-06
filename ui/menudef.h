@@ -86,6 +86,8 @@
 #define FEEDER_SCRIMTREMTEAMS             68    // scrim teams
 #define FEEDER_SCRIMWEAPONS               69    // scrim weapons
 
+#define FEEDER_LAYOUTS                    70    // layouts for the selected map
+
 // display flags
 #define UI_SHOW_FAVORITESERVERS           0x00000001
 #define UI_SHOW_NOTFAVORITESERVERS        0x00000002
