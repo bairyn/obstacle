@@ -140,6 +140,11 @@ extern int oc_gameMode;
 		"[^30 - none|1 - admins|2 - all#^7]" \
 	}, \
  \
+	{"endscrim", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "scrim", \
+		"Ends the scrim taking place", \
+		"" \
+	}, \
+ \
 	{"hide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "hide", \
 		"hide a player", \
 		"[^3name|slot#^7]" \
@@ -158,6 +163,11 @@ extern int oc_gameMode;
 	{"showhides", (qboolean(*)(gentity_t *, int))(G_admin_showhides), "hide", \
 		"display a (partial) list of active hides", \
 		"(^5start at hide#^7) (^5name|IP^7)" \
+	}, \
+ \
+	{"startscrim", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "scrim", \
+		"Starts a medical station scrim or an armoury scrim", \
+		"[^3m|a -- medical station or armoury scrim^7]" \
 	}, \
  \
 	{"unhide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "hide", \
