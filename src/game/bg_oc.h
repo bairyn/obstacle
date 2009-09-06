@@ -140,7 +140,7 @@ extern int oc_gameMode;
 		"[^30 - none|1 - admins|2 - all#^7]" \
 	}, \
  \
-	{"endscrim", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "scrim", \
+	{"endscrim", (qboolean(*)(gentity_t *, int))(G_admin_endscrim), "scrim", \
 		"Ends the scrim taking place", \
 		"" \
 	}, \
@@ -165,7 +165,7 @@ extern int oc_gameMode;
 		"(^5start at hide#^7) (^5name|IP^7)" \
 	}, \
  \
-	{"startscrim", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "scrim", \
+	{"startscrim", (qboolean(*)(gentity_t *, int))(G_admin_startscrim), "scrim", \
 		"Starts a medical station scrim or an armoury scrim", \
 		"[^3m|a -- medical station or armoury scrim^7]" \
 	}, \
