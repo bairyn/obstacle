@@ -2282,6 +2282,7 @@ static void UI_LoadScrimWeapons(void)
     if(strcmp(uiInfo.scrimWeaponList[i].v.text, ui_scrimWeapon.string) == 0)
     {
       uiInfo.scrimWeaponIndex = i;
+      Menu_SetFeederSelection( NULL, FEEDER_SCRIMWEAPONS, i, NULL );
     }
   }
 }
@@ -3851,10 +3852,8 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
   }
   else if( feederID == FEEDER_SCRIMWEAPONS )
   {
-    //if( index >= 0 && index < uiInfo.scrimWeaponCount )
-      //return uiInfo.scrimWeaponList[ index ].text;
-    if( uiInfo.scrimWeaponIndex >= 0 && uiInfo.scrimWeaponIndex < uiInfo.scrimWeaponCount )
-      return uiInfo.scrimWeaponList[ uiInfo.scrimWeaponIndex ].text;
+    if( index >= 0 && index < uiInfo.scrimWeaponCount )
+      return uiInfo.scrimWeaponList[ index ].text;
   }
 
   return "";

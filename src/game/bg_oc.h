@@ -66,6 +66,7 @@ extern int oc_gameMode;
 // TODO: add 'u'oc
 
 // these can be post-2.0
+// TODO: Initialize value for scrim weapon feeder
 // TODO: restore OC stuff on ptrc (can be post-2.0, but highest priority)
 // TODO: help reads !info directly, or have a client-side "info"
 // TODO: fix player names not showing (can be post-2.0)
