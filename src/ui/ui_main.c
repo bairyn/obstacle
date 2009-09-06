@@ -2225,7 +2225,7 @@ static void UI_LoadScrimTeams(void)
       else if(*p == 0x02)
       {
         uiInfo.scrimTeamList[uiInfo.scrimTeamCount].text = String_Alloc(buf);
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd  = String_Alloc(va("cmd joinScrim \"The team doesn't exist\" \"%s\"\n", buf));
+        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd  = String_Alloc(va("cmd joinScrim \"The_team_doesn't_exist\" \"%s\"\n", buf));
       }
 
       i = buf[0] = 0;
@@ -3851,8 +3851,10 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
   }
   else if( feederID == FEEDER_SCRIMWEAPONS )
   {
-    if( index >= 0 && index < uiInfo.scrimWeaponCount )
-      return uiInfo.scrimWeaponList[ index ].text;
+    //if( index >= 0 && index < uiInfo.scrimWeaponCount )
+      //return uiInfo.scrimWeaponList[ index ].text;
+    if( uiInfo.scrimWeaponIndex >= 0 && uiInfo.scrimWeaponIndex < uiInfo.scrimWeaponCount )
+      return uiInfo.scrimWeaponList[ uiInfo.scrimWeaponIndex ].text;
   }
 
   return "";

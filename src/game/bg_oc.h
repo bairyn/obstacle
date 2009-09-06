@@ -2178,7 +2178,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(client->pers.scrimTeam) \
 		{ \
-			g_oc_scrimTeam_t *t = &level.scrimTeam[client->pers.scrimTeam]; \
+			g_oc_scrimTeam_t *t = &level.scrimTeam[client->pers.scrimTeam - 1]; \
 			client->ps.persistant[PERS_OCTIMER] = (unsigned int) ((unsigned int) ((unsigned int) G_OC_SCRIMTIME) & 0x0000FFFF); \
 			client->ps.persistant[PERS_OCTIMER + 1] = (unsigned int) ((unsigned int) ((unsigned int) G_OC_SCRIMTIME) >> ((unsigned int) 16)); \
 		} \
