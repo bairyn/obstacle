@@ -69,7 +69,6 @@ extern int oc_gameMode;
 // TODO: restore OC stuff on ptrc (can be post-2.0, but highest priority)
 // TODO: help reads !info directly, or have a client-side "info"
 // TODO: fix player names not showing (can be post-2.0)
-// TODO: add listlayouts to callvote section (post-2.0)
 // TODO: 'x' is building 'x', if it's worth adding (post-2.0)
 // TODO: fix advanced granger mispredictions (different bbox from server) and let the client know that it can wallwalk
 
