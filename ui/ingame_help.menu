@@ -72,7 +72,7 @@
       textstyle ITEM_TEXTSTYLE_NORMAL
       style WINDOW_STYLE_EMPTY
       rect INFO_X INFO_Y INFO_W INFO_H
-      textscale .2
+      textscale .33
       textalign ALIGN_LEFT
       textvalign VALIGN_TOP
       textalignx INFO_TOFF

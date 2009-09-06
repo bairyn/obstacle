@@ -1439,7 +1439,7 @@ void UI_LoadHelp( const char *helpFile )
 {
   pc_token_t token;
   int handle, start;
-  char title[ 32 ], buffer[ 1024 ];
+  char title[ 64 ], buffer[ 16384 ];
 
   start = trap_Milliseconds();
   
