@@ -2972,7 +2972,7 @@ static void G_OC_UpdateScrimTeamConfigString()
 					while(*p)
 					{
 						*p = MAX(*p, 0x03);
-						*p = MAX(*p, 0x32);
+						*p = MAX(*p, 32);
 						p++;
 					}
 
