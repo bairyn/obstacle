@@ -270,18 +270,29 @@ extern int oc_gameMode;
 	// scrims and votes
 	//<+===============================================+>
 
+	#define G_OC_DYNAMICALLY_ALLOCATE_REWARDS
+
+	#ifndef G_OC_DYNAMICALLY_ALLOCATE_REWARDS
+	#define G_OC_MAXARMS 512
+	#define G_OC_MAXMEDIS 1024
+	#endif
 	typedef struct
 	{
 		int       active;
 		char      name[50];  // MAX_NAME_LENGTH isn't here
 		int       time;
+		#ifdef G_OC_DYNAMICALLY_ALLOCATE_REWARDS
 		gentity_t **arms;
 		gentity_t **medis;
+		#else
+		gentity_t *arms[G_OC_MAXARMS];
+		gentity_t *medis[G_OC_MAXMEDIS];
+		#endif
 		gentity_t *checkpoint;
 		weapon_t  weapon;
 		int       flags;
 		#define G_OC_SCRIMFLAG_EQUIPMENT     0x0001
-		#define G_OC_SCRIMFLAG_NOTSINGLETEAM 0x0002  // set when a player joins a team that already has another player in it (and never unset while the team exists)
+		#define G_OC_SCRIMFLAG_NOTSINGLETEAM 0x0002  // set when a player joins a team that already has another player in it and is never unset while the team exists
 	//	struct g_oc_scrimTeam_t *next;
 	} g_oc_scrimTeam_t;
 
@@ -530,7 +541,6 @@ extern int oc_gameMode;
 	do \
 	{ \
 		unsigned int triggers = 0; \
-		int i; \
  \
 		BG_StrToLower(level.layout); \
 		trap_SetConfigstring(CS_LAYOUT, level.layout); \
@@ -1540,47 +1550,47 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define G_OC_NoBuildTimer() ((BG_OC_OCMode()) ? ((G_admin_canEditOC(ent)) ? (1) : (0)) : (0))
 
-	int G_OC_UseMedi(gentity_t *ent, gentity_t *medi);
-	int G_OC_SyncMedis(gentity_t **medis, int len);
-	int G_OC_MergeMedis(gentity_t **dst, gentity_t **src);
-	int G_OC_AppendMedi(gentity_t **medis, gentity_t *medi);
-	int G_OC_RemoveMedi(gentity_t **medis, gentity_t *medi);
-	int G_OC_AllMedis(gentity_t **medis);
-	int G_OC_NumberOfMedis(gentity_t **medis);
-	int G_OC_HasMediBeenUsed(gentity_t *medi, gentity_t **medis);
-	int G_OC_ClearMedis(gentity_t **medis);
-	int G_OC_UseArm(gentity_t *ent, gentity_t *arm);
-	int G_OC_SyncArms(gentity_t **arms, int len);
-	int G_OC_MergeArms(gentity_t **dst, gentity_t **src);
-	int G_OC_AppendArm(gentity_t **arms, gentity_t *arm);
-	int G_OC_RemoveArm(gentity_t **arms, gentity_t *arm);
-	int G_OC_AllArms(gentity_t **arms);
-	int G_OC_NumberOfArms(gentity_t **arms);
-	int G_OC_HasArmBeenUsed(gentity_t *arm, gentity_t **arms);
-	int G_OC_ClearArms(gentity_t **arms);
-	int G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent);
-	int G_OC_PlayerSpawn(gentity_t *ent);
-	int G_OC_PlayerDie(gentity_t *ent);
-	int G_OC_CanUseBonus(gentity_t *ent);
-//	int G_OC_WeaponIsReserved(weapon_t weapon);
-	int G_OC_WeaponIsReserved(int weapon);
-	int G_OC_WeaponRemoveReserved(gentity_t *ent);
-	int G_OC_IsSingleScrim(void);
-	int G_OC_EndScrim(void);
-	//int G_OC_ValidScrimWeapon(weapon_t weapon);
-	int G_OC_ValidScrimWeapon(int weapon);
-	int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamName, char *weaponName);
-	int G_OC_ValidScrimTeamName(char *name);
-	int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent);
-	int G_OC_EmptyScrim(void);
-	int G_OC_NumScrimTeams(void);
-	int G_OC_TooFewScrimTeams(void);
-	int G_OC_HasScrimFinished(void);
-	int G_OC_NumberOfTeams(void);
+	void G_OC_UseMedi(gentity_t *ent, gentity_t *medi);
+	void G_OC_SyncMedis(gentity_t **medis, int len);
+	void G_OC_MergeMedis(gentity_t **dst, gentity_t **src);
+	void G_OC_AppendMedi(gentity_t **medis, gentity_t *medi);
+	void G_OC_RemoveMedi(gentity_t **medis, gentity_t *medi);
+	int  G_OC_AllMedis(gentity_t **medis);
+	int  G_OC_NumberOfMedis(gentity_t **medis);
+	int  G_OC_HasMediBeenUsed(gentity_t *medi, gentity_t **medis);
+	void G_OC_ClearMedis(gentity_t **medis);
+	void G_OC_UseArm(gentity_t *ent, gentity_t *arm);
+	void G_OC_SyncArms(gentity_t **arms, int len);
+	void G_OC_MergeArms(gentity_t **dst, gentity_t **src);
+	void G_OC_AppendArm(gentity_t **arms, gentity_t *arm);
+	void G_OC_RemoveArm(gentity_t **arms, gentity_t *arm);
+	int  G_OC_AllArms(gentity_t **arms);
+	int  G_OC_NumberOfArms(gentity_t **arms);
+	int  G_OC_HasArmBeenUsed(gentity_t *arm, gentity_t **arms);
+	void G_OC_ClearArms(gentity_t **arms);
+	void G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent);
+	void G_OC_PlayerSpawn(gentity_t *ent);
+	void G_OC_PlayerDie(gentity_t *ent);
+	int  G_OC_CanUseBonus(gentity_t *ent);
+//	int  G_OC_WeaponIsReserved(weapon_t weapon);
+	int  G_OC_WeaponIsReserved(int weapon);
+	int  G_OC_WeaponRemoveReserved(gentity_t *ent);
+	int  G_OC_IsSingleScrim(void);
+	void G_OC_EndScrim(void);
+//  int  G_OC_ValidScrimWeapon(weapon_t weapon);
+	int  G_OC_ValidScrimWeapon(int weapon);
+	void G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamName, char *weaponName);
+	int  G_OC_ValidScrimTeamName(char *name);
+	void G_OC_RemovePlayerFromScrimTeam(gentity_t *ent);
+	int  G_OC_EmptyScrim(void);
+	int  G_OC_NumScrimTeams(void);
+	int  G_OC_TooFewScrimTeams(void);
+	int  G_OC_HasScrimFinished(void);
+	int  G_OC_NumberOfTeams(void);
 	#define G_OC_BUILDABLEBUILT(x) G_OC_BuildableBuilt(x)
-	int G_OC_BuildableBuilt(gentity_t *ent);
+	void G_OC_BuildableBuilt(gentity_t *ent);
 	#define G_OC_BUILDABLEDESTROYED(x) G_OC_BuildableDestroyed(x)
-	int G_OC_BuildableDestroyed(gentity_t *ent);
+	void G_OC_BuildableDestroyed(gentity_t *ent);
 
 	void G_OC_Lol(gentity_t *ent);
 

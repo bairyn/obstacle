@@ -972,25 +972,25 @@ void G_OC_LayoutLoad(char *layout)
 		if(g_entities[i].client && level.clients[i].pers.connected != CON_CONNECTED)
 		{
 			if(level.clients[i].pers.medis)
-				BG_Free(level.clients[i].pers.medis);
+				{ BG_Free(level.clients[i].pers.medis); level.clients[i].pers.medis = NULL; }
 			if(level.totalMedistations)
 				level.clients[i].pers.medis = BG_Alloc((level.totalMedistations) * sizeof(gentity_t *));
 			else
 				level.clients[i].pers.medis = NULL;
 			if(level.clients[i].pers.medisLastCheckpoint)
-				BG_Free(level.clients[i].pers.medisLastCheckpoint);
+				{ BG_Free(level.clients[i].pers.medisLastCheckpoint); level.clients[i].pers.medisLastCheckpoint = NULL; }
 			if(level.totalMedistations)
 				level.clients[i].pers.medisLastCheckpoint = BG_Alloc((level.totalMedistations) * sizeof(gentity_t *));
 			else
 				level.clients[i].pers.medisLastCheckpoint = NULL;
 			if(level.clients[i].pers.arms)
-				BG_Free(level.clients[i].pers.arms);
+				{ BG_Free(level.clients[i].pers.arms); level.clients[i].pers.arms = NULL; }
 			if(level.totalArmouries)
 				level.clients[i].pers.arms = BG_Alloc((level.totalArmouries) * sizeof(gentity_t *));
 			else
 				level.clients[i].pers.arms = NULL;
 			if(level.clients[i].pers.armsLastCheckpoint)
-				BG_Free(level.clients[i].pers.armsLastCheckpoint);
+				{ BG_Free(level.clients[i].pers.armsLastCheckpoint); level.clients[i].pers.armsLastCheckpoint = NULL; }
 			if(level.totalArmouries)
 				level.clients[i].pers.armsLastCheckpoint = BG_Alloc((level.totalArmouries) * sizeof(gentity_t *));
 			else
@@ -1416,37 +1416,37 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 	}
 }
 
-int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
+void G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 {
 	gentity_t *client;
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(!medi)
-		return 0;
+		return;
 
 	if(medi->s.modelindex != BA_H_MEDISTAT)  // not a medi
-		return 0;
+		return;
 
 	if(!ent)
-		return 0;
+		return;
 
 	if(!ent->client)  // not a client
-		return 0;
+		return;
 
 	if(!ent->client->pers.medis)  // this function can only be called when there are medis, so this should never happen
-		return 0;
+		return;
 
 	if(!medi->powered)  // an unpowered medistation
-		return 0;
+		return;
 
 	if(!G_OC_CanUseBonus (ent))  // if the player is cheating or using equipment
-		return 0;
+		return;
 
 	if(!level.totalMedistations)  // this shouldn't happen for obvious reasons
-		return 0;
+		return;
 
 	// heal all players
 	if(ent->client && ent->client->ps.stats[STAT_TEAM] == TEAM_HUMANS && ent->health < ent->client->ps.stats[STAT_MAX_HEALTH] && ent->client->ps.pm_type != PM_DEAD && ent != medi->enemy)
@@ -1548,7 +1548,8 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 					if(G_OC_AllMedis(tmp))
 					{
 						BG_Free(tmp);
-						return G_OC_UseMedi(ent, medi);
+						G_OC_UseMedi(ent, medi);
+						return;
 					}
 					G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
 					G_ClientCP(ent, va("Medical Stations: %d/%d", G_OC_NumberOfMedis(tmp), level.totalMedistations), "Medical Stations", CLIENT_SPECTATORS);
@@ -1587,7 +1588,7 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 				AP(va("print \"^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s\n\"", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
 				G_LogPrintf(va("^7%s^7 has used every bonus medical station! (%d^7/%d^7) (%dm:%ds%dms)%s\n", ent->client->pers.netname, level.totalMedistations, level.totalMedistations, MINS(ent->client->pers.mediTime), SECS(ent->client->pers.mediTime), MSEC(ent->client->pers.mediTime), record));
 				G_ClientCP(ent, va("Medical Stations: %d/%d\n^2You Win!", level.totalMedistations, level.totalMedistations), NULL, CLIENT_SPECTATORS);
-				return 0;
+				return;
 			}
 			G_ClientCP(ent, "New Medi!", NULL, CLIENT_SPECTATORS);
 			G_ClientCP(ent, va("Medical Stations: %d/%d", G_OC_NumberOfMedis(ent->client->pers.medis), level.totalMedistations), "Medical Stations", CLIENT_SPECTATORS);
@@ -1601,18 +1602,18 @@ int G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 		}
 	}
 
-	return 0;
+	return;
 }
 
 // sync can be an expensive function
-int G_OC_SyncMedis(gentity_t **medis, int len)
+void G_OC_SyncMedis(gentity_t **medis, int len)
 {
 	// medis should contain a null terminator at medis[len]
 	int i, j, k, tmp, tmp2;
 
 	// OC only
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	// first eliminate anything that isn't powered or isn't a medi
 	for(i = 0; i < len; i++)
@@ -1671,50 +1672,50 @@ int G_OC_SyncMedis(gentity_t **medis, int len)
 		}
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_MergeMedis(gentity_t **dst, gentity_t **src)
+void G_OC_MergeMedis(gentity_t **dst, gentity_t **src)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	for(i = 0; src[i]; i++)
 	{
 		G_OC_AppendMedi(dst, src[i]);
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_AppendMedi(gentity_t **medis, gentity_t *medi)
+void G_OC_AppendMedi(gentity_t **medis, gentity_t *medi)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	for(i = 0; medis[i]; i++)
 	{
 		if(medis[i] == medi)
 		{
-			return 0;
+			return;
 		}
 	}
 
 	medis[i] = medi;
 
-	return 0;
+	return;
 }
 
-int G_OC_RemoveMedi(gentity_t **medis, gentity_t *medi)
+void G_OC_RemoveMedi(gentity_t **medis, gentity_t *medi)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	for(i = 0; medis[i]; i++)
 	{
@@ -1725,7 +1726,7 @@ int G_OC_RemoveMedi(gentity_t **medis, gentity_t *medi)
 		}
 	}
 
-	return 0;
+	return;
 }
 
 int G_OC_AllMedis(gentity_t **medis)
@@ -1769,55 +1770,55 @@ int G_OC_HasMediBeenUsed(gentity_t *medi, gentity_t **medis)
 	return 0;
 }
 
-int G_OC_ClearMedis(gentity_t **medis)
+void G_OC_ClearMedis(gentity_t **medis)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(!medis)
-		return 0;
+		return;
 
 	for(i = 0; i < level.totalMedistations; i++)
 	{
 		medis[i] = NULL;
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
+void G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 {
 	gentity_t *client;
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(!arm)
-		return 0;
+		return;
 
 	if(arm->s.modelindex != BA_H_ARMOURY)  // not an arm
-		return 0;
+		return;
 
 	if(!ent)
-		return 0;
+		return;
 
 	if(!ent->client)  // not a client
-		return 0;
+		return;
 
 	if(!ent->client->pers.arms)  // this function can only be called when there are arms, so this should never happen
-		return 0;
+		return;
 
 	if(!arm->powered)  // an unpowered armoury
-		return 0;
+		return;
 
 	if(!G_OC_CanUseBonus (ent))  // if the player is cheating or using equipment
-		return 0;
+		return;
 
 	if(!level.totalArmouries)  // this shouldn't happen for obvious reasons
-		return 0;
+		return;
 
 	// arm can be used
 
@@ -1913,7 +1914,8 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 					if(G_OC_AllArms(tmp))
 					{
 						BG_Free(tmp);
-						return G_OC_UseArm(ent, arm);
+						G_OC_UseArm(ent, arm);
+						return;
 					}
 					G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
 					G_ClientCP(ent, va("^a^r^mArmouries: %d/%d", G_OC_NumberOfArms(tmp), level.totalArmouries), "^a^r^m", CLIENT_SPECTATORS);
@@ -1978,7 +1980,8 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 					if(G_OC_AllArms(tmp))
 					{
 						BG_Free(tmp);
-						return G_OC_UseArm(ent, arm);
+						G_OC_UseArm(ent, arm);
+						return;
 					}
 					G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
 					G_ClientCP(ent, va("^a^r^mArmouries: %d/%d", G_OC_NumberOfArms(tmp), level.totalArmouries), "^a^r^m", CLIENT_SPECTATORS);
@@ -2038,7 +2041,7 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 						G_ClientCP(ent, va("^a^r^m^2You Win!"), "^a^r^m", CLIENT_SPECTATORS);
 					}
 				}
-				return 0;
+				return;
 			}
 			G_ClientCP(ent, "New Armoury!", NULL, CLIENT_SPECTATORS);
 			G_ClientCP(ent, va("^a^r^mArmouries: %d/%d", G_OC_NumberOfArms(ent->client->pers.arms), level.totalArmouries), "^a^r^m", CLIENT_SPECTATORS);
@@ -2046,11 +2049,11 @@ int G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 		}
 	}
 
-	return 0;
+	return;
 }
 
 // sync can be an expensive function
-int G_OC_SyncArms(gentity_t **arms, int len)
+void G_OC_SyncArms(gentity_t **arms, int len)
 {
 	// arms should contain a null terminator at arms[len]
 	int i, j, k, tmp, tmp2;
@@ -2112,50 +2115,50 @@ int G_OC_SyncArms(gentity_t **arms, int len)
 		}
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_MergeArms(gentity_t **dst, gentity_t **src)
+void G_OC_MergeArms(gentity_t **dst, gentity_t **src)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	for(i = 0; src[i]; i++)
 	{
 		G_OC_AppendArm(dst, src[i]);
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_AppendArm(gentity_t **arms, gentity_t *arm)
+void G_OC_AppendArm(gentity_t **arms, gentity_t *arm)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	for(i = 0; arms[i]; i++)
 	{
 		if(arms[i] == arm)
 		{
-			return 0;
+			return;
 		}
 	}
 
 	arms[i] = arm;
 
-	return 0;
+	return;
 }
 
-int G_OC_RemoveArm(gentity_t **arms, gentity_t *arm)
+void G_OC_RemoveArm(gentity_t **arms, gentity_t *arm)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	for(i = 0; arms[i]; i++)
 	{
@@ -2166,7 +2169,7 @@ int G_OC_RemoveArm(gentity_t **arms, gentity_t *arm)
 		}
 	}
 
-	return 0;
+	return;
 }
 
 int G_OC_AllArms(gentity_t **arms)
@@ -2210,32 +2213,33 @@ int G_OC_HasArmBeenUsed(gentity_t *arm, gentity_t **arms)
 	return 0;
 }
 
-int G_OC_ClearArms(gentity_t **arms)
+void G_OC_ClearArms(gentity_t **arms)
 {
 	int i;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(!arms)
-		return 0;
+		return;
 
 	for(i = 0; i < level.totalArmouries; i++)
 	{
 		arms[i] = NULL;
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
+void G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 {
+#ifdef G_OC_DYNAMICALLY_ALLOCATE_REWARDS
 	int i;
 	gentity_t **tmp;
 	g_oc_scrimTeam_t *si;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(ent->s.modelindex == BA_H_MEDISTAT)
 	{
@@ -2352,20 +2356,22 @@ int G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 		level.numNodes++;
 	}
 
-	return 0;
+	return;
+#endif
 }
 
-int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longer exists (before it is really freed)
+void G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longer exists (before it is really freed)
 {
+#ifdef G_OC_DYNAMICALLY_ALLOCATE_REWARDS
 	int i;
 	gentity_t **tmp;
 	g_oc_scrimTeam_t *si;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(!ent->powered && ent->verifyUnpowered)
-		return 0;
+		return;
 
 	if(ent->s.modelindex == BA_H_MEDISTAT)
 	{
@@ -2504,42 +2510,43 @@ int G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no longe
 		level.numNodes--;
 	}
 
-	return 0;
+	return;
+#endif
 }
 
-int G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent)  // called when a player, ent, activates a checkpoint
+void G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent)  // called when a player, ent, activates a checkpoint
 {
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(!checkpoint)
-		return 0;
+		return;
 
 	if(!ent)
-		return 0;
+		return;
 
 	if(!ent->client)
-		return 0;
+		return;
 
 	if(!checkpoint)
-		return 0;
+		return;
 
 	if(checkpoint->client)
-		return 0;
+		return;
 
 	if(checkpoint->s.modelindex != BA_A_BOOSTER)
-		return 0;
+		return;
 
 	// prevent against checkpoint exploit
 	if(ent->client->pers.nextCheckpointTime && level.time < ent->client->pers.nextCheckpointTime)
-		return 0;
+		return;
 
 	if(ent->health <= 0)
-		return 0;
+		return;
 
 	// do nothing if preparing for a match
 	if(ent->client->pers.scrimTeam && level.ocScrimState < G_OC_STATE_PLAY)
-		return 0;
+		return;
 
 	// good to go...
 	ent->client->pers.nextCheckpointTime = 0;
@@ -2580,7 +2587,7 @@ int G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent)  // called when a pla
 			G_ClientPrint(ent, "^1Error saving checkpoint information", CLIENT_SPECTATORS);
 	}
 
-	return 0;
+	return;
 }
 
 void G_OC_PlayerMaxAmmo(gentity_t *ent)
@@ -2621,10 +2628,10 @@ void G_OC_PlayerMaxHealth(gentity_t *ent)
 	BG_AddUpgradeToInventory(UP_MEDKIT, ent->client->ps.stats);
 }
 
-int G_OC_PlayerSpawn(gentity_t *ent)  // called when a player spawns
+void G_OC_PlayerSpawn(gentity_t *ent)  // called when a player spawns
 {
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(ent && ent->client)
 	{
@@ -2640,16 +2647,16 @@ int G_OC_PlayerSpawn(gentity_t *ent)  // called when a player spawns
 //		}
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
+void G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 {
 	int i, j;
 	gentity_t *client;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(ent->client->pers.scrimTeam)
 	{
@@ -2664,7 +2671,7 @@ int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 
 				// don't do anything if they already won
 				if(t->time)
-					return 0;
+					return;
 
 				// iterate over each medi.  If no other player has the same medi
 				// notify the team that is lost x medis
@@ -2795,7 +2802,7 @@ int G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 		}
 	}
 
-	return 0;
+	return;
 }
 
 int G_OC_CanUseBonus(gentity_t *ent)
@@ -2988,7 +2995,7 @@ static void G_OC_UpdateScrimTeamConfigString()
 	trap_SetConfigstring(CS_SCRIMTEAMS, buf);
 }
 
-int G_OC_EndScrim(void)
+void G_OC_EndScrim(void)
 {
 	int i;
 	gentity_t *ent;
@@ -2996,10 +3003,10 @@ int G_OC_EndScrim(void)
 	//g_oc_scrimTeam_t *tmp;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(level.ocScrimState <= G_OC_STATE_NONE)
-		return 0;
+		return;
 
 	level.scrimEndTime = 0;
 
@@ -3070,7 +3077,7 @@ int G_OC_EndScrim(void)
 
 	level.ocScrimState = G_OC_STATE_NONE;
 
-	return 0;
+	return;
 }
 
 static g_oc_scrimTeam_t *G_OC_ScrimTeam(char *name)
@@ -3269,14 +3276,14 @@ int G_OC_ValidScrimTeamName(char *name)
 	return 1;
 }
 
-int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamName, char *weaponName)
+void G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamName, char *weaponName)
 {
 	g_oc_scrimTeam_t *t;
 	char err[MAX_STRING_CHARS];
 	weapon_t weapon;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if((t = G_OC_ScrimTeam(teamName)))
 	{
@@ -3302,13 +3309,13 @@ int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamN
 		if(G_OC_WeaponIsReserved(weapon))
 		{
 			G_ClientPrint(reportEnt, va("/joinScrim: the %s^7 is already in use by another team", G_OC_HumanNameForWeapon(t->weapon)), CLIENT_NULL);
-			return 0;
+			return;
 		}
 
 		if(!(t = G_OC_NewScrimTeam(teamName, weapon, err, sizeof(err))))
 		{
 			G_ClientPrint(reportEnt, va("/joinScrim: couldn't create scrim team: %s", err), CLIENT_NULL);
-			return 0;
+			return;
 		}
 
 		// scrim team is good
@@ -3326,27 +3333,27 @@ int G_OC_JoinPlayerToScrimTeam(gentity_t *ent, gentity_t *reportEnt, char *teamN
 		G_OC_UpdateScrimTeamConfigString();
 	}
 
-	return 0;
+	return;
 }
 
-int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
+void G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
 {
 	int i, otherPlayers = 0, otherTeams = 0, scrimTeam;
 	gentity_t *client;
 
 	if(!BG_OC_OCMode())
-		return 0;
+		return;
 
 	if(!ent)
-		return 0;
+		return;
 
 	if(!ent->client)
-		return 0;
+		return;
 
 	scrimTeam = ent->client->pers.scrimTeam;
 
 	if(!scrimTeam)
-		return 0;
+		return;
 
 	G_OC_RestartClient(ent, 1, 1);
 	G_ClientPrint(NULL, va("%s^7 let team %s^7 down", ent->client->pers.netname, level.scrimTeam[scrimTeam].name), CLIENT_NULL);
@@ -3362,8 +3369,8 @@ int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
 	if(!otherPlayers)
 	{
 		G_ClientPrint(NULL, va("OC Scrim team %s^7 no longer exists", level.scrimTeam[scrimTeam].name), CLIENT_NULL);
-		BG_Free(level.scrimTeam[scrimTeam].medis);
-		BG_Free(level.scrimTeam[scrimTeam].arms);
+		BG_Free(level.scrimTeam[scrimTeam].medis); level.scrimTeam[scrimTeam].medis = NULL;
+		BG_Free(level.scrimTeam[scrimTeam].arms); level.scrimTeam[scrimTeam].arms = NULL;
 		level.scrimTeam[scrimTeam].checkpoint = NULL;
 		level.scrimTeam[scrimTeam].flags  = 0;
 		level.scrimTeam[scrimTeam].active = 0;
@@ -3387,7 +3394,7 @@ int G_OC_RemovePlayerFromScrimTeam(gentity_t *ent)
 		}
 	}
 
-	return 0;
+	return;
 }
 
 int G_OC_NumScrimTeams(void)
