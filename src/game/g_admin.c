@@ -155,6 +155,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       ""
     },
 
+    {"register", G_admin_register, "register",
+      "Registers your name to protect it from being used by others or updates your admin name to your current name.",
+      ""
+    },
+
     {"rename", G_admin_rename, "N",
       "rename a player",
       "[^3name|slot#^7] [^3new name^7]"
@@ -1082,7 +1087,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       level_open = admin_open = ban_open = qfalse;
       G_OC_ADMININITOPEN
     }
-	G_OC_ADMINREADOPEN
+  G_OC_ADMINREADOPEN
     else if( level_open )
     {
       if( !Q_stricmp( t, "level" ) )
@@ -1188,7 +1193,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
         COM_ParseError( "[command] unrecognized token \"%s\"", t );
       }
     }
-	G_OC_ADMINREADSET
+  G_OC_ADMINREADSET
     else
     {
       COM_ParseError( "unexpected token \"%s\"", t );
@@ -1203,6 +1208,23 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   for( i = 0; i < level.maxclients; i++ )
     if( level.clients[ i ].pers.connected != CON_DISCONNECTED )
       level.clients[ i ].pers.adminLevel = G_admin_level( &g_entities[ i ] );
+  return qtrue;
+}
+
+qboolean G_admin_register( gentity_t *ent, int skiparg )
+{
+  int level = 0;
+
+  level = G_admin_level(ent);
+
+  if( level == 0 )
+    level = 1;
+
+  trap_SendConsoleCommand( EXEC_APPEND, va( "!setlevel %d %d;",ent - g_entities, level ) );
+  ClientUserinfoChanged( ent - g_entities );
+
+  AP( va( "print \"^3!register: ^7%s^7 is now a protected nickname.\n\"", ent->client->pers.netname ) );
+
   return qtrue;
 }
 
@@ -1992,7 +2014,7 @@ qboolean G_admin_override( gentity_t *ent, int skiparg )
 
   if(!g_cheats.integer && !G_OC_CanOverride(ent))
   {
-	  ADMP("Cheats are disabled.\n");
+    ADMP("Cheats are disabled.\n");
   }
 
   G_SayArgv( skiparg, command, sizeof( command ) );

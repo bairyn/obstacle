@@ -172,6 +172,7 @@ qboolean G_admin_admintest( gentity_t *ent, int skiparg );
 qboolean G_admin_allready( gentity_t *ent, int skiparg );
 qboolean G_admin_endvote( gentity_t *ent, int skiparg );
 qboolean G_admin_spec999( gentity_t *ent, int skiparg );
+qboolean G_admin_register( gentity_t *ent, int skiparg );
 qboolean G_admin_rename( gentity_t *ent, int skiparg );
 qboolean G_admin_restart( gentity_t *ent, int skiparg );
 qboolean G_admin_nextmap( gentity_t *ent, int skiparg );

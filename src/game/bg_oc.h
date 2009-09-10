@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * several which are recommended: client-side speedometer, notarget buildables, cmd
  * stealth and weak aimbot detection, crash, connectMessage, CPMode, restart CP,
  * no auto-vote, LayoutLoad memory leak fix, speed, disableWeaponSounds, 
- * g_connectMessage, and 'x is building' message.
+ * g_connectMessage, !register, and 'x is building' message.
  */
 
 #ifdef _TREMULOUS_H
