@@ -402,6 +402,8 @@ void CG_OffsetThirdPersonView( void )
     }
   }
 
+  rotationAngles[ YAW ] -= cg_thirdPersonAngle.value;
+
   // Move the camera range distance back.
   AngleVectors( rotationAngles, forward, right, up );
   VectorCopy( cg.refdef.vieworg, view );
@@ -457,78 +459,18 @@ void CG_OffsetShoulderView( void )
   float         deltaMousePitch;
   static float  mousePitch;
   vec3_t        forward, right, up;
-  float         classFwdOffset = 0, classUpOffset = 0, classRightOffset = 0;
+  classConfig_t* classConfig;
+
+  // Ignore following pitch; it's too jerky otherwise.
+  if( !cg_thirdPersonPitchFollow.integer ) 
+    cg.refdefViewAngles[ PITCH ] = 0.0;
     
   AngleVectors( cg.refdefViewAngles, forward, right, up );
 
-  // Set a nice view by offsetting from vieworigin to get to the "shoulder"
-  // for each class.
-  // FIXME: These need to not be hard-coded so hackishly
-  switch( cg.snap->ps.stats[ STAT_CLASS ] )
-  {
-    case PCL_ALIEN_BUILDER0:
-    case PCL_ALIEN_BUILDER0_UPG:
-      classFwdOffset = -8;
-      classRightOffset = 15;
-      classUpOffset = 13;
-      break;
-    case PCL_ALIEN_LEVEL0:
-      classFwdOffset = -5;
-      classRightOffset = 0;
-      classUpOffset = 17; // +10 for dev from svn
-      break;
-    case PCL_ALIEN_LEVEL1:
-    case PCL_ALIEN_LEVEL1_UPG:
-      classFwdOffset = -10;
-      classRightOffset = 0;
-      classUpOffset = 18;
-      break;
-    case PCL_ALIEN_LEVEL2: 
-    case PCL_ALIEN_LEVEL2_UPG: 
-      classFwdOffset = 0;
-      classRightOffset = 12;
-      classUpOffset = 5;
-      break;
-    case PCL_ALIEN_LEVEL3:
-      classFwdOffset = -10;
-      classRightOffset = 15;
-      classUpOffset = 8;
-      break;
-    case PCL_ALIEN_LEVEL3_UPG:
-      classFwdOffset = -10;
-      classRightOffset = 17;
-      classUpOffset = 12;
-      break;
-    case PCL_ALIEN_LEVEL4:
-      classFwdOffset = -20;
-      classRightOffset = -25;
-      classUpOffset = 30; // -40 for dev from svn
-      break;
-    case PCL_HUMAN:
-      classFwdOffset = -10;
-      classRightOffset = 15;
-      classUpOffset = 0;
-      break;
-    case PCL_HUMAN_BSUIT:
-      classFwdOffset = -30;
-      classRightOffset = 25;
-      classUpOffset = -2; // +6 for dev from svn
-      break;
-  }
-  // The override is temporary so that people can help find good offset positions for me.
-  // It will not remain in final code.
-  if( !cg_shoulderViewOverride.integer )
-  {
-    VectorMA( cg.refdef.vieworg, classFwdOffset, forward, cg.refdef.vieworg );
-    VectorMA( cg.refdef.vieworg, classUpOffset, up, cg.refdef.vieworg );
-    VectorMA( cg.refdef.vieworg, classRightOffset, right, cg.refdef.vieworg );
-  }
-  else
-  {
-    VectorMA( cg.refdef.vieworg, cg_shoulderViewForward.value, forward, cg.refdef.vieworg );
-    VectorMA( cg.refdef.vieworg, cg_shoulderViewUp.value, up, cg.refdef.vieworg );
-    VectorMA( cg.refdef.vieworg, cg_shoulderViewRight.value, right, cg.refdef.vieworg );
-  }
+  classConfig = BG_ClassConfig( cg.snap->ps.stats[ STAT_CLASS ] );
+  VectorMA( cg.refdef.vieworg, classConfig->shoulderOffsets[ 0 ], forward, cg.refdef.vieworg );
+  VectorMA( cg.refdef.vieworg, classConfig->shoulderOffsets[ 1 ], right, cg.refdef.vieworg );
+  VectorMA( cg.refdef.vieworg, classConfig->shoulderOffsets[ 2 ], up, cg.refdef.vieworg );
 
   // If someone is playing like this, the rest is already taken care of
   // so just get the firstperson effects and leave.
@@ -553,11 +495,7 @@ void CG_OffsetShoulderView( void )
   // Handle pitch.
   rotationAngles[ PITCH ] = mousePitch;
 
-  // Ignore following pitch; it's too jerky otherwise.
-  if( cg_thirdPersonPitchFollow.integer ) 
-    mousePitch += cg.refdefViewAngles[ PITCH ];
-
-  rotationAngles[ PITCH ] = AngleNormalize180( rotationAngles[ PITCH ] );
+  rotationAngles[ PITCH ] = AngleNormalize180( rotationAngles[ PITCH ] + AngleNormalize180( cg.refdefViewAngles[ PITCH ] ) );
   if( rotationAngles [ PITCH ] < -90 ) rotationAngles [ PITCH ] = -90;
   if( rotationAngles [ PITCH ] > 90 ) rotationAngles [ PITCH ] = 90;
 
@@ -1044,6 +982,7 @@ static int CG_CalcFov( void )
     inwater = qfalse;
 
   if( ( cg.predictedPlayerEntity.currentState.eFlags & EF_POISONCLOUDED ) &&
+      ( cg.time - cg.poisonedTime < PCLOUD_DISORIENT_DURATION) &&
       cg.predictedPlayerState.stats[ STAT_HEALTH ] > 0 &&
       !( cg.snap->ps.pm_flags & PMF_FOLLOW ) )
   {
