@@ -651,7 +651,7 @@ static void CG_DrawStack( rectDef_t *rect, vec4_t color, float fill,
   float each;
   int   ival;
   float frac;
-  float nudge;
+  float nudge = 0.0f;  // fix annoying and unnecessary compiler warning
   float fmax = max; // otherwise we'd be (float) casting everywhere
 
   if( val <= 0 || max <= 0 )

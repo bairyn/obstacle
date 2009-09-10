@@ -1318,7 +1318,6 @@ void G_CalculateBuildPoints( void )
   {
     float alienPlayerCountMod = level.averageNumAlienClients / PLAYER_COUNT_MOD;
     float humanPlayerCountMod = level.averageNumHumanClients / PLAYER_COUNT_MOD;
-    int   alienNextStageThreshold, humanNextStageThreshold;
 
     if( alienPlayerCountMod < 0.1f )
       alienPlayerCountMod = 0.1f;
