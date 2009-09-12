@@ -88,42 +88,42 @@ void G_AddCreditToClient( gclient_t *client, short credit, qboolean cap )
 {
   if( !client )
     return;
-
-  //if we're already at the max and trying to add credit then stop
-  if( cap )
+  if( cap && credit > 0)
   {
-    if( client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+    if( client->pers.teamSelection == TEAM_ALIENS )
     {
-      if( client->ps.persistant[ PERS_CREDIT ] >= ALIEN_MAX_CREDITS &&
-          credit > 0 )
+      if( client->pers.credit > ALIEN_MAX_CREDITS )
         return;
     }
-    else if( client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
+    else if( client->pers.teamSelection == TEAM_HUMANS )
     {
-      if( client->ps.persistant[ PERS_CREDIT ] >= HUMAN_MAX_CREDITS &&
-          credit > 0 )
+      if( client->pers.credit > HUMAN_MAX_CREDITS )
         return;
     }
   }
 
-  client->ps.persistant[ PERS_CREDIT ] += credit;
+  client->pers.credit += credit;
 
   if( cap )
   {
-    if( client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+    if( client->pers.teamSelection == TEAM_ALIENS )
     {
-      if( client->ps.persistant[ PERS_CREDIT ] > ALIEN_MAX_CREDITS )
-        client->ps.persistant[ PERS_CREDIT ] = ALIEN_MAX_CREDITS;
+      if( client->pers.credit > ALIEN_MAX_CREDITS )
+        client->pers.credit = ALIEN_MAX_CREDITS;
     }
-    else if( client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
+    else if( client->pers.teamSelection == TEAM_HUMANS )
     {
-      if( client->ps.persistant[ PERS_CREDIT ] > HUMAN_MAX_CREDITS )
-        client->ps.persistant[ PERS_CREDIT ] = HUMAN_MAX_CREDITS;
+      if( client->pers.credit > HUMAN_MAX_CREDITS )
+        client->pers.credit = HUMAN_MAX_CREDITS;
     }
   }
 
-  if( client->ps.persistant[ PERS_CREDIT ] < 0 )
-    client->ps.persistant[ PERS_CREDIT ] = 0;
+  if( client->pers.credit < 0 )
+    client->pers.credit = 0;
+
+  //might as well copy to ps here for the hud/spectators
+  client->ps.persistant[ PERS_CREDIT ] = client->pers.credit;
+
 }
 
 

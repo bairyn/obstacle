@@ -392,6 +392,14 @@ void Cmd_Give_f( gentity_t *ent )
       ent->client->boostedTime = level.time;
     }
   }
+  
+  if( Q_stricmp( name, "gas" ) == 0 )
+  {
+    ent->client->ps.eFlags |= EF_POISONCLOUDED;
+    ent->client->lastPoisonCloudedTime = level.time;
+    trap_SendServerCommand( ent->client->ps.clientNum,
+                              "poisoncloud" );
+  }
 
   if( give_all || Q_stricmp( name, "ammo" ) == 0 )
   {
@@ -3216,7 +3224,7 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         G_ChangeTeam( ent, connection->clientTeam );
 
         // set the correct credit
-        ent->client->ps.persistant[ PERS_CREDIT ] = 0;
+        ent->client->pers.credit = 0;
         G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
 
         G_OC_PTRCRestore();

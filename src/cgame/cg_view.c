@@ -542,11 +542,11 @@ static void CG_StepOffset( void )
   }
 }
 
-#define PCLOUD_ROLL_AMPLITUDE   25.0f
-#define PCLOUD_ROLL_FREQUENCY   0.4f
-#define PCLOUD_ZOOM_AMPLITUDE   15
-#define PCLOUD_ZOOM_FREQUENCY   0.7f
 #define PCLOUD_DISORIENT_DURATION 2500
+#define PCLOUD_ROLL_AMPLITUDE   25.0f
+#define PCLOUD_ROLL_FREQUENCY   0.4f // 
+#define PCLOUD_ZOOM_AMPLITUDE   15
+#define PCLOUD_ZOOM_FREQUENCY   0.625f // 2.5s / 4
 
 
 /*
@@ -763,8 +763,8 @@ void CG_OffsetFirstPersonView( void )
             BG_PlayerPoisonCloudTime( &cg.predictedPlayerState );
     if( scale < 0.f )
       scale = 0.f;
-    fraction = sin( cg.time / 500.0f * M_PI * PCLOUD_ROLL_FREQUENCY ) * scale;
-    pitchFraction = sin( cg.time / 200.0f * M_PI * PCLOUD_ROLL_FREQUENCY ) *
+    fraction = sin( ( cg.time - cg.poisonedTime ) / 500.0f * M_PI * PCLOUD_ROLL_FREQUENCY ) * scale;
+    pitchFraction = sin( ( cg.time - cg.poisonedTime ) / 200.0f * M_PI * PCLOUD_ROLL_FREQUENCY ) *
                     scale;
 
     angles[ ROLL ] += fraction * PCLOUD_ROLL_AMPLITUDE;
@@ -989,7 +989,7 @@ static int CG_CalcFov( void )
     float scale = 1.0f - (float)( cg.time - cg.poisonedTime ) /
                   BG_PlayerPoisonCloudTime( &cg.predictedPlayerState );
       
-    phase = cg.time / 1000.0 * PCLOUD_ZOOM_FREQUENCY * M_PI * 2;
+    phase = ( cg.time - cg.poisonedTime ) / 1000.0 * PCLOUD_ZOOM_FREQUENCY * M_PI * 2;
     v = PCLOUD_ZOOM_AMPLITUDE * sin( phase ) * scale;
     fov_x += v;
     fov_y += v;

@@ -284,7 +284,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_floodMaxDemerits, "g_floodMaxDemerits", "5000", CVAR_ARCHIVE, 0, qfalse  },
   { &g_floodMinTime, "g_floodMinTime", "2000", CVAR_ARCHIVE, 0, qfalse  },
 
-  { &g_markDeconstruct, "g_markDeconstruct", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse  },
+  { &g_markDeconstruct, "g_markDeconstruct", "3", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_debugMapRotation, "g_debugMapRotation", "0", 0, 0, qfalse  },
   { &g_currentMapRotation, "g_currentMapRotation", "-1", 0, 0, qfalse  }, // -1 = NOT_ROTATING
@@ -1315,18 +1315,6 @@ void G_CalculateBuildPoints( void )
     level.humanBuildPoints = 0;
   if( level.alienBuildPoints < 0 )
     level.alienBuildPoints = 0;
-  {
-    float alienPlayerCountMod = level.averageNumAlienClients / PLAYER_COUNT_MOD;
-    float humanPlayerCountMod = level.averageNumHumanClients / PLAYER_COUNT_MOD;
-
-    if( alienPlayerCountMod < 0.1f )
-      alienPlayerCountMod = 0.1f;
-
-    if( humanPlayerCountMod < 0.1f )
-      humanPlayerCountMod = 0.1f;
-
-
-  }
 }
 
 /*
