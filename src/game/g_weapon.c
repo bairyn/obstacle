@@ -1615,6 +1615,8 @@ void FireWeapon( gentity_t *ent )
     VectorCopy( ent->s.pos.trBase, muzzle );
   }
 
+  G_OC_FireWeapon();
+
   // fire the specific weapon
   switch( ent->s.weapon )
   {

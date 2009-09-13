@@ -831,15 +831,15 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		/* so simulate a goon */ \
 		if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL0) \
 		{ \
-		;; \
+			;; \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_BUILDER0) \
 		{ \
-		;; \
+			;; \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_BUILDER0_UPG) \
 		{ \
-		;; \
+			;; \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1) \
 		{ \
@@ -874,6 +874,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			G_ClientPrint(ent, "^1Error: ^3Alien class unknown for scrim - using Dragoon chomp", CLIENT_SPECTATORS); \
 			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
 		} \
+ \
 		return; \
 	} while(0)
 
