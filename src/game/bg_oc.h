@@ -819,7 +819,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			if(t->active) \
 			{ \
 				/* throw a grenade if it's the team's weapon because otherwise the grenade won't be thrown */ \
-				if(t->weapon = WP_GRENADE) \
+				if(t->weapon == WP_GRENADE) \
 				{ \
 					throwGrenade(ent); \
 				} \
@@ -843,36 +843,36 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1) \
 		{ \
-			meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
+			meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1_UPG) \
 		{ \
-			meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
+			meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL2) \
 		{ \
-			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
+			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL2_UPG) \
 		{ \
-			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
+			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL3) \
 		{ \
-			meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
+			meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL3_UPG) \
 		{ \
-			meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
+			meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL4) \
 		{ \
-			meleeAttack(ent, LEVEL4_CLAW_RANGE, LEVEL4_CLAW_WIDTH, LEVEL4_CLAW_DMG, MOD_LEVEL4_CLAW); \
+			meleeAttack(ent, LEVEL4_CLAW_RANGE, LEVEL4_CLAW_WIDTH, LEVEL4_CLAW_WIDTH, LEVEL4_CLAW_DMG, MOD_LEVEL4_CLAW); \
 		} \
 		else \
 		{ \
 			G_ClientPrint(ent, "^1Error: ^3Alien class unknown for scrim - using Dragoon chomp", CLIENT_SPECTATORS); \
-			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
+			meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
 		} \
  \
 		return; \
@@ -948,7 +948,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			else \
 			{ \
 				G_ClientPrint(ent, "^1Error: ^3Alien class unknown for scrim - using Dragoon chomp", CLIENT_SPECTATORS); \
-				meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
+				meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
 			} \
  \
 			if(ent->s.weapon == WP_ALEVEL1_UPG) \
