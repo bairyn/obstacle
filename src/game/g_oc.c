@@ -3605,7 +3605,7 @@ static int G_OC_CompareStats(const void *aa, const void *bb)
 	const stat_t *a = aa, *b = bb;
 
 	if(a->count != b->count)
-		return a->count - a->count;
+		return b->count - a->count;
 
 	if(a->time != b->time)
 		return a->time  - b->time;

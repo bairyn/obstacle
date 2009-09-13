@@ -60,12 +60,10 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: no "New record!" message when a record is overwritten?
-// TODO: add 'u'oc
-
 // these can be post-2.0
-// TODO: Initialize value for scrim weapon feeder
+// TODO: add 'u'oc
 // TODO: restore OC stuff on ptrc (can be post-2.0, but highest priority)
+// TODO: Initialize value for scrim weapon feeder
 // TODO: help reads !info directly, or have a client-side "info"
 // TODO: fix player names not showing (can be post-2.0)
 // TODO: 'x' is building 'x', if it's worth adding (post-2.0)
