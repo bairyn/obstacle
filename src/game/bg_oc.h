@@ -60,9 +60,9 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
+// TODO: fix scrim team timer
 // TODO: no "New record!" message when a record is overwritten?
 // TODO: fix restartoc so that it teleports to spawn even if it's not valid (has to do with z axis += 1?);  and always reset timer (BUT NO SINCE THE PLAYER DIES AND IS MUCH CLEANER)
-// TODO: fix bug where last slice is recorded (at least as granger)
 // TODO: add 'u'oc
 
 // these can be post-2.0
@@ -811,6 +811,12 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
+		if(!ent->client) \
+			break; \
+ \
+		AngleVectors( ent->client->ps.viewangles, forward, right, up ); \
+		CalcMuzzlePoint( ent, forward, right, up, muzzle ); \
+ \
 		if(!ent->client->pers.scrimTeam || ent->client->pers.override || G_admin_canEditOC(ent)) \
 		{ \
 			if(ent->s.weapon == WP_ABUILD || ent->s.weapon == WP_ABUILD2 || ent->s.weapon == WP_HBUILD) \
@@ -818,7 +824,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				cancelBuildFire(ent); \
 			} \
  \
-			break; \
+			return; \
 		} \
  \
 		if(ent->client->pers.teamSelection == TEAM_ALIENS) \
