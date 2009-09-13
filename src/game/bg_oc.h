@@ -60,7 +60,6 @@ extern int oc_gameMode;
 #define gentity_t struct gentity_s
 #define weapon_t int
 
-// TODO: fix scrim team timer
 // TODO: no "New record!" message when a record is overwritten?
 // TODO: add 'u'oc
 
@@ -802,6 +801,80 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(traceEnt->s.modelindex != BA_A_BOOSTER) \
 			return qfalse; \
+	} while(0)
+
+	#define G_OC_FireWeapon() \
+	do \
+	{ \
+		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		if(ent->client->pers.teamSelection != TEAM_ALIENS) \
+			break; \
+ \
+		if(ent->client->pers.scrimTeam) \
+		{ \
+			g_oc_scrimTeam_t *t; \
+			G_OC_GETTEAM(t, level.scrimTeam, ent->client->pers.scrimTeam); \
+			if(t->active) \
+			{ \
+				/* throw a grenade if it's the team's weapon because otherwise the grenade won't be thrown */ \
+				if(t->weapon = WP_GRENADE) \
+				{ \
+					throwGrenade(ent); \
+				} \
+			} \
+		} \
+ \
+		/* aliens can't fire weapons */ \
+		/* but sometimes they need weapons to distinguish on teams */ \
+		/* so simulate a goon */ \
+		if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL0) \
+		{ \
+		;; \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_BUILDER0) \
+		{ \
+		;; \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_BUILDER0_UPG) \
+		{ \
+		;; \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1) \
+		{ \
+			meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1_UPG) \
+		{ \
+			meleeAttack(ent, LEVEL1_CLAW_RANGE, LEVEL1_CLAW_WIDTH, LEVEL1_CLAW_DMG, MOD_LEVEL1_CLAW); \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL2) \
+		{ \
+			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL2_UPG) \
+		{ \
+			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL3) \
+		{ \
+			meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL3_UPG) \
+		{ \
+			meleeAttack(ent, LEVEL3_CLAW_RANGE, LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW); \
+		} \
+		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL4) \
+		{ \
+			meleeAttack(ent, LEVEL4_CLAW_RANGE, LEVEL4_CLAW_WIDTH, LEVEL4_CLAW_DMG, MOD_LEVEL4_CLAW); \
+		} \
+		else \
+		{ \
+			G_ClientPrint(ent, "^1Error: ^3Alien class unknown for scrim - using Dragoon chomp", CLIENT_SPECTATORS); \
+			meleeAttack(ent, LEVEL2_CLAW_RANGE, LEVEL2_CLAW_WIDTH, LEVEL2_CLAW_DMG, MOD_LEVEL2_CLAW); \
+		} \
+		return; \
 	} while(0)
 
 	#define G_OC_FireWeapon2() \
@@ -2194,7 +2267,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(client->pers.scrimTeam) \
 		{ \
-			g_oc_scrimTeam_t *t = &level.scrimTeam[client->pers.scrimTeam - 1]; \
+			g_oc_scrimTeam_t *t; \
+			G_OC_GETTEAM(t, level.scrimTeam, client->pers.scrimTeam); \
  \
 			if(level.ocScrimState >= G_OC_STATE_PLAY) \
 			{ \
