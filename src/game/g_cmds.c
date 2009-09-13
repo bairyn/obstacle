@@ -2112,9 +2112,6 @@ void Cmd_Destroy_f( gentity_t *ent )
       else if( g_markDeconstruct.integer &&
                ( ent->client->pers.teamSelection != TEAM_HUMANS ||
                  G_FindPower( traceEnt ) ) )
-        G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-                  traceEnt->health, 0, MOD_SUICIDE );
-      else if( g_markDeconstruct.integer && !G_OC_NoMarkDeconstruct() )
       {
         traceEnt->deconstruct     = qtrue; // Mark buildable for deconstruction
         traceEnt->deconstructTime = level.time;
