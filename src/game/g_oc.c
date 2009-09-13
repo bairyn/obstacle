@@ -1323,6 +1323,8 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 				  // save results of pmove
 				  BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, qtrue);
 
+				  VectorCopy(spawn_origin, ent->s.origin);
+
 				  // use the precise origin for linking
 				  VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
 			  }
@@ -1368,22 +1370,30 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 				  // save results of pmove
 				  BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, qtrue);
 
+				  VectorCopy(spawn_origin, ent->s.origin);
+
 				  // use the precise origin for linking
 				  VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
 			  }
 			  else
 			  {
 				G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
+				G_OC_RestartClient(ent, 1, resetScrimTeam);
+				return;
 			  }
 			}
 			else
 			{
 			  G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
+			  G_OC_RestartClient(ent, 1, resetScrimTeam);
+			  return;
 			}
 		}
 		else
 		{
 			G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
+			G_OC_RestartClient(ent, 1, resetScrimTeam);
+			return;
 		}
 		VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);
 		ent->client->pers.aliveTime = 0;

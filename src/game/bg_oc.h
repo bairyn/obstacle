@@ -62,7 +62,6 @@ extern int oc_gameMode;
 
 // TODO: fix scrim team timer
 // TODO: no "New record!" message when a record is overwritten?
-// TODO: fix restartoc so that it teleports to spawn even if it's not valid (has to do with z axis += 1?);  and always reset timer (BUT NO SINCE THE PLAYER DIES AND IS MUCH CLEANER)
 // TODO: add 'u'oc
 
 // these can be post-2.0
