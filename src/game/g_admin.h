@@ -145,6 +145,10 @@ void G_admin_namelog_update( gclient_t *ent, qboolean disconnect );
 int G_admin_level( gentity_t *ent );
 int G_admin_parse_time( const char *time );
 
+qboolean admin_higher( gentity_t *admin, gentity_t *victim );
+
+void admin_writeconfig( void );
+
 // ! command functions
 qboolean G_admin_time( gentity_t *ent, int skiparg );
 qboolean G_admin_setlevel( gentity_t *ent, int skiparg );
@@ -158,6 +162,7 @@ qboolean G_admin_listlayouts( gentity_t *ent, int skiparg );
 qboolean G_admin_listplayers( gentity_t *ent, int skiparg );
 qboolean G_admin_map( gentity_t *ent, int skiparg );
 qboolean G_admin_mute( gentity_t *ent, int skiparg );
+qboolean G_admin_override( gentity_t *ent, int skiparg );
 qboolean G_admin_denybuild( gentity_t *ent, int skiparg );
 qboolean G_admin_showbans( gentity_t *ent, int skiparg );
 qboolean G_admin_help( gentity_t *ent, int skiparg );
@@ -165,11 +170,13 @@ qboolean G_admin_admintest( gentity_t *ent, int skiparg );
 qboolean G_admin_allready( gentity_t *ent, int skiparg );
 qboolean G_admin_endvote( gentity_t *ent, int skiparg );
 qboolean G_admin_spec999( gentity_t *ent, int skiparg );
+qboolean G_admin_register( gentity_t *ent, int skiparg );
 qboolean G_admin_rename( gentity_t *ent, int skiparg );
 qboolean G_admin_restart( gentity_t *ent, int skiparg );
 qboolean G_admin_nextmap( gentity_t *ent, int skiparg );
 qboolean G_admin_namelog( gentity_t *ent, int skiparg );
 qboolean G_admin_lock( gentity_t *ent, int skiparg );
+qboolean G_admin_info( gentity_t *ent, int skiparg );
 
 void G_admin_print( gentity_t *ent, char *m );
 void G_admin_buffer_print( gentity_t *ent, char *m );

@@ -23,6 +23,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // bg_local.h -- local definitions for the bg (both games) files
 
+#ifndef _BG_LOCAL_H
+#define _BG_LOCAL_H
+
 #define MIN_WALK_NORMAL 0.7f   // can't walk on very steep slopes
 
 #define STEPSIZE    18
@@ -86,3 +89,5 @@ qboolean  PM_SlideMove( qboolean gravity );
 void      PM_StepEvent( vec3_t from, vec3_t to, vec3_t normal );
 qboolean  PM_StepSlideMove( qboolean gravity, qboolean predictive );
 qboolean  PM_PredictStepMove( void );
+
+#endif /* _BG_LOCAL_H */

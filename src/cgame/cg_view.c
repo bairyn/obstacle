@@ -1437,6 +1437,12 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
   cg.renderingThirdPerson = ( cg_thirdPerson.integer || ( cg.snap->ps.stats[ STAT_HEALTH ] <= 0 ) || 
                             ( cg.chaseFollow && cg.snap->ps.pm_flags & PMF_FOLLOW) );
 
+  // update speedometer
+  if( cg_speedometerXYZ.integer )
+    CG_AddSpeed( VectorLength( cg.snap->ps.velocity ) );
+  else
+    CG_AddSpeed( sqrt( cg.snap->ps.velocity[ 0 ] * cg.snap->ps.velocity[ 0 ] + cg.snap->ps.velocity[ 1 ] * cg.snap->ps.velocity[ 1 ] ) );
+
   // build cg.refdef
   inwater = CG_CalcViewValues( );
 
@@ -1509,5 +1515,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
   if( cg_stats.integer )
     CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
+
+  CG_OC_Frame();
 }
 

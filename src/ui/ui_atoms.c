@@ -164,7 +164,8 @@ struct
   { "messagemode", UI_MessageMode_f },
   { "messagemode2", UI_MessageMode_f },
   { "menu", UI_Menu_f },
-  { "closemenus", UI_CloseMenus_f }
+  { "closemenus", UI_CloseMenus_f },
+  { "ui_setLayouts", UI_SetLayouts_f }
 };
 
 /*

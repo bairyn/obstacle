@@ -399,6 +399,8 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
             !( client->oldbuttons & BUTTON_ATTACK );
   attack3 = ( client->buttons & BUTTON_USE_HOLDABLE ) &&
             !( client->oldbuttons & BUTTON_USE_HOLDABLE );
+
+  G_OC_SpectatorThink();
    
   // We are in following mode only if we are following a non-spectating client           
   following = client->sess.spectatorState == SPECTATOR_FOLLOW;
@@ -1199,7 +1201,7 @@ static void G_UnlaggedDetectCollisions( gentity_t *ent )
   G_UnlaggedOn( ent, ent->client->oldOrigin, range );
 
   trap_Trace(&tr, ent->client->oldOrigin, ent->r.mins, ent->r.maxs,
-    ent->client->ps.origin, ent->s.number,  MASK_PLAYERSOLID );
+    ent->client->ps.origin, ent->s.number,  MASK_PLAYERSOLID);
   if( tr.entityNum >= 0 && tr.entityNum < MAX_CLIENTS )
     g_entities[ tr.entityNum ].client->unlaggedCalc.used = qfalse;
 
@@ -1501,7 +1503,7 @@ void ClientThink_real( gentity_t *ent )
   }
 
   // set speed
-  if( client->ps.pm_type == PM_NOCLIP )
+  if( client->ps.pm_type == PM_NOCLIP || client->speed )
     client->ps.speed = client->pers.flySpeed;
   else
     client->ps.speed = g_speed.value *
@@ -1521,7 +1523,7 @@ void ClientThink_real( gentity_t *ent )
     }
 
     //switch jetpack off if no reactor
-    if( !G_Reactor( ) )
+    if( !G_Reactor( ) && !G_OC_NeverUnpowerJetpack() )
       BG_DeactivateUpgrade( UP_JETPACK, client->ps.stats );
   }
 
@@ -1542,6 +1544,8 @@ void ClientThink_real( gentity_t *ent )
   pm.ps = &client->ps;
   pm.pmext = &client->pmext;
   pm.cmd = *ucmd;
+
+  G_OC_ClientThink();
 
   if( pm.ps->pm_type == PM_DEAD )
     pm.tracemask = MASK_DEADSOLID;
@@ -1711,9 +1715,9 @@ void ClientThink_real( gentity_t *ent )
 
       traceEnt = &g_entities[ trace.entityNum ];
 
-      if( traceEnt && traceEnt->buildableTeam == client->ps.stats[ STAT_TEAM ] && traceEnt->use )
+      if( traceEnt && ( traceEnt->buildableTeam == client->ps.stats[ STAT_TEAM ] || G_OC_CanBuildableBeUsedOnOtherTeam() ) && traceEnt->use )
         traceEnt->use( traceEnt, ent, ent ); //other and activator are the same in this context
-      else
+      else if( G_OC_CanUseBuildableInArea() )
       {
         //no entity in front of player - do a small area search
 

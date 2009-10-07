@@ -597,7 +597,11 @@ void AHive_SearchAndDestroy( gentity_t *self )
   int       i;
   float     d, nearest;
 
-  if( level.time > self->timestamp )
+  if( G_OC_NeedAlternateHiveSearchAndDestroy() )
+  {
+    G_OC_AlternateHiveSearchAndDestroy();
+  }
+  else if( level.time > self->timestamp )
   {
     VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
     self->s.pos.trType = TR_STATIONARY;
@@ -624,7 +628,8 @@ void AHive_SearchAndDestroy( gentity_t *self )
       if( tr.entityNum != ENTITYNUM_WORLD )
       {
         nearest = d;
-        self->target_ent = ent;
+        if(!(ent->flags & FL_NOTARGET))
+          self->target_ent = ent;
       }
     }
   }
@@ -667,7 +672,7 @@ gentity_t *fire_hive( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
   bolt->methodOfDeath = MOD_SWARM;
-  bolt->clipmask = MASK_SHOT;
+  bolt->clipmask = BG_OC_SHOTMASK;
   bolt->target_ent = self->target_ent;
   bolt->timestamp = level.time + HIVE_LIFETIME;
 
@@ -709,7 +714,7 @@ gentity_t *fire_lockblob( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
   bolt->methodOfDeath = MOD_UNKNOWN; //doesn't do damage so will never kill
-  bolt->clipmask = MASK_SHOT;
+  bolt->clipmask = BG_OC_SHOTMASK;
   bolt->target_ent = NULL;
 
   bolt->s.pos.trType = TR_LINEAR;
@@ -787,7 +792,7 @@ gentity_t *fire_paraLockBlob( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->damage = 0;
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
-  bolt->clipmask = MASK_SHOT;
+  bolt->clipmask = BG_OC_SHOTMASK;
   bolt->target_ent = NULL;
 
   bolt->s.pos.trType = TR_GRAVITY;

@@ -1040,7 +1040,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       // base is under attack warning if DCC'd
       if( targ->buildableTeam == TEAM_HUMANS && G_FindDCC( targ ) &&
           level.time > level.humanBaseAttackTimer &&
-          mod != MOD_DECONSTRUCT && mod != MOD_SUICIDE )
+          mod != MOD_DECONSTRUCT && mod != MOD_SUICIDE && !G_OC_NoDamageAlert() )
       {
         level.humanBaseAttackTimer = level.time + DC_ATTACK_PERIOD;
         G_BroadcastEvent( EV_DCC_ATTACK, 0 );
@@ -1051,6 +1051,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     if ( targ->flags & FL_GODMODE )
       return;
   }
+
+  G_OC_Damage();
 
   // add to the attacker's hit counter
   if( attacker->client && targ != attacker && targ->health > 0
@@ -1343,6 +1345,8 @@ qboolean G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
 
     if( CanDamage( ent, origin ) )
     {
+      G_OC_RADIUSDAMAGE
+
       VectorSubtract( ent->r.currentOrigin, origin, dir );
       // push the center of mass higher than the origin so players
       // get knocked into the air more

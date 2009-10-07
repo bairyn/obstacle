@@ -165,6 +165,7 @@ void CG_SetConfigValues( void )
 
   cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
   cg.warmup = atoi( CG_ConfigString( CS_WARMUP ) );
+  CG_OC_SetConfigStrings();
 }
 
 
@@ -229,7 +230,7 @@ static void CG_AnnounceAlienStageTransistion( stage_t from, stage_t to )
     return;
 
   trap_S_StartLocalSound( cgs.media.alienStageTransition, CHAN_ANNOUNCER );
-  CG_CenterPrint( "We have evolved!", 200, GIANTCHAR_WIDTH * 4 );
+  CG_CenterPrint( "We have evolved!", NULL, 200, GIANTCHAR_WIDTH * 4 );
 }
 
 /*
@@ -243,7 +244,7 @@ static void CG_AnnounceHumanStageTransistion( stage_t from, stage_t to )
     return;
 
   trap_S_StartLocalSound( cgs.media.humanStageTransition, CHAN_ANNOUNCER );
-  CG_CenterPrint( "Reinforcements have arrived!", 200, GIANTCHAR_WIDTH * 4 );
+  CG_CenterPrint( "Reinforcements have arrived!", NULL, 200, GIANTCHAR_WIDTH * 4 );
 }
 
 /*
@@ -378,6 +379,7 @@ static void CG_ConfigStringModified( void )
   {
     CG_ShaderStateChanged( );
   }
+  CG_OC_CONFIGSTRINGMODIFIED
 }
 
 
@@ -418,7 +420,7 @@ static void CG_MapRestart( void )
 
   // play the "fight" sound if this is a restart without warmup
   if( cg.warmup == 0 )
-    CG_CenterPrint( "FIGHT!", 120, GIANTCHAR_WIDTH * 2 );
+    CG_CenterPrint( "FIGHT!", NULL, 120, GIANTCHAR_WIDTH * 2 );
 
   trap_Cvar_Set( "cg_thirdPerson", "0" );
 }
@@ -1100,7 +1102,12 @@ CG_CenterPrint_f
 */
 static void CG_CenterPrint_f( void )
 {
-  CG_CenterPrint( CG_Argv( 1 ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+  char message[ MAX_STRING_CHARS ], find[ MAX_STRING_CHARS ];
+
+  strncpy( message, CG_Argv( 1 ), sizeof( message ) );
+  strncpy( find, CG_Argv( 2 ), sizeof( find ) );
+
+  CG_CenterPrint( message, ( find[ 0 ] ) ? ( find ) : ( NULL ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 }
 
 /*
@@ -1228,6 +1235,11 @@ static void CG_PTRConfirm_f( void )
   trap_SendConsoleCommand( "menu ptrc_popmenu\n" );
 }
 
+static void CG_SetLayouts_f( void )
+{
+  trap_SendConsoleCommand( va( "ui_setLayouts \"%s\"", CG_Argv( 1 ) ) );
+}
+
 static consoleCommand_t svcommands[ ] =
 {
   { "cp", CG_CenterPrint_f },
@@ -1245,7 +1257,9 @@ static consoleCommand_t svcommands[ ] =
   { "voice", CG_ParseVoice },
   { "ptrcrequest", CG_PTRRequest_f },
   { "ptrcissue", CG_PTRIssue_f },
-  { "ptrcconfirm", CG_PTRConfirm_f }
+  { "ptrcconfirm", CG_PTRConfirm_f },
+  { "setLayouts", CG_SetLayouts_f }
+  CG_OC_SERVERCMDS
 };
 
 /*

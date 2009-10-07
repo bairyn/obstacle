@@ -32,6 +32,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
+#ifndef _TREMULOUS_H
+#define _TREMULOUS_H
+
+#ifndef _G_OC_H
+#define TREMULOUS_VALUE(d, o) (d)
+#endif /* ifndef _G_OC_H */
+
 #define ALIEN_WDMG_MODIFIER         1.0f
 #define ADM(d)                      ((int)((float)d*ALIEN_WDMG_MODIFIER))
 
@@ -47,35 +54,35 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ABUILDER_BLOB_SPEED_MOD     0.5f
 #define ABUILDER_BLOB_TIME          5000
 
-#define LEVEL0_BITE_DMG             ADM(36)
+#define LEVEL0_BITE_DMG             TREMULOUS_VALUE(ADM(36), ADM(48))
 #define LEVEL0_BITE_RANGE           64.0f
 #define LEVEL0_BITE_WIDTH           6.0f
 #define LEVEL0_BITE_REPEAT          500
 #define LEVEL0_BITE_K_SCALE         1.0f
 
 #define LEVEL1_CLAW_DMG             ADM(32)
-#define LEVEL1_CLAW_RANGE           64.0f
-#define LEVEL1_CLAW_U_RANGE         LEVEL1_CLAW_RANGE + 3.0f
+#define LEVEL1_CLAW_RANGE           TREMULOUS_VALUE(64.0f, 96.0f)
+#define LEVEL1_CLAW_U_RANGE         TREMULOUS_VALUE(LEVEL1_CLAW_RANGE + 3.0f, LEVEL1_CLAW_RANGE)
 #define LEVEL1_CLAW_WIDTH           10.0f
 #define LEVEL1_CLAW_REPEAT          600
 #define LEVEL1_CLAW_U_REPEAT        500
 #define LEVEL1_CLAW_K_SCALE         1.0f
 #define LEVEL1_CLAW_U_K_SCALE       1.0f
 #define LEVEL1_GRAB_RANGE           96.0f
-#define LEVEL1_GRAB_U_RANGE         LEVEL1_GRAB_RANGE + 3.0f
+#define LEVEL1_GRAB_U_RANGE         TREMULOUS_VALUE(LEVEL1_GRAB_RANGE + 3.0f, LEVEL1_GRAB_RANGE)
 #define LEVEL1_GRAB_TIME            300
 #define LEVEL1_GRAB_U_TIME          300
 #define LEVEL1_PCLOUD_DMG           ADM(4)
-#define LEVEL1_PCLOUD_RANGE         120.0f
+#define LEVEL1_PCLOUD_RANGE         TREMULOUS_VALUE(120.0f, 200.0f)
 #define LEVEL1_PCLOUD_REPEAT        2500
 #define LEVEL1_PCLOUD_TIME          10000
-#define LEVEL1_REGEN_MOD            2.0f
-#define LEVEL1_UPG_REGEN_MOD        3.0f
+#define LEVEL1_REGEN_MOD            TREMULOUS_VALUE(2.0f, 1.0f)
+#define LEVEL1_UPG_REGEN_MOD        TREMULOUS_VALUE(3.0f, 1.0)
 
 #define LEVEL2_CLAW_DMG             ADM(40)
-#define LEVEL2_CLAW_RANGE           80.0f
-#define LEVEL2_CLAW_U_RANGE         LEVEL2_CLAW_RANGE + 2.0f
-#define LEVEL2_CLAW_WIDTH           14.0f
+#define LEVEL2_CLAW_RANGE           TREMULOUS_VALUE(80.0f, 96.0f)
+#define LEVEL2_CLAW_U_RANGE         TREMULOUS_VALUE(LEVEL2_CLAW_RANGE + 2.0f, LEVEL2_CLAW_RANGE)
+#define LEVEL2_CLAW_WIDTH           TREMULOUS_VALUE(14.0f, 12.0f)
 #define LEVEL2_CLAW_REPEAT          500
 #define LEVEL2_CLAW_K_SCALE         1.0f
 #define LEVEL2_CLAW_U_REPEAT        400
@@ -89,17 +96,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL2_WALLJUMP_MAXSPEED    1000.0f
 
 #define LEVEL3_CLAW_DMG             ADM(80)
-#define LEVEL3_CLAW_RANGE           72.0f
-#define LEVEL3_CLAW_UPG_RANGE       LEVEL3_CLAW_RANGE + 3.0f          
-#define LEVEL3_CLAW_WIDTH           12.0f
+#define LEVEL3_CLAW_RANGE           TREMULOUS_VALUE(72.0f, 96.0f)
+#define LEVEL3_CLAW_U_RANGE         TREMULOUS_VALUE(LEVEL3_CLAW_RANGE + 3.0f, LEVEL3_CLAW_RANGE + 8.0f)
+#define LEVEL3_CLAW_WIDTH           TREMULOUS_VALUE(12.0f, 16.0f)
 #define LEVEL3_CLAW_REPEAT          700
 #define LEVEL3_CLAW_K_SCALE         1.0f
 #define LEVEL3_CLAW_U_REPEAT        600
 #define LEVEL3_CLAW_U_K_SCALE       1.0f
 #define LEVEL3_POUNCE_DMG           ADM(100)
-#define LEVEL3_POUNCE_RANGE         54.0f
-#define LEVEL3_POUNCE_UPG_RANGE     LEVEL3_POUNCE_RANGE + 3.0f
-#define LEVEL3_POUNCE_WIDTH         14.0f
+#define LEVEL3_POUNCE_RANGE         TREMULOUS_VALUE(54.0f, 72.0f)
+#define LEVEL3_POUNCE_UPG_RANGE     TREMULOUS_VALUE(LEVEL3_POUNCE_RANGE + 3.0f, LEVEL3_POUNCE_RANGE + 0.0f)
+#define LEVEL3_POUNCE_WIDTH         TREMULOUS_VALUE(14.0f, 16.0f)
 #define LEVEL3_POUNCE_TIME          700      // msec for full Dragoon pounce
 #define LEVEL3_POUNCE_TIME_UPG      700      // msec for full Adv. Dragoon pounce
 #define LEVEL3_POUNCE_TIME_MIN      200      // msec before which pounce cancels  
@@ -114,13 +121,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL3_BOUNCEBALL_REGEN     15000    // msec until new barb
 
 #define LEVEL4_CLAW_DMG             ADM(100)
-#define LEVEL4_CLAW_RANGE           100.0f
-#define LEVEL4_CLAW_WIDTH           14.0f
+#define LEVEL4_CLAW_RANGE           TREMULOUS_VALUE(100.0f, 128.0f)
+#define LEVEL4_CLAW_WIDTH           TREMULOUS_VALUE(14.0f, 20.0f)
 #define LEVEL4_CLAW_HEIGHT          20.0f
 #define LEVEL4_CLAW_REPEAT          750
 #define LEVEL4_CLAW_K_SCALE         1.0f
 
-#define LEVEL4_TRAMPLE_DMG             ADM(111)
+#define LEVEL4_TRAMPLE_DMG             TREMULOUS_VALUE(ADM(111), ADM(110))
 #define LEVEL4_TRAMPLE_SPEED           2.0f
 #define LEVEL4_TRAMPLE_CHARGE_MIN      375   // minimum msec to start a charge
 #define LEVEL4_TRAMPLE_CHARGE_MAX      1000  // msec to maximum charge stored
@@ -291,10 +298,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define HIVE_CREEPSIZE              120
 #define HIVE_SENSE_RANGE            500.0f
 #define HIVE_LIFETIME               3000
-#define HIVE_REPEAT                 3000
+#define HIVE_REPEAT                 TREMULOUS_VALUE(3000, 5000)
 #define HIVE_K_SCALE                1.0f
-#define HIVE_DMG                    80
-#define HIVE_SPEED                  320.0f
+#define HIVE_DMG                    TREMULOUS_VALUE(80, 50)
+#define HIVE_SPEED                  TREMULOUS_VALUE(320.0f, 240.0f)
 #define HIVE_DIR_CHANGE_PERIOD      500
 #define HIVE_VALUE                  ABVM(HIVE_BP)
 
@@ -347,10 +354,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ALIEN_POISON_DMG            5
 #define ALIEN_POISON_DIVIDER        (1.0f/1.32f) //about 1.0/(time`th root of damage)
 
-#define ALIEN_SPAWN_REPEAT_TIME     10000
+#define ALIEN_SPAWN_REPEAT_TIME     TREMULOUS_VALUE(10000, 0)
 
 #define ALIEN_REGEN_DAMAGE_TIME     2000 //msec since damage that regen starts again
-#define ALIEN_REGEN_NOCREEP_MOD     (1.0f/3.0f) //regen off creep
+#define ALIEN_REGEN_NOCREEP_MOD     TREMULOUS_VALUE((1.0f/3.0f), (1.0f)) //regen off creep
 
 #define ALIEN_MAX_FRAGS             9
 #define ALIEN_MAX_CREDITS           (ALIEN_MAX_FRAGS*ALIEN_CREDITS_PER_KILL)
@@ -566,8 +573,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MGTURRET_K_SCALE            1.0f
 #define MGTURRET_RANGE              400.0f
 #define MGTURRET_SPREAD             200
-#define MGTURRET_DMG                HDM(8)
-#define MGTURRET_SPINUP_TIME        750 // time between target sighted and fire
+#define MGTURRET_DMG                TREMULOUS_VALUE(HDM(8), HDM(4))
+#define MGTURRET_SPINUP_TIME        TREMULOUS_VALUE(750, 0) // time between target sighted and fire
 #define MGTURRET_VALUE              HBVM(MGTURRET_BP)
 
 #define TESLAGEN_BP                 10
@@ -635,12 +642,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define STAMINA_STOP_RESTORE        25
 #define STAMINA_WALK_RESTORE        15
 #define STAMINA_MEDISTAT_RESTORE    30 // stacked on STOP or WALK
-#define STAMINA_SPRINT_TAKE         8
-#define STAMINA_JUMP_TAKE           250
-#define STAMINA_DODGE_TAKE          250
+#define STAMINA_SPRINT_TAKE         TREMULOUS_VALUE(8, 0)
+#define STAMINA_JUMP_TAKE           TREMULOUS_VALUE(250, 0)
+#define STAMINA_DODGE_TAKE          TREMULOUS_VALUE(250, 0)
 #define STAMINA_BREATHING_LEVEL     0
 
-#define HUMAN_SPAWN_REPEAT_TIME     10000
+#define HUMAN_SPAWN_REPEAT_TIME     TREMULOUS_VALUE(10000, 0)
 #define HUMAN_REGEN_DAMAGE_TIME     2000 //msec since damage before dcc repairs
 
 #define HUMAN_MAX_CREDITS           2000
@@ -682,3 +689,5 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
                                          
 #define MAXIMUM_BUILD_TIME          20000 // used for pie timer
 
+
+#endif /* #ifndef _TREMULOUS_H */

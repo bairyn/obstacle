@@ -102,14 +102,20 @@ upgradeInfo_t   cg_upgrades[ 32 ];
 
 buildableInfo_t cg_buildables[ BA_NUM_BUILDABLES ];
 
+CG_OC_CVARS
+
 vmCvar_t  cg_teslaTrailTime;
 vmCvar_t  cg_centertime;
+vmCvar_t  cg_staticCenterPrints;
 vmCvar_t  cg_runpitch;
 vmCvar_t  cg_runroll;
 vmCvar_t  cg_swingSpeed;
 vmCvar_t  cg_shadows;
 vmCvar_t  cg_drawTimer;
 vmCvar_t  cg_drawClock;
+vmCvar_t  cg_drawPlayerTimer;
+vmCvar_t  cg_drawSpeedometer;
+vmCvar_t  cg_speedometerXYZ;
 vmCvar_t  cg_drawFPS;
 vmCvar_t  cg_drawDemoState;
 vmCvar_t  cg_drawSnapshot;
@@ -118,6 +124,7 @@ vmCvar_t  cg_drawCrosshair;
 vmCvar_t  cg_drawCrosshairNames;
 vmCvar_t  cg_crosshairSize;
 vmCvar_t  cg_draw2D;
+vmCvar_t  cg_disableWeaponSounds;
 vmCvar_t  cg_animSpeed;
 vmCvar_t  cg_debugAnim;
 vmCvar_t  cg_debugPosition;
@@ -145,6 +152,7 @@ vmCvar_t  cg_thirdPersonPitchFollow;
 vmCvar_t  cg_thirdPersonRange;
 vmCvar_t  cg_stereoSeparation;
 vmCvar_t  cg_lagometer;
+vmCvar_t  cg_drawSpeed;
 vmCvar_t  cg_synchronousClients;
 vmCvar_t  cg_stats;
 vmCvar_t  cg_paused;
@@ -221,6 +229,13 @@ typedef struct
 
 static cvarTable_t cvarTable[ ] =
 {
+  CG_OC_DCVARS
+
+  { &cg_disableWeaponSounds, "cg_disableWeaponSounds", "", CVAR_ARCHIVE  },
+  { &cg_drawPlayerTimer, "cg_drawPlayerTimer", "0", CVAR_ARCHIVE  },
+  { &cg_drawSpeedometer, "cg_drawSpeedometer", "0", CVAR_ARCHIVE  },
+  { &cg_speedometerXYZ, "cg_speedometerXYZ", "0", CVAR_ARCHIVE  },
+
   { &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
   { &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
   { &cg_stereoSeparation, "cg_stereoSeparation", "0.4", CVAR_ARCHIVE  },
@@ -237,11 +252,13 @@ static cvarTable_t cvarTable[ ] =
   { &cg_crosshairSize, "cg_crosshairSize", "1", CVAR_ARCHIVE },
   { &cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE },
   { &cg_lagometer, "cg_lagometer", "0", CVAR_ARCHIVE },
+  { &cg_drawSpeed, "cg_drawSpeed", "0", CVAR_ARCHIVE },
   { &cg_teslaTrailTime, "cg_teslaTrailTime", "250", CVAR_ARCHIVE  },
   { &cg_gun_x, "cg_gunX", "0", CVAR_CHEAT },
   { &cg_gun_y, "cg_gunY", "0", CVAR_CHEAT },
   { &cg_gun_z, "cg_gunZ", "0", CVAR_CHEAT },
   { &cg_centertime, "cg_centertime", "3", CVAR_CHEAT },
+  { &cg_staticCenterPrints, "cg_staticCenterPrints", "1", CVAR_ARCHIVE },
   { &cg_runpitch, "cg_runpitch", "0.002", CVAR_ARCHIVE},
   { &cg_runroll, "cg_runroll", "0.005", CVAR_ARCHIVE },
   { &cg_swingSpeed, "cg_swingSpeed", "0.3", CVAR_CHEAT },
@@ -1736,6 +1753,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   // load overrides
   BG_InitClassConfigs( );
   BG_InitBuildableConfigs( );
+  BG_InitWeaponConfigs( );
   BG_InitAllowedGameElements( );
 
   // Dynamic memory
@@ -1782,6 +1800,8 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 
   cg.loading = qtrue;   // force players to load instead of defer
 
+  CG_SetConfigValues( );  // set config values before misc is loaded
+
   CG_LoadTrailSystems( );
   CG_UpdateMediaFraction( 0.05f );
 
@@ -1815,7 +1835,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   cg.infoScreenText[ 0 ] = 0;
 
   // Make sure we have update values (scores)
-  CG_SetConfigValues( );
+  //CG_SetConfigValues( );
 
   CG_StartMusic( );
 

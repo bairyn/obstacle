@@ -85,6 +85,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "(^5command^7)"
     },
 
+    {"info", G_admin_info, "h",
+      "display the contents of server info files",
+      "(^5subject^7)"
+    },
+
     {"kick", G_admin_kick, "kick",
       "kick a player with an optional reason",
       "[^3name|slot#^7] (^5reason^7)"
@@ -130,6 +135,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       ""
     },
 
+    {"override", G_admin_override, "override",
+      "override a player",
+      "[^3name|slot#^7]"
+    },
+
     {"passvote", G_admin_endvote, "passvote",
       "pass a vote currently taking place",
       "(^5a|h^7)"
@@ -142,6 +152,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
 
     {"readconfig", G_admin_readconfig, "readconfig",
       "reloads the admin config file and refreshes permission flags",
+      ""
+    },
+
+    {"register", G_admin_register, "register",
+      "Registers your name to protect it from being used by others or updates your admin name to your current name.",
       ""
     },
 
@@ -186,7 +201,14 @@ g_admin_cmd_t g_admin_cmds[ ] =
     {"unmute", G_admin_mute, "mute",
       "unmute a muted player",
       "[^3name|slot#^7]"
+    },
+
+    {"unoverride", G_admin_override, "override",
+      "unoverride an overridden player",
+      "[^3name|slot#^7]"
     }
+
+    G_OC_ADMINDEFS
   };
 
 static int adminNumCmds = sizeof( g_admin_cmds ) / sizeof( g_admin_cmds[ 0 ] );
@@ -332,7 +354,7 @@ static qboolean admin_higher_guid( char *admin_guid, char *victim_guid )
   return qtrue;
 }
 
-static qboolean admin_higher( gentity_t *admin, gentity_t *victim )
+qboolean admin_higher( gentity_t *admin, gentity_t *victim )
 {
 
   // console always wins
@@ -357,11 +379,12 @@ static void admin_writeconfig_int( int v, fileHandle_t f )
 {
   char buf[ 32 ];
 
-  Com_sprintf( buf, sizeof( buf ), "%d\n", v );
+  Com_sprintf( buf, sizeof(buf), "%d", v );
   trap_FS_Write( buf, strlen( buf ), f );
+  trap_FS_Write( "\n", 1, f );
 }
 
-static void admin_writeconfig( void )
+void admin_writeconfig( void )
 {
   fileHandle_t f;
   int i;
@@ -447,6 +470,7 @@ static void admin_writeconfig( void )
     admin_writeconfig_string( g_admin_commands[ i ]->flag, f );
     trap_FS_Write( "\n", 1, f );
   }
+  G_OC_ADMINWRITE
   trap_FS_FCloseFile( f );
 }
 
@@ -999,6 +1023,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   char *t;
   qboolean level_open, admin_open, ban_open, command_open;
   int i;
+  G_OC_ADMINREADDEC
 
   G_admin_cleanup();
 
@@ -1027,6 +1052,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   admin_level_maxname = 0;
 
   level_open = admin_open = ban_open = command_open = qfalse;
+  G_OC_ADMININITOPEN
   COM_BeginParseSession( g_admin.string );
   while( 1 )
   {
@@ -1042,6 +1068,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       g_admin_levels[ lc++ ] = l;
       level_open = qtrue;
       admin_open = ban_open = command_open = qfalse;
+      G_OC_ADMININITOPEN
     }
     else if( !Q_stricmp( t, "[admin]" ) )
     {
@@ -1051,6 +1078,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       g_admin_admins[ ac++ ] = a;
       admin_open = qtrue;
       level_open = ban_open = command_open = qfalse;
+      G_OC_ADMININITOPEN
     }
     else if( !Q_stricmp( t, "[ban]" ) )
     {
@@ -1060,6 +1088,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       g_admin_bans[ bc++ ] = b;
       ban_open = qtrue;
       level_open = admin_open = command_open = qfalse;
+      G_OC_ADMININITOPEN
     }
     else if( !Q_stricmp( t, "[command]" ) )
     {
@@ -1069,7 +1098,9 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       g_admin_commands[ cc++ ] = c;
       command_open = qtrue;
       level_open = admin_open = ban_open = qfalse;
+      G_OC_ADMININITOPEN
     }
+  G_OC_ADMINREADOPEN
     else if( level_open )
     {
       if( !Q_stricmp( t, "level" ) )
@@ -1175,14 +1206,15 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
         COM_ParseError( "[command] unrecognized token \"%s\"", t );
       }
     }
+  G_OC_ADMINREADSET
     else
     {
       COM_ParseError( "unexpected token \"%s\"", t );
     }
   }
   BG_Free( cnf2 );
-  ADMP( va( "^3!readconfig: ^7loaded %d levels, %d admins, %d bans, %d commands\n",
-          lc, ac, bc, cc ) );
+  ADMP( va( "^3!readconfig: ^7loaded %d levels, %d admins, %d bans, %d commands%s\n",
+          lc, ac, bc, cc, G_OC_ADMINNUM ) );
   if( lc == 0 )
     admin_default_levels();
   // reset adminLevel
@@ -1191,6 +1223,23 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
     if( level.clients[ i ].pers.connected != CON_DISCONNECTED )
       level.clients[ i ].pers.adminLevel = G_admin_level( &g_entities[ i ] );
   }
+
+  return qtrue;
+}
+
+qboolean G_admin_register( gentity_t *ent, int skiparg )
+{
+  int level = 0;
+
+  level = G_admin_level(ent);
+
+  if( level == 0 )
+    level = 1;
+
+  trap_SendConsoleCommand( EXEC_APPEND, va( "!setlevel %d %d;",ent - g_entities, level ) );
+  ClientUserinfoChanged( ent - g_entities );
+
+  AP( va( "print \"^3!register: ^7%s^7 is now a protected nickname.\n\"", ent->client->pers.netname ) );
 
   return qtrue;
 }
@@ -2005,6 +2054,70 @@ qboolean G_admin_mute( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
+qboolean G_admin_override( gentity_t *ent, int skiparg )
+{
+  int pids[ MAX_CLIENTS ], found;
+  char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
+  char command[ MAX_ADMIN_CMD_LEN ], *cmd;
+  gentity_t *vic;
+
+  if(!g_cheats.integer && !G_OC_CanOverride(ent))
+  {
+    ADMP("Cheats are disabled.\n");
+  }
+
+  G_SayArgv( skiparg, command, sizeof( command ) );
+  cmd = command;
+  if( cmd && *cmd == '!' )
+    cmd++;
+  if( G_SayArgc() < 2 + skiparg )
+  {
+    ADMP( va( "^3!%s: ^7usage: !%s [name|slot#]\n", cmd, cmd ) );
+    return qfalse;
+  }
+  G_SayArgv( 1 + skiparg, name, sizeof( name ) );
+  if( ( found = G_ClientNumbersFromString( name, pids, MAX_CLIENTS ) ) != 1 )
+  {
+    G_MatchOnePlayer( pids, found, err, sizeof( err ) );
+    ADMP( va( "^3!%s: ^7%s\n", cmd, err ) );
+    return qfalse;
+  }
+  if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
+  {
+    ADMP( va( "^3!%s: ^7sorry, but your intended victim has a higher admin"
+        " level than you\n", cmd ) );
+    return qfalse;
+  }
+  vic = &g_entities[ pids[ 0 ] ];
+  if( vic->client->pers.override == qtrue )
+  {
+    if( !Q_stricmp( cmd, "override" ) )
+    {
+      ADMP( "^3!override: ^7player is already overridden\n" );
+      return qtrue;
+    }
+    vic->client->pers.override = qfalse;
+    CPx( pids[ 0 ], "cp \"^1You have been un-overridden\"" );
+    AP( va( "print \"^3!unoverride: ^7%s^7 has been un-overridden by %s\n\"",
+            vic->client->pers.netname,
+            ( ent ) ? ent->client->pers.netname : "console" ) );
+  }
+  else
+  {
+    if( !Q_stricmp( cmd, "unoverride" ) )
+    {
+      ADMP( "^3!unoverride: ^7player is not currently overridden\n" );
+      return qtrue;
+    }
+    vic->client->pers.override = qtrue;
+    CPx( pids[ 0 ], "cp \"^1You've been overridden\"" );
+    AP( va( "print \"^3!override: ^7%s^7 has been overridden by ^7%s\n\"",
+            vic->client->pers.netname,
+            ( ent ) ? ent->client->pers.netname : "console" ) );
+  }
+  return qtrue;
+}
+
 qboolean G_admin_denybuild( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ], found;
@@ -2154,6 +2267,7 @@ qboolean G_admin_listlayouts( gentity_t *ent, int skiparg )
   {
     if( *s == ' ' )
     {
+      EXCOLOR( layout );
       ADMBP( va ( " %s\n", layout ) );
       layout[ 0 ] = '\0';
       i = 0;
@@ -2166,7 +2280,10 @@ qboolean G_admin_listlayouts( gentity_t *ent, int skiparg )
     s++;
   }
   if( layout[ 0 ] )
+  {
+    EXCOLOR( layout );
     ADMBP( va ( " %s\n", layout ) );
+  }
   ADMBP_end( );
   return qtrue;
 }
@@ -2902,6 +3019,285 @@ qboolean G_admin_lock( gentity_t *ent, int skiparg )
     ent ? ent->client->pers.netname : "console" ) );
 
   return qtrue;
+}
+
+void G_Unescape( char *input, char *output, int len );
+qboolean G_StringReplaceCvars( char *input, char *output, int len );
+
+qboolean G_admin_info( gentity_t *ent, int skiparg )
+{/*
+  fileHandle_t infoFile;
+  int length, i;
+#define MESSAGEBUF_LEN 1000
+  char *message, filename[ MAX_OSPATH ], messagebuf[ MESSAGEBUF_LEN ];
+  for( i = 0; i < MESSAGEBUF_LEN; i++ )
+    messagebuf[ i ] = '\0';
+  if( G_SayArgc() == 2 + skiparg )
+    G_SayArgv( 1 + skiparg, filename, sizeof( filename ) );
+  else if( G_SayArgc() == 1 + skiparg )
+    Q_strncpyz( filename, "default", sizeof( filename ) );
+  else
+  {
+    ADMP( "^3!info: ^7usage: ^3!info ^7(^5subject^7)\n" );
+    return qfalse;
+  }
+  Com_sprintf( filename, sizeof( filename ), "info/info-%s.txt", filename );
+  length = trap_FS_FOpenFile( filename, &infoFile, FS_READ );
+  message = G_Alloc( length * 2 + 1 );
+  if( length <= 0 || !infoFile )
+  {
+    G_Free( message );
+    trap_FS_FCloseFile( infoFile );
+    ADMP( "^3!info: ^7no relevant information is available\n" );
+    return qfalse;
+  }
+  else
+  {
+    int i;
+    char *cr;
+    trap_FS_Read( message, length, infoFile );
+    *( message + length ) = '\0';
+    trap_FS_FCloseFile( infoFile );
+    // strip carriage returns for windows platforms
+    while( ( cr = strchr( message, '\r' ) ) )
+      memmove( cr, cr + 1, strlen( cr + 1 ) + 1 );
+#define MAX_INFO_PARSE_LOOPS 100
+    for( i = 0; i < MAX_INFO_PARSE_LOOPS &&
+        G_StringReplaceCvars( message, message, sizeof( message ) ); i++ );
+    G_Unescape( message, message, sizeof( message ) );
+    if( i >= MAX_INFO_PARSE_LOOPS )
+      G_Printf( S_COLOR_YELLOW "WARNING: %s exceeds MAX_INFO_PARSE_LOOPS\n", filename );
+    i = 0;
+    while( i < length && *( message + i ) )
+    {
+      if( i + 1 % ( MESSAGEBUF_LEN ) )
+      {
+        *( messagebuf + ( i % MESSAGEBUF_LEN ) ) = *( message + i );
+      }
+      else
+      {
+        *( messagebuf + ( MESSAGEBUF_LEN - 1 ) ) = '\0';
+        ADMP( va( "%s", messagebuf ) );
+      }
+      i++;
+      ADMP( va( "messagebuf: %s\nmessage[ 0 ]: %d\nmessage[ 1 ]: %d\nmessage[ 2 ]: %d\nmessage[ 3 ]: %d\nmessage[ 4 ]: %d\nmessage[ 5 ]: %d\nmessage0: %d\nmessage1: %d\nmessage2: %d\nmessage3: %d\n", messagebuf, message[ 0 ], message[ 1 ], message[ 2 ], message[ 3 ], message[ 4 ], message[ 5 ], *(message+0), *(message+1), *(message+2), *(message+3) ) );
+    }
+    G_Free( message );
+    *( messagebuf + i ) = '\0';
+    ADMP( va( "%s", messagebuf ) );
+    return qtrue;
+  }
+*/
+
+
+
+
+  fileHandle_t f;
+  int  len, i=0;
+  char *info, *infoPtr, *cr;
+  char fileName[ MAX_OSPATH ];
+  char line[ MAX_STRING_CHARS ], linebuf[ MAX_STRING_CHARS ];
+
+  if( g_floodMinTime.integer && ent && ent->client )
+    if ( G_FloodLimited( ent ) )
+    {
+      ADMP( "Your chat is flood-limited; wait before chatting again\n" );
+      return qfalse;
+    }
+
+  if( G_SayArgc() == 2 + skiparg )
+    G_SayArgv( 1 + skiparg, fileName, MAX_OSPATH );
+  else if( G_SayArgc() == 1 + skiparg )
+    strcpy( fileName, "default" );
+  else
+  {
+    ADMP( "^3!info: ^7usage: ^3!info ^7(^5subject^7)\n" );
+    return qfalse;
+  }
+  Com_sprintf( fileName, sizeof( fileName ), "info/info-%s.txt", fileName );
+
+  len = trap_FS_FOpenFile( fileName, &f, FS_READ );
+  if( len < 0 )
+  {
+    trap_FS_FCloseFile( f );
+    ADMP( "^3!info: ^7no relevant information is available\n" );
+    return qfalse;
+  }
+  info = BG_Alloc( len + 1 );
+  infoPtr = info;
+  trap_FS_Read( info, len, f );
+  *( info + len ) = '\0';
+  trap_FS_FCloseFile( f );
+
+  // strip carriage returns for windows platforms
+  while( ( cr = strchr( info, '\r' ) ) )
+    memmove( cr, cr + 1, strlen( cr + 1 ) + 1 );
+#define MAX_INFO_PARSE_LOOPS 100
+  for( i = 0; i < MAX_INFO_PARSE_LOOPS && G_StringReplaceCvars( info, info, len ); i++ );
+  G_Unescape( info, info, len );
+
+  while( *info )
+  {
+    if( i >= sizeof( line ) - 1 )
+    {
+      BG_Free( info );
+      G_Printf( S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
+       fileName, line );
+      return qfalse;
+    }
+    line[ i++ ] = *info;
+    line[ i ] = '\0';
+    if( *info == '\n' )
+    {
+      ADMP( line );
+      i = 0;
+    }
+    info++;
+  }
+
+  info = infoPtr;
+
+  if( line[0] )
+  {
+    ADMP( linebuf );
+    ADMP( "\n" );
+  }
+
+  BG_Free( info );
+  return qtrue;
+}
+
+void G_Unescape( char *input, char *output, int len )
+{
+  // \n -> newline, \%c -> %c
+  // output is terminated at output[len - 1]
+  // it's OK for input to equal output, because our position in input is always
+  // equal or greater than our position in output
+  // however, if output is later in the same string as input, a crash is pretty
+  // much inevitable
+  int i, j;
+  for( i = j = 0; input[i] && j + 1 < len; i++, j++ )
+  {
+    if( input[i] == '\\' )
+    {
+      if( !input[++i] )
+      {
+        output[j] = '\0';
+        return;
+      }
+      else if( input[i] == 'n' )
+        output[j] = '\n';
+      else
+        output[j] = input[i];
+    }
+    else
+      output[j] = input[i];
+  }
+  output[j] = '\0';
+}
+
+qboolean G_StringReplaceCvars( char *input, char *output, int len )
+{
+  int i, outNum = 0;
+  char tmp;
+  char cvarName[ 64 ], cvarValue[ MAX_CVAR_VALUE_STRING ];
+  char *outputBuffer;
+  qboolean doneAnything = qfalse;
+  if( len <= 0 )
+    return qfalse;
+  // use our own internal buffer in case output == input
+  outputBuffer = BG_Alloc( len );
+  len -= 1; // fit in a terminator
+  while( *input && outNum < len )
+  {
+    if( *input == '\\' && input[1] && outNum < len - 1 )
+    {
+      outputBuffer[ outNum++ ] = *input++;
+      outputBuffer[ outNum++ ] = *input++;
+    }
+    else if( *input == '$' )
+    {
+      qboolean brackets = qfalse;
+      doneAnything = qtrue;
+      input++;
+      if( *input == '{' )
+      {
+        brackets = qtrue;
+        input++;
+      }
+      for( i = 0; *input && ( isalnum( *input ) || *input == '_' || ( brackets && *input != '}' ) ) &&
+          i < 63; i++ )
+        cvarName[ i ] = *input++;
+      cvarName[ i ] = '\0';
+      if( *input == '}' )
+      {
+        input++;
+      }
+
+      tmp = cvarName[strlen("oc-rating")];
+      cvarName[strlen("oc-rating")] = 0;
+      if(strcmp(cvarName, "oc-rating") == 0)
+      {
+        // ${oc-rating,atcs,oc}
+        char *s;
+        char map[ MAX_STRING_CHARS ] = {""};
+        char layout[ MAX_STRING_CHARS ] = {""};
+
+        cvarValue[0] = 0;
+        cvarName[strlen("oc-rating")] = tmp;
+        s = cvarName + strlen("oc-rating");
+        while(*s == ',') s++;
+        i = 0;
+        while(*s != ',')
+        {
+            if(!*s)
+            {
+                break;
+            }
+
+            map[i++] = *s;
+            map[i] = 0;
+
+            s++;
+        }
+        i = 0;
+        while(*s == ',') s++;
+        while(*s != ',')
+        {
+            if(!*s)
+            {
+                break;
+            }
+
+            layout[i++] = *s;
+            layout[i] = 0;
+
+            s++;
+        }
+        if(s && map[0] && layout[0] && (s = G_OC_Rating(map, layout)) && s[0])
+        {
+            Q_strncpyz(cvarValue, s, sizeof(cvarValue));
+        }
+      }
+      else
+      {
+        cvarName[strlen("oc-rating")] = tmp;
+        trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
+      }
+
+      if( cvarValue[ 0 ] )
+      {
+        for( i = 0; cvarValue[ i ] && outNum < len; i++ )
+          outputBuffer[ outNum++ ] = cvarValue[ i ];
+      }
+    }
+    else
+      outputBuffer[ outNum++ ] = *input++;
+  }
+  outputBuffer[ outNum ] = '\0';
+  Q_strncpyz( output, outputBuffer, len );
+  BG_Free( outputBuffer );
+  return doneAnything;
 }
 
 /*

@@ -491,6 +491,28 @@ void Cmd_Noclip_f( gentity_t *ent )
 
 /*
 ==================
+Cmd_Speed_f
+
+argv(0) speed
+==================
+*/
+void Cmd_Speed_f( gentity_t *ent )
+{
+  char  *msg;
+
+  if( ent->client->speed )
+    msg = "speedmode OFF\n";
+  else
+    msg = "speedmode ON\n";
+
+  ent->client->speed = !ent->client->speed;
+
+  trap_SendServerCommand( ent - g_entities, va( "print \"%s\"", msg ) );
+}
+
+
+/*
+==================
 Cmd_LevelShot_f
 
 This is just to help generate the level pictures
@@ -518,7 +540,7 @@ void Cmd_Kill_f( gentity_t *ent )
     return;
   }
 
-  if( g_cheats.integer )
+  if( g_cheats.integer || G_OC_NeedSuicide() )
   {
     ent->flags &= ~FL_GODMODE;
     ent->client->ps.stats[ STAT_HEALTH ] = ent->health = 0;
@@ -598,7 +620,7 @@ void Cmd_Team_f( gentity_t *ent )
       else if( level.humanTeamLocked )
         force = qtrue;
 
-      if( !force && g_teamForceBalance.integer && aliens > humans )
+      if( !force && g_teamForceBalance.integer && aliens > humans && !G_OC_NeverForceTeamBalance() )
       {
         G_TriggerMenu( ent - g_entities, MN_A_TEAMFULL );
         return;
@@ -616,7 +638,7 @@ void Cmd_Team_f( gentity_t *ent )
       else if( level.alienTeamLocked )
         force = qtrue;
 
-      if( !force && g_teamForceBalance.integer && humans > aliens )
+      if( !force && g_teamForceBalance.integer && humans > aliens && !G_OC_NeverForceTeamBalance() )
       {
         G_TriggerMenu( ent - g_entities, MN_H_TEAMFULL );
         return;
@@ -656,6 +678,8 @@ void Cmd_Team_f( gentity_t *ent )
     return;
   }
 
+  G_OC_TeamChange();
+
   // Apply the change
   G_ChangeTeam( ent, team );
 }
@@ -682,15 +706,22 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
   if( other->client->pers.connected != CON_CONNECTED )
     return;
 
-  if( mode == SAY_TEAM && !OnSameTeam( ent, other ) )
+  if(!G_OC_NeedOtherSayTeamCheck())
   {
-    if( other->client->pers.teamSelection != TEAM_NONE )
-      return;
+    if( mode == SAY_TEAM && !OnSameTeam( ent, other ) )
+    {
+      if( other->client->pers.teamSelection != TEAM_NONE )
+        return;
 
-    if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) )
-      return;
+      if( !G_admin_permission( other, ADMF_SPEC_ALLCHAT ) )
+        return;
 
-    // specs with ADMF_SPEC_ALLCHAT flag can see team chat
+      // specs with ADMF_SPEC_ALLCHAT flag can see team chat
+    }
+  }
+  else
+  {
+    G_OC_OtherSayTeamCheck();
   }
 
   if( ent && BG_ClientListTest( &other->client->sess.ignoreList, ent-g_entities ) )
@@ -1006,9 +1037,13 @@ void Cmd_CallVote_f( gentity_t *ent )
 {
   int   i;
   char  arg1[ MAX_STRING_TOKENS ];
-  char  arg2[ MAX_NAME_LENGTH ];
+  char  arg2[ MAX_STRING_TOKENS ];
+  char  arg3[ MAX_STRING_TOKENS ];
   int   clientNum = -1;
   char  name[ MAX_NAME_LENGTH ];
+  float percentAddition = 0.0f;  // just for map votes
+
+  G_OC_CallvotePercentage();
 
   if( !g_allowVote.integer )
   {
@@ -1035,8 +1070,9 @@ void Cmd_CallVote_f( gentity_t *ent )
   // make sure it is a valid command to vote on
   trap_Argv( 1, arg1, sizeof( arg1 ) );
   trap_Argv( 2, arg2, sizeof( arg2 ) );
+  trap_Argv( 3, arg3, sizeof( arg3 ) );
 
-  if( strchr( arg1, ';' ) || strchr( arg2, ';' ) )
+  if( strchr( arg1, ';' ) || strchr( arg2, ';' ) || strchr( arg3, ';' ) || strchr( arg1, '\n' ) || strchr( arg2, '\n' ) || strchr( arg3, '\n' ) )
   {
     trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
     return;
@@ -1054,7 +1090,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   // detect clientNum for partial name match votes
   if( !Q_stricmp( arg1, "kick" ) ||
     !Q_stricmp( arg1, "mute" ) ||
-    !Q_stricmp( arg1, "unmute" ) )
+    !Q_stricmp( arg1, "unmute" ) G_OC_NamedVoteMatches() )
   {
     int clientNums[ MAX_CLIENTS ];
     int matches = 0;
@@ -1156,22 +1192,60 @@ void Cmd_CallVote_f( gentity_t *ent )
   }
   else if( !Q_stricmp( arg1, "map_restart" ) )
   {
-    Com_sprintf( level.voteString, sizeof( level.voteString ), "%s", arg1 );
-    Com_sprintf( level.voteDisplayString,
-        sizeof( level.voteDisplayString ), "Restart current map" );
+    if(G_OC_NeedAlternateMapRestartVote())
+    {
+      G_OC_AlternateMapRestartVote();
+    }
+    else
+    {
+      level.votePassThreshold = g_mapVotePercent.value + percentAddition;
+      Com_sprintf( level.voteString, sizeof( level.voteString ), "%s", arg1 );
+      Com_sprintf( level.voteDisplayString,
+          sizeof( level.voteDisplayString ), "Restart current map" );
+    }
   }
   else if( !Q_stricmp( arg1, "map" ) )
   {
-    if( !G_MapExists( arg2 ) )
+    if(G_OC_NeedAlternateMapVote())
     {
-      trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
-        "'maps/%s.bsp' could not be found on the server\n\"", arg2 ) );
-      return;
+      G_OC_AlternateMapVote();
     }
+    else
+    {
+      BG_StrToLower( arg3 );
 
-    Com_sprintf( level.voteString, sizeof( level.voteString ), "%s %s", arg1, arg2 );
-    Com_sprintf( level.voteDisplayString,
-        sizeof( level.voteDisplayString ), "Change to map '%s'", arg2 );
+      if( !G_MapExists( arg2 ) )
+      {
+        trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
+          "'maps/%s.bsp' could not be found on the server\n\"", arg2 ) );
+        return;
+      }
+
+      if( arg3[ 0 ] )
+      {
+        if( !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg2, arg3 ), NULL, FS_READ ) )
+        {
+          trap_SendServerCommand( ent - g_entities, va( "print \"callvote: "
+            "'layouts/%s/%s.dat' could not be found on the server\n\"", arg2, arg3 ) );
+          return;
+        }
+      }
+
+      if( arg3[ 0 ] )
+      {
+        level.votePassThreshold = g_mapVotePercent.value + percentAddition;
+        Com_sprintf( level.voteString, sizeof( level.voteString ), "!map %s %s", arg2, arg3 );
+        Com_sprintf( level.voteDisplayString,
+            sizeof( level.voteDisplayString ), "Change to map '%s^7' with layout '%s^7'", arg2, arg3 );
+      }
+      else
+      {
+        level.votePassThreshold = g_mapVotePercent.value + percentAddition;
+        Com_sprintf( level.voteString, sizeof( level.voteString ), "!map %s", arg2 );
+        Com_sprintf( level.voteDisplayString,
+            sizeof( level.voteDisplayString ), "Change to map '%s^7'", arg2 );
+      }
+    }
   }
   else if( !Q_stricmp( arg1, "nextmap" ) )
   {
@@ -1197,14 +1271,22 @@ void Cmd_CallVote_f( gentity_t *ent )
   }
   else if( !Q_stricmp( arg1, "draw" ) )
   {
-    Com_sprintf( level.voteString, sizeof( level.voteString ), "evacuation" );
-    Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
-        "End match in a draw" );
+    if(G_OC_NeedAlternateDrawVote())
+    {
+      G_OC_AlternateDrawVote();
+    }
+    else
+    {
+      level.votePassThreshold = g_mapVotePercent.value + percentAddition;
+      Com_sprintf( level.voteString, sizeof( level.voteString ), "evacuation" );
+      Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
+          "End match in a draw" );
+    }
   }
-  else if( !Q_stricmp( arg1, "sudden_death" ) ||
-    !Q_stricmp( arg1, "suddendeath" ) )
+  else if( ( !Q_stricmp( arg1, "sudden_death" ) ||
+    !Q_stricmp( arg1, "suddendeath" ) ) && G_OC_AllowSuddenDeathVote() )
   {
-    if(!g_suddenDeathVotePercent.integer)
+    if(!g_suddenDeathVotePercent.value || G_OC_NoSuddenDeath())
     {
       trap_SendServerCommand( ent-g_entities, 
             "print \"Sudden Death votes have been disabled\n\"" );
@@ -1224,7 +1306,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
     else 
     {
-      level.votePassThreshold = g_suddenDeathVotePercent.integer;
+      level.votePassThreshold = g_suddenDeathVotePercent.value;
       Com_sprintf( level.voteString, sizeof( level.voteString ), "suddendeath" );
       Com_sprintf( level.voteDisplayString,
           sizeof( level.voteDisplayString ), "Begin sudden death" );
@@ -1235,18 +1317,26 @@ void Cmd_CallVote_f( gentity_t *ent )
 
     }
   }
+  G_OC_OTHERVOTECOMMANDS
   else
   {
     trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
     trap_SendServerCommand( ent-g_entities, "print \"Valid vote commands are: "
-      "map, nextmap, map_restart, sudden_death, draw, kick, mute and unmute\n" );
+      "map, nextmap, map_restart, sudden_death, draw, kick%s, mute and unmute\n", G_OC_OtherCommandDescription() );
     return;
   }
 
   if( level.votePassThreshold != 50 )
   {
+    //Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ), 
+              //va( " (Needs > %d percent)", level.votePassThreshold ) );
+
+    char buf[MAX_STRING_TOKENS];
+
+    Q_strncpyz( buf, va( "%f", level.votePassThreshold ), sizeof( buf ) );
+    G_MinorFormatNumber( buf );
     Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ), 
-              va( " (Needs > %d percent)", level.votePassThreshold ) );
+              va( " (Needs > %s percent)", buf ) );
   }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE
@@ -1258,20 +1348,18 @@ void Cmd_CallVote_f( gentity_t *ent )
 
   ent->client->pers.voteCount++;
 
-  // start the voting, the caller autoamtically votes yes
+  // start the voting
   level.voteTime = level.time;
-  level.voteYes = 1;
+  level.voteYes = 0;
   level.voteNo = 0;
   ent->client->pers.vote = qtrue;
 
   for( i = 0; i < level.maxclients; i++ )
     level.clients[i].ps.eFlags &= ~EF_VOTED;
 
-  ent->client->ps.eFlags |= EF_VOTED;
-
   trap_SetConfigstring( CS_VOTE_TIME, va( "%i", level.voteTime ) );
   trap_SetConfigstring( CS_VOTE_STRING, level.voteDisplayString );
-  trap_SetConfigstring( CS_VOTE_YES, "1" );
+  trap_SetConfigstring( CS_VOTE_YES, "0" );
   trap_SetConfigstring( CS_VOTE_NO, "0" );
 }
 
@@ -1295,6 +1383,8 @@ void Cmd_Vote_f( gentity_t *ent )
     trap_SendServerCommand( ent-g_entities, "print \"Vote already cast\n\"" );
     return;
   }
+
+  G_OC_VoteCheck();
 
   trap_SendServerCommand( ent-g_entities, "print \"Vote cast\n\"" );
 
@@ -1324,6 +1414,8 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
   if( team == TEAM_ALIENS )
     cs_offset = 1;
 
+  G_OC_CheckTeamVote();
+
   if( !g_allowVote.integer )
   {
     trap_SendServerCommand( ent-g_entities, "print \"Voting not allowed here\n\"" );
@@ -1350,7 +1442,7 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
   trap_Argv( 1, arg1, sizeof( arg1 ) );
   trap_Argv( 2, arg2, sizeof( arg2 ) );
 
-  if( strchr( arg1, ';' ) || strchr( arg2, ';' ) )
+  if( strchr( arg1, ';' ) || strchr( arg2, ';' ) || strchr( arg1, '\n' ) || strchr( arg2, '\n' ) )
   {
     trap_SendServerCommand( ent-g_entities, "print \"Invalid team vote string\n\"" );
     return;
@@ -1595,8 +1687,8 @@ void Cmd_SetViewpos_f( gentity_t *ent )
 
 #define AS_OVER_RT3         ((ALIENSENSE_RANGE*0.5f)/M_ROOT3)
 
-static qboolean G_RoomForClassChange( gentity_t *ent, class_t class,
-                                      vec3_t newOrigin )
+qboolean G_RoomForClassChange( gentity_t *ent, class_t class,
+                               vec3_t newOrigin )
 {
   vec3_t    fromMins, fromMaxs;
   vec3_t    toMins, toMaxs;
@@ -1684,23 +1776,26 @@ void Cmd_Class_f( gentity_t *ent )
     {
       if( newClass != PCL_ALIEN_BUILDER0 &&
           newClass != PCL_ALIEN_BUILDER0_UPG &&
-          newClass != PCL_ALIEN_LEVEL0 )
+          newClass != PCL_ALIEN_LEVEL0 &&
+          !ent->client->pers.override )
       {
         G_TriggerMenuArgs( ent->client->ps.clientNum, MN_A_CLASSNOTSPAWN, newClass );
         return;
       }
 
-      if( !BG_ClassIsAllowed( newClass ) )
+      if( !BG_ClassIsAllowed( newClass ) && !client->pers.override )
       {
         G_TriggerMenuArgs( ent->client->ps.clientNum, MN_A_CLASSNOTALLOWED, newClass );
         return;
       }
 
-      if( !BG_ClassAllowedInStage( newClass, g_alienStage.integer ) )
+      if( !BG_ClassAllowedInStage( newClass, ( G_OC_NeedAlternateStageTest() ) ? ( G_OC_AlternateStageTest() ) : ( g_alienStage.integer ) ) && !ent->client->pers.override )
       {
         G_TriggerMenuArgs( ent->client->ps.clientNum, MN_A_CLASSNOTATSTAGE, newClass );
         return;
       }
+
+      G_OC_Class();
 
       // spawn from an egg
       if( G_PushSpawnQueue( &level.alienSpawnQueue, clientNum ) )
@@ -1755,6 +1850,8 @@ void Cmd_Class_f( gentity_t *ent )
       int cost;
 
       //check that we have an overmind
+      if( !G_OC_NeverOvermindAbsent() )  // &&
+      if( !ent->client->pers.override )  // &&
       if( !G_Overmind( ) )
       {
         G_TriggerMenu( clientNum, MN_A_NOOVMND_EVOLVE );
@@ -1766,16 +1863,19 @@ void Cmd_Class_f( gentity_t *ent )
       VectorSubtract( ent->client->ps.origin, range, mins );
 
       num = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
-      for( i = 0; i < num; i++ )
+      if( !G_OC_NeverHumanNearby() && !ent->client->pers.override )
       {
-        other = &g_entities[ entityList[ i ] ];
-
-        if( ( other->client && other->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS ) ||
-            ( other->s.eType == ET_BUILDABLE && other->buildableTeam == TEAM_HUMANS &&
-              other->powered ) )
+        for( i = 0; i < num; i++ )
         {
-          G_TriggerMenu( clientNum, MN_A_TOOCLOSE );
-          return;
+          other = &g_entities[ entityList[ i ] ];
+
+          if( ( other->client && other->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS ) ||
+              ( other->s.eType == ET_BUILDABLE && other->buildableTeam == TEAM_HUMANS &&
+                other->powered ) )
+          {
+            G_TriggerMenu( clientNum, MN_A_TOOCLOSE );
+            return;
+          }
         }
       }
       
@@ -1790,7 +1890,8 @@ void Cmd_Class_f( gentity_t *ent )
       if( ent->client->sess.spectatorState == SPECTATOR_NOT &&
           ( currentClass == PCL_ALIEN_BUILDER0 ||
             currentClass == PCL_ALIEN_BUILDER0_UPG ) &&
-          ent->client->ps.stats[ STAT_MISC ] > 0 )
+          ent->client->ps.stats[ STAT_MISC ] > 0 &&
+         !ent->client->pers.override )
       {
         G_TriggerMenu( ent->client->ps.clientNum, MN_A_EVOLVEBUILDTIMER );
         return;
@@ -1800,9 +1901,9 @@ void Cmd_Class_f( gentity_t *ent )
                                       ent->client->pers.credit,
                                       g_alienStage.integer, 0 );
 
-      if( G_RoomForClassChange( ent, newClass, infestOrigin ) )
+      if( G_RoomForClassChange( ent, newClass, infestOrigin ) && G_OC_ClassChange() )
       {
-        if( cost >= 0 )
+        if( cost >= 0 || ent->client->pers.override )
         {
           int oldBoostTime = -1;
 
@@ -1856,6 +1957,12 @@ void Cmd_Destroy_f( gentity_t *ent )
   char        cmd[ 12 ];
   qboolean    deconstruct = qtrue;
 
+  if( !G_OC_ClientCanBuild( ent ) )
+  {
+    G_OC_ClientCannotBuild( ent );
+    return;
+  }
+
   if( ent->client->pers.denyBuild )
   {
     G_TriggerMenu( ent->client->ps.clientNum, MN_B_REVOKED );
@@ -1877,7 +1984,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
   if( tr.fraction < 1.0f &&
       ( traceEnt->s.eType == ET_BUILDABLE ) &&
-      ( traceEnt->buildableTeam == ent->client->pers.teamSelection ) &&
+      ( traceEnt->buildableTeam == ent->client->pers.teamSelection || G_OC_CanBuildableBeDestoryedOnOtherTeam() ) &&
       ( ( ent->client->ps.weapon >= WP_ABUILD ) &&
         ( ent->client->ps.weapon <= WP_HBUILD ) ) )
   {
@@ -1885,19 +1992,20 @@ void Cmd_Destroy_f( gentity_t *ent )
     if( traceEnt->health <= 0 )
     {
       G_QueueBuildPoints( traceEnt );
+//      G_OC_BuildableDestroyed( traceEnt );
       G_FreeEntity( traceEnt );
       return;
     }
 
     // Cancel deconstruction
-    if( g_markDeconstruct.integer && traceEnt->deconstruct )
+    if( g_markDeconstruct.integer && traceEnt->deconstruct && !G_OC_NoMarkDeconstruct() )
     {
       traceEnt->deconstruct = qfalse;
       return;
     }
 
     // Prevent destruction of the last spawn
-    if( !g_markDeconstruct.integer && !g_cheats.integer )
+    if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) && !g_cheats.integer )
     {
       if( ent->client->pers.teamSelection == TEAM_ALIENS &&
           traceEnt->s.modelindex == BA_A_SPAWN )
@@ -1924,10 +2032,10 @@ void Cmd_Destroy_f( gentity_t *ent )
       return;
 
     // Don't allow destruction of buildables that cannot be rebuilt
-    if( G_TimeTilSuddenDeath( ) <= 0 )
+    if( G_TimeTilSuddenDeath( ) <= 0 && !G_OC_NoSuddenDeath() )
       return;
 
-    if( !g_markDeconstruct.integer ||
+    if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) ||
         ( ent->client->pers.teamSelection == TEAM_HUMANS &&
           !G_FindPower( traceEnt ) ) )
     {
@@ -1955,10 +2063,11 @@ void Cmd_Destroy_f( gentity_t *ent )
       else
       {
         G_LogDestruction( traceEnt, ent, MOD_DECONSTRUCT );
+//        G_OC_BuildableDestroyed( traceEnt );
         G_FreeEntity( traceEnt );
       }
 
-      if( !g_cheats.integer )
+      if( !g_cheats.integer && !G_OC_NoBuildTimer() )
       {
         ent->client->ps.stats[ STAT_MISC ] +=
           BG_Buildable( traceEnt->s.modelindex )->buildTime / 4;
@@ -1987,6 +2096,11 @@ void Cmd_ActivateItem_f( gentity_t *ent )
     if( ent->client->ps.weapon == WP_BLASTER &&
         BG_PlayerCanChangeWeapon( &ent->client->ps ) )
       G_ForceWeaponChange( ent, WP_NONE );  
+    return;
+  }
+
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  {
     return;
   }
   
@@ -2019,6 +2133,11 @@ void Cmd_DeActivateItem_f( gentity_t *ent )
   char      s[ MAX_TOKEN_CHARS ];
   upgrade_t upgrade;
 
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  {
+    return;
+  }
+
   trap_Argv( 1, s, sizeof( s ) );
   upgrade = BG_UpgradeByName( s )->number;
 
@@ -2039,6 +2158,11 @@ void Cmd_ToggleItem_f( gentity_t *ent )
   char      s[ MAX_TOKEN_CHARS ];
   weapon_t  weapon;
   upgrade_t upgrade;
+
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  {
+    return;
+  }
 
   trap_Argv( 1, s, sizeof( s ) );
   upgrade = BG_UpgradeByName( s )->number;
@@ -2076,10 +2200,30 @@ Cmd_Buy_f
 */
 void Cmd_Buy_f( gentity_t *ent )
 {
+  vec3_t    forward, end;
+  trace_t   tr;
+  gentity_t *armoury;
   char s[ MAX_TOKEN_CHARS ];
   weapon_t  weapon;
   upgrade_t upgrade;
   qboolean  energyOnly;
+
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+  {
+    // see if an alien is trying to buy something
+    if(BG_OC_OCMode())
+    {
+        AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+        VectorMA( ent->client->ps.origin, 100, forward, end );
+        trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+        armoury = &g_entities[ tr.entityNum ];
+        if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+          armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+        G_OC_ArmouryUsed( ent, armoury );
+    }
+
+    return;
+  }
 
   trap_Argv( 1, s, sizeof( s ) );
 
@@ -2087,7 +2231,7 @@ void Cmd_Buy_f( gentity_t *ent )
   upgrade = BG_UpgradeByName( s )->number;
 
   // Only give energy from reactors or repeaters
-  if( G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY ) )
+  if( G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY ) || ent->client->pers.override )
     energyOnly = qfalse;
   else if( upgrade == UP_AMMO &&
            BG_Weapon( ent->client->ps.stats[ STAT_WEAPON ] )->usesEnergy &&
@@ -2114,43 +2258,53 @@ void Cmd_Buy_f( gentity_t *ent )
     }
 
     // Only humans can buy stuff
-    if( BG_Weapon( weapon )->team != TEAM_HUMANS )
+    if( BG_Weapon( weapon )->team != TEAM_HUMANS && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't buy alien items\n\"" );
       return;
     }
 
     //are we /allowed/ to buy this?
-    if( !BG_Weapon( weapon )->purchasable )
+    if( !BG_Weapon( weapon )->purchasable && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't buy this item\n\"" );
       return;
     }
 
     //are we /allowed/ to buy this?
-    if( !BG_WeaponAllowedInStage( weapon, g_humanStage.integer ) || !BG_WeaponIsAllowed( weapon ) )
+    if( ( !BG_WeaponAllowedInStage( weapon, ( G_OC_NeedAlternateStageTest() ) ? ( G_OC_AlternateStageTest() ) : ( g_humanStage.integer ) ) || !BG_WeaponIsAllowed( weapon ) ) && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't buy this item\n\"" );
       return;
     }
 
     //can afford this?
-    if( BG_Weapon( weapon )->price > (short)ent->client->pers.credit )
+    if( BG_Weapon( weapon )->price > (short)ent->client->pers.credit && !ent->client->pers.override )
     {
       G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOFUNDS );
       return;
     }
 
     //have space to carry this?
-    if( BG_Weapon( weapon )->slots & BG_SlotsForInventory( ent->client->ps.stats ) )
+    if( BG_Weapon( weapon )->slots & BG_SlotsForInventory( ent->client->ps.stats ) && !ent->client->pers.override )
     {
       G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOSLOTS );
       return;
     }
 
     // In some instances, weapons can't be changed
-    if( !BG_PlayerCanChangeWeapon( &ent->client->ps ) )
+    if( !BG_PlayerCanChangeWeapon( &ent->client->ps ) && !ent->client->pers.override )
       return;
+
+    // Prefer the armoury directly in front of player
+    AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+    VectorMA( ent->client->ps.origin, 100, forward, end );
+    trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+    armoury = &g_entities[ tr.entityNum ];
+    if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+      armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+    G_OC_ArmouryUsed( ent, armoury );
+    G_OC_CheckWeaponPurchase();
 
     ent->client->ps.stats[ STAT_WEAPON ] = weapon;
     ent->client->ps.ammo = BG_Weapon( weapon )->maxAmmo;
@@ -2178,39 +2332,49 @@ void Cmd_Buy_f( gentity_t *ent )
     }
 
     //can afford this?
-    if( BG_Upgrade( upgrade )->price > (short)ent->client->pers.credit )
+    if( BG_Upgrade( upgrade )->price > (short)ent->client->pers.credit && !ent->client->pers.override )
     {
       G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOFUNDS );
       return;
     }
 
     //have space to carry this?
-    if( BG_Upgrade( upgrade )->slots & BG_SlotsForInventory( ent->client->ps.stats ) )
+    if( BG_Upgrade( upgrade )->slots & BG_SlotsForInventory( ent->client->ps.stats ) && !ent->client->pers.override )
     {
       G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOSLOTS );
       return;
     }
 
     // Only humans can buy stuff
-    if( BG_Upgrade( upgrade )->team != TEAM_HUMANS )
+    if( BG_Upgrade( upgrade )->team != TEAM_HUMANS && !ent->client->pers.override && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't buy alien items\n\"" );
       return;
     }
 
     //are we /allowed/ to buy this?
-    if( !BG_Upgrade( upgrade )->purchasable )
+    if( !BG_Upgrade( upgrade )->purchasable && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't buy this item\n\"" );
       return;
     }
 
     //are we /allowed/ to buy this?
-    if( !BG_UpgradeAllowedInStage( upgrade, g_humanStage.integer ) || !BG_UpgradeIsAllowed( upgrade ) )
+    if( ( !BG_UpgradeAllowedInStage( upgrade, ( G_OC_NeedAlternateStageTest() ) ? ( G_OC_AlternateStageTest() ) : ( g_humanStage.integer ) ) || !BG_UpgradeIsAllowed( upgrade ) ) && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't buy this item\n\"" );
       return;
     }
+
+    // Prefer the armoury directly in front of player
+    AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+    VectorMA( ent->client->ps.origin, 100, forward, end );
+    trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+    armoury = &g_entities[ tr.entityNum ];
+    if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+      armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+    G_OC_ArmouryUsed( ent, armoury );
+    G_OC_CheckUpgradePurchase();
 
     if( upgrade == UP_AMMO )
       G_GiveClientMaxAmmo( ent, energyOnly );
@@ -2220,7 +2384,7 @@ void Cmd_Buy_f( gentity_t *ent )
       {
         vec3_t newOrigin;
 
-        if( !G_RoomForClassChange( ent, PCL_HUMAN_BSUIT, newOrigin ) )
+        if( !G_RoomForClassChange( ent, PCL_HUMAN_BSUIT, newOrigin ) && !ent->client->pers.override )
         {
           G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOROOMBSUITON );
           return;
@@ -2256,10 +2420,30 @@ Cmd_Sell_f
 */
 void Cmd_Sell_f( gentity_t *ent )
 {
+  vec3_t    forward, end;
+  trace_t   tr;
+  gentity_t *armoury;
   char      s[ MAX_TOKEN_CHARS ];
   int       i;
   weapon_t  weapon;
   upgrade_t upgrade;
+
+  if( ent->client->pers.teamSelection != TEAM_HUMANS && !G_OC_CanActivateItem() && !ent->client->pers.override )
+   {
+     // see if an alien is trying to sell something
+     if(BG_OC_OCMode())
+     {
+         AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+         VectorMA( ent->client->ps.origin, 100, forward, end );
+         trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+         armoury = &g_entities[ tr.entityNum ];
+         if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+           armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+         G_OC_ArmouryUsed( ent, armoury );
+     }
+ 
+     return;
+   }
 
   trap_Argv( 1, s, sizeof( s ) );
 
@@ -2281,21 +2465,30 @@ void Cmd_Sell_f( gentity_t *ent )
   {
     weapon_t selected = BG_GetPlayerWeapon( &ent->client->ps );
   
-    if( !BG_PlayerCanChangeWeapon( &ent->client->ps ) )
+    if( !BG_PlayerCanChangeWeapon( &ent->client->ps ) && !ent->client->pers.override )
       return;
   
     //are we /allowed/ to sell this?
-    if( !BG_Weapon( weapon )->purchasable )
+    if( !BG_Weapon( weapon )->purchasable && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't sell this weapon\n\"" );
       return;
     }
 
+    AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+    VectorMA( ent->client->ps.origin, 100, forward, end );
+    trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+    armoury = &g_entities[ tr.entityNum ];
+    if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+      armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+    G_OC_ArmouryUsed( ent, armoury );
+    G_OC_CheckWeaponPurchase();
+
     //remove weapon if carried
     if( BG_InventoryContainsWeapon( weapon, ent->client->ps.stats ) )
     {
       //guard against selling the HBUILD weapons exploit
-      if( weapon == WP_HBUILD && ent->client->ps.stats[ STAT_MISC ] > 0 )
+      if( weapon == WP_HBUILD && ent->client->ps.stats[ STAT_MISC ] > 0 && !ent->client->pers.override )
       {
         G_TriggerMenu( ent->client->ps.clientNum, MN_H_ARMOURYBUILDTIMER );
         return;
@@ -2314,11 +2507,21 @@ void Cmd_Sell_f( gentity_t *ent )
   else if( upgrade != UP_NONE )
   {
     //are we /allowed/ to sell this?
-    if( !BG_Upgrade( upgrade )->purchasable )
+    if( !BG_Upgrade( upgrade )->purchasable && !ent->client->pers.override )
     {
       trap_SendServerCommand( ent-g_entities, "print \"You can't sell this item\n\"" );
       return;
     }
+
+    AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+    VectorMA( ent->client->ps.origin, 100, forward, end );
+    trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+    armoury = &g_entities[ tr.entityNum ];
+    if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+      armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+    G_OC_ArmouryUsed( ent, armoury );
+    G_OC_CheckUpgradePurchase();
+
     //remove upgrade if carried
     if( BG_InventoryContainsUpgrade( upgrade, ent->client->ps.stats ) )
     {
@@ -2327,7 +2530,7 @@ void Cmd_Sell_f( gentity_t *ent )
       {
         vec3_t newOrigin;
 
-        if( !G_RoomForClassChange( ent, PCL_HUMAN, newOrigin ) )
+        if( !G_RoomForClassChange( ent, PCL_HUMAN, newOrigin ) && !ent->client->pers.override )
         {
           G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOROOMBSUITOFF );
           return;
@@ -2352,13 +2555,24 @@ void Cmd_Sell_f( gentity_t *ent )
   {
     weapon_t selected = BG_GetPlayerWeapon( &ent->client->ps );
 
-    if( !BG_PlayerCanChangeWeapon( &ent->client->ps ) )
+    if( !BG_PlayerCanChangeWeapon( &ent->client->ps ) && !ent->client->pers.override )
       return;
 
     for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
     {
+      weapon = selected;
+
+      AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+      VectorMA( ent->client->ps.origin, 100, forward, end );
+      trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+      armoury = &g_entities[ tr.entityNum ];
+      if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+        armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+      G_OC_ArmouryUsed( ent, armoury );
+      G_OC_CheckWeaponPurchase();
+
       //guard against selling the HBUILD weapons exploit
-      if( i == WP_HBUILD && ent->client->ps.stats[ STAT_MISC ] > 0 )
+      if( i == WP_HBUILD && ent->client->ps.stats[ STAT_MISC ] > 0 && !ent->client->pers.override )
       {
         G_TriggerMenu( ent->client->ps.clientNum, MN_H_ARMOURYBUILDTIMER );
         continue;
@@ -2382,17 +2596,27 @@ void Cmd_Sell_f( gentity_t *ent )
   {
     for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
     {
+      upgrade = i;
+
       //remove upgrade if carried
-      if( BG_InventoryContainsUpgrade( i, ent->client->ps.stats ) &&
-          BG_Upgrade( i )->purchasable )
+      if( BG_InventoryContainsUpgrade( upgrade, ent->client->ps.stats ) &&
+          BG_Upgrade( upgrade )->purchasable )
       {
+        AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+        VectorMA( ent->client->ps.origin, 100, forward, end );
+        trap_Trace( &tr, ent->client->ps.origin, NULL, NULL, end, ent->s.number, MASK_PLAYERSOLID );
+        armoury = &g_entities[ tr.entityNum ];
+        if( !armoury || armoury->s.eType != ET_BUILDABLE || armoury->s.modelindex != BA_H_ARMOURY )
+          armoury = G_BuildableRange( ent->client->ps.origin, 100, BA_H_ARMOURY );
+        G_OC_ArmouryUsed( ent, armoury );
+        G_OC_CheckUpgradePurchase();
 
         // shouldn't really need to test for this, but just to be safe
-        if( i == UP_BATTLESUIT )
+        if( upgrade == UP_BATTLESUIT )
         {
           vec3_t newOrigin;
 
-          if( !G_RoomForClassChange( ent, PCL_HUMAN, newOrigin ) )
+          if( !G_RoomForClassChange( ent, PCL_HUMAN, newOrigin ) && !ent->client->pers.override )
           {
             G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOROOMBSUITOFF );
             continue;
@@ -2403,13 +2627,13 @@ void Cmd_Sell_f( gentity_t *ent )
           ent->client->ps.eFlags ^= EF_TELEPORT_BIT;
         }
 
-        BG_RemoveUpgradeFromInventory( i, ent->client->ps.stats );
+        BG_RemoveUpgradeFromInventory( upgrade, ent->client->ps.stats );
 
-        if( i == UP_BATTPACK )
+        if( upgrade == UP_BATTPACK )
           G_GiveClientMaxAmmo( ent, qtrue );
 
         //add to funds
-        G_AddCreditToClient( ent->client, (short)BG_Upgrade( i )->price, qfalse );
+        G_AddCreditToClient( ent->client, (short)BG_Upgrade( upgrade )->price, qfalse );
       }
     }
   }
@@ -2434,6 +2658,12 @@ void Cmd_Build_f( gentity_t *ent )
   vec3_t        origin;
   team_t        team;
 
+  if( !G_OC_ClientCanBuild( ent ) )
+  {
+    G_OC_ClientCannotBuild( ent );
+    return;
+  }
+
   if( ent->client->pers.denyBuild )
   {
     G_TriggerMenu( ent->client->ps.clientNum, MN_B_REVOKED );
@@ -2450,7 +2680,7 @@ void Cmd_Build_f( gentity_t *ent )
 
   buildable = BG_BuildableByName( s )->number;
 
-  if( G_TimeTilSuddenDeath( ) <= 0 )
+  if( G_TimeTilSuddenDeath( ) <= 0 && !G_OC_NoSuddenDeath() )
   {
     G_TriggerMenu( ent->client->ps.clientNum, MN_B_SUDDENDEATH );
     return;
@@ -2462,8 +2692,9 @@ void Cmd_Build_f( gentity_t *ent )
       ( ( 1 << ent->client->ps.weapon ) & BG_Buildable( buildable )->buildWeapon ) &&
       !( ent->client->ps.stats[ STAT_STATE ] & SS_HOVELING ) &&
       BG_BuildableIsAllowed( buildable ) &&
-      ( ( team == TEAM_ALIENS && BG_BuildableAllowedInStage( buildable, g_alienStage.integer ) ) ||
-        ( team == TEAM_HUMANS && BG_BuildableAllowedInStage( buildable, g_humanStage.integer ) ) ) )
+      ( ( team == TEAM_ALIENS && BG_BuildableAllowedInStage( buildable, g_alienStage.integer )  ) ||
+        ( team == TEAM_HUMANS && BG_BuildableAllowedInStage( buildable, g_humanStage.integer ) ) ||
+		G_OC_BuildableStageAlwaysValid() ) )
   {
     dynMenu_t err;
     dist = BG_Class( ent->client->ps.stats[ STAT_CLASS ] )->buildDist;
@@ -2543,6 +2774,18 @@ void Cmd_Build_f( gentity_t *ent )
 
 /*
 =================
+Cmd_Cheat_f
+=================
+*/
+void Cmd_Cheat_f( gentity_t *ent )
+{
+  G_LogPrintf( "Possible aimbotter: %s\n", ent->client->pers.netname );
+  G_AdminMessage( NULL, "Possible aimbotter: %s\n", ent->client->pers.netname );
+}
+void Cmd_TStatus_f(gentity_t*ent){}
+
+/*
+=================
 Cmd_Reload_f
 =================
 */
@@ -2581,14 +2824,17 @@ stops any other clients from following this one
 called when a player leaves a team or dies
 =================
 */
-void G_StopFromFollowing( gentity_t *ent )
+void G_StopFromFollowing( gentity_t *ent, int force )
 {
   int i;
 
   for( i = 0; i < level.maxclients; i++ )
   {
     if( level.clients[ i ].sess.spectatorState == SPECTATOR_FOLLOW &&
-        level.clients[ i ].sess.spectatorClient == ent->client->ps.clientNum )
+        level.clients[ i ].sess.spectatorClient == ent->client->ps.clientNum &&
+        level.clients[ i ].sess.spectatorClient == ent->client->ps.clientNum &&
+        ( ( !G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) &&
+        !g_entities[ i ].client->pers.stickySpec ) || force ) )
     {
       if( !G_FollowNewClient( &g_entities[ i ], 1 ) )
         G_StopFollowing( &g_entities[ i ] );
@@ -2744,6 +2990,8 @@ qboolean G_FollowNewClient( gentity_t *ent, int dir )
           ent->client->pers.teamSelection ) )
       continue;
     
+    G_OC_NewFollowTest();
+
     // this is good, we can use it
     ent->client->sess.spectatorClient = clientnum;
     ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
@@ -2824,6 +3072,8 @@ void Cmd_Follow_f( gentity_t *ent )
         ( level.clients[ i ].pers.teamSelection != 
           ent->client->pers.teamSelection ) )
       return;
+
+    G_OC_FollowTest();
 
     ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
     ent->client->sess.spectatorClient = i;
@@ -2935,6 +3185,8 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         // set the correct credit
         ent->client->pers.credit = 0;
         G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
+
+        G_OC_PTRCRestore();
       }
     }
   }
@@ -3062,6 +3314,75 @@ void Cmd_Damage_f( gentity_t *ent )
 }
 
 /*
+=================
+Cmd_CPMode_f
+
+Enables a client to disable CP's, or to print them instead
+=================
+*/
+
+static void Cmd_CPMode_f( gentity_t *ent )
+{
+    char cmd[MAX_STRING_CHARS];
+    char mode[MAX_STRING_CHARS];
+
+    trap_Argv(0, cmd, sizeof(cmd));
+    trap_Argv(1, mode, sizeof(mode));
+
+    switch(mode[0])
+    {
+        case 'E':
+        case 'e':
+        case CP_MODE_ENABLED + '0':
+        case 'y':
+        case 'Y':
+            ent->client->pers.CPMode = CP_MODE_ENABLED;
+            G_ClientPrint(ent, va("%s: CP's are enabled", cmd), 0);
+            break;
+        case 'P':
+        case 'p':
+        case CP_MODE_PRINT + '0':
+        case 'o':
+        case 'O':
+            ent->client->pers.CPMode = CP_MODE_PRINT;
+            G_ClientPrint(ent, va("%s: CP's are printed", cmd), 0);
+            break;
+        case 'D':
+        case 'd':
+        case CP_MODE_DISABLED + '0':
+        case 'n':
+        case 'N':
+            ent->client->pers.CPMode = CP_MODE_DISABLED;
+            G_ClientPrint(ent, va("%s: CP's are disabled", cmd), 0);
+            break;
+        default:
+            G_ClientPrint(ent, va("Usage: %s <Enabled/Print/Disabled>", cmd), 0);
+            break;
+    }
+}
+
+/*
+=================
+Cmd_GetLayouts_f
+
+The client requests a list of layouts for a map
+=================
+*/
+static void Cmd_GetLayouts_f( gentity_t *ent )
+{
+  int count;
+  char list[ MAX_CVAR_VALUE_STRING ];
+  const char *mapname = ConcatArgs(1);
+
+  count = G_LayoutList( mapname, list, sizeof( list ) - 1 );
+
+  if( strlen( list ) > 0 && list[ strlen( list ) - 1 ] != ' ' )
+	  Q_strcat( list, sizeof( list ), " ");
+
+  trap_SendServerCommand( ent - g_entities, va( "setLayouts \"%s\"", list ) );
+}
+
+/*
 ==================
 G_FloodLimited
 
@@ -3120,6 +3441,10 @@ commands_t cmds[ ] = {
 
   { "score", CMD_INTERMISSION, ScoreboardMessage },
 
+  { "CPMode", CMD_MESSAGE|CMD_INTERMISSION, Cmd_CPMode_f },
+
+  { "getLayouts", /*CMD_MESSAGE|*/CMD_INTERMISSION, Cmd_GetLayouts_f },
+
   // cheats
   { "give", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Give_f },
   { "god", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_God_f },
@@ -3127,6 +3452,7 @@ commands_t cmds[ ] = {
   { "noclip", CMD_CHEAT_TEAM, Cmd_Noclip_f },
   { "levelshot", CMD_CHEAT, Cmd_LevelShot_f },
   { "setviewpos", CMD_CHEAT_TEAM, Cmd_SetViewpos_f },
+  { "speed", CMD_CHEAT | CMD_TEAM | CMD_LIVING, Cmd_Speed_f },
   { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
   { "test", CMD_CHEAT, Cmd_Test_f },
   { "damage", CMD_CHEAT|CMD_LIVING, Cmd_Damage_f },
@@ -3147,12 +3473,46 @@ commands_t cmds[ ] = {
   { "build", CMD_TEAM|CMD_LIVING, Cmd_Build_f },
   { "deconstruct", CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
 
-  { "buy", CMD_HUMAN|CMD_LIVING, Cmd_Buy_f },
-  { "sell", CMD_HUMAN|CMD_LIVING, Cmd_Sell_f },
-  { "itemact", CMD_HUMAN|CMD_LIVING, Cmd_ActivateItem_f },
-  { "itemdeact", CMD_HUMAN|CMD_LIVING, Cmd_DeActivateItem_f },
-  { "itemtoggle", CMD_HUMAN|CMD_LIVING, Cmd_ToggleItem_f },
-  { "reload", CMD_HUMAN|CMD_LIVING, Cmd_Reload_f },
+//  { "buy", CMD_HUMAN|CMD_LIVING, Cmd_Buy_f },
+//  { "sell", CMD_HUMAN|CMD_LIVING, Cmd_Sell_f },
+//  { "itemact", CMD_HUMAN|CMD_LIVING, Cmd_ActivateItem_f },
+//  { "itemdeact", CMD_HUMAN|CMD_LIVING, Cmd_DeActivateItem_f },
+//  { "itemtoggle", CMD_HUMAN|CMD_LIVING, Cmd_ToggleItem_f },
+//  { "reload", CMD_HUMAN|CMD_LIVING, Cmd_Reload_f },
+
+  // for override or mod reasons, these commands handle some of the limitations inside the functions themselves
+  { "buy", CMD_LIVING, Cmd_Buy_f },
+  { "sell", CMD_LIVING, Cmd_Sell_f },
+  { "itemact", CMD_LIVING, Cmd_ActivateItem_f },
+  { "itemdeact", CMD_LIVING, Cmd_DeActivateItem_f },
+  { "itemtoggle", CMD_LIVING, Cmd_ToggleItem_f },
+  { "reload", CMD_LIVING, Cmd_Reload_f },
+
+  // poorly detect aimbots
+  { "n_aim", CMD_STEALTH, Cmd_Cheat_f },
+  { "aimbot", CMD_STEALTH, Cmd_Cheat_f },
+  { "+aimbot", CMD_STEALTH, Cmd_Cheat_f },
+  { "-aimbot", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_aimmode", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_aimthru", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_zadjust", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_walls", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_wall", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_glow", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_esp", CMD_STEALTH, Cmd_Cheat_f },
+  { "n_predict", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_aimmode", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_aimthru", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_zadjust", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_status", CMD_STEALTH, Cmd_TStatus_f },
+  { "thz_walls", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_wall", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_glow", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_esp", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_predict", CMD_STEALTH, Cmd_Cheat_f },
+  { "thz_diffcolor", CMD_STEALTH, Cmd_Cheat_f },
+
+  G_OC_CMDS
 };
 static int numCmds = sizeof( cmds ) / sizeof( cmds[ 0 ] );
 
@@ -3192,7 +3552,7 @@ void ClientCommand( int clientNum )
   if( !( cmds[ i ].cmdFlags & CMD_INTERMISSION ) && level.intermissiontime )
     return;
 
-  if( cmds[ i ].cmdFlags & CMD_CHEAT && !g_cheats.integer )
+  if( cmds[ i ].cmdFlags & CMD_CHEAT && !g_cheats.integer && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_CHEAT );
     return;
@@ -3204,35 +3564,35 @@ void ClientCommand( int clientNum )
 
   if( ( cmds[ i ].cmdFlags & CMD_TEAM ||
       ( cmds[ i ].cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer ) ) &&
-      ent->client->pers.teamSelection == TEAM_NONE )
+      ent->client->pers.teamSelection == TEAM_NONE && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_TEAM );
     return;
   }
 
   if( cmds[ i ].cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer &&
-      ent->client->pers.teamSelection != TEAM_NONE )
+      ent->client->pers.teamSelection != TEAM_NONE && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_CHEAT_TEAM );
     return;
   }
 
   if( cmds[ i ].cmdFlags & CMD_SPEC &&
-      ent->client->sess.spectatorState == SPECTATOR_NOT )
+      ent->client->sess.spectatorState == SPECTATOR_NOT && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_SPEC );
     return;
   }
 
   if( cmds[ i ].cmdFlags & CMD_ALIEN &&
-      ent->client->pers.teamSelection != TEAM_ALIENS )
+      ent->client->pers.teamSelection != TEAM_ALIENS && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_ALIEN );
     return;
   }
 
   if( cmds[ i ].cmdFlags & CMD_HUMAN &&
-      ent->client->pers.teamSelection != TEAM_HUMANS )
+      ent->client->pers.teamSelection != TEAM_HUMANS && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_HUMAN );
     return;
@@ -3240,7 +3600,7 @@ void ClientCommand( int clientNum )
 
   if( cmds[ i ].cmdFlags & CMD_LIVING &&
     ( ent->client->ps.stats[ STAT_HEALTH ] <= 0 ||
-      ent->client->sess.spectatorState != SPECTATOR_NOT ) )
+      ent->client->sess.spectatorState != SPECTATOR_NOT ) && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_LIVING );
     return;

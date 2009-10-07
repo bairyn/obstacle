@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#ifndef _G_PUBLIC_H
+#define _G_PUBLIC_H
+
 // g_public.h -- game module information visible to server
 
 #define GAME_API_VERSION  9
@@ -257,4 +260,6 @@ typedef enum {
   // The game can issue trap_argc() / trap_argv() commands to get the command
   // and parameters.  Return qfalse if the game doesn't recognize it as a command.
 } gameExport_t;
+
+#endif /* ifndef _G_PUBLIC_H */
 

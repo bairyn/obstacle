@@ -518,6 +518,8 @@ void G_FreeEntity( gentity_t *ent )
   if( ent->neverFree )
     return;
 
+  G_OC_BuildableDestroyed( ent );
+
   memset( ent, 0, sizeof( *ent ) );
   ent->classname = "freent";
   ent->freetime = level.time;
@@ -579,6 +581,9 @@ void G_KillBox( gentity_t *ent )
   int       touch[ MAX_GENTITIES ];
   gentity_t *hit;
   vec3_t    mins, maxs;
+
+  if( !G_OC_SpotNeverTelefrags() )
+    return;
 
   VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
   VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
@@ -1045,4 +1050,61 @@ qboolean G_AdrCmpStr( const char *a, const char *b )
   if( !G_AddressParse( b, &cmpb, NULL ) )
     return qfalse;
   return G_AddressCompare( &cmpa, &cmpb, netmask );
+}
+
+/*
+===============
+G_MinorFormatNumber
+
+Strip all trailing and leading 0's.  eg 0043.500000 will be 43.5
+The first non-numeric character and everything past will be ignored
+===============
+*/
+void G_MinorFormatNumber(char *s)
+{
+    char *str = s;
+    qboolean dot = qfalse;
+
+    // strip zeros and dot
+    while(*str)
+    {
+        if(*str == '.')
+        {
+            if(dot)
+                return;
+            dot++;
+        }
+        else if(*str > '9')
+        {
+            return;
+        }
+        else if(*str < '0')
+        {
+            return;
+        }
+
+        str++;
+    }
+
+    str--;
+    if(dot)
+    {
+        while(*str == '0')
+        {
+            *str-- = 0;
+        }
+        if(*str == '.')
+        {
+            *str-- = 0;
+        }
+    }
+
+    // strip leading zeros
+    str = s;
+    while(*str == '0' && *(str + 1))
+    {
+        memmove(str + 1, str, strlen(str) - 1);
+        *(str + strlen(str) - 1) = 0;
+        str++;
+    }
 }

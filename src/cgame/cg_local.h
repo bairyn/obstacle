@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 
+#include "../game/bg_oc.h"
+
 #include "../qcommon/q_shared.h"
 #include "../renderer/tr_types.h"
 #include "../game/bg_public.h"
@@ -78,6 +80,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define TEAM_OVERLAY_MAXNAME_WIDTH  12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH  16
+
+//==================================================================
+
+#define MSEC(t) ( ( t ) - ( ( ( t ) / 1000 ) * 1000 ) )
+#define SECS(t) ( ( ( t ) - ( ( ( t ) / 60000 ) * 60000 ) ) / 1000 )
+#define MINS(t) ( ( t ) / 60000 )
+
+#define SUFN(x) ( ( ( x ) < 11 && ( x ) > 13 ) ? ( ( ( x ) % 10 == 1 ) ? ( "st" ) : ( ( ( x ) % 10 == 2 ) ? ( "nd" ) : ( ( ( x ) % 10 == 3 ) ? ( "rd" ) : ( "th" ) ) ) ) : ( "th" ) )
+
+#define EXCOLOR(s) \
+{ \
+    int i; \
+ \
+    for(i = 0; i < sizeof((s)); i++) \
+    { \
+        if(((s)[i]) == '^' && i + 3 < sizeof((s))) \
+        { \
+            memmove( (&(s)[i]) + 2, (&(s)[i]), strlen((s)) + 1); \
+            (s)[++i] = '^'; \
+            (s)[++i] = '7'; \
+        } \
+    } \
+}
+
+//==================================================================
 
 typedef enum
 {
@@ -918,6 +945,20 @@ typedef struct
 // After this many msec the crosshair name fades out completely
 #define CROSSHAIR_CLIENT_TIMEOUT 1000
 
+#define MAX_CP_CHARS 128  // buffer size for each individual CP
+#define MAX_CP 20  // 20 individual CP messages at most
+
+typedef struct mix_cp_s mix_cp_t;
+struct mix_cp_s
+{
+	qboolean active;
+	int time;  // start time
+	int charWidth;
+	int y;
+	char message[ MAX_CP_CHARS ];
+	int lines;
+};
+
 typedef struct
 {
   int           clientFrame;                        // incremented each frame
@@ -1021,11 +1062,7 @@ typedef struct
   int           spectatorPaintLen;                  // current offset from start
 
   // centerprinting
-  int           centerPrintTime;
-  int           centerPrintCharWidth;
-  int           centerPrintY;
-  char          centerPrint[ 1024 ];
-  int           centerPrintLines;
+  mix_cp_t      centerPrint[ MAX_CP ];
 
   // low ammo warning state
   int           lowAmmoWarning;   // 1 = low, 2 = empty
@@ -1436,14 +1473,20 @@ extern  buildableInfo_t cg_buildables[ BA_NUM_BUILDABLES ];
 
 extern  markPoly_t      cg_markPolys[ MAX_MARK_POLYS ];
 
+CG_OC_ECVARS
+
 extern  vmCvar_t    cg_teslaTrailTime;
 extern  vmCvar_t    cg_centertime;
+extern  vmCvar_t    cg_staticCenterPrints;
 extern  vmCvar_t    cg_runpitch;
 extern  vmCvar_t    cg_runroll;
 extern  vmCvar_t    cg_swingSpeed;
 extern  vmCvar_t    cg_shadows;
 extern  vmCvar_t    cg_drawTimer;
 extern  vmCvar_t    cg_drawClock;
+extern  vmCvar_t    cg_drawPlayerTimer;
+extern  vmCvar_t    cg_drawSpeedometer;
+extern  vmCvar_t    cg_speedometerXYZ;
 extern  vmCvar_t    cg_drawFPS;
 extern  vmCvar_t    cg_drawDemoState;
 extern  vmCvar_t    cg_drawSnapshot;
@@ -1452,6 +1495,7 @@ extern  vmCvar_t    cg_drawCrosshair;
 extern  vmCvar_t    cg_drawCrosshairNames;
 extern  vmCvar_t    cg_crosshairSize;
 extern  vmCvar_t    cg_draw2D;
+extern  vmCvar_t    cg_disableWeaponSounds;
 extern  vmCvar_t    cg_animSpeed;
 extern  vmCvar_t    cg_debugAnim;
 extern  vmCvar_t    cg_debugPosition;
@@ -1479,6 +1523,7 @@ extern  vmCvar_t    cg_thirdPersonPitchFollow;
 extern  vmCvar_t    cg_thirdPersonRange;
 extern  vmCvar_t    cg_stereoSeparation;
 extern  vmCvar_t    cg_lagometer;
+extern  vmCvar_t    cg_drawSpeed;
 extern  vmCvar_t    cg_synchronousClients;
 extern  vmCvar_t    cg_stats;
 extern  vmCvar_t    cg_paused;
@@ -1619,7 +1664,8 @@ extern  int numSortedTeamPlayers;
 
 void        CG_AddLagometerFrameInfo( void );
 void        CG_AddLagometerSnapshotInfo( snapshot_t *snap );
-void        CG_CenterPrint( const char *str, int y, int charWidth );
+void        CG_AddSpeed( float speed );
+void        CG_CenterPrint( const char *str, const char *find, int y, int charWidth );
 void        CG_DrawActive( stereoFrame_t stereoView );
 void        CG_OwnerDraw( float x, float y, float w, float h, float text_x,
                           float text_y, int ownerDraw, int ownerDrawFlags,

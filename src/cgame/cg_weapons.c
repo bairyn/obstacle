@@ -382,6 +382,12 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
+      if(strstr(cg_disableWeaponSounds.string, token))
+	  {
+		wim->impactSound[ index ] = 0;
+        continue;
+	  }
+
       wim->impactSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
       continue;
@@ -404,6 +410,12 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, token))
+	  {
+		wim->impactFleshSound[ index ] = 0;
+        continue;
+	  }
 
       wim->impactFleshSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
@@ -470,6 +482,12 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
+      if(strstr(cg_disableWeaponSounds.string, token))
+	  {
+		wim->firingSound = 0;
+        continue;
+	  }
+
       wim->firingSound = trap_S_RegisterSound( token, qfalse );
 
       continue;
@@ -479,6 +497,12 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, token))
+	  {
+		wim->missileSound = 0;
+        continue;
+	  }
 
       wim->missileSound = trap_S_RegisterSound( token, qfalse );
 
@@ -502,6 +526,12 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, token))
+	  {
+		wim->flashSound[ index ] = 0;
+        continue;
+	  }
 
       wim->flashSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
@@ -662,6 +692,12 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       token = COM_Parse( &text_p );
       if( !token )
         break;
+
+      if(strstr(cg_disableWeaponSounds.string, token))
+	  {
+		wi->readySound = 0;
+        continue;
+	  }
 
       wi->readySound = trap_S_RegisterSound( token, qfalse );
 

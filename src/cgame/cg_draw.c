@@ -1723,6 +1723,44 @@ static void CG_DrawClock( rectDef_t *rect, float text_x, float text_y,
 }
 
 /*
+=================
+CG_DrawPlayerTimer
+=================
+*/
+static void CG_DrawPlayerTimer( rectDef_t *rect, float text_x, float text_y,
+                          float scale, vec4_t color,
+                          int textalign, int textvalign, int textStyle )
+{
+  char    *s;
+  float   tx, ty;
+  int     i, strLength;
+  float   w, h, totalWidth;
+
+  if( !cg_drawPlayerTimer.integer )
+    return;
+
+  s = "";
+  if(BG_OC_OCMode())
+	s = CG_OC_PLAYERTIMER;
+  w = UI_Text_Width( "0", scale, 0 );
+  h = UI_Text_Height( "0", scale, 0 );
+  strLength = CG_DrawStrlen( s );
+  totalWidth = w * strLength;
+
+  CG_AlignText( rect, s, 0.0f, totalWidth, h, textalign, textvalign, &tx, &ty );
+
+  for( i = 0; i < strLength; i++ )
+  {
+    char c[ 2 ];
+
+    c[ 0 ] = s[ i ];
+    c[ 1 ] = '\0';
+
+    UI_Text_Paint( text_x + tx + i * w, text_y + ty, scale, color, c, 0, 0, textStyle );
+  }
+}
+
+/*
 ==================
 CG_DrawSnapshot
 ==================
@@ -2023,6 +2061,101 @@ static void CG_DrawLagometer( rectDef_t *rect, float text_x, float text_y,
   CG_DrawDisconnect( );
 }
 
+#define SPEEDOMETER_NUM_SAMPLES 160
+float speedSamples[ SPEEDOMETER_NUM_SAMPLES ];
+// array indices
+int oldestSpeedSample = 0;
+int maxSpeedSample = 0;
+
+/*
+===================
+CG_AddSpeed
+
+append a speed to the sample history
+===================
+*/
+void CG_AddSpeed( float speed )
+{
+  if( speed > speedSamples[ maxSpeedSample ] )
+  {
+    maxSpeedSample = oldestSpeedSample;
+    speedSamples[ oldestSpeedSample++ ] = speed;
+    oldestSpeedSample %= SPEEDOMETER_NUM_SAMPLES;
+    return;
+  }
+
+  speedSamples[ oldestSpeedSample ] = speed;
+  if( maxSpeedSample == oldestSpeedSample++ )
+  {
+    // if old max was overwritten find a new one
+    int i;
+    for( maxSpeedSample = 0, i = 1; i < SPEEDOMETER_NUM_SAMPLES; i++ )
+    {
+      if( speedSamples[ i ] > speedSamples[ maxSpeedSample ] )
+        maxSpeedSample = i;
+    }
+  }
+
+  oldestSpeedSample %= SPEEDOMETER_NUM_SAMPLES;
+}
+
+#define SPEEDOMETER_MIN_RANGE 900
+
+/*
+===================
+CG_DrawSpeed
+===================
+*/
+static void CG_DrawSpeed( rectDef_t *rect, float text_x, float text_y, 
+                          float scale, vec4_t textColor )
+{
+  int i;
+  float val, max = speedSamples[ maxSpeedSample ], top;
+  vec4_t slow = { 0.0, 0.0, 1.0, 1.0 };
+  vec4_t medium = { 0.0, 1.0, 0.0, 1.0 };
+  vec4_t fast = { 1.0, 0.0, 0.0, 1.0 };
+  vec4_t color = { 0, 0, 0, 1 };
+  char speedstr[ 9 ]; // won't need more than 99999999 I'd think
+  if( max < SPEEDOMETER_MIN_RANGE )
+    max = SPEEDOMETER_MIN_RANGE;
+
+  if( !cg_drawSpeedometer.integer )
+    return;
+
+  textColor[ 3 ] = 0.25;
+  trap_R_SetColor( textColor );
+  textColor[ 3 ] = 1;
+  CG_DrawPic( rect->x, rect->y, rect->w, rect->h, cgs.media.whiteShader );
+
+  for( i = 1; i < SPEEDOMETER_NUM_SAMPLES; i++ )
+  {
+    val = speedSamples[ ( oldestSpeedSample + i ) % SPEEDOMETER_NUM_SAMPLES ];
+#define SPEED_MED 600.f
+#define SPEED_FAST 1800.f
+#define SPEED_DIFF (SPEED_FAST - SPEED_MED)
+    if( val < SPEED_MED )
+      VectorLerp( val / SPEED_MED, slow, medium, color );
+    else if( val < SPEED_FAST )
+      VectorLerp( ( val - SPEED_MED ) / SPEED_DIFF, medium, fast, color );
+    else
+      VectorCopy( fast, color );
+    trap_R_SetColor( color );
+    top = rect->y + ( 1 - val / max ) * rect->h;
+    CG_DrawPic( rect->x + ( i / (float)SPEEDOMETER_NUM_SAMPLES ) * rect->w, top,
+                rect->w / (float)SPEEDOMETER_NUM_SAMPLES, val * rect->h / max,
+                cgs.media.whiteShader );
+  }
+  if( val > 99999 )
+    val = 99999;
+  trap_R_SetColor( NULL );
+  Com_sprintf( speedstr, sizeof( speedstr ), "%d", (int)val );
+  textColor[ 3 ] = 0.5f;
+  UI_Text_Paint(
+      rect->x + ( rect->w - UI_Text_Width( speedstr, scale, 0 ) ) / 2.0f,
+      rect->y + ( rect->h + UI_Text_Height( speedstr, scale, 0 ) ) / 2.0f,
+      scale, textColor, speedstr, 0, 0, ITEM_TEXTSTYLE_NORMAL );
+}
+
 /*
 ===================
 CG_DrawConsole
@@ -2192,7 +2325,7 @@ static void CG_ScanForCrosshairEntity( void )
   VectorMA( start, 131072, cg.refdef.viewaxis[ 0 ], end );
 
   CG_Trace( &trace, start, vec3_origin, vec3_origin, end,
-    cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY );
+    cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY|BG_OC_CLIENTCONTENTS );
 
   // if the player is in fog, don't show it
   content = trap_CM_PointContents( trace.endpos, 0 );
@@ -2216,7 +2349,7 @@ static void CG_ScanForCrosshairEntity( void )
   if( cg.snap->ps.persistant[ PERS_SPECSTATE ] == SPECTATOR_NOT )
   {
     //only display team names of those on the same team as this player
-    if( team != cg.snap->ps.stats[ STAT_TEAM ] )
+    if( team != cg.snap->ps.stats[ STAT_TEAM ] && !CG_OC_OCNameOtherTeams() )
       return;
   }
 
@@ -2412,6 +2545,9 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
     case CG_HUMANS_SCORE_LABEL:
       CG_DrawTeamLabel( &rect, TEAM_HUMANS, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
+    case CG_SPEEDOMETER:
+      CG_DrawSpeed( &rect, text_x, text_y, scale, foreColor );
+      break;
 
     //loading screen
     case CG_LOAD_LEVELSHOT:
@@ -2463,6 +2599,9 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
       break;
     case CG_CLOCK:
       CG_DrawClock( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
+      break;
+    case CG_PLAYER_TIMER:
+      CG_DrawPlayerTimer( &rect, text_x, text_y, scale, foreColor, textalign, textvalign, textStyle );
       break;
     case CG_TIMER_MINS:
       CG_DrawTimerMins( &rect, foreColor );
@@ -2662,26 +2801,90 @@ Called for important messages that should stay in the center of the screen
 for a few moments
 ==============
 */
-void CG_CenterPrint( const char *str, int y, int charWidth )
+void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 {
-  char  *s;
+  mix_cp_t *i, *cp = NULL;
+  char *s;
+  qboolean replaced = qfalse;
 
-  Q_strncpyz( cg.centerPrint, str, sizeof( cg.centerPrint ) );
+  if( !str )
+    return;
 
-  cg.centerPrintTime = cg.time;
-  cg.centerPrintY = y;
-  cg.centerPrintCharWidth = charWidth;
+  // first attempt to find something to replace
+  for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
+  {
+    if( i->active )
+    {
+      if( i->time > i->time + cg_centertime.value )
+      {
+        // the cp has faded away
+        i->active = qfalse;
+      }
+    }
+
+    if( i->active )
+    {
+      if( ( Q_strncmp( str, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  if find matches the message exactly, then it will be replaced
+      {
+        i->active = qfalse;
+
+        if( !cp )
+        {
+          replaced = qtrue;
+          cp = i;  // use the first replaced slot; don't stop yet because sometimes multiple CP's need to be replaced
+        }
+      }
+    }
+  }
+
+  if( !cp )
+  {
+    // nothing was replaced, so find an available slot
+    for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
+    {
+      if( i->active )
+      {
+        if( i->time > i->time + cg_centertime.value )
+        {
+          // the cp has faded away
+          i->active = qfalse;
+        }
+      }
+
+      if( !i->active )
+      {
+        cp = i;
+        break;
+      }
+    }
+  }
+
+  if( !cp )
+  {
+    // no slots found
+    Com_Printf(S_COLOR_RED "Error: no more available slots for CP: " S_COLOR_WHITE "%s\n", str);
+    return;
+  }
+
+  Q_strncpyz( cp->message, str, sizeof( cp->message ) );
+
+  cp->time = cg.time;
+  if( !replaced || !cg_staticCenterPrints.integer )
+    cp->y = y;
+  cp->charWidth = charWidth;
 
   // count the number of lines for centering
-  cg.centerPrintLines = 1;
-  s = cg.centerPrint;
+  cp->lines = 1;
+  s = cp->message;
   while( *s )
   {
     if( *s == '\n' )
-      cg.centerPrintLines++;
+      cp->lines++;
 
     s++;
   }
+
+  cp->active = qtrue;
 }
 
 
@@ -2692,55 +2895,100 @@ CG_DrawCenterString
 */
 static void CG_DrawCenterString( void )
 {
+  char  buf[ MAX_CP_CHARS ];  // for text heights
   char  *start;
   int   l;
   int   x, y, w;
   int h;
   float *color;
+  int yl[ MAX_CP ] = {0};  // the lowest y for each CP; this is to stop CP's with similar heights
+  int yt[ MAX_CP ] = {0};  // the highest y for each CP
+  mix_cp_t *i;
+  int      j;
+  int      k;
+  int      hu;
+  int id;
 
-  if( !cg.centerPrintTime )
-    return;
-
-  color = CG_FadeColor( cg.centerPrintTime, 1000 * cg_centertime.value );
-  if( !color )
-    return;
-
-  trap_R_SetColor( color );
-
-  start = cg.centerPrint;
-
-  y = cg.centerPrintY - cg.centerPrintLines * BIGCHAR_HEIGHT / 2;
-
-  while( 1 )
+  for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
   {
-    char linebuffer[ 1024 ];
+    id = i - cg.centerPrint;
 
-    for( l = 0; l < 50; l++ )
+    if( i->active )
     {
-      if( !start[ l ] || start[ l ] == '\n' )
-        break;
+      if( i->time > i->time + cg_centertime.value )
+      {
+        i->active = qfalse;
+          continue;
+      }
 
-      linebuffer[ l ] = start[ l ];
+      if( !i->time )
+        continue;
+
+      color = CG_FadeColor( i->time, 1000 * cg_centertime.value );
+      if( !color )
+        continue;
+
+      trap_R_SetColor( color );
+
+      y = i->y - i->lines * BIGCHAR_HEIGHT / 2;
+
+      yl[ id ] = y;
+      yt[ id ] = i->y;
+
+      // see if we need to bump up y
+      for( j = 0; j < id && j < sizeof( yl ) && j < sizeof( yt ); j++ )
+      {
+        if( yl[ j ] && yt[ j ] && yl[ j ] <= yl[ id ] && yl[ id ] <= yt[ j ] )
+        {
+          start = cg.centerPrint[ j ].message;
+          k = 0;
+
+          while( *start && *start != '\n' )
+            buf[ k++ ] = *start++;
+          buf[ k ] = 0;
+
+          hu = cg.centerPrint[ j ].lines * (UI_Text_Height( buf, 0.5, 0 ) + 6);
+          yl[ id ] += hu;
+          yt[ id ] += hu;
+          i->y     += hu;
+          y        += hu;
+		  j--;  // just in case it needs bumped again
+        }
+      }
+
+      start = i->message;
+      while( 1 )
+      {
+        char linebuffer[ 1024 ];
+
+        for( l = 0; l < 50; l++ )
+        {
+          if( !start[ l ] || start[ l ] == '\n' )
+            break;
+
+          linebuffer[ l ] = start[ l ];
+        }
+
+        linebuffer[ l ] = 0;
+
+        w = UI_Text_Width( linebuffer, 0.5, 0 );
+        h = UI_Text_Height( linebuffer, 0.5, 0 );
+        x = ( SCREEN_WIDTH - w ) / 2;
+        UI_Text_Paint( x, y + h, 0.5, color, linebuffer, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE );
+        y += h + 6;
+
+        while( *start && ( *start != '\n' ) )
+          start++;
+
+        if( !*start )
+          break;
+
+        start++;
+      }
+
+      trap_R_SetColor( NULL );
     }
-
-    linebuffer[ l ] = 0;
-
-    w = UI_Text_Width( linebuffer, 0.5, 0 );
-    h = UI_Text_Height( linebuffer, 0.5, 0 );
-    x = ( SCREEN_WIDTH - w ) / 2;
-    UI_Text_Paint( x, y + h, 0.5, color, linebuffer, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE );
-    y += h + 6;
-
-    while( *start && ( *start != '\n' ) )
-      start++;
-
-    if( !*start )
-      break;
-
-    start++;
   }
-
-  trap_R_SetColor( NULL );
 }
 
 
@@ -2779,8 +3027,8 @@ static void CG_DrawVote( void )
     sec = 0;
   Q_strncpyz( yeskey, CG_KeyBinding( "vote yes" ), sizeof( yeskey ) ); 
   Q_strncpyz( nokey, CG_KeyBinding( "vote no" ), sizeof( nokey ) ); 
-  s = va( "VOTE(%i): \"%s\"  [%s]Yes:%i [%s]No:%i", sec, cgs.voteString,
-    yeskey, cgs.voteYes, nokey, cgs.voteNo );
+  s = va( "VOTE(%i): [%s]Yes:%i [%s]No:%i  \"%s\"", sec, yeskey, cgs.voteYes,
+          nokey, cgs.voteNo, cgs.voteString );
   UI_Text_Paint( 8, 340, 0.3f, white, s, 0, 0, ITEM_TEXTSTYLE_NORMAL );
 }
 

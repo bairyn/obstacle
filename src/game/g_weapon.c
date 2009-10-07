@@ -351,7 +351,7 @@ void bulletFire( gentity_t *ent, float spread, int damage, int mod )
     G_UnlaggedOff( );
   }
   else
-    trap_Trace( &tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT );
+    trap_Trace( &tr, muzzle, NULL, NULL, end, ent->s.number, BG_OC_SHOTMASK );
 
   if( tr.surfaceFlags & SURF_NOIMPACT )
     return;
@@ -582,6 +582,8 @@ void flamerFire( gentity_t *ent )
   // Correct muzzle so that the missile fires from the player's hand
   VectorMA( origin, 4.5f, right, origin );
 
+  G_OC_CloseRangeWeaponFired( ent );
+
   fire_flamer( ent, origin, forward );
 }
 
@@ -596,6 +598,8 @@ GRENADE
 void throwGrenade( gentity_t *ent )
 {
   gentity_t *m;
+
+  G_OC_CloseRangeWeaponFired( ent );
 
   m = launch_grenade( ent, muzzle, forward );
 }
@@ -666,6 +670,8 @@ void painSawFire( gentity_t *ent )
   trace_t   tr;
   vec3_t    temp;
   gentity_t *tent, *traceEnt;
+
+  G_OC_CloseRangeWeaponFired( ent );
 
   G_WideTrace( &tr, ent, PAINSAW_RANGE, PAINSAW_WIDTH, PAINSAW_HEIGHT,
                &traceEnt );
@@ -747,7 +753,7 @@ void teslaFire( gentity_t *self )
   target[ 2 ] += self->enemy->r.maxs[ 2 ];
 
   // Trace to the target entity
-  trap_Trace( &tr, origin, NULL, NULL, target, self->s.number, MASK_SHOT );
+  trap_Trace( &tr, origin, NULL, NULL, target, self->s.number, BG_OC_SHOTMASK );
   if( tr.entityNum != self->enemy->s.number )
     return;
 
@@ -857,7 +863,7 @@ void buildFire( gentity_t *ent, dynMenu_t menu )
 
     if( G_BuildIfValid( ent, buildable ) )
     {
-      if( !g_cheats.integer )
+      if( !g_cheats.integer && !G_OC_NoBuildTimer() )
       {
         ent->client->ps.stats[ STAT_MISC ] +=
           BG_Buildable( buildable )->buildTime;
@@ -924,13 +930,20 @@ qboolean CheckVenomAttack( gentity_t *ent )
     return qfalse;
 
   // only allow bites to work against buildings as they are constructing
-  if( traceEnt->s.eType == ET_BUILDABLE )
+  if(!G_OC_NeedAlternateVenomAttackCheck())
   {
-    if( traceEnt->spawned )
-      return qfalse;
+    if( traceEnt->s.eType == ET_BUILDABLE )
+    {
+      if( traceEnt->spawned )
+        return qfalse;
 
-    if( traceEnt->buildableTeam == TEAM_ALIENS )
-      return qfalse;
+      if( traceEnt->buildableTeam == TEAM_ALIENS )
+        return qfalse;
+    }
+  }
+  else
+  {
+    G_OC_AlternateVenomAttackCheck();
   }
 
   if( traceEnt->client )
@@ -1021,11 +1034,13 @@ poisonCloud
 void poisonCloud( gentity_t *ent )
 {
   int       entityList[ MAX_GENTITIES ];
-  vec3_t    range = { LEVEL1_PCLOUD_RANGE, LEVEL1_PCLOUD_RANGE, LEVEL1_PCLOUD_RANGE };
+  vec3_t    range;
   vec3_t    mins, maxs;
   int       i, num;
   gentity_t *humanPlayer;
   trace_t   tr;
+
+  range[ 0 ] = range[ 1 ] = range[ 2 ] = LEVEL1_PCLOUD_RANGE;
 
   VectorAdd( ent->client->ps.origin, range, maxs );
   VectorSubtract( ent->client->ps.origin, range, mins );
@@ -1467,6 +1482,8 @@ FireWeapon3
 */
 void FireWeapon3( gentity_t *ent )
 {
+  G_OC_FireWeapon3();
+
   if( ent->client )
   {
     // set aiming directions
@@ -1502,6 +1519,8 @@ FireWeapon2
 */
 void FireWeapon2( gentity_t *ent )
 {
+  G_OC_FireWeapon2();
+
   if( ent->client )
   {
     // set aiming directions
@@ -1558,6 +1577,8 @@ void FireWeapon( gentity_t *ent )
     VectorCopy( ent->s.pos.trBase, muzzle );
   }
 
+  G_OC_FireWeapon();
+
   // fire the specific weapon
   switch( ent->s.weapon )
   {
@@ -1574,7 +1595,7 @@ void FireWeapon( gentity_t *ent )
                    LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW );
       break;
     case WP_ALEVEL3_UPG:
-      meleeAttack( ent, LEVEL3_CLAW_UPG_RANGE, LEVEL3_CLAW_WIDTH,
+      meleeAttack( ent, LEVEL3_CLAW_U_RANGE, LEVEL3_CLAW_WIDTH,
                    LEVEL3_CLAW_WIDTH, LEVEL3_CLAW_DMG, MOD_LEVEL3_CLAW );
       break;
     case WP_ALEVEL2:

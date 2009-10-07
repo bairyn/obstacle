@@ -23,6 +23,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // bg_public.h -- definitions shared by both the server game and client game modules
 
+#ifndef _BG_PUBLIC_H
+#define _BG_PUBLIC_H
+
+#define OC_BGAME
+#include "bg_oc.h"
+
 //tremulous balance header
 #include "tremulous.h"
 
@@ -70,6 +76,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_CLIENTS_READY    26
 
 #define CS_STAGES           29
+
+BG_OC_CS
 
 #define CS_MODELS           33
 #define CS_SOUNDS           (CS_MODELS+MAX_MODELS)
@@ -269,7 +277,8 @@ typedef enum
   PERS_QUEUEPOS,  // position in the spawn queue
   PERS_NEWWEAPON,  // weapon to switch to
   PERS_BP
-  // netcode has space for 4 more
+  BG_OC_PERS
+  // netcode has space for 5 more
 } persEnum_t;
 
 #define PS_WALLCLIMBINGFOLLOW   0x00000001
@@ -1153,6 +1162,8 @@ const weaponAttributes_t    *BG_Weapon( weapon_t weapon );
 qboolean                    BG_WeaponAllowedInStage( weapon_t weapon,
                                                      stage_t stage );
 
+void                        BG_InitWeaponConfigs( void );
+
 const upgradeAttributes_t   *BG_UpgradeByName( const char *name );
 const upgradeAttributes_t   *BG_Upgrade( upgrade_t upgrade );
 qboolean                    BG_UpgradeAllowedInStage( upgrade_t upgrade,
@@ -1313,3 +1324,10 @@ voiceTrack_t *BG_VoiceTrackFind( voiceTrack_t *head, team_t team,
 int BG_LoadEmoticons( char names[ ][ MAX_EMOTICON_NAME_LEN ], int widths[ ] );
 
 char *BG_TeamName( team_t team );
+
+#ifndef ISDEFINED_BG_STRTOLOWER__
+#define ISDEFINED_BG_STRTOLOWER__
+void BG_StrToLower( char *s );
+#endif
+
+#endif /* #ifndef _BG_PUBLIC_H */

@@ -5215,6 +5215,16 @@ static bind_t g_bindings[] =
     { "scoresDown",    K_KP_PGDN,    -1, -1, -1 },
     { "messagemode",  -1,            -1, -1, -1 },
     { "messagemode2", -1,            -1, -1, -1 }
+
+    // OC
+    { "newRestartOC", -1,            -1, -1, -1 },
+    { "teleportToCheckpoint", -1,    -1, -1, -1 },
+    { "hide", -1,            -1, -1, -1 },
+    //{ "buy ammo", -1,            -1, -1, -1 },
+    { "stats", -1,            -1, -1, -1 },
+    { "myStats", -1,            -1, -1, -1 },
+    { "askLayout", -1,            -1, -1, -1 },
+    { "+button7", -1,            -1, -1, -1 },
   };
 
 
