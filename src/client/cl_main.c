@@ -194,8 +194,10 @@ void CL_UpdateVoipIgnore(const char *idstr, qboolean ignore)
 			                         ignore ? "ignore" : "unignore", id));
 			Com_Printf("VoIP: %s ignoring player #%d\n",
 			            ignore ? "Now" : "No longer", id);
+			return;
 		}
 	}
+	Com_Printf("VoIP: invalid player ID#\n");
 }
 
 static
@@ -234,7 +236,19 @@ void CL_Voip_f( void )
 	} else if (strcmp(cmd, "unignore") == 0) {
 		CL_UpdateVoipIgnore(Cmd_Argv(2), qfalse);
 	} else if (strcmp(cmd, "gain") == 0) {
-		CL_UpdateVoipGain(Cmd_Argv(2), atof(Cmd_Argv(3)));
+		if (Cmd_Argc() > 3) {
+			CL_UpdateVoipGain(Cmd_Argv(2), atof(Cmd_Argv(3)));
+		} else if (Q_isanumber(Cmd_Argv(2))) {
+			int id = atoi(Cmd_Argv(2));
+			if (id >= 0 && id < MAX_CLIENTS) {
+				Com_Printf("VoIP: current gain for player #%d "
+					"is %f\n", id, clc.voipGain[id]);
+			} else {
+				Com_Printf("VoIP: invalid player ID#\n");
+			}
+		} else {
+			Com_Printf("usage: voip gain <playerID#> [value]\n");
+		}
 	} else if (strcmp(cmd, "muteall") == 0) {
 		Com_Printf("VoIP: muting incoming voice\n");
 		CL_AddReliableCommand("voip muteall");
@@ -243,6 +257,10 @@ void CL_Voip_f( void )
 		Com_Printf("VoIP: unmuting incoming voice\n");
 		CL_AddReliableCommand("voip unmuteall");
 		clc.voipMuteAll = qfalse;
+	} else {
+		Com_Printf("usage: voip [un]ignore <playerID#>\n"
+		           "       voip [un]muteall\n"
+		           "       voip gain <playerID#> [value]\n");
 	}
 }
 
@@ -485,7 +503,6 @@ CL_WriteDemoMessage
 Dumps the current net message, prefixed by the length
 ====================
 */
-
 void CL_WriteDemoMessage ( msg_t *msg, int headerBytes ) {
 	int		len, swlen;
 
@@ -1337,22 +1354,25 @@ void CL_RequestMotd( void ) {
 		return;
 	}
 	Com_Printf( "Resolving %s\n", MASTER_SERVER_NAME );
-	if ( !NET_StringToAdr( MASTER_SERVER_NAME, &cls.updateServer, NA_IP  ) ) {
-		Com_Printf( "Couldn't resolve address\n" );
-		return;
+
+	switch( NET_StringToAdr( MASTER_SERVER_NAME, &cls.updateServer,
+	                         NA_UNSPEC ) )
+	{
+		case 0:
+			Com_Printf( "Couldn't resolve master address\n" );
+			return;
+
+		case 2:
+			cls.updateServer.port = BigShort( PORT_MASTER );
+		default:
+			break;
 	}
-	cls.updateServer.port = BigShort( PORT_MASTER );
-	Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", MASTER_SERVER_NAME,
-		cls.updateServer.ip[0], cls.updateServer.ip[1],
-		cls.updateServer.ip[2], cls.updateServer.ip[3],
-		BigShort( cls.updateServer.port ) );
+
+	Com_Printf( "%s resolved to %s\n", MASTER_SERVER_NAME,
+	            NET_AdrToStringwPort( cls.updateServer ) );
 
 	info[0] = 0;
-  // NOTE TTimo xoring against Com_Milliseconds, otherwise we may not have a true randomization
-  // only srand I could catch before here is tr_noise.c l:26 srand(1001)
-  // https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=382
-  // NOTE: the Com_Milliseconds xoring only affects the lower 16-bit word,
-  //   but I decided it was enough randomization
+
 	Com_sprintf( cls.updateChallenge, sizeof( cls.updateChallenge ),
 			"%i", ((rand() << 16) ^ rand()) ^ Com_Milliseconds());
 
@@ -1525,10 +1545,14 @@ void CL_Connect_f( void ) {
 
 	// if we aren't playing on a lan, we need to authenticate
 	// with the cd key
-	if ( NET_IsLocalAddress( clc.serverAddress ) ) {
+	if(NET_IsLocalAddress(clc.serverAddress))
 		cls.state = CA_CHALLENGING;
-	} else {
+	else
+	{
 		cls.state = CA_CONNECTING;
+		
+		// Set a client challenge number that ideally is mirrored back by the server.
+		clc.challenge = ((rand() << 16) ^ rand()) ^ Com_Milliseconds();
 	}
 
 	Key_SetCatcher( 0 );
@@ -1876,8 +1900,8 @@ void CL_BeginDownload( const char *localName, const char *remoteName ) {
 	clc.downloadBlock = 0; // Starting new file
 	clc.downloadCount = 0;
 
-  // Stop any errant looping sounds that may be playing
-  S_ClearLoopingSounds( qtrue );
+	// Stop any errant looping sounds that may be playing
+	S_ClearLoopingSounds( qtrue );
 
 	CL_AddReliableCommand( va("download %s", remoteName) );
 }
@@ -1918,18 +1942,23 @@ void CL_NextDownload(void) {
 			name = clc.downloadList;
 			if( *name == '@' )
 				name++;
+
 			do {
 				// Copy remote name
 				head = name;
 				while( *head && *head != '@' )
 					head++;
+
 				swap = *head;
 				*head = 0;
-				if( i++ < max_list )
+
+				if( i++ < max_list ) {
 					Com_sprintf( files, sizeof( files ), "%s%s%s",
 					             files, i > 1 ? ", " : "", name );
-				else
+				} else {
 					others++;
+				}
+
 				*head = swap;
 				if( !swap )
 					break;
@@ -1938,36 +1967,43 @@ void CL_NextDownload(void) {
 				head++;
 				while( *head && *head != '@' )
 					head++;
+
 				name = head + 1;
 			} while( *head );
-			if( others )
+
+			if( others ) {
 				Com_sprintf( files, sizeof( files ),
 				             "%s (%d other file%s)\n", files, others,
 				              others > 1 ? "s" : "" );
+			}
 
 			// Set the pure message
-			if( cl_connectedToPureServer )
+			if( cl_connectedToPureServer ) {
 				if( !( clc.sv_allowDownload & DLF_ENABLE ) ||
 				    ( ( clc.sv_allowDownload & DLF_NO_UDP ) &&
-				    ( clc.sv_allowDownload & DLF_NO_REDIRECT ) ) )
+				    ( clc.sv_allowDownload & DLF_NO_REDIRECT ) ) ) {
 					pure_msg = "You are missing files required by the server. "
 					"The server does not allow downloading. "
 					"You must install these files manually:";
-				else
+				} else {
 					pure_msg = "You are missing files required by the server. "
 					"You must download these files or disconnect:";
-			else
+				}
+			} else {
 				pure_msg = "You are missing optional files provided by the "
 				"server. You may not need them to play but can "
 				"choose to download them anyway:";
+			}
 
 			Cvar_Set( "com_downloadPromptText",
 			          va("%s\n\n%s\n%s", pure_msg, files, url_msg ) );
 			Cvar_Set( "com_downloadPrompt", va("%d", DLP_SHOW ) );
 			return;
 		}
+
 		if( !( prompt & DLP_PROMPTED ) )
 			Cvar_Set( "com_downloadPrompt", va("%d", prompt | DLP_PROMPTED ) );
+
 		prompt &= DLP_TYPE_MASK;
 
 		s = clc.downloadList;
@@ -2025,6 +2061,7 @@ void CL_NextDownload(void) {
 #endif /* USE_CURL */
 		if(!useCURL) {
 			Com_Printf("Trying UDP download: %s; %s\n", localName, remoteName);
+
 			if( ( !( cl_allowDownload->integer & DLF_ENABLE ) ||
 			    ( cl_allowDownload->integer & DLF_NO_UDP ) ) &&
 			    prompt != DLP_UDP ) {
@@ -2036,6 +2073,7 @@ void CL_NextDownload(void) {
 				                  cl_allowDownload->integer);
 					return;
 				}
+
 				Com_Printf("WARNING: UDP downloads are disabled.\n");
 				CL_DownloadsComplete();
 				return;
@@ -2109,7 +2147,11 @@ void CL_CheckForResend( void ) {
 	switch ( cls.state ) {
 	case CA_CONNECTING:
 		// requesting a challenge
-		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getchallenge");
+
+		// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
+		Com_sprintf(data, sizeof(data), "getchallenge %d", clc.challenge);
+
+		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "%s", data);
 		break;
 		
 	case CA_CHALLENGING:
@@ -2184,16 +2226,23 @@ CL_MotdPacket
 ===================
 */
 void CL_MotdPacket( netadr_t from, const char *info ) {
-	char	*v;
+	const char *v;
 
 	// if not from our server, ignore it
 	if ( !NET_CompareAdr( from, cls.updateServer ) ) {
+		Com_DPrintf( "MOTD packet from unexpected source\n" );
 		return;
 	}
+
+	Com_DPrintf( "MOTD packet: %s\n", info );
+	while( *info != '\\' )
+		info++;
 
 	// check challenge
 	v = Info_ValueForKey( info, "challenge" );
 	if ( strcmp( v, cls.updateChallenge ) ) {
+		Com_DPrintf( "MOTD packet mismatched challenge: "
+		             "'%s' != '%s'\n", v, cls.updateChallenge );
 		return;
 	}
 
@@ -2213,6 +2262,7 @@ void CL_InitServerInfo( serverInfo_t *server, netadr_t *address ) {
 	server->clients = 0;
 	server->hostName[0] = '\0';
 	server->mapName[0] = '\0';
+	server->label = NULL;
 	server->maxClients = 0;
 	server->maxPing = 0;
 	server->minPing = 0;
@@ -2220,6 +2270,102 @@ void CL_InitServerInfo( serverInfo_t *server, netadr_t *address ) {
 	server->game[0] = '\0';
 	server->gameType = 0;
 	server->netType = 0;
+}
+
+/*
+===================
+CL_GSRSequenceInformation
+
+Parses this packet's index and the number of packets from a master server's
+response. Updates the packet count and returns the index. Advances the data
+pointer as appropriate (but only when parsing was successful)
+
+The sequencing information isn't terribly useful at present (we can skip
+duplicate packets, but we don't bother to make sure we've got all of them).
+===================
+*/
+int CL_GSRSequenceInformation( byte **data )
+{
+	char *p = (char *)*data, *e;
+	int ind, num;
+	// '\0'-delimited fields: this packet's index, total number of packets
+	if( *p++ != '\0' )
+		return -1;
+
+	ind = strtol( p, (char **)&e, 10 );
+	if( *e++ != '\0' )
+		return -1;
+
+	num = strtol( e, (char **)&p, 10 );
+	if( *p++ != '\0' )
+		return -1;
+
+	if( num <= 0 || ind <= 0 || ind > num )
+		return -1; // nonsensical response
+
+	if( cls.numMasterPackets > 0 && num != cls.numMasterPackets )
+	{
+		// Assume we sent two getservers and somehow they changed in
+		// between - only use the results that arrive later
+		Com_DPrintf( "Master changed its mind about packet count!\n" );
+		cls.receivedMasterPackets = 0;
+		cls.numglobalservers = 0;
+		cls.numGlobalServerAddresses = 0;
+	}
+	cls.numMasterPackets = num;
+
+	// successfully parsed
+	*data = (byte *)p;
+	return ind;
+}
+
+/*
+===================
+CL_GSRFeaturedLabel
+
+Parses from the data an arbitrary text string labelling the servers in the
+following getserversresponse packet.
+Either this matches an existing label, or it is copied into a new one.
+The relevant buffer, or NULL, is returned, and *data is advanced as appropriate
+===================
+*/
+char *CL_GSRFeaturedLabel( byte **data )
+{
+	char label[ MAX_FEATLABEL_CHARS ] = { 0 }, *l = label;
+	int  i;
+
+	// copy until '\0' which indicates field break
+	// or slash which indicates beginning of server list
+	while( **data && **data != '\\' && **data != '/' )
+	{
+		if( l < &label[ sizeof( label ) - 1 ] )
+			*l = **data;
+		else if( l == &label[ sizeof( label ) - 1 ] )
+			Com_DPrintf( S_COLOR_YELLOW "Warning: "
+				"CL_GSRFeaturedLabel: overflow\n" );
+		l++, (*data)++;
+	}
+
+	if( !label[ 0 ] )
+		return NULL;
+
+	// find the label in the stored array
+	for( i = 0; i < cls.numFeaturedServerLabels; i++ )
+	{
+		l = cls.featuredServerLabels[ i ];
+		if( strcmp( label, l ) == 0 )
+			return l;
+	}
+	if( i == MAX_FEATURED_LABELS )
+	{
+		Com_DPrintf( S_COLOR_YELLOW "Warning: CL_GSRFeaturedLabel: "
+			"ran out of label space, dropping %s\n", label );
+		return NULL;
+	}
+	if( i == 0 )
+		l = cls.featuredServerLabels[ 0 ];
+	Q_strncpyz( l, label, sizeof( *cls.featuredServerLabels ) );
+	return l;
 }
 
 #define MAX_SERVERSPERPACKET	256
@@ -2235,13 +2381,18 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 	int				numservers;
 	byte*			buffptr;
 	byte*			buffend;
+	char			*label = NULL;
 	
-	Com_Printf("CL_ServersResponsePacket\n");
+	Com_DPrintf("CL_ServersResponsePacket%s\n",
+		(extended) ? " (extended)" : "");
 
 	if (cls.numglobalservers == -1) {
 		// state to detect lack of servers or lack of response
 		cls.numglobalservers = 0;
 		cls.numGlobalServerAddresses = 0;
+		cls.numMasterPackets = 0;
+		cls.receivedMasterPackets = 0;
+		cls.numFeaturedServerLabels = 0;
 	}
 
 	// parse through server response string
@@ -2249,14 +2400,47 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 	buffptr    = msg->data;
 	buffend    = buffptr + msg->cursize;
 
+	// skip header
+	buffptr += 4;
+
 	// advance to initial token
-	do
+	// I considered using strchr for this but I don't feel like relying
+	// on its behaviour with '\0'
+	while( *buffptr && *buffptr != '\\' && *buffptr != '/' )
 	{
-		if(*buffptr == '\\' || (extended && *buffptr == '/'))
-			break;
-		
 		buffptr++;
-	} while (buffptr < buffend);
+
+		if( buffptr >= buffend )
+			break;
+	}
+
+	if( *buffptr == '\0' )
+	{
+		int ind = CL_GSRSequenceInformation( &buffptr );
+		if( ind >= 0 )
+		{
+			// this denotes the start of new-syntax stuff
+			// have we already received this packet?
+			if( cls.receivedMasterPackets & ( 1 << ( ind - 1 ) ) )
+			{
+				Com_DPrintf( "CL_ServersResponsePacket: "
+					"received packet %d again, ignoring\n",
+					ind );
+				return;
+			}
+			// TODO: detect dropped packets and make another
+			// request
+			Com_DPrintf( "CL_ServersResponsePacket: packet "
+				"%d of %d\n", ind, cls.numMasterPackets );
+			cls.receivedMasterPackets |= ( 1 << ( ind - 1 ) );
+
+			label = CL_GSRFeaturedLabel( &buffptr );
+			Com_DPrintf( "CL_GSRFeaturedLabel: %s\n", label );
+		}
+		// now skip to the server list
+		for(; buffptr < buffend && *buffptr != '\\' && *buffptr != '/';
+			buffptr++ );
+	}
 
 	while (buffptr + 1 < buffend)
 	{
@@ -2312,6 +2496,7 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 		serverInfo_t *server = &cls.globalServers[count];
 
 		CL_InitServerInfo( server, &addresses[i] );
+		server->label = label;
 		// advance to next slot
 		count++;
 	}
@@ -2342,8 +2527,7 @@ Responses to broadcasts, etc
 */
 void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	char	*s;
-	char	c[ BIG_INFO_STRING ];
-	char	arg1[ BIG_INFO_STRING ];
+	char	*c;
 
 	MSG_BeginReadingOOB( msg );
 	MSG_ReadLong( msg );	// skip the -1
@@ -2352,27 +2536,44 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 	Cmd_TokenizeString( s );
 
-	Q_strncpyz( c, Cmd_Argv( 0 ), BIG_INFO_STRING );
-	Q_strncpyz( arg1, Cmd_Argv( 1 ), BIG_INFO_STRING );
+	c = Cmd_Argv(0);
 
 	Com_DPrintf ("CL packet %s: %s\n", NET_AdrToStringwPort(from), c);
 
 	// challenge from the server we are connecting to
-	if ( !Q_stricmp(c, "challengeResponse") ) {
-		if ( cls.state != CA_CONNECTING ) {
-			Com_DPrintf( "Unwanted challenge response received.  Ignored.\n" );
-		} else {
-			// start sending challenge repsonse instead of challenge request packets
-			clc.challenge = atoi(arg1);
-			cls.state = CA_CHALLENGING;
-			clc.connectPacketCount = 0;
-			clc.connectTime = -99999;
-
-			// take this address as the new server address.  This allows
-			// a server proxy to hand off connections to multiple servers
-			clc.serverAddress = from;
-			Com_DPrintf ("challengeResponse: %d\n", clc.challenge);
+	if (!Q_stricmp(c, "challengeResponse"))
+	{
+		if (cls.state != CA_CONNECTING)
+		{
+			Com_DPrintf("Unwanted challenge response received.  Ignored.\n");
+			return;
 		}
+		
+		if(!NET_CompareAdr(from, clc.serverAddress))
+		{
+			// This challenge response is not coming from the expected address.
+			// Check whether we have a matching client challenge to prevent
+			// connection hi-jacking.
+			
+			c = Cmd_Argv(2);
+			
+			if(!*c || atoi(c) != clc.challenge)
+			{
+				Com_DPrintf("Challenge response received from unexpected source. Ignored.\n");
+				return;
+			}
+		}
+
+		// start sending challenge response instead of challenge request packets
+		clc.challenge = atoi(Cmd_Argv(1));
+		cls.state = CA_CHALLENGING;
+		clc.connectPacketCount = 0;
+		clc.connectTime = -99999;
+
+		// take this address as the new server address.  This allows
+		// a server proxy to hand off connections to multiple servers
+		clc.serverAddress = from;
+		Com_DPrintf ("challengeResponse: %d\n", clc.challenge);
 		return;
 	}
 
@@ -2383,13 +2584,11 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 			return;
 		}
 		if ( cls.state != CA_CHALLENGING ) {
-			Com_Printf ("connectResponse packet while not connecting.  Ignored.\n");
+			Com_Printf ("connectResponse packet while not connecting. Ignored.\n");
 			return;
 		}
-		if ( !NET_CompareBaseAdr( from, clc.serverAddress ) ) {
-			Com_Printf( "connectResponse from a different address.  Ignored.\n" );
-			Com_Printf( "%s should have been %s\n", NET_AdrToStringwPort( from ), 
-				NET_AdrToStringwPort( clc.serverAddress ) );
+		if ( !NET_CompareAdr( from, clc.serverAddress ) ) {
+			Com_Printf( "connectResponse from wrong address. Ignored.\n" );
 			return;
 		}
 		Netchan_Setup (NS_CLIENT, &clc.netchan, from, Cvar_VariableValue( "net_qport" ) );
@@ -2419,13 +2618,13 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 	// echo request from server
 	if ( !Q_stricmp(c, "echo") ) {
-		NET_OutOfBandPrint( NS_CLIENT, from, "%s", arg1 );
+		NET_OutOfBandPrint( NS_CLIENT, from, "%s", Cmd_Argv(1) );
 		return;
 	}
 
 	// global MOTD from trem master
 	if ( !Q_stricmp(c, "motd") ) {
-		CL_MotdPacket( from, arg1 );
+		CL_MotdPacket( from, s );
 		return;
 	}
 
@@ -2602,18 +2801,19 @@ void CL_Frame ( int msec ) {
 		            com_downloadPrompt->integer );
 		CL_NextDownload( );
 	}
-
-	// If the UI VM does not support the download prompt, we need to catch
-	// the prompt here and replicate regular behavior.
-	// One frame will always run between requesting and showing the prompt.
 	else if( com_downloadPrompt->integer & DLP_SHOW ) {
+		// If the UI VM does not support the download prompt, we need to catch
+		// the prompt here and replicate regular behavior.
+		// One frame will always run between requesting and showing the prompt.
+
 		if( com_downloadPrompt->integer & DLP_STALE ) {
 			Com_Printf( "WARNING: UI VM does not support download prompt\n" );
 			Cvar_Set( "com_downloadPrompt", va( "%d", DLP_IGNORE ) );
 			CL_NextDownload( );
-		} else
+		} else {
 			Cvar_Set( "com_downloadPrompt",
 			          va( "%d", com_downloadPrompt->integer | DLP_STALE ) );
+		}
 	}
 
 #ifdef USE_CURL
@@ -3133,10 +3333,6 @@ void CL_Init( void ) {
 
 	cl_serverStatusResendTime = Cvar_Get ("cl_serverStatusResendTime", "750", 0);
 
-	// init autoswitch so the ui will have it correctly even
-	// if the cgame hasn't been started
-	Cvar_Get ("cg_autoswitch", "1", CVAR_ARCHIVE);
-
 	m_pitch = Cvar_Get ("m_pitch", "0.022", CVAR_ARCHIVE);
 	m_yaw = Cvar_Get ("m_yaw", "0.022", CVAR_ARCHIVE);
 	m_forward = Cvar_Get ("m_forward", "0.25", CVAR_ARCHIVE);
@@ -3380,7 +3576,7 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 		if ( cl_pinglist[i].adr.port && !cl_pinglist[i].time && NET_CompareAdr( from, cl_pinglist[i].adr ) )
 		{
 			// calc ping time
-			cl_pinglist[i].time = cls.realtime - cl_pinglist[i].start + 1;
+			cl_pinglist[i].time = Sys_Milliseconds() - cl_pinglist[i].start;
 			Com_DPrintf( "ping time %dms from %s\n", cl_pinglist[i].time, NET_AdrToString( from ) );
 
 			// save of info
@@ -3697,7 +3893,6 @@ void CL_GlobalServers_f( void ) {
 	netadr_t	to;
 	int			count, i, masterNum;
 	char		command[1024], *masteraddress;
-	char		*cmdname;
 	
 	if ((count = Cmd_Argc()) < 3 || (masterNum = atoi(Cmd_Argv(1))) < 0 || masterNum > 4)
 	{
@@ -3732,17 +3927,10 @@ void CL_GlobalServers_f( void ) {
 	cls.numglobalservers = -1;
 	cls.pingUpdateSource = AS_GLOBAL;
 
-	// Use the extended query for IPv6 masters
-	if (to.type == NA_IP6 || to.type == NA_MULTICAST6)
-	{
-		cmdname = "getserversExt " GAMENAME_FOR_MASTER;
-
-		// TODO: test if we only have an IPv6 connection. If it's the case,
-		//       request IPv6 servers only by appending " ipv6" to the command
-	}
-	else
-		cmdname = "getservers";
-	Com_sprintf( command, sizeof(command), "%s %s", cmdname, Cmd_Argv(2) );
+	// TODO: test if we only have an IPv6 connection. If it's the case,
+	//       request IPv6 servers only by appending " ipv6" to the command
+	Com_sprintf( command, sizeof(command), "getserversExt "
+		GAMENAME_FOR_MASTER " %s", Cmd_Argv(2) );
 
 	for (i=3; i < count; i++)
 	{
@@ -3780,7 +3968,7 @@ void CL_GetPing( int n, char *buf, int buflen, int *pingtime )
 	if (!time)
 	{
 		// check for timeout
-		time = cls.realtime - cl_pinglist[n].start;
+		time = Sys_Milliseconds() - cl_pinglist[n].start;
 		maxPing = Cvar_VariableIntegerValue( "cl_maxPing" );
 		if( maxPing < 100 ) {
 			maxPing = 100;
@@ -3887,7 +4075,7 @@ ping_t* CL_GetFreePing( void )
 		{
 			if (!pingptr->time)
 			{
-				if (cls.realtime - pingptr->start < 500)
+				if (Sys_Milliseconds() - pingptr->start < 500)
 				{
 					// still waiting for response
 					continue;
@@ -3912,7 +4100,7 @@ ping_t* CL_GetFreePing( void )
 	for (i=0; i<MAX_PINGREQUESTS; i++, pingptr++ )
 	{
 		// scan for oldest
-		time = cls.realtime - pingptr->start;
+		time = Sys_Milliseconds() - pingptr->start;
 		if (time > oldest)
 		{
 			oldest = time;
@@ -3965,7 +4153,7 @@ void CL_Ping_f( void ) {
 	pingptr = CL_GetFreePing();
 
 	memcpy( &pingptr->adr, &to, sizeof (netadr_t) );
-	pingptr->start = cls.realtime;
+	pingptr->start = Sys_Milliseconds();
 	pingptr->time  = 0;
 
 	CL_SetServerInfoByAddress(pingptr->adr, NULL, 0);
@@ -4037,7 +4225,7 @@ qboolean CL_UpdateVisiblePings_f(int source) {
 							}
 						}
 						memcpy(&cl_pinglist[j].adr, &server[i].adr, sizeof(netadr_t));
-						cl_pinglist[j].start = cls.realtime;
+						cl_pinglist[j].start = Sys_Milliseconds();
 						cl_pinglist[j].time = 0;
 						NET_OutOfBandPrint( NS_CLIENT, cl_pinglist[j].adr, "getinfo xxx" );
 						slots++;

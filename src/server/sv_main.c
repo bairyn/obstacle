@@ -37,6 +37,8 @@ cvar_t	*sv_zombietime;			// seconds to sink messages after disconnect
 cvar_t	*sv_rconPassword;		// password for remote server commands
 cvar_t	*sv_privatePassword;	// password for the privateClient slots
 cvar_t	*sv_allowDownload;
+cvar_t	*sv_wwwDownload;
+cvar_t	*sv_wwwBaseURL;
 cvar_t	*sv_maxclients;
 
 cvar_t	*sv_privateClients;		// number of clients reserved for password
@@ -72,7 +74,7 @@ SV_ExpandNewlines
 Converts newlines to "\n" so a line prints nicer
 ===============
 */
-char	*SV_ExpandNewlines( char *in ) {
+static char	*SV_ExpandNewlines( char *in ) {
 	static	char	string[1024];
 	int		l;
 
@@ -95,10 +97,11 @@ char	*SV_ExpandNewlines( char *in ) {
 ======================
 SV_ReplacePendingServerCommands
 
-  This is ugly
+FIXME: This is ugly
 ======================
 */
-int SV_ReplacePendingServerCommands( client_t *client, const char *cmd ) {
+#if 0 // unused
+static int SV_ReplacePendingServerCommands( client_t *client, const char *cmd ) {
 	int i, index, csnum1, csnum2;
 
 	for ( i = client->reliableSent+1; i <= client->reliableSequence; i++ ) {
@@ -115,6 +118,7 @@ int SV_ReplacePendingServerCommands( client_t *client, const char *cmd ) {
 	}
 	return qfalse;
 }
+#endif
 
 /*
 ======================
@@ -221,52 +225,89 @@ but not on every player enter or exit.
 #define	HEARTBEAT_MSEC	300*1000
 #define	HEARTBEAT_GAME	"Tremulous"
 void SV_MasterHeartbeat( void ) {
-	static netadr_t	adr[MAX_MASTER_SERVERS];
+	static netadr_t	adr[MAX_MASTER_SERVERS][2]; // [2] for v4 and v6 address for the same address string.
 	int			i;
 	int			res;
+	int			netenabled;
+
+	netenabled = Cvar_VariableIntegerValue("net_enabled");
 
 	// "dedicated 1" is for lan play, "dedicated 2" is for inet public play
-	if ( !com_dedicated || com_dedicated->integer != 2 ) {
+	if (!com_dedicated || com_dedicated->integer != 2 || !(netenabled & (NET_ENABLEV4 | NET_ENABLEV6)))
 		return;		// only dedicated servers send heartbeats
-	}
 
 	// if not time yet, don't send anything
-	if ( svs.time < svs.nextHeartbeatTime ) {
+	if ( svs.time < svs.nextHeartbeatTime )
 		return;
-	}
+
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
-
 	// send to group masters
-	for ( i = 0 ; i < MAX_MASTER_SERVERS ; i++ ) {
-		if ( !sv_master[i]->string[0] ) {
+	for (i = 0; i < MAX_MASTER_SERVERS; i++)
+	{
+		if(!sv_master[i]->string[0])
 			continue;
-		}
 
 		// see if we haven't already resolved the name
 		// resolving usually causes hitches on win95, so only
 		// do it when needed
-		if ( sv_master[i]->modified ) {
+		if(sv_master[i]->modified || (adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD))
+		{
 			sv_master[i]->modified = qfalse;
-	
-			Com_Printf( "Resolving %s\n", sv_master[i]->string );
-			res = NET_StringToAdr( sv_master[i]->string, &adr[i], NA_UNSPEC );
-			if ( !res ) {
-				Com_Printf( "Couldn't resolve address: %s\n", sv_master[i]->string );
+			
+			if(netenabled & NET_ENABLEV4)
+			{
+				Com_Printf("Resolving %s (IPv4)\n", sv_master[i]->string);
+				res = NET_StringToAdr(sv_master[i]->string, &adr[i][0], NA_IP);
+
+				if(res == 2)
+				{
+					// if no port was specified, use the default master port
+					adr[i][0].port = BigShort(PORT_MASTER);
+				}
+				
+				if(res)
+					Com_Printf( "%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(adr[i][0]));
+				else
+					Com_Printf( "%s has no IPv4 address.\n", sv_master[i]->string);
+			}
+			
+			if(netenabled & NET_ENABLEV6)
+			{
+				Com_Printf("Resolving %s (IPv6)\n", sv_master[i]->string);
+				res = NET_StringToAdr(sv_master[i]->string, &adr[i][1], NA_IP6);
+
+				if(res == 2)
+				{
+					// if no port was specified, use the default master port
+					adr[i][1].port = BigShort(PORT_MASTER);
+				}
+				
+				if(res)
+					Com_Printf( "%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(adr[i][1]));
+				else
+					Com_Printf( "%s has no IPv6 address.\n", sv_master[i]->string);
+			}
+
+			if(adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD)
+			{
+				Com_Printf("Couldn't resolve address: %s\n", sv_master[i]->string);
+				Cvar_Set(sv_master[i]->name, "");
+				sv_master[i]->modified = qfalse;
 				continue;
 			}
-			if ( res == 2 ) {
-				// if no port was specified, use the default master port
-				adr[i].port = BigShort( PORT_MASTER );
-			}
-			Com_Printf( "%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(adr[i]));
 		}
 
 
 		Com_Printf ("Sending heartbeat to %s\n", sv_master[i]->string );
+
 		// this command should be changed if the server info / status format
 		// ever incompatably changes
-		NET_OutOfBandPrint( NS_SERVER, adr[i], "heartbeat %s\n", HEARTBEAT_GAME );
+
+		if(adr[i][0].type != NA_BAD)
+			NET_OutOfBandPrint( NS_SERVER, adr[i][0], "heartbeat %s\n", HEARTBEAT_GAME );
+		if(adr[i][1].type != NA_BAD)
+			NET_OutOfBandPrint( NS_SERVER, adr[i][1], "heartbeat %s\n", HEARTBEAT_GAME );
 	}
 }
 
@@ -297,28 +338,29 @@ SV_MasterGameStat
 */
 void SV_MasterGameStat( const char *data )
 {
-	static netadr_t	adr;
+  netadr_t adr;
 
-	if( !com_dedicated || com_dedicated->integer != 2 )
-		return;		// only dedicated servers send stats
+  if( !com_dedicated || com_dedicated->integer != 2 )
+    return; // only dedicated servers send stats
 
   Com_Printf( "Resolving %s\n", MASTER_SERVER_NAME );
-  if( !NET_StringToAdr( MASTER_SERVER_NAME, &adr, NA_IP ) )
+
+  switch( NET_StringToAdr( MASTER_SERVER_NAME, &adr, NA_UNSPEC ) )
   {
-    Com_Printf( "Couldn't resolve address: %s\n", MASTER_SERVER_NAME );
-    return;
-  }
-  else
-  {
-    if( !strstr( ":", MASTER_SERVER_NAME ) )
+    case 0:
+      Com_Printf( "Couldn't resolve master address: %s\n", MASTER_SERVER_NAME );
+      return;
+
+    case 2:
       adr.port = BigShort( PORT_MASTER );
-
-    Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", MASTER_SERVER_NAME,
-      adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3],
-      BigShort( adr.port ) );
+    default:
+      break;
   }
 
-  Com_Printf ("Sending gamestat to %s\n", MASTER_SERVER_NAME );
+  Com_Printf( "%s resolved to %s\n", MASTER_SERVER_NAME,
+              NET_AdrToStringwPort( adr ) );
+
+  Com_Printf( "Sending gamestat to %s\n", MASTER_SERVER_NAME );
   NET_OutOfBandPrint( NS_SERVER, adr, "gamestat %s", data );
 }
 
@@ -339,7 +381,7 @@ and all connected players.  Used for getting detailed information after
 the simple info query.
 ================
 */
-void SVC_Status( netadr_t from ) {
+static void SVC_Status( netadr_t from ) {
 	char	player[1024];
 	char	status[MAX_MSGLEN];
 	int		i;
@@ -446,7 +488,7 @@ SVC_FlushRedirect
 
 ================
 */
-void SV_FlushRedirect( char *outputbuf ) {
+static void SV_FlushRedirect( char *outputbuf ) {
 	NET_OutOfBandPrint( NS_SERVER, svs.redirectAddress, "print\n%s", outputbuf );
 }
 
@@ -459,7 +501,7 @@ Shift down the remaining args
 Redirect all printfs
 ===============
 */
-void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
+static void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	qboolean	valid;
 	unsigned int time;
 	char		remaining[1024];
@@ -480,10 +522,10 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	if ( !strlen( sv_rconPassword->string ) ||
 		strcmp (Cmd_Argv(1), sv_rconPassword->string) ) {
 		valid = qfalse;
-		Com_Printf ("Bad rcon from %s:\n%s\n", NET_AdrToString (from), Cmd_Argv(2) );
+		Com_Printf ("Bad rcon from %s: %s\n", NET_AdrToString (from), Cmd_ArgsFrom(2) );
 	} else {
 		valid = qtrue;
-		Com_Printf ("Rcon from %s:\n%s\n", NET_AdrToString (from), Cmd_Argv(2) );
+		Com_Printf ("Rcon from %s: %s\n", NET_AdrToString (from), Cmd_ArgsFrom(2) );
 	}
 
 	// start redirecting all print outputs to the packet
@@ -529,7 +571,7 @@ Clients that are in the game can still send
 connectionless packets.
 =================
 */
-void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
+static void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	char	*s;
 	char	*c;
 
@@ -551,7 +593,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
   } else if (!Q_stricmp(c, "getinfo")) {
 		SVC_Info( from );
 	} else if (!Q_stricmp(c, "getchallenge")) {
-		SV_GetChallenge( from );
+		SV_GetChallenge(from);
 	} else if (!Q_stricmp(c, "connect")) {
 		SV_DirectConnect( from );
 	} else if (!Q_stricmp(c, "rcon")) {
@@ -638,7 +680,7 @@ SV_CalcPings
 Updates the cl->ping variables
 ===================
 */
-void SV_CalcPings( void ) {
+static void SV_CalcPings( void ) {
 	int			i, j;
 	client_t	*cl;
 	int			total, count;
@@ -694,7 +736,7 @@ for a few seconds to make sure any final reliable message gets resent
 if necessary
 ==================
 */
-void SV_CheckTimeouts( void ) {
+static void SV_CheckTimeouts( void ) {
 	int		i;
 	client_t	*cl;
 	int			droppoint;
@@ -735,7 +777,7 @@ void SV_CheckTimeouts( void ) {
 SV_CheckPaused
 ==================
 */
-qboolean SV_CheckPaused( void ) {
+static qboolean SV_CheckPaused( void ) {
 	int		count;
 	client_t	*cl;
 	int		i;

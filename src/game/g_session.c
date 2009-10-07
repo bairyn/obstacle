@@ -136,6 +136,9 @@ void G_WriteSessionData( void )
 {
   int    i;
 
+  //FIXME: What's this for?
+  trap_Cvar_Set( "session", va( "%i", 0 ) );
+
   for( i = 0 ; i < level.maxclients ; i++ )
   {
     if( level.clients[ i ].pers.connected == CON_CONNECTED )

@@ -43,9 +43,9 @@ static const char *MonthAbbrev[ ] =
 
 static const char *netSources[ ] =
 {
-  "LAN",
-  "Mplayer",
   "Internet",
+  "Mplayer",
+  "LAN",
   "Favorites"
 };
 
@@ -100,9 +100,6 @@ vmCvar_t  ui_winner;
 
 vmCvar_t  ui_emoticons;
 
-vmCvar_t  ui_scrimTeamName;
-vmCvar_t  ui_scrimWeapon;
-
 static cvarTable_t    cvarTable[ ] =
 {
   { &ui_browserShowFull, "ui_browserShowFull", "1", CVAR_ARCHIVE },
@@ -126,9 +123,7 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_textWrapCache, "ui_textWrapCache", "1", CVAR_ARCHIVE },
   { &ui_developer, "ui_developer", "0", CVAR_ARCHIVE | CVAR_CHEAT },
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
-  { &ui_winner, "ui_winner", "", CVAR_ROM },
-  { &ui_scrimTeamName, "ui_scrimTeamName", "UnnamedTeam", CVAR_ARCHIVE },
-  { &ui_scrimWeapon, "ui_scrimWeapon", "rifle", CVAR_ARCHIVE },
+  { &ui_winner, "ui_winner", "", CVAR_ROM }
 };
 
 static int    cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -150,9 +145,9 @@ void UI_SetMousePosition( int x, int y );
 void UI_Refresh( int realtime );
 qboolean UI_IsFullscreen( void );
 void UI_SetActiveMenu( uiMenuCommand_t menu );
-intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
-                 int arg4, int arg5, int arg6, int arg7,
-                 int arg8, int arg9, int arg10, int arg11  )
+Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
+                          int arg4, int arg5, int arg6, int arg7,
+                          int arg8, int arg9, int arg10, int arg11  )
 {
   switch( command )
   {
@@ -173,6 +168,13 @@ intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
 
     case UI_MOUSE_EVENT:
       UI_MouseEvent( arg0, arg1 );
+      return 0;
+
+    case UI_MOUSE_POSITION:
+      return UI_MousePosition( );
+
+    case UI_SET_MOUSE_POSITION:
+      UI_SetMousePosition( arg0, arg1 );
       return 0;
 
     case UI_REFRESH:
@@ -905,6 +907,8 @@ static void UI_BuildServerDisplayList( qboolean force )
       if( ping > 0 )
       {
         trap_LAN_MarkServerVisible( ui_netSource.integer, i, qfalse );
+        if( Info_ValueForKey( info, "label" )[0] )
+          uiInfo.serverStatus.numFeaturedServers++;
         numinvisible++;
       }
     }
@@ -1041,6 +1045,7 @@ static void UI_StartServerRefresh( qboolean full )
   uiInfo.serverStatus.nextDisplayRefresh = uiInfo.uiDC.realTime + 1000;
   // clear number of displayed servers
   uiInfo.serverStatus.numDisplayServers = 0;
+  uiInfo.serverStatus.numFeaturedServers = 0;
   uiInfo.serverStatus.numPlayersOnServers = 0;
   // mark all servers as visible so we store ping updates for them
   trap_LAN_MarkServerVisible( ui_netSource.integer, -1, qtrue );
@@ -1439,7 +1444,7 @@ void UI_LoadHelp( const char *helpFile )
 {
   pc_token_t token;
   int handle, start;
-  char title[ 64 ], buffer[ 16384 ];
+  char title[ 32 ], buffer[ 1024 ];
 
   start = trap_Milliseconds();
   
@@ -1472,19 +1477,19 @@ void UI_LoadHelp( const char *helpFile )
       buffer[ 0 ] = 0;
       Q_strcat( buffer, sizeof( buffer ), title );
       Q_strcat( buffer, sizeof( buffer ), "\n\n" );
-      while( 1 )
+      while( trap_Parse_ReadToken( handle, &token ) &&
+             token.string[0] != 0 && token.string[0] != '}' )
       {
-        if( !trap_Parse_ReadToken( handle, &token ) ||
-            token.string[0] == 0 || token.string[0] == '}' )
-          break;
         Q_strcat( buffer, sizeof( buffer ), token.string );
       }
+
       uiInfo.helpList[ uiInfo.helpCount ].text = String_Alloc( title );
       uiInfo.helpList[ uiInfo.helpCount ].v.text = String_Alloc( buffer );
       uiInfo.helpList[ uiInfo.helpCount ].type = INFOTYPE_TEXT;
       uiInfo.helpCount++;
       title[ 0 ] = 0;
-    } else
+    }
+    else
       Q_strcat( title, sizeof( title ), token.string );
   }
 
@@ -1508,7 +1513,7 @@ void UI_Load( void )
   UI_LoadMenus( "ui/ingame.txt", qfalse );
   UI_LoadMenus( "ui/tremulous.txt", qfalse );
   UI_LoadHelp( "ui/help.txt" );
-  Menus_CloseAll( qtrue );
+  Menus_CloseAll( );
   Menus_ActivateByName( lastName );
 
 }
@@ -1573,7 +1578,7 @@ static void UI_DrawInfoPane( menuItem_t *item, rectDef_t *rect, float text_x, fl
     case INFOTYPE_CLASS:
       value = ( BG_ClassCanEvolveFromTo( class, item->v.pclass, credits,
                                          UI_GetCurrentAlienStage(), 0 ) +
-                ALIEN_CREDITS_PER_FRAG - 1 ) / ALIEN_CREDITS_PER_FRAG;
+                ALIEN_CREDITS_PER_KILL - 1 ) / ALIEN_CREDITS_PER_KILL;
 
       if( value < 1 )
       {
@@ -1887,9 +1892,10 @@ static void UI_DrawGLInfo( rectDef_t *rect, float scale, int textalign, int text
 static void UI_OwnerDraw( float x, float y, float w, float h,
                           float text_x, float text_y, int ownerDraw,
                           int ownerDrawFlags, int align,
-                          int textalign, int textvalign, float special,
+                          int textalign, int textvalign, float borderSize,
                           float scale, vec4_t foreColor, vec4_t backColor,
-                          qhandle_t shader, int textStyle )
+                          qhandle_t shader,
+                          int textStyle )
 {
   rectDef_t       rect;
 
@@ -1902,11 +1908,6 @@ static void UI_OwnerDraw( float x, float y, float w, float h,
   {
     case UI_TEAMINFOPANE:
       UI_DrawInfoPane( &uiInfo.teamList[ uiInfo.teamIndex ],
-                       &rect, text_x, text_y, scale, textalign, textvalign, foreColor, textStyle );
-      break;
-
-    case UI_SCRIMTEAMINFOPANE:
-      UI_DrawInfoPane( &uiInfo.scrimTeamList[ uiInfo.scrimTeamIndex ],
                        &rect, text_x, text_y, scale, textalign, textvalign, foreColor, textStyle );
       break;
 
@@ -2193,151 +2194,6 @@ static void UI_LoadTeams( void )
 
 /*
 ===============
-UI_LoadScrimTeams
-===============
-*/
-static void UI_LoadScrimTeams(void)
-{
-  char cs[1024];
-  char buf[1024] = {""}; int i = 0;
-  char *p = cs;
-
-  trap_GetConfigString(CS_SCRIMTEAMS, cs, sizeof(cs));
-
-  uiInfo.scrimTeamCount = 0;
-
-  while(*p && i < sizeof(buf) - 1 && uiInfo.scrimTeamCount < sizeof(uiInfo.scrimTeamList) / sizeof(uiInfo.scrimTeamList[0]))
-  {
-    if(*p > 0x02)
-    {
-      buf[i++] = *p++;
-      buf[i]   = 0;
-    }
-    else
-    {
-      if(*p == 0x01)
-      {
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].v.text = String_Alloc(buf);
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].type = INFOTYPE_TEXT;
-
-        uiInfo.scrimTeamCount++;
-      }
-      else if(*p == 0x02)
-      {
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].text = String_Alloc(buf);
-        uiInfo.scrimTeamList[uiInfo.scrimTeamCount].cmd  = String_Alloc(va("cmd joinScrim \"The_team_doesn't_exist\" \"%s\"\n", buf));
-      }
-
-      i = buf[0] = 0;
-      p++;
-    }
-  }
-}
-
-/*
-===============
-UI_LoadScrimWeapons
-===============
-*/
-static void UI_LoadScrimWeapons(void)
-{
-  int i;
-
-  // arbitrary list of scrim weapons
-  uiInfo.scrimWeaponCount = 10;
-
-  uiInfo.scrimWeaponList[0].text = "Rifle";
-  uiInfo.scrimWeaponList[0].v.text = "rifle";
-
-  uiInfo.scrimWeaponList[1].text = "Shotgun";
-  uiInfo.scrimWeaponList[1].v.text = "shotgun";
-
-  uiInfo.scrimWeaponList[2].text = "Chaingun";
-  uiInfo.scrimWeaponList[2].v.text = "chaingun";
-
-  uiInfo.scrimWeaponList[3].text = "Las Gun";
-  uiInfo.scrimWeaponList[3].v.text = "lgun";
-
-  uiInfo.scrimWeaponList[4].text = "Mass Driver";
-  uiInfo.scrimWeaponList[4].v.text = "mdriver";
-
-  uiInfo.scrimWeaponList[5].text = "Pulse Rifle";
-  uiInfo.scrimWeaponList[5].v.text = "prifle";
-
-  uiInfo.scrimWeaponList[6].text = "Lucifer Cannon";
-  uiInfo.scrimWeaponList[6].v.text = "lcannon";
-
-  uiInfo.scrimWeaponList[7].text = "Flamer";
-  uiInfo.scrimWeaponList[7].v.text = "flamer";
-
-  uiInfo.scrimWeaponList[8].text = "Pain Saw";
-  uiInfo.scrimWeaponList[8].v.text = "psaw";
-
-  uiInfo.scrimWeaponList[9].text = "Grenade";
-  uiInfo.scrimWeaponList[9].v.text = "gren";
-
-  for(i = 0; i < uiInfo.scrimWeaponCount; i++)
-  {
-    uiInfo.scrimWeaponList[i].type = INFOTYPE_TEXT;
-    if(strcmp(uiInfo.scrimWeaponList[i].v.text, ui_scrimWeapon.string) == 0)
-    {
-      uiInfo.scrimWeaponIndex = i;
-      Menu_SetFeederSelection( NULL, FEEDER_SCRIMWEAPONS, i, NULL );
-    }
-  }
-}
-
-/*
-===============
-UI_LoadLayouts
-===============
-*/
-static void UI_LoadLayouts(void)
-{
-  // reset layout list
-  uiInfo.layoutCount = 0;
-
-  // ask server for new layout list
-  trap_Cmd_ExecuteText(EXEC_APPEND, va("cmd getLayouts \"%s\"", uiInfo.mapList[ui_selectedMap.integer].mapLoadName));
-}
-
-/*
-===============
-UI_SetLayouts_f
-===============
-*/
-void UI_SetLayouts_f( void )
-{
-  char buf[1024] = {""}; int i = 0;
-  const char *layouts = UI_Argv(1);
-
-  uiInfo.layoutCount = 0;
-
-  while(*layouts && i < sizeof(buf) - 1)
-  {
-    if(*layouts == ' ')
-    {
-      menuItem_t *m = &uiInfo.layoutList[uiInfo.layoutCount++];
-
-      m->v.text = String_Alloc(buf);
-      EXCOLOR(buf);
-      m->text = String_Alloc(buf);
-      m->type = INFOTYPE_TEXT;
-
-      i = buf[0] = 0;
-    }
-    else
-    {
-      buf[i++] = *layouts;
-      buf[i]   = 0;
-    }
-
-    layouts++;
-  }
-}
-
-/*
-===============
 UI_AddClass
 ===============
 */
@@ -2404,6 +2260,7 @@ static void UI_LoadHumanItems( void )
 
   if( BG_WeaponIsAllowed( WP_MACHINEGUN ) )
     UI_AddItem( WP_MACHINEGUN );
+
   if( BG_WeaponIsAllowed( WP_HBUILD ) )
     UI_AddItem( WP_HBUILD );
 }
@@ -2899,7 +2756,6 @@ static void UI_Update( const char *name )
         trap_Cvar_SetValue( "r_fastSky", 0 );
         trap_Cvar_SetValue( "r_inGameVideo", 1 );
         trap_Cvar_SetValue( "cg_shadows", 1 );
-        trap_Cvar_SetValue( "cg_brassTime", 2500 );
         trap_Cvar_SetValue( "cg_bounceParticles", 1 );
         trap_Cvar_Set( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR" );
         break;
@@ -2914,7 +2770,6 @@ static void UI_Update( const char *name )
         trap_Cvar_SetValue( "r_texturebits", 0 );
         trap_Cvar_SetValue( "r_fastSky", 0 );
         trap_Cvar_SetValue( "r_inGameVideo", 1 );
-        trap_Cvar_SetValue( "cg_brassTime", 2500 );
         trap_Cvar_Set( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR" );
         trap_Cvar_SetValue( "cg_shadows", 0 );
         trap_Cvar_SetValue( "cg_bounceParticles", 0 );
@@ -2931,7 +2786,6 @@ static void UI_Update( const char *name )
         trap_Cvar_SetValue( "cg_shadows", 0 );
         trap_Cvar_SetValue( "r_fastSky", 1 );
         trap_Cvar_SetValue( "r_inGameVideo", 0 );
-        trap_Cvar_SetValue( "cg_brassTime", 0 );
         trap_Cvar_SetValue( "cg_bounceParticles", 0 );
         trap_Cvar_Set( "r_texturemode", "GL_LINEAR_MIPMAP_NEAREST" );
         break;
@@ -2945,7 +2799,6 @@ static void UI_Update( const char *name )
         trap_Cvar_SetValue( "r_picmip", 2 );
         trap_Cvar_SetValue( "r_texturebits", 16 );
         trap_Cvar_SetValue( "cg_shadows", 0 );
-        trap_Cvar_SetValue( "cg_brassTime", 0 );
         trap_Cvar_SetValue( "r_fastSky", 1 );
         trap_Cvar_SetValue( "r_inGameVideo", 0 );
         trap_Cvar_SetValue( "cg_bounceParticles", 0 );
@@ -2990,8 +2843,6 @@ static void UI_RunMenuScript( char **args )
       UI_LoadArenas();
       Menu_SetFeederSelection( NULL, FEEDER_MAPS, 0, "createserver" );
     }
-    else if( Q_stricmp( name, "loadLayouts" ) == 0 )
-      UI_LoadLayouts();
     else if( Q_stricmp( name, "loadServerInfo" ) == 0 )
       UI_ServerInfo();
     else if( Q_stricmp( name, "saveControls" ) == 0 )
@@ -3046,18 +2897,9 @@ static void UI_RunMenuScript( char **args )
       UI_LoadMods();
     else if( Q_stricmp( name, "LoadTeams" ) == 0 )
       UI_LoadTeams( );
-    else if( Q_stricmp( name, "LoadScrimTeams" ) == 0 )
-      UI_LoadScrimTeams( );
-    else if( Q_stricmp( name, "LoadScrimWeapons" ) == 0 )
-      UI_LoadScrimWeapons( );
     else if( Q_stricmp( name, "JoinTeam" ) == 0 )
     {
       if( ( cmd = uiInfo.teamList[ uiInfo.teamIndex ].cmd ) )
-        trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
-    }
-    else if( Q_stricmp( name, "JoinScrimTeam" ) == 0 )
-    {
-      if( ( cmd = uiInfo.scrimTeamList[ uiInfo.scrimTeamIndex ].cmd ) )
         trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
     }
     else if( Q_stricmp( name, "LoadHumanItems" ) == 0 )
@@ -3099,7 +2941,7 @@ static void UI_RunMenuScript( char **args )
       //disallow the menu if it would be empty
 
       if( uiInfo.alienUpgradeCount <= 0 )
-        Menus_CloseAll( qfalse );
+        Menus_CloseAll( );
     }
     else if( Q_stricmp( name, "UpgradeToNewClass" ) == 0 )
     {
@@ -3147,15 +2989,13 @@ static void UI_RunMenuScript( char **args )
       char buffer[ MAX_CVAR_VALUE_STRING ];
       trap_Cvar_VariableStringBuffer( "ui_sayBuffer", buffer, sizeof( buffer ) );
 
-      if( !buffer[ 0 ] )
+      if( buffer[ 0 ] )
       {
+        if( uiInfo.chatTeam )
+          trap_Cmd_ExecuteText( EXEC_APPEND, va( "say_team \"%s\"\n", buffer ) );
+        else
+          trap_Cmd_ExecuteText( EXEC_APPEND, va( "say \"%s\"\n", buffer ) );
       }
-      else if( uiInfo.chatTargetClientNum != -1 )
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "tell %i \"%s\"\n", uiInfo.chatTargetClientNum, buffer  ) );
-      else if( uiInfo.chatTeam )
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "say_team \"%s\"\n", buffer ) );
-      else
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "say \"%s\"\n", buffer ) );
     }
     else if( Q_stricmp( name, "playMovie" ) == 0 )
     {
@@ -3255,7 +3095,7 @@ static void UI_RunMenuScript( char **args )
     {
       trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
       trap_Key_SetCatcher( KEYCATCH_UI );
-      Menus_CloseAll( qtrue );
+      Menus_CloseAll( );
       Menus_ActivateByName( "main" );
     }
     else if( Q_stricmp( name, "ServerSort" ) == 0 )
@@ -3280,23 +3120,14 @@ static void UI_RunMenuScript( char **args )
       trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
       trap_Key_ClearStates();
       trap_Cvar_Set( "cl_paused", "0" );
-      Menus_CloseAll( qfalse );
+      Menus_CloseAll( );
     }
     else if( Q_stricmp( name, "voteMap" ) == 0 )
     {
       if( ui_selectedMap.integer >= 0 && ui_selectedMap.integer < uiInfo.mapCount )
       {
-        if( uiInfo.layoutIndex >= 0 && uiInfo.layoutIndex < uiInfo.layoutCount && strcmp(uiInfo.layoutList[uiInfo.layoutIndex].v.text, "*BUILTIN*") != 0 )
-        {
-          trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote map \"%s\" \"%s\"\n",
-                                uiInfo.mapList[ui_selectedMap.integer].mapLoadName,
-                                uiInfo.layoutList[uiInfo.layoutIndex].v.text ) );
-        }
-        else
-        {
-          trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote map %s\n",
-                                uiInfo.mapList[ui_selectedMap.integer].mapLoadName ) );
-        }
+        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote map %s\n",
+                              uiInfo.mapList[ui_selectedMap.integer].mapLoadName ) );
       }
     }
     else if( Q_stricmp( name, "voteKick" ) == 0 )
@@ -3307,49 +3138,13 @@ static void UI_RunMenuScript( char **args )
                                                uiInfo.clientNums[ uiInfo.playerIndex ] ) );
       }
     }
-    else if( Q_stricmp( name, "voteHide" ) == 0 )
+    else if( Q_stricmp( name, "voteMute" ) == 0 )
     {
       if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
       {
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote hide %d\n",
+        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote mute %d\n",
                                                uiInfo.clientNums[ uiInfo.playerIndex ] ) );
       }
-    }
-    else if( Q_stricmp( name, "voteUnhide" ) == 0 )
-    {
-      if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
-      {
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "callvote unhide %d\n",
-                                               uiInfo.clientNums[ uiInfo.playerIndex ] ) );
-      }
-    }
-    else if( Q_stricmp( name, "testHidden" ) == 0 )
-    {
-      if( uiInfo.playerIndex >= 0 && uiInfo.playerIndex < uiInfo.playerCount )
-      {
-        trap_Cmd_ExecuteText( EXEC_APPEND, va( "testHidden %d\n",
-                                               uiInfo.clientNums[ uiInfo.playerIndex ] ) );
-      }
-    }
-    else if( Q_stricmp( name, "leaveScrimTeam" ) == 0 )
-    {
-      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd leaveScrim\n" );
-    }
-    else if( Q_stricmp( name, "joinNewScrimTeam" ) == 0 )
-    {
-      trap_Cmd_ExecuteText( EXEC_APPEND, va( "cmd joinScrim \"%s\" \"%s\"\n", ui_scrimWeapon.string, ui_scrimTeamName.string ) );
-    }
-    else if( Q_stricmp( name, "voteStartScrimA" ) == 0 )
-    {
-      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd callvote startscrim a\n" );
-    }
-    else if( Q_stricmp( name, "voteStartScrimM" ) == 0 )
-    {
-      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd callvote startscrim m\n" );
-    }
-    else if( Q_stricmp( name, "voteEndScrim" ) == 0 )
-    {
-      trap_Cmd_ExecuteText( EXEC_APPEND, "cmd callvote endscrim m\n" );
     }
     else if( Q_stricmp( name, "voteUnMute" ) == 0 )
     {
@@ -3543,10 +3338,11 @@ static int UI_FeederCount( float feederID )
     return uiInfo.movieCount;
   else if( feederID == FEEDER_MAPS )
     return uiInfo.mapCount;
-  else if( feederID == FEEDER_LAYOUTS )
-    return uiInfo.layoutCount;
   else if( feederID == FEEDER_SERVERS )
-    return uiInfo.serverStatus.numDisplayServers;
+    return uiInfo.serverStatus.numDisplayServers -
+           uiInfo.serverStatus.numFeaturedServers;
+  else if( feederID == FEEDER_FEATURED )
+    return uiInfo.serverStatus.numFeaturedServers;
   else if( feederID == FEEDER_SERVERSTATUS )
     return uiInfo.serverStatusInfo.numLines;
   else if( feederID == FEEDER_FINDPLAYER )
@@ -3581,8 +3377,6 @@ static int UI_FeederCount( float feederID )
     return uiInfo.demoCount;
   else if( feederID == FEEDER_TREMTEAMS )
     return uiInfo.teamCount;
-  else if( feederID == FEEDER_SCRIMTREMTEAMS )
-    return uiInfo.scrimTeamCount;
   else if( feederID == FEEDER_TREMHUMANITEMS )
     return uiInfo.humanItemCount;
   else if( feederID == FEEDER_TREMALIENCLASSES )
@@ -3599,8 +3393,6 @@ static int UI_FeederCount( float feederID )
     return uiInfo.humanBuildCount;
   else if( feederID == FEEDER_RESOLUTIONS )
     return uiInfo.numResolutions;
-  else if( feederID == FEEDER_SCRIMWEAPONS )
-    return uiInfo.scrimWeaponCount;
 
   return 0;
 }
@@ -3642,16 +3434,14 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
     int actual;
     return UI_SelectedMap( index, &actual );
   }
-  else if( feederID == FEEDER_LAYOUTS )
+  else if( feederID == FEEDER_SERVERS || feederID == FEEDER_FEATURED )
   {
-    if( index >= 0 && index < uiInfo.layoutCount )
-      return uiInfo.layoutList[index].text;
-  }
-  else if( feederID == FEEDER_SERVERS )
-  {
-    if( index >= 0 && index < uiInfo.serverStatus.numDisplayServers )
+    if( index >= 0 && index < UI_FeederCount( feederID ) )
     {
       int ping;
+
+      if( feederID == FEEDER_SERVERS )
+        index += UI_FeederCount( FEEDER_FEATURED );
 
       if( lastColumn != column || lastTime > uiInfo.uiDC.realTime + 5000 )
       {
@@ -3792,11 +3582,6 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
     if( index >= 0 && index < uiInfo.teamCount )
       return uiInfo.teamList[ index ].text;
   }
-  else if( feederID == FEEDER_SCRIMTREMTEAMS )
-  {
-    if( index >= 0 && index < uiInfo.scrimTeamCount )
-      return uiInfo.scrimTeamList[ index ].text;
-  }
   else if( feederID == FEEDER_TREMHUMANITEMS )
   {
     if( index >= 0 && index < uiInfo.humanItemCount )
@@ -3850,11 +3635,6 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
     Com_sprintf( resolution, sizeof( resolution ), "Custom (%dx%d)", w, h );
     return resolution;
   }
-  else if( feederID == FEEDER_SCRIMWEAPONS )
-  {
-    if( index >= 0 && index < uiInfo.scrimWeaponCount )
-      return uiInfo.scrimWeaponList[ index ].text;
-  }
 
   return "";
 }
@@ -3902,12 +3682,7 @@ static void UI_FeederSelection( float feederID, int index )
     uiInfo.mapList[ui_selectedMap.integer].cinematic =
       trap_CIN_PlayCinematic( va( "%s.roq", uiInfo.mapList[ui_selectedMap.integer].mapLoadName ),
                               0, 0, 0, 0, ( CIN_loop | CIN_silent ) );
-
-    // reload layouts
-    UI_LoadLayouts();
   }
-  else if( feederID == FEEDER_LAYOUTS )
-    uiInfo.layoutIndex = index;
   else if( feederID == FEEDER_SERVERS )
   {
     const char *mapName = NULL;
@@ -3972,8 +3747,6 @@ static void UI_FeederSelection( float feederID, int index )
     uiInfo.demoIndex = index;
   else if( feederID == FEEDER_TREMTEAMS )
     uiInfo.teamIndex = index;
-  else if( feederID == FEEDER_SCRIMTREMTEAMS )
-    uiInfo.scrimTeamIndex = index;
   else if( feederID == FEEDER_TREMHUMANITEMS )
     uiInfo.humanItemIndex = index;
   else if( feederID == FEEDER_TREMALIENCLASSES )
@@ -3992,10 +3765,6 @@ static void UI_FeederSelection( float feederID, int index )
   {
     trap_Cvar_Set( "r_width", va( "%d", uiInfo.resolutions[ index ].w ) );
     trap_Cvar_Set( "r_height", va( "%d", uiInfo.resolutions[ index ].h ) );
-  }
-  else if( feederID == FEEDER_SCRIMWEAPONS )
-  {
-	trap_Cvar_Set("ui_scrimWeapon", uiInfo.scrimWeaponList[index].v.text);
   }
 }
 
@@ -4198,7 +3967,7 @@ void UI_Init( qboolean inGameLoad )
   UI_LoadMenus( "ui/tremulous.txt", qfalse );
   UI_LoadHelp( "ui/help.txt" );
 
-  Menus_CloseAll( qtrue );
+  Menus_CloseAll( );
 
   trap_LAN_LoadCachedServers();
 
@@ -4228,7 +3997,7 @@ void UI_KeyEvent( int key, qboolean down )
     if( menu )
     {
       if( key == K_ESCAPE && down && !Menus_AnyFullScreenVisible() )
-        Menus_CloseAll( qtrue );
+        Menus_CloseAll( );
       else
         Menu_HandleKey( menu, key, down );
     }
@@ -4310,14 +4079,14 @@ void UI_SetActiveMenu( uiMenuCommand_t menu )
         trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
         trap_Key_ClearStates();
         trap_Cvar_Set( "cl_paused", "0" );
-        Menus_CloseAll( qtrue );
+        Menus_CloseAll( );
 
         return;
 
       case UIMENU_MAIN:
         trap_Cvar_Set( "sv_killserver", "1" );
         trap_Key_SetCatcher( KEYCATCH_UI );
-        Menus_CloseAll( qtrue );
+        Menus_CloseAll( );
         Menus_ActivateByName( "main" );
         trap_Cvar_VariableStringBuffer( "com_errorMessage", buf, sizeof( buf ) );
 
@@ -4335,7 +4104,7 @@ void UI_SetActiveMenu( uiMenuCommand_t menu )
         trap_Cvar_Set( "cl_paused", "1" );
         trap_Key_SetCatcher( KEYCATCH_UI );
         UI_BuildPlayerList();
-        Menus_CloseAll( qtrue );
+        Menus_CloseAll( );
         Menus_ActivateByName( "ingame" );
         return;
     }

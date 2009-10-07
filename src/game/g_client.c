@@ -86,44 +86,23 @@ G_AddCreditToClient
 */
 void G_AddCreditToClient( gclient_t *client, short credit, qboolean cap )
 {
+  int capAmount;
+
   if( !client )
     return;
-  if( cap && credit > 0)
-  {
-    if( client->pers.teamSelection == TEAM_ALIENS )
-    {
-      if( client->pers.credit > ALIEN_MAX_CREDITS )
-        return;
-    }
-    else if( client->pers.teamSelection == TEAM_HUMANS )
-    {
-      if( client->pers.credit > HUMAN_MAX_CREDITS )
-        return;
-    }
-  }
 
   client->pers.credit += credit;
+  capAmount = client->pers.teamSelection == TEAM_ALIENS ?
+               ALIEN_MAX_CREDITS : HUMAN_MAX_CREDITS;
 
-  if( cap )
-  {
-    if( client->pers.teamSelection == TEAM_ALIENS )
-    {
-      if( client->pers.credit > ALIEN_MAX_CREDITS )
-        client->pers.credit = ALIEN_MAX_CREDITS;
-    }
-    else if( client->pers.teamSelection == TEAM_HUMANS )
-    {
-      if( client->pers.credit > HUMAN_MAX_CREDITS )
-        client->pers.credit = HUMAN_MAX_CREDITS;
-    }
-  }
+  if( cap && client->pers.credit > capAmount )
+    client->pers.credit = capAmount;
 
   if( client->pers.credit < 0 )
     client->pers.credit = 0;
 
-  //might as well copy to ps here for the hud/spectators
+  // Copy to ps so the client can access it
   client->ps.persistant[ PERS_CREDIT ] = client->pers.credit;
-
 }
 
 
@@ -147,11 +126,6 @@ qboolean SpotWouldTelefrag( gentity_t *spot )
   int       touch[ MAX_GENTITIES ];
   gentity_t *hit;
   vec3_t    mins, maxs;
-
-  if( G_OC_SpotNeverTelefrags() )
-  {
-    return qfalse;
-  }
 
   VectorAdd( spot->s.origin, playerMins, mins );
   VectorAdd( spot->s.origin, playerMaxs, maxs );
@@ -328,7 +302,7 @@ G_SelectAlienSpawnPoint
 go to a random point that doesn't telefrag
 ================
 */
-gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not )
+gentity_t *G_SelectAlienSpawnPoint( vec3_t preference )
 {
   gentity_t *spot;
   int       count;
@@ -339,8 +313,6 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
 
   count = 0;
   spot = NULL;
-
-  G_OC_SelectAlienSpawnPoint();
 
   while( ( spot = G_Find( spot, FOFS( classname ),
     BG_Buildable( BA_A_SPAWN )->entityName ) ) != NULL )
@@ -355,12 +327,6 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
       continue;
 
     if( spot->clientSpawnTime > 0 )
-      continue;
-
-    if( spot->groupID != groupID )
-      continue;
-
-    if( spot == not )
       continue;
 
     if( G_CheckSpawnPoint( spot->s.number, spot->s.origin,
@@ -385,7 +351,7 @@ G_SelectHumanSpawnPoint
 go to a random point that doesn't telefrag
 ================
 */
-gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int groupID, gentity_t *not )
+gentity_t *G_SelectHumanSpawnPoint( vec3_t preference )
 {
   gentity_t *spot;
   int       count;
@@ -396,8 +362,6 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
 
   count = 0;
   spot = NULL;
-
-  G_OC_SelectHumanSpawnPoint();
 
   while( ( spot = G_Find( spot, FOFS( classname ),
     BG_Buildable( BA_H_SPAWN )->entityName ) ) != NULL )
@@ -412,12 +376,6 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
       continue;
 
     if( spot->clientSpawnTime > 0 )
-      continue;
-
-    if( spot->groupID != groupID )
-      continue;
-
-    if( spot == not )
       continue;
 
     if( G_CheckSpawnPoint( spot->s.number, spot->s.origin,
@@ -455,27 +413,23 @@ G_SelectTremulousSpawnPoint
 Chooses a player start, deathmatch start, etc
 ============
 */
-gentity_t *G_SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t origin, vec3_t angles, gentity_t *ent, gentity_t *not )
+gentity_t *G_SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t origin, vec3_t angles )
 {
   gentity_t *spot = NULL;
 
   if( team == TEAM_ALIENS )
-    spot = G_SelectAlienSpawnPoint( preference, ent, GROUP_SPAWN, not );
+    spot = G_SelectAlienSpawnPoint( preference );
   else if( team == TEAM_HUMANS )
-    spot = G_SelectHumanSpawnPoint( preference, ent, GROUP_SPAWN, not );
+    spot = G_SelectHumanSpawnPoint( preference );
 
   //no available spots
   if( !spot )
     return NULL;
 
-#if 1
-  G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, origin );  // no need for checks for both teams
-#else
   if( team == TEAM_ALIENS )
-    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, origin );
+    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, BA_A_SPAWN, origin );
   else if( team == TEAM_HUMANS )
-    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, spot->s.modelindex, origin );
-#endif
+    G_CheckSpawnPoint( spot->s.number, spot->s.origin, spot->s.origin2, BA_H_SPAWN, origin );
 
   VectorCopy( spot->s.angles, angles );
   angles[ ROLL ] = 0;
@@ -756,11 +710,11 @@ void SpawnCorpse( gentity_t *ent )
 
 /*
 ==================
-SetClientViewAngle
+G_SetClientViewAngle
 
 ==================
 */
-void SetClientViewAngle( gentity_t *ent, vec3_t angle )
+void G_SetClientViewAngle( gentity_t *ent, vec3_t angle )
 {
   int     i;
 
@@ -1115,7 +1069,7 @@ void ClientUserinfoChanged( int clientNum )
     if( strcmp( oldname, client->pers.netname ) )
     {
       trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE
-        " renamed to %s\n\"", oldname, client->pers.netname ) );
+        " renamed to %s" S_COLOR_WHITE "\n\"", oldname, client->pers.netname ) );
       G_LogPrintf( "ClientRename: %i [%s] (%s) \"%s^7\" -> \"%s^7\"\n", clientNum,
          client->pers.ip, client->pers.guid, oldname, client->pers.netname );
       G_admin_namelog_update( client, qfalse );
@@ -1261,19 +1215,20 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   client = &level.clients[ clientNum ];
   ent->client = client;
   memset( client, 0, sizeof( *client ) );
+
   trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 
   value = Info_ValueForKey( userinfo, "cl_guid" );
   Q_strncpyz( client->pers.guid, value, sizeof( client->pers.guid ) );
 
+  value = Info_ValueForKey( userinfo, "ip" );
+  Q_strncpyz( client->pers.ip, value, sizeof( client->pers.ip ) );
+
   // check for admin ban
-  if( G_admin_ban_check( userinfo, reason, sizeof( reason ) ) )
+  if( G_admin_ban_check( ent, reason, sizeof( reason ) ) )
   {
     return va( "%s", reason );
   }
-
-  value = Info_ValueForKey( userinfo, "ip" );
-  Q_strncpyz( client->pers.ip, value, sizeof( client->pers.ip ) );
 
   // check for a password
   value = Info_ValueForKey( userinfo, "password" );
@@ -1282,20 +1237,18 @@ char *ClientConnect( int clientNum, qboolean firstTime )
       strcmp( g_password.string, value ) != 0 )
     return "Invalid password";
 
-
   // add guid to session so we don't have to keep parsing userinfo everywhere
   for( i = 0; i < sizeof( client->pers.guid ) - 1 &&
               isxdigit( client->pers.guid[ i ] ); i++ );
+
   if( i < sizeof( client->pers.guid ) - 1 )
-  {
-    //return "Invalid GUID";
-    Com_Memset( &client->pers.guid, 'X', 32 );
-    client->pers.guid[ 32 ] = '\0';
-  }
-  else for( i = 0; i < level.maxclients; i++ )
+    return "Invalid GUID";
+
+  for( i = 0; i < level.maxclients; i++ )
   {
     if( level.clients[ i ].pers.connected == CON_DISCONNECTED )
       continue;
+
     if( !Q_stricmp( client->pers.guid, level.clients[ i ].pers.guid ) )
     {
       if( !G_ClientIsLagging( level.clients + i ) )
@@ -1309,7 +1262,7 @@ char *ClientConnect( int clientNum, qboolean firstTime )
 
   // check for local client
   if( !strcmp( client->pers.ip, "localhost" ) )
-     client->pers.localClient = qtrue;
+    client->pers.localClient = qtrue;
   client->pers.adminLevel = G_admin_level( ent );
 
   client->pers.connected = CON_CONNECTING;
@@ -1376,21 +1329,7 @@ void ClientBegin( int clientNum )
   client->ps.eFlags = flags;
 
   // locate ent at a spawn point
-
   ClientSpawn( ent, NULL, NULL, NULL );
-
-  G_OC_ClientBegin();
-
-  if( g_connectMessage.string[ 0 ] )
-  {
-    char buf[ MAX_STRING_CHARS ], *buf_p;
-    Q_strncpyz( buf, g_connectMessage.string, sizeof( buf ) );
-    buf_p = &buf[ 0 ];
-    while(*buf_p )
-      if( *buf_p++ == '|' )
-        *--buf_p = '\n';
-    G_ClientPrint(ent, buf, CLIENT_SPECTATORS);
-  }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname ) );
 
@@ -1434,7 +1373,6 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   int                 maxAmmo, maxClips;
   weapon_t            weapon;
 
-
   index = ent - g_entities;
   client = ent->client;
 
@@ -1453,11 +1391,9 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   else if( client->pers.classSelection == PCL_NONE )
     client->sess.spectatorState = SPECTATOR_LOCKED;
 
-  //if client is dead and following teammate, stop following before spawning
-  if(ent->client->sess.spectatorState == SPECTATOR_FOLLOW)
-  {
+  // if client is dead and following teammate, stop following before spawning
+  if( ent->client->sess.spectatorState == SPECTATOR_FOLLOW )
     G_StopFollowing( ent );
-  }
 
   if( origin != NULL )
     VectorCopy( origin, spawn_origin );
@@ -1542,7 +1478,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   ent->takedamage = qtrue;
   ent->inuse = qtrue;
   ent->classname = "player";
-  ent->r.contents = BG_OC_CLIENTCONTENTS;
+  ent->r.contents = CONTENTS_BODY;
   ent->clipmask = MASK_PLAYERSOLID;
   ent->die = player_die;
   ent->waterlevel = 0;
@@ -1582,6 +1518,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   client->ps.ammo = maxAmmo;
   client->ps.clips = maxClips;
 
+  // We just spawned, not changing weapons
   client->ps.persistant[ PERS_NEWWEAPON ] = 0;
 
   ent->client->ps.stats[ STAT_CLASS ] = ent->client->pers.classSelection;
@@ -1653,7 +1590,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   client->ps.pm_flags |= PMF_RESPAWNED;
 
   trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );
-  SetClientViewAngle( ent, spawn_angles );
+  G_SetClientViewAngle( ent, spawn_angles );
 
   if( client->sess.spectatorState == SPECTATOR_NOT )
   {
@@ -1662,6 +1599,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
     // force the base weapon up
     if( client->pers.teamSelection == TEAM_HUMANS )
       G_ForceWeaponChange( ent, weapon );
+
     client->ps.weaponstate = WEAPON_READY;
   }
 
@@ -1723,8 +1661,6 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
 
   // clear entity state values
   BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
-
-  G_OC_PLAYERSPAWN(ent);
 }
 
 
@@ -1751,15 +1687,11 @@ void ClientDisconnect( int clientNum )
   if( !ent->client )
     return;
 
-  G_OC_ClientDisconnect();
-
   G_admin_namelog_update( ent->client, qtrue );
   G_LeaveTeam( ent );
   G_Vote( ent, qfalse );
 
   // stop any following clients
-  G_StopFromFollowing( ent, 1 );
-
   for( i = 0; i < level.maxclients; i++ )
   {
     // remove any /ignore settings for this clientNum
@@ -1791,136 +1723,4 @@ void ClientDisconnect( int clientNum )
   trap_SetConfigstring( CS_PLAYERS + clientNum, "");
 
   CalculateRanks( );
-}
-
-#ifdef _G_OC_H  // leftover from a mod
-#define CLIENT_GETSCRIMTEAM(x) x->client->pers.scrimTeam
-#else
-#define CLIENT_GETSCRIMTEAM(x) 0
-#endif /* #ifdef _G_OC_H */
-
-// big buffer for the following communication functions
-static char buf[ MAX_STRING_CHARS ];
-
-void G_ClientCP( gentity_t *ent, const char *message, const char *find, int mode )
-{
-    gentity_t *i;
-    qboolean target;
-
-    if(ent && !ent->client)
-        return;
-
-    // iterate for each client
-    for( i = &g_entities[ 0 ]; i < g_entities + level.maxclients; i++ )
-    {
-        if(i->client->pers.connected != CON_CONNECTED)
-        {
-            continue;
-        }
-
-        // reset target boolean
-        target = qfalse;
-
-        // is this client one of the targets?
-        if((i == ent) ||
-           (!ent) ||
-           (mode & CLIENT_SPECTATORS && i->client->sess.spectatorState == SPECTATOR_FOLLOW && i->client->sess.spectatorClient == ent - g_entities) ||
-           (mode & CLIENT_SCRIMTEAM && CLIENT_GETSCRIMTEAM(i) == CLIENT_GETSCRIMTEAM(ent)))
-        {
-            target = qtrue;
-        }
-        if(mode & CLIENT_ALLBUT)
-        {
-            target = !target;
-        }
-        if(mode & CLIENT_NOTARGET && i == ent)
-        {
-            target = qfalse;
-        }
-        if(mode & CLIENT_NOTEAM && CLIENT_GETSCRIMTEAM(i))
-        {
-            target = qfalse;
-        }
-        if(mode & CLIENT_ONLYTEAM && !CLIENT_GETSCRIMTEAM(i))
-        {
-            target = qfalse;
-        }
-
-        if(target)
-        {
-			if(i->client->pers.CPMode == CP_MODE_ENABLED)
-			{
-				buf[0] = 0;
-				if(find)
-					Com_sprintf(buf, sizeof(buf), "cp \"%s\" \"%s\"", message, find);
-				else
-					Com_sprintf(buf, sizeof(buf), "cp \"%s\"", message);
-				trap_SendServerCommand(i - g_entities, buf);
-			}
-
-			else if(i->client->pers.CPMode == CP_MODE_PRINT)
-			{
-				buf[0] = 0;
-				Com_sprintf(buf, sizeof(buf), "print \"%s\"", message);
-				trap_SendServerCommand(i - g_entities, buf);
-			}
-
-			else if(i->client->pers.CPMode == CP_MODE_DISABLED)
-			{
-			}
-        }
-    }
-}
-
-void G_ClientPrint( gentity_t *ent, const char *message, int mode )
-{
-    gentity_t *i;
-    qboolean target;
-
-    if(ent && !ent->client)
-        return;
-
-    // iterate for each client
-    for( i = &g_entities[ 0 ]; i < g_entities + level.maxclients; i++ )
-    {
-        if(i->client->pers.connected != CON_CONNECTED)
-        {
-            continue;
-        }
-
-        // reset target boolean
-        target = qfalse;
-
-        // is this client one of the targets?
-        if((i == ent) ||
-           (!ent) ||
-           (mode & CLIENT_SPECTATORS && i->client->sess.spectatorState == SPECTATOR_FOLLOW && i->client->sess.spectatorClient == ent - g_entities) ||
-           (mode & CLIENT_SCRIMTEAM && CLIENT_GETSCRIMTEAM(i) == CLIENT_GETSCRIMTEAM(ent)))
-        {
-            target = qtrue;
-        }
-        if(mode & CLIENT_ALLBUT)
-        {
-            target = !target;
-        }
-        if(mode & CLIENT_NOTARGET && i == ent)
-        {
-            target = qfalse;
-        }
-        if(mode & CLIENT_NOTEAM && CLIENT_GETSCRIMTEAM(i))
-        {
-            target = qfalse;
-        }
-        if(mode & CLIENT_ONLYTEAM && !CLIENT_GETSCRIMTEAM(i))
-        {
-            target = qfalse;
-        }
-
-        if(target)
-        {
-            buf[0] = 0;
-            Com_sprintf(buf, sizeof(buf), "print \"%s\n\"", message);
-            trap_SendServerCommand(i - g_entities, buf);
-        }
-    }
 }

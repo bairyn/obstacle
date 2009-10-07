@@ -316,9 +316,11 @@ static void Svcmd_TeamWin_f( void )
     case TEAM_ALIENS:
       G_BaseSelfDestruct( TEAM_HUMANS );
       break;
+
     case TEAM_HUMANS:
       G_BaseSelfDestruct( TEAM_ALIENS );
       break;
+
     default:
       return;
   }
@@ -342,8 +344,10 @@ static void Svcmd_MapRotation_f( void )
     return;
   }
 
+  G_ClearRotationStack( );
+
   trap_Argv( 1, rotationName, sizeof( rotationName ) );
-  if( !G_StartMapRotation( rotationName, qfalse ) )
+  if( !G_StartMapRotation( rotationName, qfalse, qtrue ) )
     G_Printf( "maprotation: invalid map rotation \"%s\"\n", rotationName );
 }
 
@@ -457,6 +461,33 @@ static void Svcmd_DumpUser_f( void )
   }
 }
 
+static void Svcmd_PrintQueue_f( void )
+{
+  char team[ MAX_STRING_CHARS ];
+
+  if( trap_Argc() != 2 )
+  {
+    G_Printf( "usage: printqueue <team>\n" );
+    return;
+  }
+
+  trap_Argv( 1, team, sizeof( team ) );
+
+  switch( team[0] )
+  {
+    case 'a':
+      G_PrintSpawnQueue( &level.alienSpawnQueue );
+      break;
+
+    case 'h':
+      G_PrintSpawnQueue( &level.humanSpawnQueue );
+      break;
+
+    default:
+      G_Printf( "unknown team\n" );
+  }
+}
+
 static void Svcmd_Chat_f( void )
 {
   trap_SendServerCommand( -1, va( "chat \"%s\"", ConcatArgs( 1 ) ) );
@@ -468,6 +499,7 @@ static void Svcmd_MessageWrapper( void )
 {
   char cmd[ 5 ];
   trap_Argv( 0, cmd, sizeof( cmd ) );
+
   if( !Q_stricmp( cmd, "a" ) )
     Cmd_AdminMessage_f( NULL );
   else if( !Q_stricmp( cmd, "m" ) )
@@ -496,6 +528,7 @@ struct
   { "dumpuser", qfalse, Svcmd_DumpUser_f },
   { "admitDefeat", qfalse, Svcmd_AdmitDefeat_f },
   { "evacuation", qfalse, Svcmd_Evacuation_f },
+  { "printqueue", qfalse, Svcmd_PrintQueue_f },
   // don't handle communication commands unless dedicated
   { "cp", qtrue, Svcmd_CenterPrint_f },
   { "say_team", qtrue, Svcmd_TeamMessage_f },

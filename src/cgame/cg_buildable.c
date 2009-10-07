@@ -10,6 +10,7 @@ and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
+Tremulous is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -363,13 +364,6 @@ void CG_InitBuildables( void )
       strcpy( soundfile, cg_buildableSoundNames[ j - 1 ] );
       Com_sprintf( filename, sizeof( filename ), "sound/buildables/%s/%s", buildableName, soundfile );
 
-      if(strstr(cg_disableWeaponSounds.string, va("%s/%s", buildableName, soundfile)))
-      {
-	    cg_buildables[ i ].sounds[ j ].enabled = qfalse;
-	    cg_buildables[ i ].sounds[ j ].sound = 0;
-        continue;
-      }
-
       if( cg_buildables[ i ].sounds[ j ].enabled )
       {
         if( trap_FS_FOpenFile( filename, &f, FS_READ ) > 0 )
@@ -538,8 +532,7 @@ CG_PositionAndOrientateBuildable
 static void CG_PositionAndOrientateBuildable( const vec3_t angles, const vec3_t inOrigin,
                                               const vec3_t normal, const int skipNumber,
                                               const vec3_t mins, const vec3_t maxs,
-                                              vec3_t outAxis[ 3 ], vec3_t outOrigin,
-											  qboolean ghost )
+                                              vec3_t outAxis[ 3 ], vec3_t outOrigin )
 {
   vec3_t  forward, start, end;
   trace_t tr;
@@ -564,8 +557,6 @@ static void CG_PositionAndOrientateBuildable( const vec3_t angles, const vec3_t 
   VectorMA( inOrigin, 1.0f, normal, start );
   CG_CapTrace( &tr, start, mins, maxs, end, skipNumber,
                CONTENTS_SOLID | CONTENTS_PLAYERCLIP );
-
-  CG_OC_PositionBuildable();
 
   if( tr.fraction == 1.0f )
   {
@@ -600,7 +591,7 @@ void CG_GhostBuildable( buildable_t buildable )
   BG_PositionBuildableRelativeToPlayer( ps, mins, maxs, CG_Trace, entity_origin, angles, &tr );
 
   CG_PositionAndOrientateBuildable( ps->viewangles, entity_origin, tr.plane.normal, ps->clientNum,
-                                    mins, maxs, ent.axis, ent.origin, qtrue );
+                                    mins, maxs, ent.axis, ent.origin );
 
   //offset on the Z axis if required
   VectorMA( ent.origin, BG_BuildableConfig( buildable )->zOffset, tr.plane.normal, ent.origin );
@@ -642,8 +633,8 @@ static void CG_BuildableParticleEffects( centity_t *cent )
 {
   entityState_t   *es = &cent->currentState;
   team_t          team = BG_Buildable( es->modelindex )->team;
-  int             health = es->generic1 & B_HEALTH_MASK;
-  float           healthFrac = (float)health / B_HEALTH_MASK;
+  int             health = es->generic1;
+  float           healthFrac = (float)health / BG_Buildable( es->modelindex )->health;
 
   if( !( es->eFlags & EF_B_SPAWNED ) )
     return;
@@ -964,10 +955,12 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
       return;
   }
 
-  health = (unsigned char)es->generic1;
-  healthScale = (float)health / B_HEALTH_MASK;
+  health = es->generic1;
+  healthScale = (float)health / BG_Buildable( es->modelindex )->health;
 
-  if( healthScale < 0.0f )
+  if( health > 0 && healthScale < 0.01f )
+    healthScale = 0.01f;
+  else if( healthScale < 0.0f )
     healthScale = 0.0f;
   else if( healthScale > 1.0f )
     healthScale = 1.0f;
@@ -1246,7 +1239,7 @@ void CG_Buildable( centity_t *cent )
     {
       CG_PositionAndOrientateBuildable( angles, ent.origin, surfNormal,
                                         es->number, mins, maxs, ent.axis,
-                                        ent.origin, qfalse );
+                                        ent.origin );
       VectorCopy( ent.axis[ 0 ], cent->buildableCache.axis[ 0 ] );
       VectorCopy( ent.axis[ 1 ], cent->buildableCache.axis[ 1 ] );
       VectorCopy( ent.axis[ 2 ], cent->buildableCache.axis[ 2 ] );
@@ -1419,10 +1412,10 @@ void CG_Buildable( centity_t *cent )
       trap_S_AddLoopingSound( es->number, cent->lerpOrigin, vec3_origin, weapon->readySound );
   }
 
-  health = (unsigned char)es->generic1;
-  healthScale = (float)health / B_HEALTH_MASK;
+  health = es->generic1;
+  healthScale = (float)health / BG_Buildable( es->modelindex )->health;
 
-  if( healthScale < cent->lastBuildableHealthScale &&
+  if( health < cent->lastBuildableHealth &&
       ( es->eFlags & EF_B_SPAWNED ) )
   {
     if( cent->lastBuildableDamageSoundTime + BUILDABLE_SOUND_PERIOD < cg.time )
@@ -1439,7 +1432,7 @@ void CG_Buildable( centity_t *cent )
     }
   }
 
-  cent->lastBuildableHealthScale = healthScale;
+  cent->lastBuildableHealth = health;
 
   //smoke etc for damaged buildables
   CG_BuildableParticleEffects( cent );

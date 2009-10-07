@@ -22,8 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 
-#include "../game/bg_oc.h"
-
 #include "../qcommon/q_shared.h"
 #include "../renderer/tr_types.h"
 #include "../game/bg_public.h"
@@ -80,31 +78,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define TEAM_OVERLAY_MAXNAME_WIDTH  12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH  16
-
-//==================================================================
-
-#define MSEC(t) ( ( t ) - ( ( ( t ) / 1000 ) * 1000 ) )
-#define SECS(t) ( ( ( t ) - ( ( ( t ) / 60000 ) * 60000 ) ) / 1000 )
-#define MINS(t) ( ( t ) / 60000 )
-
-#define SUFN(x) ( ( ( x ) < 11 && ( x ) > 13 ) ? ( ( ( x ) % 10 == 1 ) ? ( "st" ) : ( ( ( x ) % 10 == 2 ) ? ( "nd" ) : ( ( ( x ) % 10 == 3 ) ? ( "rd" ) : ( "th" ) ) ) ) : ( "th" ) )
-
-#define EXCOLOR(s) \
-{ \
-    int i; \
- \
-    for(i = 0; i < sizeof((s)); i++) \
-    { \
-        if(((s)[i]) == '^' && i + 3 < sizeof((s))) \
-        { \
-            memmove( (&(s)[i]) + 2, (&(s)[i]), strlen((s)) + 1); \
-            (s)[++i] = '^'; \
-            (s)[++i] = '7'; \
-        } \
-    } \
-}
-
-//==================================================================
 
 typedef enum
 {
@@ -491,7 +464,7 @@ typedef struct baseTrailBeam_s
 
   // the time it takes for a beam to fade out (double attached only)
   int                     fadeOutTime;
-
+  
   char                    shaderName[ MAX_QPATH ];
   qhandle_t               shader;
 
@@ -677,7 +650,7 @@ typedef struct centity_s
   particleSystem_t      *buildablePS;
   buildableStatus_t     buildableStatus;
   buildableCache_t      buildableCache;   // so we don't recalculate things
-  float                 lastBuildableHealthScale;
+  float                 lastBuildableHealth;
   int                   lastBuildableDamageSoundTime;
 
   lightFlareStatus_t    lfs;
@@ -706,7 +679,7 @@ typedef struct centity_s
   int                   muzzleTSDeathTime;
 
   qboolean              valid;
-  qboolean              oldValid;
+  qboolean              oldValid;  
   struct centity_s      *nextLocation;
 } centity_t;
 
@@ -750,7 +723,7 @@ typedef struct
 
   char        name[ MAX_QPATH ];
   team_t      team;
-
+  
   vec3_t      color1;
   vec3_t      color2;
 
@@ -945,20 +918,6 @@ typedef struct
 // After this many msec the crosshair name fades out completely
 #define CROSSHAIR_CLIENT_TIMEOUT 1000
 
-#define MAX_CP_CHARS 128  // buffer size for each individual CP
-#define MAX_CP 20  // 20 individual CP messages at most
-
-typedef struct mix_cp_s mix_cp_t;
-struct mix_cp_s
-{
-	qboolean active;
-	int time;  // start time
-	int charWidth;
-	int y;
-	char message[ MAX_CP_CHARS ];
-	int lines;
-};
-
 typedef struct
 {
   int           clientFrame;                        // incremented each frame
@@ -1062,7 +1021,11 @@ typedef struct
   int           spectatorPaintLen;                  // current offset from start
 
   // centerprinting
-  mix_cp_t      centerPrint[ MAX_CP ];
+  int           centerPrintTime;
+  int           centerPrintCharWidth;
+  int           centerPrintY;
+  char          centerPrint[ 1024 ];
+  int           centerPrintLines;
 
   // low ammo warning state
   int           lowAmmoWarning;   // 1 = low, 2 = empty
@@ -1473,20 +1436,14 @@ extern  buildableInfo_t cg_buildables[ BA_NUM_BUILDABLES ];
 
 extern  markPoly_t      cg_markPolys[ MAX_MARK_POLYS ];
 
-CG_OC_ECVARS
-
 extern  vmCvar_t    cg_teslaTrailTime;
 extern  vmCvar_t    cg_centertime;
-extern  vmCvar_t    cg_staticCenterPrints;
 extern  vmCvar_t    cg_runpitch;
 extern  vmCvar_t    cg_runroll;
 extern  vmCvar_t    cg_swingSpeed;
 extern  vmCvar_t    cg_shadows;
 extern  vmCvar_t    cg_drawTimer;
 extern  vmCvar_t    cg_drawClock;
-extern  vmCvar_t    cg_drawPlayerTimer;
-extern  vmCvar_t    cg_drawSpeedometer;
-extern  vmCvar_t    cg_speedometerXYZ;
 extern  vmCvar_t    cg_drawFPS;
 extern  vmCvar_t    cg_drawDemoState;
 extern  vmCvar_t    cg_drawSnapshot;
@@ -1494,9 +1451,7 @@ extern  vmCvar_t    cg_drawChargeBar;
 extern  vmCvar_t    cg_drawCrosshair;
 extern  vmCvar_t    cg_drawCrosshairNames;
 extern  vmCvar_t    cg_crosshairSize;
-extern  vmCvar_t    cg_drawAmmoStack;
 extern  vmCvar_t    cg_draw2D;
-extern  vmCvar_t    cg_disableWeaponSounds;
 extern  vmCvar_t    cg_animSpeed;
 extern  vmCvar_t    cg_debugAnim;
 extern  vmCvar_t    cg_debugPosition;
@@ -1508,7 +1463,6 @@ extern  vmCvar_t    cg_noPlayerAnims;
 extern  vmCvar_t    cg_showmiss;
 extern  vmCvar_t    cg_footsteps;
 extern  vmCvar_t    cg_addMarks;
-extern  vmCvar_t    cg_brassTime;
 extern  vmCvar_t    cg_viewsize;
 extern  vmCvar_t    cg_drawGun;
 extern  vmCvar_t    cg_gun_frame;
@@ -1518,7 +1472,6 @@ extern  vmCvar_t    cg_gun_z;
 extern  vmCvar_t    cg_tracerChance;
 extern  vmCvar_t    cg_tracerWidth;
 extern  vmCvar_t    cg_tracerLength;
-extern  vmCvar_t    cg_autoswitch;
 extern  vmCvar_t    cg_thirdPerson;
 extern  vmCvar_t    cg_thirdPersonAngle;
 extern  vmCvar_t    cg_thirdPersonShoulderViewMode;
@@ -1526,12 +1479,10 @@ extern  vmCvar_t    cg_thirdPersonPitchFollow;
 extern  vmCvar_t    cg_thirdPersonRange;
 extern  vmCvar_t    cg_stereoSeparation;
 extern  vmCvar_t    cg_lagometer;
-extern  vmCvar_t    cg_drawSpeed;
 extern  vmCvar_t    cg_synchronousClients;
 extern  vmCvar_t    cg_stats;
 extern  vmCvar_t    cg_paused;
 extern  vmCvar_t    cg_blood;
-extern  vmCvar_t    cg_drawFriend;
 extern  vmCvar_t    cg_teamChatsOnly;
 extern  vmCvar_t    cg_noVoiceChats;
 extern  vmCvar_t    cg_noVoiceText;
@@ -1547,7 +1498,6 @@ extern  vmCvar_t    cg_noTaunt;
 extern  vmCvar_t    cg_drawSurfNormal;
 extern  vmCvar_t    cg_drawBBOX;
 extern  vmCvar_t    cg_wwSmoothTime;
-extern  vmCvar_t    cg_flySpeed;
 extern  vmCvar_t    cg_disableBlueprintErrors;
 extern  vmCvar_t    cg_depthSortParticles;
 extern  vmCvar_t    cg_bounceParticles;
@@ -1589,8 +1539,6 @@ extern  vmCvar_t    cg_optimizePrediction;
 extern  vmCvar_t    cg_projectileNudge;
 
 extern  vmCvar_t    cg_voice;
-
-extern  vmCvar_t    cg_suppressWAnimWarnings;
 
 extern  vmCvar_t    cg_emoticons;
 
@@ -1671,13 +1619,12 @@ extern  int numSortedTeamPlayers;
 
 void        CG_AddLagometerFrameInfo( void );
 void        CG_AddLagometerSnapshotInfo( snapshot_t *snap );
-void        CG_AddSpeed( float speed );
-void        CG_CenterPrint( const char *str, const char *find, int y, int charWidth );
+void        CG_CenterPrint( const char *str, int y, int charWidth );
 void        CG_DrawActive( stereoFrame_t stereoView );
 void        CG_OwnerDraw( float x, float y, float w, float h, float text_x,
                           float text_y, int ownerDraw, int ownerDrawFlags,
                           int align, int textalign, int textvalign,
-                          float special, float scale, vec4_t foreColor,
+                          float borderSize, float scale, vec4_t foreColor,
                           vec4_t backColor, qhandle_t shader, int textStyle );
 float       CG_GetValue(int ownerDraw);
 void        CG_RunMenuScript(char **args);
@@ -1750,10 +1697,6 @@ void        CG_PredictPlayerState( void );
 void        CG_CheckEvents( centity_t *cent );
 void        CG_EntityEvent( centity_t *cent, vec3_t position );
 void        CG_PainEvent( centity_t *cent, int health );
-void        CG_MissileHitEntity( weapon_t weaponNum, weaponMode_t weaponMode,
-                vec3_t origin, vec3_t dir, int entityNum, int charge );
-void        CG_TeamJoinMessage( clientInfo_t *newInfo, clientInfo_t *ci );
-
 
 
 //
@@ -1788,7 +1731,8 @@ void        CG_RegisterWeapon( int weaponNum );
 void        CG_FireWeapon( centity_t *cent, weaponMode_t weaponMode );
 void        CG_MissileHitWall( weapon_t weapon, weaponMode_t weaponMode, int clientNum,
                                vec3_t origin, vec3_t dir, impactSound_t soundType, int charge );
-void        CG_MissileHitPlayer( weapon_t weapon, weaponMode_t weaponMode, vec3_t origin, vec3_t dir, int entityNum, int charge );
+void        CG_MissileHitEntity( weapon_t weaponNum, weaponMode_t weaponMode,
+                                 vec3_t origin, vec3_t dir, int entityNum, int charge );
 void        CG_Bullet( vec3_t origin, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum );
 void        CG_ShotgunFire( entityState_t *es );
 
@@ -2106,8 +2050,8 @@ int           trap_Key_GetKey( const char *binding );
 void          trap_Key_KeynumToStringBuf( int keynum, char *buf, int buflen );
 void          trap_Key_GetBindingBuf( int keynum, char *buf, int buflen );
 void          trap_Key_SetBinding( int keynum, const char *binding );
-//void          trap_Key_SetOverstrikeMode( qboolean state );
-//qboolean      trap_Key_GetOverstrikeMode( void );
+void          trap_Key_SetOverstrikeMode( qboolean state );
+qboolean      trap_Key_GetOverstrikeMode( void );
 
 int           trap_CIN_PlayCinematic( const char *arg0, int xpos, int ypos, int width, int height, int bits );
 e_status      trap_CIN_StopCinematic( int handle );

@@ -1303,7 +1303,7 @@ trailSystem_t *CG_SpawnNewTrailSystem( qhandle_t psHandle )
       ts->valid = qtrue;
       ts->destroyTime = -1;
       ts->birthTime = cg.time;
-
+      
       for( j = 0; j < bts->numBeams; j++ )
         CG_SpawnNewTrailBeam( bts->beams[ j ], ts );
 

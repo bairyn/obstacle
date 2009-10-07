@@ -89,8 +89,7 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles )
   G_UnlaggedClear( player );
 
   // set angles
-  if( player && player->client && !player->client->pers.autoAngleDisabled )
-    SetClientViewAngle( player, angles );
+  G_SetClientViewAngle( player, angles );
 
   // kill anything at the destination
   if( player->client->sess.spectatorState == SPECTATOR_NOT )

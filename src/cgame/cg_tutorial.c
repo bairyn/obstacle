@@ -156,8 +156,8 @@ static entityState_t *CG_BuildableInRange( playerState_t *ps, float *healthFract
 
   if( healthFraction )
   {
-    health = (unsigned char)es->generic1;
-    *healthFraction = (float)health / B_HEALTH_MASK;
+    health = es->generic1;
+    *healthFraction = (float)health / BG_Buildable( es->modelindex )->health;
   }
 
   if( es->eType == ET_BUILDABLE &&
@@ -409,9 +409,9 @@ static void CG_HumanText( char *text, playerState_t *ps )
   char      *name;
   upgrade_t upgrade = UP_NONE;
 
-  if( cg.weaponSelect <= 32 )
+  if( cg.weaponSelect < 32 )
     name = cg_weapons[ cg.weaponSelect ].humanName;
-  else if( cg.weaponSelect > 32 )
+  else
   {
     name = cg_upgrades[ cg.weaponSelect - 32 ].humanName;
     upgrade = cg.weaponSelect - 32;
@@ -573,20 +573,20 @@ static void CG_SpectatorText( char *text, playerState_t *ps )
                 va( "Press %s to return to free spectator mode\n",
                     CG_KeyNameForCommand( "+button2" ) ) );
 
-    Q_strcat( text, MAX_TUTORIAL_TEXT,
+      Q_strcat( text, MAX_TUTORIAL_TEXT,
           va( "Press %s or ",
             CG_KeyNameForCommand( "weapprev" ) ) );
-    Q_strcat( text, MAX_TUTORIAL_TEXT,
+      Q_strcat( text, MAX_TUTORIAL_TEXT,
           va( "%s to change player\n",
             CG_KeyNameForCommand( "weapnext" ) ) );
-  }
+    }
   else
   {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to follow a player\n",
             CG_KeyNameForCommand( "+button2" ) ) );
+    }
   }
-}
 
 /*
 ===============

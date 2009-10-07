@@ -110,12 +110,6 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace )
   qboolean    returnAfterDamage = qfalse;
   vec3_t      dir;
 
-  if( trace->surfaceFlags & SURF_NOIMPACT )
-  {
-    G_FreeEntity( ent );
-    return;
-  }
-
   other = &g_entities[ trace->entityNum ];
   attacker = &g_entities[ ent->r.ownerNum ];
 
@@ -253,7 +247,8 @@ void G_RunMissile( gentity_t *ent )
 {
   vec3_t    origin;
   trace_t   tr;
-  int     passent;
+  int       passent;
+  qboolean  impact = qfalse;
 
   // get current position
   BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
@@ -262,50 +257,63 @@ void G_RunMissile( gentity_t *ent )
   passent = ent->r.ownerNum;
 
   // general trace to see if we hit anything at all
-  trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, passent, ent->clipmask );
+  trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs,
+              origin, passent, ent->clipmask );
 
   if( tr.startsolid || tr.allsolid )
   {
-    tr.fraction = 0;
+    tr.fraction = 0.0f;
     VectorCopy( ent->r.currentOrigin, tr.endpos );
   }
 
-  // this is a bit nasty
-  // keep in mind that some of the later else ifs change the contents of tr
-  if( tr.fraction == 1.0f )
+  if( tr.fraction < 1.0f )
   {
-    VectorCopy( tr.endpos, ent->r.currentOrigin );
+    if( !ent->pointAgainstWorld || tr.contents & CONTENTS_BODY || 
+        ( tr.entityNum >= 0 && tr.entityNum != ENTITYNUM_WORLD ) )
+    {
+      // We hit an entity or we don't care
+      impact = qtrue;
+    }
+    else
+    {
+      trap_Trace( &tr, ent->r.currentOrigin, NULL, NULL, origin, 
+                  passent, ent->clipmask );
+
+      if( tr.fraction < 1.0f )
+      {
+        // Hit the world with point trace
+        impact = qtrue;
+      }
+      else
+      {
+        if( tr.contents & CONTENTS_BODY ||
+            ( tr.entityNum >= 0 && tr.entityNum != ENTITYNUM_WORLD ) )
+        {
+          // Hit an entity
+          impact = qtrue;
+        }
+        else
+        {
+          trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, 
+                      origin, passent, CONTENTS_BODY );
+
+          if( tr.fraction < 1.0f )
+            impact = qtrue;
+        }
+      }
+    }
   }
-  // we hit something, then - check if it was an entity (or if we don't care)
-  else if( !ent->pointAgainstWorld || tr.contents & CONTENTS_BODY || 
-      ( tr.entityNum >= 0 && tr.entityNum != ENTITYNUM_WORLD ) )
+
+  VectorCopy( tr.endpos, ent->r.currentOrigin );
+
+  if( impact )
   {
-    VectorCopy( tr.endpos, ent->r.currentOrigin );
-
-    G_MissileImpact( ent, &tr );
-
-    if( ent->s.eType != ET_MISSILE )
-      return;   // exploded
-  }
-  // only hit the world with zero width
-  else if( trap_Trace( &tr, ent->r.currentOrigin, NULL, NULL, origin, 
-                       passent, ent->clipmask ), tr.fraction < 1.0f )
-  {
-    VectorCopy( tr.endpos, ent->r.currentOrigin );
-
-    G_MissileImpact( ent, &tr );
-
-    if( ent->s.eType != ET_MISSILE )
-      return;   // exploded
-  }
-  // one last check to see if we can hit an entity near solid stuff
-  // use conditional shortcutting and comma operators to only trace if necessary
-  else if( tr.contents & CONTENTS_BODY ||
-      ( tr.entityNum >= 0 && tr.entityNum != ENTITYNUM_WORLD ) ||
-      ( trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, 
-                    origin, passent, CONTENTS_BODY ), tr.fraction ) < 1.0f )
-  {
-    VectorCopy( tr.endpos, ent->r.currentOrigin );
+    if( tr.surfaceFlags & SURF_NOIMPACT )
+    {
+      // Never explode or bounce on sky
+      G_FreeEntity( ent );
+      return;
+    }
 
     G_MissileImpact( ent, &tr );
 
@@ -501,7 +509,7 @@ gentity_t *fire_luciferCannon( gentity_t *self, vec3_t start, vec3_t dir,
   bolt->splashMethodOfDeath = MOD_LCANNON_SPLASH;
   bolt->clipmask = MASK_SHOT;
   bolt->target_ent = NULL;
-
+  
   // Give the missile a small bounding box
   bolt->r.mins[ 0 ] = bolt->r.mins[ 1 ] = bolt->r.mins[ 2 ] =
     -LCANNON_SIZE;
@@ -583,17 +591,13 @@ Adjust the trajectory to point towards the target
 */
 void AHive_SearchAndDestroy( gentity_t *self )
 {
-  vec3_t dir;
-  trace_t tr;
+  vec3_t    dir;
+  trace_t   tr;
   gentity_t *ent;
-  int i;
-  float d, nearest;
-  
-  if( G_OC_NeedAlternateHiveSearchAndDestroy() )
-  {
-    G_OC_AlternateHiveSearchAndDestroy();
-  }
-  else if( level.time > self->timestamp )
+  int       i;
+  float     d, nearest;
+
+  if( level.time > self->timestamp )
   {
     VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
     self->s.pos.trType = TR_STATIONARY;
@@ -620,22 +624,20 @@ void AHive_SearchAndDestroy( gentity_t *self )
       if( tr.entityNum != ENTITYNUM_WORLD )
       {
         nearest = d;
-        if(!(ent->flags & FL_NOTARGET))
-          self->target_ent = ent;
+        self->target_ent = ent;
       }
     }
   }
     VectorSubtract( self->target_ent->r.currentOrigin, self->r.currentOrigin, dir );
     VectorNormalize( dir );
-  
+
     //change direction towards the player
     VectorScale( dir, HIVE_SPEED, self->s.pos.trDelta );
     SnapVector( self->s.pos.trDelta );      // save net bandwidth
     VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
     self->s.pos.trTime = level.time;
-    
+
     self->nextthink = level.time + HIVE_DIR_CHANGE_PERIOD;
-    
 }
 
 /*
@@ -655,7 +657,7 @@ gentity_t *fire_hive( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->nextthink = level.time + HIVE_DIR_CHANGE_PERIOD;
   bolt->think = AHive_SearchAndDestroy;
   bolt->s.eType = ET_MISSILE;
-  bolt->s.eFlags |= EF_BOUNCE|EF_NO_BOUNCE_SOUND;
+  bolt->s.eFlags |= EF_BOUNCE | EF_NO_BOUNCE_SOUND;
   bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
   bolt->s.weapon = WP_HIVE;
   bolt->s.generic1 = WPM_PRIMARY; //weaponMode
@@ -665,7 +667,7 @@ gentity_t *fire_hive( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
   bolt->methodOfDeath = MOD_SWARM;
-  bolt->clipmask = BG_OC_SHOTMASK;
+  bolt->clipmask = MASK_SHOT;
   bolt->target_ent = self->target_ent;
   bolt->timestamp = level.time + HIVE_LIFETIME;
 
@@ -707,7 +709,7 @@ gentity_t *fire_lockblob( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
   bolt->methodOfDeath = MOD_UNKNOWN; //doesn't do damage so will never kill
-  bolt->clipmask = BG_OC_SHOTMASK;
+  bolt->clipmask = MASK_SHOT;
   bolt->target_ent = NULL;
 
   bolt->s.pos.trType = TR_LINEAR;
@@ -785,7 +787,7 @@ gentity_t *fire_paraLockBlob( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->damage = 0;
   bolt->splashDamage = 0;
   bolt->splashRadius = 0;
-  bolt->clipmask = BG_OC_SHOTMASK;
+  bolt->clipmask = MASK_SHOT;
   bolt->target_ent = NULL;
 
   bolt->s.pos.trType = TR_GRAVITY;
@@ -834,7 +836,6 @@ gentity_t *fire_bounceBall( gentity_t *self, vec3_t start, vec3_t dir )
   VectorScale( dir, LEVEL3_BOUNCEBALL_SPEED, bolt->s.pos.trDelta );
   SnapVector( bolt->s.pos.trDelta );      // save net bandwidth
   VectorCopy( start, bolt->r.currentOrigin );
-  /*bolt->s.eFlags |= EF_BOUNCE;*/
 
   return bolt;
 }

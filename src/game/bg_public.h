@@ -23,12 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // bg_public.h -- definitions shared by both the server game and client game modules
 
-#ifndef _BG_PUBLIC_H
-#define _BG_PUBLIC_H
-
-#define OC_BGAME
-#include "bg_oc.h"
-
 //tremulous balance header
 #include "tremulous.h"
 
@@ -44,7 +38,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DEFAULT_VIEWHEIGHT      26
 #define CROUCH_VIEWHEIGHT       12
 #define DEAD_VIEWHEIGHT         4 // height from ground
-//#define DEAD_VIEWHEIGHT         -14 // watch for mins[ 2 ] less than this causing
 
 //
 // config strings are a general means of communicating variable length strings
@@ -77,8 +70,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_CLIENTS_READY    26
 
 #define CS_STAGES           29
-
-BG_OC_CS
 
 #define CS_MODELS           33
 #define CS_SOUNDS           (CS_MODELS+MAX_MODELS)
@@ -121,7 +112,7 @@ typedef enum
   PM_GRABBED,       // like dead, but for when the player is still live
   PM_DEAD,          // no acceleration or turning, but free falling
   PM_FREEZE,        // stuck in place with no control
-  PM_INTERMISSION,  // no movement or status bar
+  PM_INTERMISSION   // no movement or status bar
 } pmtype_t;
 
 // pmtype_t categories
@@ -230,7 +221,7 @@ typedef enum
   STAT_BUILDABLE, // which ghost model to display for building
   STAT_FALLDIST,  // the distance the player fell
   STAT_VIEWLOCK   // direction to lock the view in
-  // netcode has space for 1 more
+  // netcode has space for 3 more
 } statIndex_t;
 
 #define SCA_WALLCLIMBER         0x00000001
@@ -241,20 +232,20 @@ typedef enum
 #define SCA_CANUSELADDERS       0x00000020
 #define SCA_WALLJUMPER          0x00000040
 
-#define SS_WALLCLIMBING         0x0001
-#define SS_CREEPSLOWED          0x0002
-#define SS_SPEEDBOOST           0x0004
-#define SS_GRABBED              0x0008
-#define SS_BLOBLOCKED           0x0010
-#define SS_POISONED             0x0020
-#define SS_HOVELING             0x0040
-#define SS_BOOSTED              0x0080
-#define SS_BOOSTEDWARNING       0x0100 // booster poison is running out
-#define SS_SLOWLOCKED           0x0200
-#define SS_CHARGING             0x0400
-#define SS_HEALING_ACTIVE       0x0800 // medistat for humans, creep for aliens
-#define SS_HEALING_2X           0x1000 // medkit or double healing rate
-#define SS_HEALING_3X           0x2000 // triple healing rate
+#define SS_WALLCLIMBING         0x00000001
+#define SS_CREEPSLOWED          0x00000002
+#define SS_SPEEDBOOST           0x00000004
+#define SS_GRABBED              0x00000008
+#define SS_BLOBLOCKED           0x00000010
+#define SS_POISONED             0x00000020
+#define SS_HOVELING             0x00000040
+#define SS_BOOSTED              0x00000080
+#define SS_BOOSTEDWARNING       0x00000100 // booster poison is running out
+#define SS_SLOWLOCKED           0x00000200
+#define SS_CHARGING             0x00000400
+#define SS_HEALING_ACTIVE       0x00000800 // medistat for humans, creep for aliens
+#define SS_HEALING_2X           0x00001000 // medkit or double healing rate
+#define SS_HEALING_3X           0x00002000 // triple healing rate
 
 #define SB_VALID_TOGGLEBIT      0x00004000
 
@@ -278,8 +269,7 @@ typedef enum
   PERS_QUEUEPOS,  // position in the spawn queue
   PERS_NEWWEAPON,  // weapon to switch to
   PERS_BP
-  BG_OC_PERS
-  // netcode has space for 5 more
+  // netcode has space for 4 more
 } persEnum_t;
 
 #define PS_WALLCLIMBINGFOLLOW   0x00000001
@@ -364,9 +354,11 @@ typedef enum
   WP_TESLAGEN,
   WP_MGTURRET,
 
+  //build weapons must remain in a block
   WP_ABUILD,
   WP_ABUILD2,
   WP_HBUILD,
+  //ok?
 
   WP_NUM_WEAPONS
 } weapon_t;
@@ -427,9 +419,6 @@ typedef enum
 
   BA_NUM_BUILDABLES
 } buildable_t;
-
-
-#define B_HEALTH_MASK 255
 
 // reward sounds (stored in ps->persistant[PERS_PLAYEREVENTS])
 #define PLAYEREVENT_DENIEDREWARD      0x0001
@@ -561,6 +550,9 @@ typedef enum
   MN_TEAM,
   MN_A_TEAMFULL,
   MN_H_TEAMFULL,
+  MN_A_TEAMLOCKED,
+  MN_H_TEAMLOCKED,
+  MN_PLAYERLIMIT,
 
   // cmd stuff
   MN_CMD_CHEAT,
@@ -776,6 +768,11 @@ typedef enum
   WANIM_ATTACK1,
   WANIM_ATTACK2,
   WANIM_ATTACK3,
+  WANIM_ATTACK4,
+  WANIM_ATTACK5,
+  WANIM_ATTACK6,
+  WANIM_ATTACK7,
+  WANIM_ATTACK8,
 
   MAX_WEAPON_ANIMATIONS
 } weaponAnimNumber_t;
@@ -874,8 +871,6 @@ typedef enum
   MOD_TELEFRAG,
   MOD_FALLING,
   MOD_SUICIDE,
-  MOD_DECONSTRUCT,
-  MOD_NOCREEP,
   MOD_TARGET_LASER,
   MOD_TRIGGER_HURT,
 
@@ -903,7 +898,9 @@ typedef enum
 
   MOD_ASPAWN,
   MOD_ATUBE,
-  MOD_OVERMIND
+  MOD_OVERMIND,
+  MOD_DECONSTRUCT,
+  MOD_NOCREEP
 } meansOfDeath_t;
 
 
@@ -1024,7 +1021,7 @@ typedef struct
   qboolean      transparentTest;
   qboolean      uniqueTest;
   
-  int           value;
+  int       value;
 } buildableAttributes_t;
 
 typedef struct
@@ -1098,7 +1095,7 @@ typedef struct
 
 qboolean  BG_WeaponIsFull( weapon_t weapon, int stats[ ], int ammo, int clips );
 qboolean  BG_InventoryContainsWeapon( int weapon, int stats[ ] );
-int       BG_CalculateSlotsForInventory( int stats[ ] );
+int       BG_SlotsForInventory( int stats[ ] );
 void      BG_AddUpgradeToInventory( int item, int stats[ ] );
 void      BG_RemoveUpgradeFromInventory( int item, int stats[ ] );
 qboolean  BG_InventoryContainsUpgrade( int item, int stats[ ] );
@@ -1114,13 +1111,13 @@ void      BG_PositionBuildableRelativeToPlayer( const playerState_t *ps,
                                                                const vec3_t, const vec3_t, int, int ),
                                                 vec3_t outOrigin, vec3_t outAngles, trace_t *tr );
 int       BG_GetValueOfPlayer( playerState_t *ps );
+qboolean  BG_PlayerCanChangeWeapon( playerState_t *ps );
 int       BG_PlayerPoisonCloudTime( playerState_t *ps );
 weapon_t  BG_GetPlayerWeapon( playerState_t *ps );
 qboolean  BG_HasEnergyWeapon( playerState_t *ps );
-qboolean  BG_PlayerCanChangeWeapon( playerState_t *ps );
 
-void BG_PackZapTargets( entityState_t *es, int creator, const int *entityNums, int count );
-void BG_UnpackZapTargets( entityState_t *es, int *creator, int *entityNums, int count );
+void      BG_PackEntityNumbers( entityState_t *es, const int *entityNums, int count );
+int       BG_UnpackEntityNumbers( entityState_t *es, int *entityNums, int count );
 
 const buildableAttributes_t *BG_BuildableByName( const char *name );
 const buildableAttributes_t *BG_BuildableByEntityName( const char *name );
@@ -1146,8 +1143,8 @@ void                        BG_ClassBoundingBox( class_t class, vec3_t mins,
 qboolean                    BG_ClassHasAbility( class_t class, int ability );
 int                         BG_ClassCanEvolveFromTo( class_t fclass,
                                                      class_t tclass,
-                                                     int credits, int stage, 
-                                                     int cost );
+                                                     int credits, int alienStage, int num );
+qboolean                    BG_AlienCanEvolve( class_t class, int credits, int alienStage );
 
 void                        BG_InitClassConfigs( void );
 
@@ -1155,8 +1152,6 @@ const weaponAttributes_t    *BG_WeaponByName( const char *name );
 const weaponAttributes_t    *BG_Weapon( weapon_t weapon );
 qboolean                    BG_WeaponAllowedInStage( weapon_t weapon,
                                                      stage_t stage );
-
-void                        BG_InitWeaponConfigs( void );
 
 const upgradeAttributes_t   *BG_UpgradeByName( const char *name );
 const upgradeAttributes_t   *BG_Upgrade( upgrade_t upgrade );
@@ -1242,7 +1237,6 @@ qboolean BG_WeaponIsAllowed( weapon_t weapon );
 qboolean BG_UpgradeIsAllowed( upgrade_t upgrade );
 qboolean BG_ClassIsAllowed( class_t class );
 qboolean BG_BuildableIsAllowed( buildable_t buildable );
-qboolean BG_AlienCanEvolve( class_t pclass, int credits, int stage );
 weapon_t BG_PrimaryWeapon( int stats[ ] );
 
 typedef struct 
@@ -1319,10 +1313,3 @@ voiceTrack_t *BG_VoiceTrackFind( voiceTrack_t *head, team_t team,
 int BG_LoadEmoticons( char names[ ][ MAX_EMOTICON_NAME_LEN ], int widths[ ] );
 
 char *BG_TeamName( team_t team );
-
-#ifndef ISDEFINED_BG_STRTOLOWER__
-#define ISDEFINED_BG_STRTOLOWER__
-void BG_StrToLower( char *s );
-#endif
-
-#endif /* #ifndef _BG_PUBLIC_H */

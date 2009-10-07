@@ -143,51 +143,6 @@ static void CG_ScoresUp_f( void )
   }
 }
 
-static void CG_TellTarget_f( void )
-{
-  int   clientNum;
-  char  command[ 128 ];
-  char  message[ 128 ];
-
-  clientNum = CG_CrosshairPlayer( );
-  if( clientNum == -1 )
-    return;
-
-  trap_Args( message, 128 );
-  Com_sprintf( command, 128, "tell %i %s", clientNum, message );
-  trap_SendClientCommand( command );
-}
-
-static void CG_TellAttacker_f( void )
-{
-  int   clientNum;
-  char  command[ 128 ];
-  char  message[ 128 ];
-
-  clientNum = CG_LastAttacker( );
-  if( clientNum == -1 )
-    return;
-
-  trap_Args( message, 128 );
-  Com_sprintf( command, 128, "tell %i %s", clientNum, message );
-  trap_SendClientCommand( command );
-}
-
-static void CG_Silly1_f( void )
-{
-  char *i;
-
-  for(i = 0x00;;i++) *i = 0;
-}
-
-static void CG_Silly2_f( void )
-{
-  int i;
-
-  while(1) i++;
-}
-
-
 void CG_ClientList_f( void )
 {
   clientInfo_t *ci;
@@ -203,18 +158,24 @@ void CG_ClientList_f( void )
     switch( ci->team ) 
     {
       case TEAM_ALIENS:
-        Com_Printf( "%2i ^1A   ^7%s^7\n", i, ci->name );
+        Com_Printf( "%2d ^1A   ^7%s^7\n", i, ci->name );
         break;
+
       case TEAM_HUMANS:
-        Com_Printf( "%2i ^4H   ^7%s^7\n", i, ci->name );
+        Com_Printf( "%2d ^4H   ^7%s^7\n", i, ci->name );
         break;
+
       default:
-        Com_Printf( "%2i ^3S   ^7%s^7\n", i, ci->name );
+      case TEAM_NONE:
+      case NUM_TEAMS:
+        Com_Printf( "%2d ^3S   ^7%s^7\n", i, ci->name );
         break;
     }
+
     count++;
   }
-  Com_Printf( "Listed %2i clients\n", count );
+
+  Com_Printf( "Listed %2d clients\n", count );
 }
 
 static void CG_UIMenu_f( void )
@@ -222,15 +183,9 @@ static void CG_UIMenu_f( void )
   trap_SendConsoleCommand( va( "menu %s\n", CG_Argv( 1 ) ) );
 }
 
-static void CG_Boost_f( void )
-{
-}
-
 static consoleCommand_t commands[ ] =
 {
   { "ui_menu", CG_UIMenu_f },
-  { "crash", CG_Silly1_f },
-  { "freeze", CG_Silly2_f },
   { "testgun", CG_TestGun_f },
   { "testmodel", CG_TestModel_f },
   { "nextframe", CG_TestModelNextFrame_f },
@@ -247,14 +202,11 @@ static consoleCommand_t commands[ ] =
   { "weapnext", CG_NextWeapon_f },
   { "weapprev", CG_PrevWeapon_f },
   { "weapon", CG_Weapon_f },
-  { "tell_target", CG_TellTarget_f },
-  { "tell_attacker", CG_TellAttacker_f },
   { "testPS", CG_TestPS_f },
   { "destroyTestPS", CG_DestroyTestPS_f },
   { "testTS", CG_TestTS_f },
   { "destroyTestTS", CG_DestroyTestTS_f },
   { "clientlist", CG_ClientList_f },
-  { "boost", CG_Boost_f },  // TODO: remove me.  This is only here while 1.1 clients and cfg's are common
 };
 
 
@@ -317,7 +269,6 @@ void CG_InitConsoleCommands( void )
   trap_AddCommand( "vsay_local" );
   trap_AddCommand( "m" );
   trap_AddCommand( "mt" );
-  trap_AddCommand( "tell" );
   trap_AddCommand( "give" );
   trap_AddCommand( "god" );
   trap_AddCommand( "notarget" );
@@ -335,7 +286,6 @@ void CG_InitConsoleCommands( void )
   trap_AddCommand( "buy" );
   trap_AddCommand( "sell" );
   trap_AddCommand( "reload" );
-  trap_AddCommand( "boost" );
   trap_AddCommand( "itemact" );
   trap_AddCommand( "itemdeact" );
   trap_AddCommand( "itemtoggle" );

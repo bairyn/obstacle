@@ -157,7 +157,7 @@ static particle_t *CG_SpawnNewParticle( baseParticle_t *bp, particleEjector_t *p
       p->radius.delay = (int)CG_RandomiseValue( (float)bp->radius.delay, bp->radius.delayRandFrac );
       p->radius.initial = CG_RandomiseValue( bp->radius.initial, bp->radius.initialRandFrac );
       p->radius.final = CG_RandomiseValue( bp->radius.final, bp->radius.finalRandFrac );
-
+      
       p->radius.initial += bp->scaleWithCharge * pe->parent->charge;
 
       p->alpha.delay = (int)CG_RandomiseValue( (float)bp->alpha.delay, bp->alpha.delayRandFrac );
@@ -2114,7 +2114,7 @@ static void CG_EvaluateParticlePhysics( particle_t *p )
   else
     radius = CG_LerpValues( p->radius.initial, p->radius.final,
                             CG_CalculateTimeFrac( p->birthTime, p->lifeTime,
-                                       p->radius.delay ) );
+                                                  p->radius.delay ) );
 
   VectorSet( mins, -radius, -radius, -radius );
   VectorSet( maxs, radius, radius, radius );

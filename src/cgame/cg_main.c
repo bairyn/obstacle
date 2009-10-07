@@ -41,9 +41,9 @@ This is the only way control passes into the module.
 This must be the very first function compiled into the .q3vm file
 ================
 */
-intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
-                              int arg4, int arg5, int arg6, int arg7,
-                              int arg8, int arg9, int arg10, int arg11 )
+Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
+                                       int arg4, int arg5, int arg6, int arg7,
+                                       int arg8, int arg9, int arg10, int arg11 )
 {
   switch( command )
   {
@@ -102,20 +102,14 @@ upgradeInfo_t   cg_upgrades[ 32 ];
 
 buildableInfo_t cg_buildables[ BA_NUM_BUILDABLES ];
 
-CG_OC_CVARS
-
 vmCvar_t  cg_teslaTrailTime;
 vmCvar_t  cg_centertime;
-vmCvar_t  cg_staticCenterPrints;
 vmCvar_t  cg_runpitch;
 vmCvar_t  cg_runroll;
 vmCvar_t  cg_swingSpeed;
 vmCvar_t  cg_shadows;
 vmCvar_t  cg_drawTimer;
 vmCvar_t  cg_drawClock;
-vmCvar_t  cg_drawPlayerTimer;
-vmCvar_t  cg_drawSpeedometer;
-vmCvar_t  cg_speedometerXYZ;
 vmCvar_t  cg_drawFPS;
 vmCvar_t  cg_drawDemoState;
 vmCvar_t  cg_drawSnapshot;
@@ -123,9 +117,7 @@ vmCvar_t  cg_drawChargeBar;
 vmCvar_t  cg_drawCrosshair;
 vmCvar_t  cg_drawCrosshairNames;
 vmCvar_t  cg_crosshairSize;
-vmCvar_t  cg_drawAmmoStack;
 vmCvar_t  cg_draw2D;
-vmCvar_t  cg_disableWeaponSounds;
 vmCvar_t  cg_animSpeed;
 vmCvar_t  cg_debugAnim;
 vmCvar_t  cg_debugPosition;
@@ -137,7 +129,6 @@ vmCvar_t  cg_noPlayerAnims;
 vmCvar_t  cg_showmiss;
 vmCvar_t  cg_footsteps;
 vmCvar_t  cg_addMarks;
-vmCvar_t  cg_brassTime;
 vmCvar_t  cg_viewsize;
 vmCvar_t  cg_drawGun;
 vmCvar_t  cg_gun_frame;
@@ -147,7 +138,6 @@ vmCvar_t  cg_gun_z;
 vmCvar_t  cg_tracerChance;
 vmCvar_t  cg_tracerWidth;
 vmCvar_t  cg_tracerLength;
-vmCvar_t  cg_autoswitch;
 vmCvar_t  cg_thirdPerson;
 vmCvar_t  cg_thirdPersonAngle;
 vmCvar_t  cg_thirdPersonShoulderViewMode;
@@ -155,12 +145,10 @@ vmCvar_t  cg_thirdPersonPitchFollow;
 vmCvar_t  cg_thirdPersonRange;
 vmCvar_t  cg_stereoSeparation;
 vmCvar_t  cg_lagometer;
-vmCvar_t  cg_drawSpeed;
 vmCvar_t  cg_synchronousClients;
 vmCvar_t  cg_stats;
 vmCvar_t  cg_paused;
 vmCvar_t  cg_blood;
-vmCvar_t  cg_drawFriend;
 vmCvar_t  cg_teamChatsOnly;
 vmCvar_t  cg_noPrintDuplicate;
 vmCvar_t  cg_noVoiceChats;
@@ -178,7 +166,6 @@ vmCvar_t  cg_noTaunt;
 vmCvar_t  cg_drawSurfNormal;
 vmCvar_t  cg_drawBBOX;
 vmCvar_t  cg_wwSmoothTime;
-vmCvar_t  cg_flySpeed;
 vmCvar_t  cg_disableBlueprintErrors;
 vmCvar_t  cg_depthSortParticles;
 vmCvar_t  cg_bounceParticles;
@@ -200,11 +187,11 @@ vmCvar_t  cg_painBlendMax;
 vmCvar_t  cg_painBlendScale;
 vmCvar_t  cg_painBlendZoom;
 
-vmCvar_t  cg_debugVoices;
-
 vmCvar_t  cg_stickySpec;
 vmCvar_t  cg_alwaysSprint;
 vmCvar_t  cg_unlagged;
+
+vmCvar_t  cg_debugVoices;
 
 vmCvar_t  ui_currentClass;
 vmCvar_t  ui_carriage;
@@ -219,9 +206,8 @@ vmCvar_t  cg_debugRandom;
 vmCvar_t  cg_optimizePrediction;
 vmCvar_t  cg_projectileNudge;
 
-vmCvar_t  cg_suppressWAnimWarnings;
-
 vmCvar_t  cg_voice;
+
 vmCvar_t  cg_emoticons;
 
 
@@ -235,20 +221,13 @@ typedef struct
 
 static cvarTable_t cvarTable[ ] =
 {
-  CG_OC_DCVARS
-
-  { &cg_autoswitch, "cg_autoswitch", "1", CVAR_ARCHIVE },
   { &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
   { &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
   { &cg_stereoSeparation, "cg_stereoSeparation", "0.4", CVAR_ARCHIVE  },
   { &cg_shadows, "cg_shadows", "1", CVAR_ARCHIVE  },
   { &cg_draw2D, "cg_draw2D", "1", CVAR_ARCHIVE  },
-  { &cg_disableWeaponSounds, "cg_disableWeaponSounds", "", CVAR_ARCHIVE  },
   { &cg_drawTimer, "cg_drawTimer", "1", CVAR_ARCHIVE  },
   { &cg_drawClock, "cg_drawClock", "0", CVAR_ARCHIVE  },
-  { &cg_drawPlayerTimer, "cg_drawPlayerTimer", "0", CVAR_ARCHIVE  },
-  { &cg_drawSpeedometer, "cg_drawSpeedometer", "0", CVAR_ARCHIVE  },
-  { &cg_speedometerXYZ, "cg_speedometerXYZ", "0", CVAR_ARCHIVE  },
   { &cg_drawFPS, "cg_drawFPS", "1", CVAR_ARCHIVE  },
   { &cg_drawDemoState, "cg_drawDemoState", "1", CVAR_ARCHIVE  },
   { &cg_drawSnapshot, "cg_drawSnapshot", "0", CVAR_ARCHIVE  },
@@ -256,17 +235,13 @@ static cvarTable_t cvarTable[ ] =
   { &cg_drawCrosshair, "cg_drawCrosshair", "1", CVAR_ARCHIVE },
   { &cg_drawCrosshairNames, "cg_drawCrosshairNames", "1", CVAR_ARCHIVE },
   { &cg_crosshairSize, "cg_crosshairSize", "1", CVAR_ARCHIVE },
-  { &cg_drawAmmoStack, "cg_drawAmmoStack", "1", CVAR_ARCHIVE },
-  { &cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE },
   { &cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE },
   { &cg_lagometer, "cg_lagometer", "0", CVAR_ARCHIVE },
-  { &cg_drawSpeed, "cg_drawSpeed", "0", CVAR_ARCHIVE },
   { &cg_teslaTrailTime, "cg_teslaTrailTime", "250", CVAR_ARCHIVE  },
   { &cg_gun_x, "cg_gunX", "0", CVAR_CHEAT },
   { &cg_gun_y, "cg_gunY", "0", CVAR_CHEAT },
   { &cg_gun_z, "cg_gunZ", "0", CVAR_CHEAT },
   { &cg_centertime, "cg_centertime", "3", CVAR_CHEAT },
-  { &cg_staticCenterPrints, "cg_staticCenterPrints", "1", CVAR_ARCHIVE },
   { &cg_runpitch, "cg_runpitch", "0.002", CVAR_ARCHIVE},
   { &cg_runroll, "cg_runroll", "0.005", CVAR_ARCHIVE },
   { &cg_swingSpeed, "cg_swingSpeed", "0.3", CVAR_CHEAT },
@@ -289,7 +264,6 @@ static cvarTable_t cvarTable[ ] =
   { &cg_thirdPersonPitchFollow, "cg_thirdPersonPitchFollow", "0", 0 },
   { &cg_thirdPersonShoulderViewMode, "cg_thirdPersonShoulderViewMode", "1", CVAR_ARCHIVE },
   { &cg_stats, "cg_stats", "0", 0 },
-  { &cg_drawFriend, "cg_drawFriend", "1", CVAR_ARCHIVE },
   { &cg_teamChatsOnly, "cg_teamChatsOnly", "0", CVAR_ARCHIVE },
   { &cg_noPrintDuplicate, "cg_noPrintDuplicate", "0", CVAR_ARCHIVE },
   { &cg_noVoiceChats, "cg_noVoiceChats", "0", CVAR_ARCHIVE },
@@ -299,12 +273,11 @@ static cvarTable_t cvarTable[ ] =
   { &cg_wwSmoothTime, "cg_wwSmoothTime", "300", CVAR_ARCHIVE },
   { NULL, "cg_wwFollow", "1", CVAR_ARCHIVE|CVAR_USERINFO },
   { NULL, "cg_wwToggle", "1", CVAR_ARCHIVE|CVAR_USERINFO },
-  { NULL, "cg_flySpeed", "600", CVAR_ARCHIVE|CVAR_USERINFO },
   { NULL, "cg_disableBlueprintErrors", "0", CVAR_ARCHIVE|CVAR_USERINFO },
-  { &cg_flySpeed, "cg_flySpeed", "500", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_stickySpec, "cg_stickySpec", "1", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_alwaysSprint, "cg_alwaysSprint", "0", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_unlagged, "cg_unlagged", "1", CVAR_ARCHIVE|CVAR_USERINFO },
+  { NULL, "cg_flySpeed", "600", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_depthSortParticles, "cg_depthSortParticles", "1", CVAR_ARCHIVE },
   { &cg_bounceParticles, "cg_bounceParticles", "0", CVAR_ARCHIVE },
   { &cg_consoleLatency, "cg_consoleLatency", "3000", CVAR_ARCHIVE },
@@ -323,14 +296,15 @@ static cvarTable_t cvarTable[ ] =
   { NULL, "cg_alienConfig", "", CVAR_ARCHIVE },
   { NULL, "cg_humanConfig", "", CVAR_ARCHIVE },
   { NULL, "cg_spectatorConfig", "", CVAR_ARCHIVE },
+
   { &cg_painBlendUpRate, "cg_painBlendUpRate", "10.0", 0 },
   { &cg_painBlendDownRate, "cg_painBlendDownRate", "0.5", 0 },
   { &cg_painBlendMax, "cg_painBlendMax", "0.7", 0 },
   { &cg_painBlendScale, "cg_painBlendScale", "7.0", 0 },
   { &cg_painBlendZoom, "cg_painBlendZoom", "0.65", 0 },
-
-  { &cg_debugVoices, "cg_debugVoices", "0", 0 },
   
+  { &cg_debugVoices, "cg_debugVoices", "0", 0 },
+
   // communication cvars set by the cgame to be read by ui
   { &ui_currentClass, "ui_currentClass", "0", CVAR_ROM },
   { &ui_carriage, "ui_carriage", "", CVAR_ROM },
@@ -361,8 +335,6 @@ static cvarTable_t cvarTable[ ] =
   { &pmove_msec, "pmove_msec", "8", 0},
   { &cg_noTaunt, "cg_noTaunt", "0", CVAR_ARCHIVE},
   
-  { &cg_suppressWAnimWarnings, "cg_suppressWAnimWarnings", "1", CVAR_ARCHIVE},
-
   { &cg_voice, "voice", "default", CVAR_USERINFO|CVAR_ARCHIVE},
 
   { &cg_emoticons, "cg_emoticons", "1", CVAR_LATCH|CVAR_ARCHIVE}
@@ -386,9 +358,6 @@ void CG_RegisterCvars( void )
     trap_Cvar_Register( cv->vmCvar, cv->cvarName,
       cv->defaultString, cv->cvarFlags );
   }
-
-  //repress standard Q3 console
-  trap_Cvar_Set( "con_notifytime", "-2" );
 
   // see if we are also running the server on this machine
   trap_Cvar_VariableStringBuffer( "sv_running", var, sizeof( var ) );
@@ -790,7 +759,7 @@ static void CG_RegisterGraphics( void )
   cgs.media.healthCrossPoisoned       = trap_R_RegisterShader( "ui/assets/neutral/cross_poison.tga" );
   
   cgs.media.upgradeClassIconShader    = trap_R_RegisterShader( "icons/icona_upgrade.tga" );
-
+  
   cgs.media.balloonShader             = trap_R_RegisterShader( "gfx/sprites/chatballoon" );
 
   cgs.media.disconnectPS              = CG_RegisterParticleSystem( "disconnectPS" );
@@ -819,7 +788,7 @@ static void CG_RegisterGraphics( void )
 
   cgs.media.humanBuildableBleedPS     = CG_RegisterParticleSystem( "humanBuildableBleedPS");  
   cgs.media.alienBuildableBleedPS     = CG_RegisterParticleSystem( "alienBuildableBleedPS" );
-  // use the regular alien bleed ps for buildables for now
+
   cgs.media.alienBleedPS              = CG_RegisterParticleSystem( "alienBleedPS" );
   cgs.media.humanBleedPS              = CG_RegisterParticleSystem( "humanBleedPS" );
 
@@ -1456,7 +1425,9 @@ static clientInfo_t * CG_InfoFromScoreIndex( int index, int team, int *scoreInde
 static qboolean CG_ClientIsReady( int clientNum )
 {
   clientList_t ready;
+
   BG_ClientListParse( &ready, CG_ConfigString( CS_CLIENTS_READY ) );
+
   return BG_ClientListTest( &ready, clientNum );
 }
 
@@ -1661,8 +1632,8 @@ void CG_LoadHudMenu( void )
   cgDC.setCVar              = trap_Cvar_Set;
   cgDC.getCVarString        = trap_Cvar_VariableStringBuffer;
   cgDC.getCVarValue         = CG_Cvar_Get;
-  //cgDC.setOverstrikeMode    = &trap_Key_SetOverstrikeMode;
-  //cgDC.getOverstrikeMode    = &trap_Key_GetOverstrikeMode;
+  cgDC.setOverstrikeMode    = &trap_Key_SetOverstrikeMode;
+  cgDC.getOverstrikeMode    = &trap_Key_GetOverstrikeMode;
   cgDC.startLocalSound      = &trap_S_StartLocalSound;
   cgDC.ownerDrawHandleKey   = &CG_OwnerDrawHandleKey;
   cgDC.feederCount          = &CG_FeederCount;
@@ -1765,7 +1736,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   // load overrides
   BG_InitClassConfigs( );
   BG_InitBuildableConfigs( );
-  BG_InitWeaponConfigs( );
   BG_InitAllowedGameElements( );
 
   // Dynamic memory
@@ -1812,8 +1782,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 
   cg.loading = qtrue;   // force players to load instead of defer
 
-  CG_SetConfigValues( );  // set config values before misc is loaded
-
   CG_LoadTrailSystems( );
   CG_UpdateMediaFraction( 0.05f );
 
@@ -1847,7 +1815,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   cg.infoScreenText[ 0 ] = 0;
 
   // Make sure we have update values (scores)
-  //CG_SetConfigValues( );
+  CG_SetConfigValues( );
 
   CG_StartMusic( );
 

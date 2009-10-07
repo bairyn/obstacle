@@ -114,44 +114,43 @@ static void UI_Menu_f( void )
 
 static void UI_CloseMenus_f( void )
 {
-  if( Menu_Count( ) > 0 )
-  {
-    Menus_CloseAll( qfalse );
-    if( Menu_Count( ) == 0 )
+    if( Menu_Count( ) > 0 )
     {
       trap_Key_SetCatcher( trap_Key_GetCatcher( ) & ~KEYCATCH_UI );
       trap_Key_ClearStates( );
       trap_Cvar_Set( "cl_paused", "0" );
+      Menus_CloseAll( );
     }
-  }
 }
 
 static void UI_MessageMode_f( void )
 {
   char *arg = UI_Argv( 0 );
+
   trap_Cvar_Set( "ui_sayBuffer", "" );
 
-  trap_Key_SetCatcher( KEYCATCH_UI );
-  Menus_CloseByName( "say" );
-  Menus_CloseByName( "say_team" );
-  switch( arg[ 14 ] )
+  switch( arg[ 11 ] )
   {
     default:
     case '\0':
       // Global
       uiInfo.chatTeam             = qfalse;
-      uiInfo.chatTargetClientNum  = -1;
-      Menus_ActivateByName( "say" );
       break;
 
     case '2':
       // Team
       uiInfo.chatTeam             = qtrue;
-      uiInfo.chatTargetClientNum  = -1;
-      Menus_ActivateByName( "say_team" );
       break;
   }
 
+  trap_Key_SetCatcher( KEYCATCH_UI );
+  Menus_CloseByName( "say" );
+  Menus_CloseByName( "say_team" );
+
+  if( uiInfo.chatTeam )
+    Menus_ActivateByName( "say_team" );
+  else
+    Menus_ActivateByName( "say" );
 }
 
 struct
@@ -162,13 +161,10 @@ struct
   { "ui_load", UI_Load },
   { "ui_report", UI_Report },
   { "ui_cache", UI_Cache_f },
-  { "ui_messagemode", UI_MessageMode_f },
-  { "ui_messagemode2", UI_MessageMode_f },
-  { "messagemode3", UI_MessageMode_f },
-  { "messagemode4", UI_MessageMode_f },
+  { "messagemode", UI_MessageMode_f },
+  { "messagemode2", UI_MessageMode_f },
   { "menu", UI_Menu_f },
-  { "closemenus", UI_CloseMenus_f },
-  { "ui_setLayouts", UI_SetLayouts_f }
+  { "closemenus", UI_CloseMenus_f }
 };
 
 /*
@@ -191,7 +187,7 @@ qboolean UI_ConsoleCommand( int realTime )
     {
       commands[ i ].function( );
       return qtrue;
-    }
+    }    
   }
 
   return qfalse;

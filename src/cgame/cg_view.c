@@ -347,8 +347,8 @@ void CG_OffsetThirdPersonView( void )
     }
 
     mouseInputAngles[ PITCH ] = pitch;
-    mouseInputAngles[ YAW ] = -1.0 * SHORT2ANGLE( cmd.angles[ YAW ] ); // yaw is inverted
-    mouseInputAngles[ ROLL ] = 0.0;
+    mouseInputAngles[ YAW ] = -1.0f * SHORT2ANGLE( cmd.angles[ YAW ] ); // yaw is inverted
+    mouseInputAngles[ ROLL ] = 0.0f;
 
     for( i = 0; i < 3; i++ )
       mouseInputAngles[ i ] = AngleNormalize180( mouseInputAngles[ i ] );
@@ -356,7 +356,7 @@ void CG_OffsetThirdPersonView( void )
     // Set the rotation angles to be the view angles offset by the mouse input
     // Ignore the original pitch though; it's too jerky otherwise
     if( !cg_thirdPersonPitchFollow.integer ) 
-      cg.refdefViewAngles[ PITCH ] = 0.0;
+      cg.refdefViewAngles[ PITCH ] = 0.0f;
 
     for( i = 0; i < 3; i++ )
     {
@@ -368,12 +368,12 @@ void CG_OffsetThirdPersonView( void )
     // that's really annoying.
     // However, when we're not on the floor or ceiling (wallwalk) pitch 
     // may not be pitch, so just let it go.
-    if( surfNormal[ 2 ] > 0.5 || surfNormal[ 2 ] < -0.5 ) 
+    if( surfNormal[ 2 ] > 0.5f || surfNormal[ 2 ] < -0.5f ) 
     {
-      if( rotationAngles[ PITCH ] > 85 )
-        rotationAngles[ PITCH ] = 85;
-      else if( rotationAngles[ PITCH ] < -85 )
-        rotationAngles[ PITCH ] = -85;
+      if( rotationAngles[ PITCH ] > 85.0f )
+        rotationAngles[ PITCH ] = 85.0f;
+      else if( rotationAngles[ PITCH ] < -85.0f )
+        rotationAngles[ PITCH ] = -85.0f;
     }
 
     // Perform the rotations specified by rotationAngles.
@@ -397,7 +397,7 @@ void CG_OffsetThirdPersonView( void )
     }
     else // dead
     {
-      rotationAngles[ PITCH ] = 20;
+      rotationAngles[ PITCH ] = 20.0f;
       rotationAngles[ YAW ] = cg.refdefViewAngles[ YAW ];
     }
   }
@@ -417,10 +417,10 @@ void CG_OffsetThirdPersonView( void )
     // in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
     CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
 
-    if( trace.fraction != 1.0 )
+    if( trace.fraction != 1.0f )
     {
       VectorCopy( trace.endpos, view );
-      view[ 2 ] += ( 1.0 - trace.fraction ) * 32;
+      view[ 2 ] += ( 1.0f - trace.fraction ) * 32;
       // Try another trace to this position, because a tunnel may have the ceiling
       // close enogh that this is poking out.
 
@@ -451,19 +451,19 @@ CG_OffsetShoulderView
 */
 void CG_OffsetShoulderView( void )
 {
-  int i;
-  int           cmdNum;
-  usercmd_t     cmd, oldCmd;
-  vec3_t        rotationAngles;
-  vec3_t        axis[ 3 ], rotaxis[ 3 ];
-  float         deltaMousePitch;
-  static float  mousePitch;
-  vec3_t        forward, right, up;
+  int            i;
+  int            cmdNum;
+  usercmd_t      cmd, oldCmd;
+  vec3_t         rotationAngles;
+  vec3_t         axis[ 3 ], rotaxis[ 3 ];
+  float          deltaMousePitch;
+  static float   mousePitch;
+  vec3_t         forward, right, up;
   classConfig_t* classConfig;
 
   // Ignore following pitch; it's too jerky otherwise.
   if( !cg_thirdPersonPitchFollow.integer ) 
-    cg.refdefViewAngles[ PITCH ] = 0.0;
+    cg.refdefViewAngles[ PITCH ] = 0.0f;
     
   AngleVectors( cg.refdefViewAngles, forward, right, up );
 
@@ -496,12 +496,12 @@ void CG_OffsetShoulderView( void )
   rotationAngles[ PITCH ] = mousePitch;
 
   rotationAngles[ PITCH ] = AngleNormalize180( rotationAngles[ PITCH ] + AngleNormalize180( cg.refdefViewAngles[ PITCH ] ) );
-  if( rotationAngles [ PITCH ] < -90 ) rotationAngles [ PITCH ] = -90;
-  if( rotationAngles [ PITCH ] > 90 ) rotationAngles [ PITCH ] = 90;
+  if( rotationAngles [ PITCH ] < -90.0f ) rotationAngles [ PITCH ] = -90.0f;
+  if( rotationAngles [ PITCH ] > 90.0f ) rotationAngles [ PITCH ] = 90.0f;
 
   // Yaw and Roll are much easier.
   rotationAngles[ YAW ] = SHORT2ANGLE( cmd.angles[ YAW ] ) + cg.refdefViewAngles[ YAW ];
-  rotationAngles[ ROLL ] = 0;
+  rotationAngles[ ROLL ] = 0.0f;
 
   // Perform the rotations.
   AnglesToAxis( rotationAngles, axis );
@@ -509,6 +509,7 @@ void CG_OffsetShoulderView( void )
       !BG_RotateAxis( cg.snap->ps.grapplePoint, axis, rotaxis, qfalse,
                       cg.snap->ps.eFlags & EF_WALLCLIMBCEILING ) )
     AxisCopy( axis, rotaxis );
+
   AxisToAngles( rotaxis, rotationAngles );
 
   // Actually set the viewangles.
@@ -542,11 +543,11 @@ static void CG_StepOffset( void )
   }
 }
 
+#define PCLOUD_ROLL_AMPLITUDE     25.0f
+#define PCLOUD_ROLL_FREQUENCY     0.4f
+#define PCLOUD_ZOOM_AMPLITUDE     15
+#define PCLOUD_ZOOM_FREQUENCY     0.625f // 2.5s / 4
 #define PCLOUD_DISORIENT_DURATION 2500
-#define PCLOUD_ROLL_AMPLITUDE   25.0f
-#define PCLOUD_ROLL_FREQUENCY   0.4f // 
-#define PCLOUD_ZOOM_AMPLITUDE   15
-#define PCLOUD_ZOOM_FREQUENCY   0.625f // 2.5s / 4
 
 
 /*
@@ -684,8 +685,8 @@ void CG_OffsetFirstPersonView( void )
         cg.predictedPlayerState.weapon == WP_ALEVEL3_UPG ) &&
       cg.predictedPlayerState.stats[ STAT_MISC ] > 0 )
   {
-    float   fraction1, fraction2;
-    vec3_t  forward;
+    float fraction1, fraction2;
+    vec3_t forward;
 
     AngleVectors( angles, forward, NULL, NULL );
     VectorNormalize( forward );
@@ -694,6 +695,7 @@ void CG_OffsetFirstPersonView( void )
                 LEVEL3_POUNCE_TIME_UPG;
     if( fraction1 > 1.0f )
       fraction1 = 1.0f;
+
     fraction2 = -sin( fraction1 * M_PI / 2 );
 
     VectorMA( origin, LEVEL3_FEEDBACK * fraction2, forward, origin );
@@ -758,12 +760,14 @@ void CG_OffsetFirstPersonView( void )
       !( cg.snap->ps.pm_flags & PMF_FOLLOW ) )
   {
     float scale, fraction, pitchFraction;
-
+    
     scale = 1.0f - (float)( cg.time - cg.poisonedTime ) /
             BG_PlayerPoisonCloudTime( &cg.predictedPlayerState );
-    if( scale < 0.f )
-      scale = 0.f;
-    fraction = sin( ( cg.time - cg.poisonedTime ) / 500.0f * M_PI * PCLOUD_ROLL_FREQUENCY ) * scale;
+    if( scale < 0.0f )
+      scale = 0.0f;
+
+    fraction = sin( ( cg.time - cg.poisonedTime ) / 500.0f * M_PI * PCLOUD_ROLL_FREQUENCY ) *
+               scale;
     pitchFraction = sin( ( cg.time - cg.poisonedTime ) / 200.0f * M_PI * PCLOUD_ROLL_FREQUENCY ) *
                     scale;
 
@@ -845,14 +849,17 @@ CG_CalcFov
 Fixed fov at intermissions, otherwise account for fov variable and zooms.
 ====================
 */
-#define WAVE_AMPLITUDE  1
-#define WAVE_FREQUENCY  0.4
+#define WAVE_AMPLITUDE  1.0f
+#define WAVE_FREQUENCY  0.4f
 
-#define FOVWARPTIME     400.0
+#define FOVWARPTIME     400.0f
+#define BASE_FOV_Y      67.5f
+#define MAX_FOV_Y       120.0f
+#define MAX_FOV_WARP_Y  127.5f
 
 static int CG_CalcFov( void )
 {
-  float     x;
+  float     y;
   float     phase;
   float     v;
   int       contents;
@@ -891,36 +898,31 @@ static int CG_CalcFov( void )
       ( cg.renderingThirdPerson ) )
   {
     // if in intermission or third person, use a fixed value
-    fov_x = 90;
+    fov_y = BASE_FOV_Y;
   }
   else
   {
     // don't lock the fov globally - we need to be able to change it
-    attribFov = BG_Class( cg.predictedPlayerState.stats[ STAT_CLASS ] )->fov;
-    fov_x = attribFov;
+    attribFov = BG_Class( cg.predictedPlayerState.stats[ STAT_CLASS ] )->fov * 0.75f;
+    fov_y = attribFov;
 
-    if ( fov_x < 1 )
-      fov_x = 1;
-    else if ( fov_x > 160 )
-      fov_x = 160;
+    if ( fov_y < 1.0f )
+      fov_y = 1.0f;
+    else if ( fov_y > MAX_FOV_Y )
+      fov_y = MAX_FOV_Y;
 
     if( cg.spawnTime > ( cg.time - FOVWARPTIME ) &&
         BG_ClassHasAbility( cg.predictedPlayerState.stats[ STAT_CLASS ], SCA_FOVWARPS ) )
     {
-      float temp, temp2;
+      float fraction = (float)( cg.time - cg.spawnTime ) / FOVWARPTIME;
 
-      temp = (float)( cg.time - cg.spawnTime ) / FOVWARPTIME;
-      temp2 = ( 170 - fov_x ) * temp;
-
-      //Com_Printf( "%f %f\n", temp*100, temp2*100 );
-
-      fov_x = 170 - temp2;
+      fov_y = MAX_FOV_WARP_Y - ( ( MAX_FOV_WARP_Y - fov_y ) * fraction );
     }
 
     // account for zooms
-    zoomFov = BG_Weapon( cg.predictedPlayerState.weapon )->zoomFov;
-    if ( zoomFov < 1 )
-      zoomFov = 1;
+    zoomFov = BG_Weapon( cg.predictedPlayerState.weapon )->zoomFov * 0.75f;
+    if ( zoomFov < 1.0f )
+      zoomFov = 1.0f;
     else if ( zoomFov > attribFov )
       zoomFov = attribFov;
 
@@ -932,47 +934,49 @@ static int CG_CalcFov( void )
       {
         f = ( cg.time - cg.zoomTime ) / (float)ZOOM_TIME;
 
-        if ( f > 1.0 )
-          fov_x = zoomFov;
+        if ( f > 1.0f )
+          fov_y = zoomFov;
         else
-          fov_x = fov_x + f * ( zoomFov - fov_x );
+          fov_y = fov_y + f * ( zoomFov - fov_y );
 
         // BUTTON_ATTACK2 isn't held so unzoom next time
         if( !( cmd.buttons & BUTTON_ATTACK2 ) )
         {
           cg.zoomed   = qfalse;
-          cg.zoomTime = cg.time;
+          cg.zoomTime = MIN( cg.time, 
+              cg.time + cg.time - cg.zoomTime - ZOOM_TIME );
         }
       }
       else
       {
         f = ( cg.time - cg.zoomTime ) / (float)ZOOM_TIME;
 
-        if ( f > 1.0 )
-          fov_x = fov_x;
+        if ( f > 1.0f )
+          fov_y = fov_y;
         else
-          fov_x = zoomFov + f * ( fov_x - zoomFov );
+          fov_y = zoomFov + f * ( fov_y - zoomFov );
 
         // BUTTON_ATTACK2 is held so zoom next time
         if( cmd.buttons & BUTTON_ATTACK2 )
         {
           cg.zoomed   = qtrue;
-          cg.zoomTime = cg.time;
+          cg.zoomTime = MIN( cg.time, 
+              cg.time + cg.time - cg.zoomTime - ZOOM_TIME );
         }
       }
     }
   }
 
-  x = cg.refdef.width / tan( fov_x / 360 * M_PI );
-  fov_y = atan2( cg.refdef.height, x );
-  fov_y = fov_y * 360 / M_PI;
+  y = cg.refdef.height / tan( fov_y / 360.0f * M_PI );
+  fov_x = atan2( cg.refdef.width, y );
+  fov_x = fov_x * 360.0f / M_PI;
 
   // warp if underwater
   contents = CG_PointContents( cg.refdef.vieworg, -1 );
 
   if( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
   {
-    phase = cg.time / 1000.0 * WAVE_FREQUENCY * M_PI * 2;
+    phase = cg.time / 1000.0f * WAVE_FREQUENCY * M_PI * 2.0f;
     v = WAVE_AMPLITUDE * sin( phase );
     fov_x += v;
     fov_y -= v;
@@ -989,7 +993,7 @@ static int CG_CalcFov( void )
     float scale = 1.0f - (float)( cg.time - cg.poisonedTime ) /
                   BG_PlayerPoisonCloudTime( &cg.predictedPlayerState );
       
-    phase = ( cg.time - cg.poisonedTime ) / 1000.0 * PCLOUD_ZOOM_FREQUENCY * M_PI * 2;
+    phase = ( cg.time - cg.poisonedTime ) / 1000.0f * PCLOUD_ZOOM_FREQUENCY * M_PI * 2.0f;
     v = PCLOUD_ZOOM_AMPLITUDE * sin( phase ) * scale;
     fov_x += v;
     fov_y += v;
@@ -1001,9 +1005,9 @@ static int CG_CalcFov( void )
   cg.refdef.fov_y = fov_y;
 
   if( !cg.zoomed )
-    cg.zoomSensitivity = 1;
+    cg.zoomSensitivity = 1.0f;
   else
-    cg.zoomSensitivity = cg.refdef.fov_y / 75.0;
+    cg.zoomSensitivity = cg.refdef.fov_y / 75.0f;
 
   return inwater;
 }
@@ -1272,8 +1276,8 @@ static int CG_CalcViewValues( void )
     ps->velocity[ 1 ] * ps->velocity[ 1 ] );
 
   // the bob velocity should't get too fast to avoid jerking
-  if( cg.xyspeed > 300.f )
-    cg.xyspeed = 300.f;
+  if( cg.xyspeed > 300.0f )
+    cg.xyspeed = 300.0f;
 
   VectorCopy( ps->origin, cg.refdef.vieworg );
 
@@ -1433,12 +1437,6 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
   cg.renderingThirdPerson = ( cg_thirdPerson.integer || ( cg.snap->ps.stats[ STAT_HEALTH ] <= 0 ) || 
                             ( cg.chaseFollow && cg.snap->ps.pm_flags & PMF_FOLLOW) );
 
-  // update speedometer
-  if( cg_speedometerXYZ.integer )
-    CG_AddSpeed( VectorLength( cg.snap->ps.velocity ) );
-  else
-    CG_AddSpeed( sqrt( cg.snap->ps.velocity[ 0 ] * cg.snap->ps.velocity[ 0 ] + cg.snap->ps.velocity[ 1 ] * cg.snap->ps.velocity[ 1 ] ) );
-
   // build cg.refdef
   inwater = CG_CalcViewValues( );
 
@@ -1511,7 +1509,5 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
   if( cg_stats.integer )
     CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
-
-  CG_OC_Frame();
 }
 

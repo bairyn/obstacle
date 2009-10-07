@@ -486,12 +486,12 @@ void SP_func_timer( gentity_t *self )
 ===============
 G_Checktrigger_stages
 
-Called when stages change.  Returns the number of triggered entities
+Called when stages change
 ===============
 */
-int G_Checktrigger_stages( team_t team, stage_t stage )
+void G_Checktrigger_stages( team_t team, stage_t stage )
 {
-  int i, res = 0;
+  int i;
   gentity_t *ent;
 
   for( i = 1, ent = g_entities + i ; i < level.num_entities ; i++, ent++ )
@@ -502,14 +502,9 @@ int G_Checktrigger_stages( team_t team, stage_t stage )
     if( !Q_stricmp( ent->classname, "trigger_stage" ) )
     {
       if( team == ent->stageTeam && stage == ent->stageStage )
-      {
-        res++;
         ent->use( ent, ent, ent );
-      }
     }
   }
-
-  return res;
 }
 
 

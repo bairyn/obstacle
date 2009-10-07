@@ -156,7 +156,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     ACIDTUBE_REGEN,        //int       regenRate;
     ACIDTUBE_SPLASHDAMAGE, //int       splashDamage;
     ACIDTUBE_SPLASHRADIUS, //int       splashRadius;
-    MOD_ATUBE, //FIXME: hmm //int       meansOfDeath;
+    MOD_ASPAWN,            //int       meansOfDeath;
     TEAM_ALIENS,           //int       team;
     ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
@@ -192,7 +192,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     TRAPPER_SPLASHDAMAGE,  //int       splashDamage;
     TRAPPER_SPLASHRADIUS,  //int       splashRadius;
     MOD_ASPAWN,            //int       meansOfDeath;
-    TEAM_ALIENS,           //int       team;
+    TEAM_ALIENS,            //int       team;
     ( 1 << WP_ABUILD2 ),   //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     100,                   //int       nextthink;
@@ -228,7 +228,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     BOOSTER_SPLASHDAMAGE,  //int       splashDamage;
     BOOSTER_SPLASHRADIUS,  //int       splashRadius;
     MOD_ASPAWN,            //int       meansOfDeath;
-    TEAM_ALIENS,           //int       team;
+    TEAM_ALIENS,            //int       team;
     ( 1 << WP_ABUILD2 ),   //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     100,                   //int       nextthink;
@@ -262,7 +262,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     HIVE_SPLASHDAMAGE,     //int       splashDamage;
     HIVE_SPLASHRADIUS,     //int       splashRadius;
     MOD_ASPAWN,            //int       meansOfDeath;
-    TEAM_ALIENS,           //int       team;
+    TEAM_ALIENS,            //int       team;
     ( 1 << WP_ABUILD2 ),   //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     500,                   //int       nextthink;
@@ -297,7 +297,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     HOVEL_SPLASHDAMAGE,    //int       splashDamage;
     HOVEL_SPLASHRADIUS,    //int       splashRadius;
     MOD_ASPAWN,            //int       meansOfDeath;
-    TEAM_ALIENS,           //int       team;
+    TEAM_ALIENS,            //int       team;
     ( 1 << WP_ABUILD2 ),   //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     150,                   //int       nextthink;
@@ -332,7 +332,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     HSPAWN_SPLASHDAMAGE,   //int       splashDamage;
     HSPAWN_SPLASHRADIUS,   //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     100,                   //int       nextthink;
@@ -367,7 +367,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     MGTURRET_SPLASHDAMAGE, //int       splashDamage;
     MGTURRET_SPLASHRADIUS, //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),   //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     50,                    //int       nextthink;
@@ -402,7 +402,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     TESLAGEN_SPLASHDAMAGE, //int       splashDamage;
     TESLAGEN_SPLASHRADIUS, //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     150,                   //int       nextthink;
@@ -437,7 +437,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     ARMOURY_SPLASHDAMAGE,  //int       splashDamage;
     ARMOURY_SPLASHRADIUS,  //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     100,                   //int       nextthink;
@@ -472,7 +472,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     DC_SPLASHDAMAGE,       //int       splashDamage;
     DC_SPLASHRADIUS,       //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     100,                   //int       nextthink;
@@ -508,7 +508,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     MEDISTAT_SPLASHDAMAGE, //int       splashDamage;
     MEDISTAT_SPLASHRADIUS, //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     100,                   //int       nextthink;
@@ -543,7 +543,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     REACTOR_SPLASHDAMAGE,  //int       splashDamage;
     REACTOR_SPLASHRADIUS,  //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     REACTOR_ATTACK_DCC_REPEAT, //int       nextthink;
@@ -578,7 +578,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     REPEATER_SPLASHDAMAGE, //int       splashDamage;
     REPEATER_SPLASHRADIUS, //int       splashRadius;
     MOD_HSPAWN,            //int       meansOfDeath;
-    TEAM_HUMANS,           //int       team;
+    TEAM_HUMANS,            //int       team;
     ( 1 << WP_HBUILD ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
     100,                   //int       nextthink;
@@ -701,7 +701,7 @@ BG_ParseBuildableFile
 Parses a configuration file describing a buildable
 ======================
 */
-static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *bc, const char *buildableName )
+static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *bc )
 {
   char          *text_p;
   int           i;
@@ -838,31 +838,6 @@ static qboolean BG_ParseBuildableFile( const char *filename, buildableConfig_t *
       defined |= ZOFFSET;
       continue;
     }
-    // hack: redefine some constants
-    else if( !Q_stricmp( token, "bp" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->buildPoints = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "splashRadius" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->splashRadius = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "range" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->turretRange = atof( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "value" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((buildableAttributes_t *)(BG_BuildableByName(buildableName)))->value = atoi( token );
-      continue;
-    }
 
 
     Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
@@ -901,8 +876,8 @@ void BG_InitBuildableConfigs( void )
     bc = BG_BuildableConfig( i );
     Com_Memset( bc, 0, sizeof( buildableConfig_t ) );
 
-    BG_ParseBuildableFile( va( "configs%s/buildables/%s.cfg",
-                               BG_OC_OCMode() ? "/oc" : "", BG_Buildable( i )->name ), bc, BG_Buildable( i )->name );
+    BG_ParseBuildableFile( va( "configs/buildables/%s.cfg",
+                               BG_Buildable( i )->name ), bc );
   }
 }
 
@@ -1164,7 +1139,7 @@ static const classAttributes_t bg_classList[ ] =
     "In addition to the basic Dragoon abilities, the Advanced "
       "Dragoon has 3 barbs which may be used to attack humans "
       "from a distance.",
-    ( 1 << S2 )|( 1 << S3 ),                                    //int  stages
+    ( 1 << S2 )|( 1 << S3 ),                        //int  stages
     LEVEL3_UPG_HEALTH,                              //int     health;
     0.0f,                                           //float   fallDamage;
     LEVEL3_UPG_REGEN,                               //float   regenRate;
@@ -1239,7 +1214,7 @@ static const classAttributes_t bg_classList[ ] =
     1.0f,                                           //float   knockbackScale;
     { PCL_NONE, PCL_NONE, PCL_NONE },               //int     children[ 3 ];
     0,                                              //int     cost;
-    ALIEN_CREDITS_PER_FRAG                          //int     value;
+    ALIEN_CREDITS_PER_KILL                          //int     value;
   },
   {
     PCL_HUMAN_BSUIT,                                //int     classnum;
@@ -1266,8 +1241,8 @@ static const classAttributes_t bg_classList[ ] =
     1.0f,                                           //float   knockbackScale;
     { PCL_NONE, PCL_NONE, PCL_NONE },               //int     children[ 3 ];
     0,                                              //int     cost;
-    ALIEN_CREDITS_PER_FRAG                          //int     value;
-  },
+    ALIEN_CREDITS_PER_KILL                          //int     value;
+  }
 };
 
 int   bg_numClasses = sizeof( bg_classList ) / sizeof( bg_classList[ 0 ] );
@@ -1374,37 +1349,44 @@ BG_ClassCanEvolveFromTo
 */
 int BG_ClassCanEvolveFromTo( class_t fclass,
                              class_t tclass,
-                             int credits, int stage, int cost )
+                             int credits, int stage,
+                             int cost )
 {
   int i, j, best, value;
 
   if( credits < cost || fclass == PCL_NONE || tclass == PCL_NONE ||
       fclass == tclass )
     return -1;
+
   for( i = 0; i < bg_numClasses; i++ )
   {
     if( bg_classList[ i ].number != fclass )
       continue;
+
     best = credits + 1;
     for( j = 0; j < 3; j++ )
     {
       int thruClass, evolveCost;
-
+      
       thruClass = bg_classList[ i ].children[ j ];
       if( thruClass == PCL_NONE || !BG_ClassAllowedInStage( thruClass, stage ) ||
           !BG_ClassIsAllowed( thruClass ) )
         continue;
-      evolveCost = BG_Class( thruClass )->cost * ALIEN_CREDITS_PER_FRAG;
+
+      evolveCost = BG_Class( thruClass )->cost * ALIEN_CREDITS_PER_KILL;
       if( thruClass == tclass )
         value = cost + evolveCost;
       else
         value = BG_ClassCanEvolveFromTo( thruClass, tclass, credits, stage,
                                          cost + evolveCost );
+
       if( value >= 0 && value < best )
         best = value;
     }
+
     return best <= credits ? best : -1;
   }
+
   Com_Printf( S_COLOR_YELLOW "WARNING: fallthrough in BG_ClassCanEvolveFromTo\n" );
   return -1;
 }
@@ -1414,24 +1396,27 @@ int BG_ClassCanEvolveFromTo( class_t fclass,
 BG_AlienCanEvolve
 ==============
 */
-qboolean BG_AlienCanEvolve( class_t pclass, int credits, int stage )
+qboolean BG_AlienCanEvolve( class_t class, int credits, int stage )
 {
   int i, j, tclass;
 
-  for( i = PCL_NONE + 1; i < PCL_NUM_CLASSES; i++ )
+  for( i = 0; i < bg_numClasses; i++ )
   {
-    if( bg_classList[ i ].number != pclass )
+    if( bg_classList[ i ].number != class )
       continue;
+
     for( j = 0; j < 3; j++ )
     {
       tclass = bg_classList[ i ].children[ j ];
       if( tclass != PCL_NONE && BG_ClassAllowedInStage( tclass, stage ) &&
           BG_ClassIsAllowed( tclass ) &&
-          credits >= BG_Class( tclass )->cost * ALIEN_CREDITS_PER_FRAG )
+          credits >= BG_Class( tclass )->cost * ALIEN_CREDITS_PER_KILL )
         return qtrue;
     }
+
     return qfalse;
   }
+
   Com_Printf( S_COLOR_YELLOW "WARNING: fallthrough in BG_AlienCanEvolve\n" );
   return qfalse;
 }
@@ -1443,7 +1428,7 @@ BG_ParseClassFile
 Parses a configuration file describing a class
 ======================
 */
-static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc, const char *className )
+static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc )
 {
   char          *text_p;
   int           i;
@@ -1678,37 +1663,6 @@ static qboolean BG_ParseClassFile( const char *filename, classConfig_t *cc, cons
       defined |= NAME;
       continue;
     }
-    // hack: redefine some constants
-    else if( !Q_stricmp( token, "health" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->health = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "value" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->value = atoi( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "regen" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->regenRate = atof( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "speed" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->speed = atof( token );
-      continue;
-    }
-    else if( !Q_stricmp( token, "jump" ) )
-    {
-      token = COM_Parse( &text_p );
-      ((classAttributes_t *)(BG_ClassByName(className)))->jumpMagnitude = atof( token );
-      continue;
-    }
     else if( !Q_stricmp( token, "shoulderOffsets" ) )
     {
       for( i = 0; i <= 2; i++ )
@@ -1769,8 +1723,8 @@ void BG_InitClassConfigs( void )
   {
     cc = BG_ClassConfig( i );
 
-    BG_ParseClassFile( va( "configs%s/classes/%s.cfg",
-                           BG_OC_OCMode() ? "/oc" : "", BG_Class( i )->name ), cc, BG_Class( i )->name );
+    BG_ParseClassFile( va( "configs/classes/%s.cfg",
+                           BG_Class( i )->name ), cc );
   }
 }
 
@@ -1801,7 +1755,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ALEVEL1,           //int       weaponNum;
@@ -1826,7 +1780,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ALEVEL1_UPG,       //int       weaponNum;
@@ -1851,7 +1805,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ALEVEL2,           //int       weaponNum;
@@ -1876,7 +1830,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ALEVEL2_UPG,       //int       weaponNum;
@@ -1901,7 +1855,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ALEVEL3,           //int       weaponNum;
@@ -1926,7 +1880,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ALEVEL3_UPG,       //int       weaponNum;
@@ -1951,7 +1905,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ALEVEL4,           //int       weaponNum;
@@ -1976,7 +1930,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_BLASTER,           //int       weaponNum;
@@ -2001,7 +1955,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_MACHINEGUN,        //int       weaponNum;
@@ -2027,7 +1981,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_PAIN_SAW,          //int       weaponNum;
@@ -2054,7 +2008,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_SHOTGUN,           //int       weaponNum;
@@ -2081,7 +2035,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_LAS_GUN,           //int       weaponNum;
@@ -2107,7 +2061,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_MASS_DRIVER,       //int       weaponNum;
@@ -2116,9 +2070,9 @@ static const weaponAttributes_t bg_weapons[ ] =
     SLOT_WEAPON,          //int       slots;
     "mdriver",            //char      *weaponName;
     "Mass Driver",        //char      *humanName;
-    "A portable magnetic accelerator capable of launching "
-      "metallic slugs at extremely high velocity. It has a"
-      "large payload, but fires slowly.",
+    "A portable particle accelerator which causes minor nuclear "
+      "reactions at the point of impact. It has a very large "
+      "payload, but fires slowly.",
     MDRIVER_CLIPSIZE,     //int       maxAmmo;
     MDRIVER_MAXCLIPS,     //int       maxClips;
     qfalse,               //int       infiniteAmmo;
@@ -2134,7 +2088,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     20.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_CHAINGUN,          //int       weaponNum;
@@ -2161,7 +2115,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_PULSE_RIFLE,       //int       weaponNum;
@@ -2186,7 +2140,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_FLAMER,            //int       weaponNum;
@@ -2213,7 +2167,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_LUCIFER_CANNON,    //int       weaponNum;
@@ -2240,7 +2194,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qtrue,                //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_GRENADE,           //int       weaponNum;
@@ -2265,7 +2219,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_LOCKBLOB_LAUNCHER, //int       weaponNum;
@@ -2290,7 +2244,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_HIVE,              //int       weaponNum;
@@ -2315,7 +2269,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_TESLAGEN,          //int       weaponNum;
@@ -2340,7 +2294,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_MGTURRET,          //int       weaponNum;
@@ -2365,7 +2319,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qfalse,               //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   },
   {
     WP_ABUILD,            //int       weaponNum;
@@ -2390,7 +2344,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_ABUILD2,           //int       weaponNum;
@@ -2415,7 +2369,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_ALIENS           //team_t  team;
+    TEAM_ALIENS           //team_t    team;
   },
   {
     WP_HBUILD,            //int       weaponNum;
@@ -2432,7 +2386,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     qtrue,                //int       infiniteAmmo;
     qfalse,               //int       usesEnergy;
     HBUILD_REPEAT,        //int       repeatRate1;
-    0 /*HBUILD_REPEAT*/,        //int       repeatRate2;
+    0,                    //int       repeatRate2;
     0,                    //int       repeatRate3;
     0,                    //int       reloadTime;
     0.0f,                 //float     knockbackScale;
@@ -2442,7 +2396,7 @@ static const weaponAttributes_t bg_weapons[ ] =
     90.0f,                //float     zoomFov;
     qtrue,                //qboolean  purchasable;
     qfalse,               //qboolean  longRanged;
-    TEAM_HUMANS           //team_t  team;
+    TEAM_HUMANS           //team_t    team;
   }
 };
 
@@ -2491,121 +2445,6 @@ qboolean BG_WeaponAllowedInStage( weapon_t weapon, stage_t stage )
   int stages = BG_Weapon( weapon )->stages;
 
   return stages & ( 1 << stage );
-}
-
-/*
-==================
-BG_ParseWeaponFile
-
-Parses a configuration file describing an override for a weapon and redefines
-the weapon's constant data
-======================
-*/
-static qboolean BG_ParseWeaponFile( const char *filename, const char *weaponName )
-{
-  char          *text_p;
-  int           len;
-  char          *token;
-  char          text[ 20000 ];
-  char          name[ 666 ] = {""};
-  fileHandle_t  f;
-
-  len = trap_FS_FOpenFile( filename, &f, FS_READ );
-  if( len < 0 )
-    return qfalse;
-
-  if( len == 0 || len >= sizeof( text ) - 1 )
-  {
-    trap_FS_FCloseFile( f );
-    Com_Printf( S_COLOR_RED "ERROR: Weapon file %s is %s\n", filename,
-      len == 0 ? "empty" : "too long" );
-    return qfalse;
-  }
-
-  trap_FS_Read( text, len, f );
-  text[ len ] = 0;
-  trap_FS_FCloseFile( f );
-
-  // parse the text
-  text_p = text;
-
-  // read optional parameters
-  while( 1 )
-  {
-    token = COM_Parse( &text_p );
-
-    if( !token )
-      break;
-
-    if( !Q_stricmp( token, "" ) )
-      break;
-
-    if( !Q_stricmp( token, "name" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      Q_strncpyz( name, token, sizeof( name ) );
-
-      continue;
-    }
-    // hack: redefine some constants
-    else if( !Q_stricmp( token, "repeat" ) || !Q_stricmp( token, "repeat1" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate1 = atoi( token );
-
-      continue;
-    }
-    else if( !Q_stricmp( token, "repeat2" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate2 = atoi( token );
-
-      continue;
-    }
-    else if( !Q_stricmp( token, "repeat3" ) )
-    {
-      token = COM_Parse( &text_p );
-      if( !token )
-        break;
-
-      ((weaponAttributes_t *)(BG_WeaponByName(weaponName)))->repeatRate3 = atoi( token );
-
-      continue;
-    }
-
-
-    Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
-    return qfalse;
-  }
-
-  return qtrue;
-}
-
-/*
-===============
-BG_InitWeaponConfigs
-===============
-*/
-void BG_InitWeaponConfigs( void )
-{
-  int  i;
-
-  if( BG_OC_OCMode() )
-  {
-    for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
-    {
-      BG_ParseWeaponFile( va( "configs/oc/weapons/%s.cfg", BG_Weapon( i )->name ), BG_Weapon( i )->name );
-    }
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3001,6 +2840,7 @@ const char *BG_EventName( int num )
 {
   if( num < 0 || num >= sizeof( eventnames ) / sizeof( char * ) )
     return "UNKNOWN";
+
   return eventnames[ num ];
 }
 
@@ -3080,8 +2920,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
   s->time2 = ps->movementDir;
   s->legsAnim = ps->legsAnim;
   s->torsoAnim = ps->torsoAnim;
-  //FIXME: gotta work out a way to transmit this in the entitystate
-  //s->weaponAnim |= ps->weaponAnim;
+  s->weaponAnim = ps->weaponAnim;
   s->clientNum = ps->clientNum;   // ET_PLAYER looks here instead of at number
                     // so corpses can also reference the proper config
   s->eFlags = ps->eFlags;
@@ -3142,7 +2981,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
   if( s->generic1 <= WPM_NONE || s->generic1 >= WPM_NUM_WEAPONMODES )
     s->generic1 = WPM_PRIMARY;
 
-  s->otherEntityNum = ps->otherEntityNum;
+  s->otherEntityNum = ps->otherEntityNum;  
 }
 
 
@@ -3170,7 +3009,6 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
   s->pos.trType = TR_LINEAR_STOP;
   VectorCopy( ps->origin, s->pos.trBase );
 
-
   if( snap )
     SnapVector( s->pos.trBase );
 
@@ -3189,8 +3027,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
   s->time2 = ps->movementDir;
   s->legsAnim = ps->legsAnim;
   s->torsoAnim = ps->torsoAnim;
-  // FIXME: see previous instance of weaponAnim
-  //s->weaponAnim = ps->weaponAnim;
+  s->weaponAnim = ps->weaponAnim;
   s->clientNum = ps->clientNum;   // ET_PLAYER looks here instead of at number
                     // so corpses can also reference the proper config
   s->eFlags = ps->eFlags;
@@ -3294,28 +3131,35 @@ qboolean BG_InventoryContainsWeapon( int weapon, int stats[ ] )
 
 /*
 ========================
-BG_CalculateSlotsForInventory
+BG_SlotsForInventory
 
 Calculate the slots used by an inventory and warn of conflicts
 ========================
 */
-int BG_CalculateSlotsForInventory( int stats[ ] )
+int BG_SlotsForInventory( int stats[ ] )
 {
   int i, slot, slots;
 
   slots = BG_Weapon( stats[ STAT_WEAPON ] )->slots;
   if( stats[ STAT_TEAM ] == TEAM_HUMANS )
     slots |= BG_Weapon( WP_BLASTER )->slots;
+
   for( i = UP_NONE; i < UP_NUM_UPGRADES; i++ )
+  {
     if( BG_InventoryContainsUpgrade( i, stats ) )
     {
       slot = BG_Upgrade( i )->slots;
+
       // this check should never be true
       if( slots & slot )
+      {
         Com_Printf( S_COLOR_YELLOW "WARNING: held item %d conflicts with "
                     "inventory slot %d\n", i, slot );
+      }
+
       slots |= slot;
     }
+  }
 
   return slots;
 }
@@ -3500,7 +3344,7 @@ void BG_PositionBuildableRelativeToPlayer( const playerState_t *ps,
   VectorMA( targetOrigin, -128, playerNormal, targetOrigin );
 
   // The mask is MASK_DEADSOLID on purpose to avoid collisions with other entities
-  (*trace)( tr, entityOrigin, mins, maxs, targetOrigin, ps->clientNum, BG_OC_BUILDABLEPOSITIONMASK );
+  (*trace)( tr, entityOrigin, mins, maxs, targetOrigin, ps->clientNum, MASK_DEADSOLID );
   VectorCopy( tr->endpos, entityOrigin );
   VectorMA( entityOrigin, 0.1f, playerNormal, outOrigin );
   vectoangles( forward, outAngles );
@@ -3515,8 +3359,11 @@ Returns the credit value of a player
 */
 int BG_GetValueOfPlayer( playerState_t *ps )
 {
-  int     i, worth = BG_Class( ps->stats[ STAT_CLASS ] )->value;
+  int i, worth = 0;
+  
+  worth = BG_Class( ps->stats[ STAT_CLASS ] )->value;
 
+  // Humans have worth from their equipment as well
   if( ps->stats[ STAT_TEAM ] == TEAM_HUMANS )
   {
     for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
@@ -3531,8 +3378,23 @@ int BG_GetValueOfPlayer( playerState_t *ps )
         worth += BG_Weapon( i )->price;
     }
   }
-
+      
   return worth;
+}
+
+/*
+=================
+BG_PlayerCanChangeWeapon
+=================
+*/
+qboolean BG_PlayerCanChangeWeapon( playerState_t *ps )
+{
+  // Do not allow Lucifer Cannon "canceling" via weapon switch
+  if( ps->weapon == WP_LUCIFER_CANNON &&
+      ps->stats[ STAT_MISC ] > LCANNON_CHARGE_TIME_MIN )
+    return qfalse;
+
+  return ps->weaponTime <= 0 || ps->weaponstate != WEAPON_FIRING;
 }
 
 /*
@@ -3566,23 +3428,8 @@ weapon_t BG_GetPlayerWeapon( playerState_t *ps )
 {
   if( ps->persistant[ PERS_NEWWEAPON ] )
     return ps->persistant[ PERS_NEWWEAPON ];
+
   return ps->weapon;
-}
-
-/*
-===============
-BG_PlayerCanChangeWeapon
-===============
-*/
-qboolean BG_PlayerCanChangeWeapon( playerState_t *ps )
-{
-  // prevent lcannon ammo conservation exploit
-  if( ( ps->weapon == WP_LUCIFER_CANNON &&
-        ps->stats[ STAT_MISC ] > LCANNON_CHARGE_TIME_MIN ) ||
-      ( ps->weaponTime > 0 && ps->weaponstate == WEAPON_FIRING ) )
-    return qfalse;
-
-  return qtrue;
 }
 
 /*
@@ -3623,117 +3470,103 @@ int atoi_neg( char *token, qboolean allowNegative )
   return value;
 }
 
+#define MAX_NUM_PACKED_ENTITY_NUMS 10
+
 /*
 ===============
-BG_PackZapTargets
+BG_PackEntityNumbers
 
-pack up to 12 targets into an entityState_t
+Pack entity numbers into an entityState_t
 ===============
 */
-//FIXME: magic - 1 and count makes no sense
-void BG_PackZapTargets( entityState_t *es, int creator, const int *targets, int count )
+void BG_PackEntityNumbers( entityState_t *es, const int *entityNums, int count )
 {
   int i;
-  es->misc = es->time = es->time2 = es->constantLight = 0;
-  for( i = 0; i < MAX_GENTITYNUM_PACK; i++ )
+
+  if( count > MAX_NUM_PACKED_ENTITY_NUMS )
   {
-    int entityNum = ENTITYNUM_NONE;
+    count = MAX_NUM_PACKED_ENTITY_NUMS;
+    Com_Printf( S_COLOR_YELLOW "WARNING: A maximum of %d entity numbers can be "
+      "packed, but BG_PackEntityNumbers was passed %d entities",
+      MAX_NUM_PACKED_ENTITY_NUMS, count );
+  }
+
+  es->misc = es->time = es->time2 = es->constantLight = 0;
+
+  for( i = 0; i < MAX_NUM_PACKED_ENTITY_NUMS; i++ )
+  {
+    int entityNum;
+
     if( i < count )
-    {
-      if( i == 0 )
-        entityNum = creator;
-      else
-        entityNum = targets[ i - 1 ];
-    }
-    if( entityNum & ~(GENTITYNUM_MASK) )
-    {
-      Com_Printf("Warning: BG_PackZapTargets: targets[%d] (%d) doesn't fit in %d bits, using ENTITYNUM_NONE\n",
-                 i, targets[i], GENTITYNUM_BITS);
+      entityNum = entityNums[ i ];
+    else
       entityNum = ENTITYNUM_NONE;
+
+    if( entityNum & ~GENTITYNUM_MASK )
+    {
+      Com_Error( ERR_FATAL, "BG_PackEntityNumbers passed an entity number (%d) which "
+        "exceeds %d bits", entityNum, GENTITYNUM_BITS );
     }
+
     switch( i )
     {
-      case 0:
-        es->misc |= entityNum;
-        break;
-      case 1:
-        es->time |= entityNum;
-        break;
-      case 2:
-        es->time |= entityNum << GENTITYNUM_BITS;
-        break;
-      case 3:
-        es->time |= entityNum << (GENTITYNUM_BITS * 2);
-        break;
-      case 4:
-        es->time2 |= entityNum;
-        break;
-      case 5:
-        es->time2 |= entityNum << GENTITYNUM_BITS;
-        break;
-      case 6:
-        es->time2 |= entityNum << (GENTITYNUM_BITS * 2);
-        break;
-      case 7:
-        es->constantLight |= entityNum;
-        break;
-      case 8:
-        es->constantLight |= entityNum << GENTITYNUM_BITS;
-        break;
-      case 9:
-        es->constantLight |= entityNum << (GENTITYNUM_BITS * 2);
+      case 0: es->misc |= entityNum;                                       break;
+      case 1: es->time |= entityNum;                                       break;
+      case 2: es->time |= entityNum << GENTITYNUM_BITS;                    break;
+      case 3: es->time |= entityNum << (GENTITYNUM_BITS * 2);              break;
+      case 4: es->time2 |= entityNum;                                      break;
+      case 5: es->time2 |= entityNum << GENTITYNUM_BITS;                   break;
+      case 6: es->time2 |= entityNum << (GENTITYNUM_BITS * 2);             break;
+      case 7: es->constantLight |= entityNum;                              break;
+      case 8: es->constantLight |= entityNum << GENTITYNUM_BITS;           break;
+      case 9: es->constantLight |= entityNum << (GENTITYNUM_BITS * 2);     break;
+      default: Com_Error( ERR_FATAL, "Entity index %d not handled", i );   break;
     }
   }
 }
 
 /*
 ===============
-BG_UnpackZapTargets
+BG_UnpackEntityNumbers
 
-unpacks the 12 targets in an entityState_t
+Unpack entity numbers from an entityState_t
 ===============
 */
-void BG_UnpackZapTargets( entityState_t *es, int *creator, int *targets, int count )
+int BG_UnpackEntityNumbers( entityState_t *es, int *entityNums, int count )
 {
   int i;
+
+  if( count > MAX_NUM_PACKED_ENTITY_NUMS )
+    count = MAX_NUM_PACKED_ENTITY_NUMS;
+
   for( i = 0; i < count; i++ )
   {
+    int *entityNum = &entityNums[ i ];
+
     switch( i )
     {
-      case 0:
-        if(creator)
-          *creator = es->misc & GENTITYNUM_MASK;
-        break;
-      case 1:
-        targets[ i - 1 ] = es->time & GENTITYNUM_MASK;
-        break;
-      case 2:
-        targets[ i - 1 ] = (es->time >> GENTITYNUM_BITS) & GENTITYNUM_MASK;
-        break;
-      case 3:
-        targets[ i - 1 ] = (es->time >> (GENTITYNUM_BITS * 2)) & GENTITYNUM_MASK;
-        break;
-      case 4:
-        targets[ i - 1 ] = es->time2 & GENTITYNUM_MASK;
-        break;
-      case 5:
-        targets[ i - 1 ] = (es->time2 >> GENTITYNUM_BITS) & GENTITYNUM_MASK;
-        break;
-      case 6:
-        targets[ i - 1 ] = (es->time2 >> (GENTITYNUM_BITS * 2)) & GENTITYNUM_MASK;
-        break;
-      case 7:
-        targets[ i - 1 ] = es->constantLight & GENTITYNUM_MASK;
-        break;
-      case 8:
-        targets[ i - 1 ] = (es->constantLight >> GENTITYNUM_BITS) & GENTITYNUM_MASK;
-        break;
-      case 9:
-        targets[ i - 1 ] = (es->constantLight >> (GENTITYNUM_BITS * 2)) & GENTITYNUM_MASK;
-        break;
+      case 0: *entityNum = es->misc;                                      break;
+      case 1: *entityNum = es->time;                                      break;
+      case 2: *entityNum = (es->time >> GENTITYNUM_BITS);                 break;
+      case 3: *entityNum = (es->time >> (GENTITYNUM_BITS * 2));           break;
+      case 4: *entityNum = es->time2;                                     break;
+      case 5: *entityNum = (es->time2 >> GENTITYNUM_BITS);                break;
+      case 6: *entityNum = (es->time2 >> (GENTITYNUM_BITS * 2));          break;
+      case 7: *entityNum = es->constantLight;                             break;
+      case 8: *entityNum = (es->constantLight >> GENTITYNUM_BITS);        break;
+      case 9: *entityNum = (es->constantLight >> (GENTITYNUM_BITS * 2));  break;
+      default: Com_Error( ERR_FATAL, "Entity index %d not handled", i );  break;
     }
+
+    *entityNum &= GENTITYNUM_MASK;
+
+    if( *entityNum == ENTITYNUM_NONE )
+      break;
   }
+
+  return i;
 }
+
 /*
 ===============
 BG_ParseCSVEquipmentList
@@ -4109,8 +3942,10 @@ weapon_t BG_PrimaryWeapon( int stats[ ] )
     if( BG_InventoryContainsWeapon( i, stats ) )
       return i;
   }
+
   if( BG_InventoryContainsWeapon( WP_BLASTER, stats ) )
     return WP_BLASTER;
+
   return WP_NONE;
 }
 
@@ -4215,28 +4050,5 @@ char *BG_TeamName( team_t team )
   if( team == TEAM_HUMANS )
     return "human";
   return "<team>";
-}
-
-/*
-===============
-BG_StrToLower
-
-Convert all characters in a string to lower case
-===============
-*/
-void BG_StrToLower( char *s )
-{
-    if(!s)
-        return;
-
-    while(*s)
-    {
-        if(*s >= 'A' && *s <= 'Z')
-        {
-            *s -= 'A' - 'a';
-        }
-
-        s++;
-    }
 }
 

@@ -101,7 +101,7 @@ void G_LeaveTeam( gentity_t *self )
   }
 
   // stop any following clients
-  G_StopFromFollowing( self, 0 );
+  G_StopFromFollowing( self );
 
   G_TeamVote( self, qfalse );
   self->suicideTime = 0;
@@ -138,59 +138,50 @@ void G_ChangeTeam( gentity_t *ent, team_t newTeam )
 
   G_LeaveTeam( ent );
   ent->client->pers.teamSelection = newTeam;
-
-  // under certain circumstances, clients can keep their kills and credits
-  // when switching teams
-  if( G_admin_permission( ent, ADMF_TEAMCHANGEFREE ) ||
-    ( ( oldTeam == TEAM_HUMANS || oldTeam == TEAM_ALIENS ) &&
-      ( level.time - ent->client->pers.teamChangeTime ) > 60000 ) )
-  {
-    if( oldTeam == TEAM_NONE )
-    {
-      //copy credits to ps for the hud code
-      ent->client->ps.persistant[ PERS_CREDIT ] = ent->client->pers.credit;
-    }
-    else if( oldTeam == TEAM_HUMANS )
-    {
-      // always save in alien credits
-      ent->client->pers.credit *=
-        ( ALIEN_MAX_CREDITS / (float)HUMAN_MAX_CREDITS );
-    }
-    else if( newTeam == TEAM_HUMANS )
-    {
-      // convert to alien currency
-      ent->client->pers.credit *=
-        ( HUMAN_MAX_CREDITS / (float)ALIEN_MAX_CREDITS );
-    }
-  }
-  else
-  {
-    ent->client->pers.credit = 0;
-    ent->client->pers.score = 0;
-  }
-
   ent->client->pers.classSelection = PCL_NONE;
   ClientSpawn( ent, NULL, NULL, NULL );
-
   ent->client->pers.joinedATeam = qtrue;
   ent->client->pers.teamChangeTime = level.time;
 
-  //update ClientInfo
+  if( oldTeam == TEAM_HUMANS && newTeam == TEAM_ALIENS )
+  {
+    // Convert from human to alien credits
+    ent->client->pers.credit =
+      (int)( ent->client->pers.credit *
+             ALIEN_MAX_CREDITS / HUMAN_MAX_CREDITS + 0.5f );
+  }
+  else if( oldTeam == TEAM_ALIENS && newTeam == TEAM_HUMANS )
+  {
+    // Convert from alien to human credits
+    ent->client->pers.credit =
+      (int)( ent->client->pers.credit *
+             HUMAN_MAX_CREDITS / ALIEN_MAX_CREDITS + 0.5f );
+  }
+
+  // Copy credits to ps for the client
+  ent->client->ps.persistant[ PERS_CREDIT ] = ent->client->pers.credit;
+
   ClientUserinfoChanged( ent->client->ps.clientNum );
 
   if( oldTeam != TEAM_NONE && newTeam != TEAM_NONE )
+  {
     G_LogPrintf(
       "team: %i %i %i: %s" S_COLOR_WHITE " left the %ss and joined the %ss\n",
        ent->s.number, newTeam, oldTeam, ent->client->pers.netname,
        BG_TeamName( oldTeam ), BG_TeamName( newTeam ) );
+  }
   else if( newTeam == TEAM_NONE )
+  {
     G_LogPrintf( "team: %i %i %i: %s" S_COLOR_WHITE " left the %ss\n",
       ent->s.number, newTeam, oldTeam, ent->client->pers.netname,
       BG_TeamName( oldTeam ) );
+  }
   else
+  {
     G_LogPrintf( "team: %i %i %i: %s" S_COLOR_WHITE " joined the %ss\n",
       ent->s.number, newTeam, oldTeam, ent->client->pers.netname,
       BG_TeamName( newTeam ) );
+  }
 }
 
 /*

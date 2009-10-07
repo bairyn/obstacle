@@ -45,7 +45,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /*
  * IMMUNITY - cannot be vote kicked, vote muted
  * NOCENSORFLOOD - cannot be censored or flood protected
- * TEAMCHANGEFREE - never loses credits for changing teams
  * SPECALLCHAT - can see team chat as a spectator
  * FORCETEAMCHANGE - can switch teams any time, regardless of balance
  * UNACCOUNTABLE - does not need to specify a reason for a kick/ban
@@ -57,11 +56,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * IMMUTABLE - admin commands cannot be used on them
  * INCOGNITO - does not show up as an admin in !listplayers
  * ALLFLAGS - all flags (including command flags) apply to this player
- * ? - receieves and can send /a admin messages
+ * ADMINCHAT - receieves and can send /a admin messages
  */
 #define ADMF_IMMUNITY        "IMMUNITY"
 #define ADMF_NOCENSORFLOOD   "NOCENSORFLOOD"
-#define ADMF_TEAMCHANGEFREE  "TEAMCHANGEFREE"
 #define ADMF_SPEC_ALLCHAT    "SPECALLCHAT"
 #define ADMF_FORCETEAMCHANGE "FORCETEAMCHANGE"
 #define ADMF_UNACCOUNTABLE   "UNACCOUNTABLE"
@@ -111,7 +109,7 @@ typedef struct g_admin_ban
 {
   char name[ MAX_NAME_LENGTH ];
   char guid[ 33 ];
-  char ip[ 40 ];
+  char ip[ 44 ]; // big enough for IPv6 CIDR notation (without brackets)
   char reason[ MAX_ADMIN_BAN_REASON ];
   char made[ 18 ]; // big enough for strftime() %c
   int expires;
@@ -138,7 +136,7 @@ typedef struct g_admin_namelog
 }
 g_admin_namelog_t;
 
-qboolean G_admin_ban_check( char *userinfo, char *reason, int rlen );
+qboolean G_admin_ban_check( gentity_t *ent, char *reason, int rlen );
 qboolean G_admin_cmd_check( gentity_t *ent, qboolean say );
 qboolean G_admin_readconfig( gentity_t *ent, int skiparg );
 qboolean G_admin_permission( gentity_t *ent, const char *flag );
@@ -146,10 +144,6 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len );
 void G_admin_namelog_update( gclient_t *ent, qboolean disconnect );
 int G_admin_level( gentity_t *ent );
 int G_admin_parse_time( const char *time );
-
-qboolean admin_higher( gentity_t *admin, gentity_t *victim );
-
-void admin_writeconfig( void );
 
 // ! command functions
 qboolean G_admin_time( gentity_t *ent, int skiparg );
@@ -164,7 +158,6 @@ qboolean G_admin_listlayouts( gentity_t *ent, int skiparg );
 qboolean G_admin_listplayers( gentity_t *ent, int skiparg );
 qboolean G_admin_map( gentity_t *ent, int skiparg );
 qboolean G_admin_mute( gentity_t *ent, int skiparg );
-qboolean G_admin_override( gentity_t *ent, int skiparg );
 qboolean G_admin_denybuild( gentity_t *ent, int skiparg );
 qboolean G_admin_showbans( gentity_t *ent, int skiparg );
 qboolean G_admin_help( gentity_t *ent, int skiparg );
@@ -172,13 +165,11 @@ qboolean G_admin_admintest( gentity_t *ent, int skiparg );
 qboolean G_admin_allready( gentity_t *ent, int skiparg );
 qboolean G_admin_endvote( gentity_t *ent, int skiparg );
 qboolean G_admin_spec999( gentity_t *ent, int skiparg );
-qboolean G_admin_register( gentity_t *ent, int skiparg );
 qboolean G_admin_rename( gentity_t *ent, int skiparg );
 qboolean G_admin_restart( gentity_t *ent, int skiparg );
 qboolean G_admin_nextmap( gentity_t *ent, int skiparg );
 qboolean G_admin_namelog( gentity_t *ent, int skiparg );
 qboolean G_admin_lock( gentity_t *ent, int skiparg );
-qboolean G_admin_info( gentity_t *ent, int skiparg );
 
 void G_admin_print( gentity_t *ent, char *m );
 void G_admin_buffer_print( gentity_t *ent, char *m );

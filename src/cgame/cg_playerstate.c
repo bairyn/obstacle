@@ -318,7 +318,7 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops )
   if( ps->stats[ STAT_TEAM ] != ops->stats[ STAT_TEAM ] )
   {
     cg.lastHealthCross = 0;
-    cg.chargeMeterAlpha = 0.f;
+    cg.chargeMeterAlpha = 0.0f;
   }
 }
 

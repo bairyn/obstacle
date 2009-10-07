@@ -31,26 +31,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../game/bg_public.h"
 #include "ui_shared.h"
 
-#define EXCOLOR(s) \
-{ \
-    int i; \
- \
-    for(i = 0; i < sizeof((s)); i++) \
-    { \
-        if(((s)[i]) == '^' && i + 3 < sizeof((s))) \
-        { \
-            memmove( (&(s)[i]) + 2, (&(s)[i]), strlen((s)) + 1); \
-            (s)[++i] = '^'; \
-            (s)[++i] = '7'; \
-        } \
-    } \
-}
-
-//
-// ui_atoms.c
-//
-char      *UI_Argv( int arg );
-
 //
 // ui_main.c
 //
@@ -122,6 +102,7 @@ typedef struct serverStatus_s
   int    currentServer;
   int    displayServers[MAX_DISPLAY_SERVERS];
   int    numDisplayServers;
+  int    numFeaturedServers;
   int    numPlayersOnServers;
   int    nextDisplayRefresh;
   int    nextSortTime;
@@ -276,18 +257,6 @@ typedef struct
   int         helpCount;
   int         helpIndex;
 
-  menuItem_t  scrimTeamList[ 64 ];
-  int         scrimTeamCount;
-  int         scrimTeamIndex;
-
-  menuItem_t  scrimWeaponList[ 32 ];
-  int         scrimWeaponCount;
-  int         scrimWeaponIndex;
-
-  menuItem_t  layoutList[ 32 ];
-  int         layoutCount;
-  int         layoutIndex;
-
   int         weapons;
   int         upgrades;
 
@@ -313,7 +282,6 @@ typedef struct
   qboolean inGameLoad;
 
   qboolean  chatTeam;
-  int       chatTargetClientNum;
 }
 uiInfo_t;
 
@@ -327,8 +295,6 @@ void      UI_AdjustFrom640( float *x, float *y, float *w, float *h );
 void      UI_Refresh( int time );
 void      UI_DrawHandlePic( float x, float y, float w, float h, qhandle_t hShader );
 void      UI_FillRect( float x, float y, float width, float height, const float *color );
-
-void      UI_SetLayouts_f( void );
 
 //
 // ui_syscalls.c

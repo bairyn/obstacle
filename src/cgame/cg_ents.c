@@ -216,7 +216,6 @@ Add continuous entity effects, like local entity emission and lighting
 */
 static void CG_EntityEffects( centity_t *cent )
 {
-
   // update sound origins
   CG_SetEntitySoundPosition( cent );
 
@@ -252,7 +251,7 @@ static void CG_EntityEffects( centity_t *cent )
 
   if( CG_IsTrailSystemValid( &cent->muzzleTS ) )
   {
-		//FIXME hack to prevent tesla trails reaching too far
+    //FIXME hack to prevent tesla trails reaching too far
     if( cent->currentState.eType == ET_BUILDABLE )
     {
       vec3_t  front, back;
@@ -267,33 +266,6 @@ static void CG_EntityEffects( centity_t *cent )
     if( cg.time > cent->muzzleTSDeathTime && CG_IsTrailSystemValid( &cent->muzzleTS ) )
       CG_DestroyTrailSystem( &cent->muzzleTS );
   }
-
-
-  /*if( cent->currentState.eType == ET_PLAYER )
-  {
-    centity_t *pcent = cent;
-
-    // predicted entity doesn't have local cgame vars
-    if( cent == &cg.predictedPlayerEntity )
-      pcent = &cg_entities[ cg.clientNum ];
-
-    for( i = 0; i <= 2; i++ )
-    {
-      if( CG_IsTrailSystemValid( &pcent->level2ZapTS[ i ] ) )
-      {
-        vec3_t  front, back;
-  
-        CG_AttachmentPoint( &pcent->level2ZapTS[ i ]->frontAttachment, front );
-        CG_AttachmentPoint( &pcent->level2ZapTS[ i ]->backAttachment, back );
-  
-        if( cg.time - pcent->level2ZapTime > 100 ||
-           Distance( front, back ) > LEVEL2_AREAZAP_CUTOFF )
-        {
-          CG_DestroyTrailSystem( &pcent->level2ZapTS[ i ] );
-        }
-      }
-    }
-  } */
 }
 
 
@@ -810,6 +782,26 @@ static void CG_LightFlare( centity_t *cent )
 
 /*
 =========================
+CG_LinkLocation
+=========================
+*/
+void CG_LinkLocation( centity_t *cent )
+{
+  centity_t *tempent;
+
+  for( tempent = cg.locationHead; tempent; tempent = tempent->nextLocation )
+  {
+    if( tempent == cent )
+      return;
+  }
+
+  cent->nextLocation = cg.locationHead;
+  cg.locationHead = cent;
+
+}
+
+/*
+=========================
 CG_Lev2ZapChain
 =========================
 */
@@ -817,22 +809,29 @@ static void CG_Lev2ZapChain( centity_t *cent )
 {
   int           i;
   entityState_t *es;
-  centity_t     *source = NULL, *target = NULL, *attacker = NULL;
-  int           targets[ LEVEL2_AREAZAP_MAX_TARGETS ], creator;
+  centity_t     *source = NULL, *target = NULL;
+  int           entityNums[ LEVEL2_AREAZAP_MAX_TARGETS + 1 ];
+  int           count;
 
   es = &cent->currentState;
 
-  BG_UnpackZapTargets( es, &creator, targets, LEVEL2_AREAZAP_MAX_TARGETS + 1 );
-  attacker = &cg_entities[ creator ];
-  for( i = 0; i < LEVEL2_AREAZAP_MAX_TARGETS; i++ )
+  count = BG_UnpackEntityNumbers( es, entityNums, LEVEL2_AREAZAP_MAX_TARGETS + 1 );
+
+  for( i = 1; i < count; i++ )
   {
-    if( i == 0 )
-      source = attacker;
+    if( i == 1 )
+    {
+      // First entity is the attacker
+      source = &cg_entities[ entityNums[ 0 ] ];
+    }
     else
-      source = &cg_entities[ targets[ 0 ] ];
-    if( targets[ i ] == ENTITYNUM_NONE )
-      continue;
-    target = &cg_entities[ targets[ i ] ];
+    {
+      // Subsequent zaps come from the first target
+      source = &cg_entities[ entityNums[ 1 ] ];
+    }
+
+    target = &cg_entities[ entityNums[ i ] ];
+
     if( !CG_IsTrailSystemValid( &cent->level2ZapTS[ i ] ) )
       cent->level2ZapTS[ i ] = CG_SpawnNewTrailSystem( cgs.media.level2ZapTS );
 
@@ -1016,6 +1015,10 @@ static void CG_CEntityPVSEnter( centity_t *cent )
     case ET_MISSILE:
       CG_LaunchMissile( cent );
       break;
+
+    case ET_BUILDABLE:
+      cent->lastBuildableHealth = es->generic1;
+      break;
   }
 
   //clear any particle systems from previous uses of this centity_t
@@ -1140,9 +1143,11 @@ static void CG_AddCEntity( centity_t *cent )
     case ET_LIGHTFLARE:
       CG_LightFlare( cent );
       break;
+
     case ET_LEV2_ZAP_CHAIN:
       CG_Lev2ZapChain( cent );
       break;
+
     case ET_LOCATION:
       CG_LinkLocation( cent );
       break;
@@ -1268,17 +1273,3 @@ void CG_AddPacketEntities( void )
   }
 }
 
-void CG_LinkLocation( centity_t *cent )
-{
-  centity_t *tempent;
-  for( tempent = cg.locationHead; tempent; tempent = tempent->nextLocation )
-  {
-    if( tempent == cent )
-    {
-      return;
-    }
-  }
-  cent->nextLocation = cg.locationHead;
-  cg.locationHead = cent;
-
-}

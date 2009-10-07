@@ -69,7 +69,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 static char sccsid[] = "@(#)qsort.c 8.1 (Berkeley) 6/4/93";
 #endif
 static const char rcsid[] =
-  "$Id: bg_lib.c 1003 2007-09-22 20:55:11Z tma $";
+  "$Id: bg_lib.c 1586 2009-10-03 12:41:40Z msk $";
 #endif /* LIBC_SCCS and not lint */
 
 static char* med3(char *, char *, char *, cmp_t *);

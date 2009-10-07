@@ -74,6 +74,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
+#if (defined _MSC_VER)
+#define Q_EXPORT __declspec(dllexport)
+#elif (defined __SUNPRO_C)
+#define Q_EXPORT __global
+#elif ((__GNUC__ >= 3) && (!__EMX__) && (!sun))
+#define Q_EXPORT __attribute__((visibility("default")))
+#else
+#define Q_EXPORT
+#endif
+
 /**********************************************************************
   VM Considerations
 
@@ -166,6 +176,10 @@ typedef int		clipHandle_t;
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
+
+#define STRING(s)			#s
+// expand constants before stringifying them
+#define XSTRING(s)			STRING(s)
 
 #define	MAX_QINT			0x7fffffff
 #define	MIN_QINT			(-MAX_QINT-1)
@@ -1011,7 +1025,6 @@ typedef enum {
 #define	GENTITYNUM_BITS		10		// don't need to send any more
 #define	MAX_GENTITIES		(1<<GENTITYNUM_BITS)
 #define GENTITYNUM_MASK		(MAX_GENTITIES - 1)
-#define MAX_GENTITYNUM_PACK	10
 
 // entitynums are communicated with GENTITY_BITS, so any reserved
 // values that are going to be communcated over the net need to
@@ -1088,6 +1101,8 @@ typedef struct playerState_s {
 	int			torsoTimer;		// don't change low priority animations until this runs out
 	int			torsoAnim;		// mask off ANIM_TOGGLEBIT
 
+	int			weaponAnim;		// mask off ANIM_TOGGLEBIT
+
 	int			movementDir;	// a number 0 to 7 that represents the reletive angle
 								// of movement to the view angle (axial and diagonals)
 								// when at rest, the value will remain unchanged
@@ -1124,8 +1139,6 @@ typedef struct playerState_s {
 	int			ammo;			// ammo held
 	int			clips;			// clips held
 
-	int			ammo_extra[14]; // compatibility
-
 	int			generic1;
 	int			loopSound;
 	int			otherEntityNum;
@@ -1147,7 +1160,7 @@ typedef struct playerState_s {
 //
 #define	BUTTON_ATTACK		1
 #define	BUTTON_TALK			2			// displays talk balloon and disables actions
-#define	BUTTON_USE_HOLDABLE	4
+#define BUTTON_USE_HOLDABLE 4           // activate upgrade
 #define	BUTTON_GESTURE		8
 #define	BUTTON_WALKING		16			// walking can't just be infered from MOVE_RUN
 										// because a key pressed late in the frame will
@@ -1243,6 +1256,7 @@ typedef struct entityState_s {
 	int		weapon;			// determines weapon and flash model, etc
 	int		legsAnim;		// mask off ANIM_TOGGLEBIT
 	int		torsoAnim;		// mask off ANIM_TOGGLEBIT
+	int		weaponAnim;		// mask off ANIM_TOGGLEBIT
 
 	int		generic1;
 } entityState_t;
@@ -1310,9 +1324,9 @@ typedef struct qtime_s {
 
 // server browser sources
 // AS_MPLAYER is no longer used
-#define AS_GLOBAL			2
+#define AS_GLOBAL			0
 #define AS_MPLAYER		1
-#define AS_LOCAL			0
+#define AS_LOCAL			2
 #define AS_FAVORITES	3
 
 
@@ -1352,7 +1366,6 @@ typedef enum {
 
 #define SAY_ALL		0
 #define SAY_TEAM	1
-#define SAY_TELL	2
 
 #define MAX_EMOTICON_NAME_LEN 16
 #define MAX_EMOTICONS 64

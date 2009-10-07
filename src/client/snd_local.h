@@ -59,7 +59,7 @@ typedef struct sfx_s {
 	int 			soundLength;
 	char 			soundName[MAX_QPATH];
 	int				lastTimeUsed;
-	int			duration;
+	int				duration;
 	struct sfx_s	*next;
 } sfx_t;
 

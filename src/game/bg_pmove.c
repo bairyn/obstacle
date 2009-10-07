@@ -106,7 +106,6 @@ void PM_StartTorsoAnim( int anim )
 PM_StartWeaponAnim
 ===================
 */
-/* FIXME: need to backport weaponAnim
 static void PM_StartWeaponAnim( int anim )
 {
   if( PM_Paralyzed( pm->ps->pm_type ) )
@@ -115,8 +114,6 @@ static void PM_StartWeaponAnim( int anim )
   pm->ps->weaponAnim = ( ( pm->ps->weaponAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT )
     | anim;
 }
-*/
-
 
 /*
 ===================
@@ -190,7 +187,6 @@ static void PM_ContinueTorsoAnim( int anim )
 PM_ContinueWeaponAnim
 ===================
 */
-/* FIXME: weaponAnim needs backporting
 static void PM_ContinueWeaponAnim( int anim )
 {
   if( ( pm->ps->weaponAnim & ~ANIM_TOGGLEBIT ) == anim )
@@ -198,7 +194,6 @@ static void PM_ContinueWeaponAnim( int anim )
 
   PM_StartWeaponAnim( anim );
 }
-*/
 
 /*
 ===================
@@ -388,8 +383,7 @@ static float PM_CmdScale( usercmd_t *cmd )
   
   if( pm->ps->stats[ STAT_TEAM ] == TEAM_HUMANS && pm->ps->pm_type == PM_NORMAL )
   {
-    //if( pm->ps->stats[ STAT_STATE ] & SS_SPEEDBOOST )
-    if( pm->ps->stats[ STAT_STAMINA ] > 0 && ( cmd->buttons & BUTTON_SPRINT || ( pm->ps->persistant[ PERS_STATE ] & PS_ALWAYSSPRINT ) ) )
+    if( pm->ps->stats[ STAT_STAMINA ] > 0 && cmd->buttons & BUTTON_SPRINT )
     {
       modifier *= HUMAN_SPRINT_MODIFIER;
       pm->ps->stats[ STAT_STATE ] |= SS_SPEEDBOOST;
@@ -545,9 +539,7 @@ static void PM_CheckCharge( void )
   if( pm->ps->stats[ STAT_MISC ] > 0 )
     pm->ps->pm_flags |= PMF_CHARGE;
   else
-
     pm->ps->pm_flags &= ~PMF_CHARGE;
-
 }
 
 /*
@@ -564,8 +556,8 @@ static qboolean PM_CheckPounce( void )
     return qfalse;
 
   // We were pouncing, but we've landed
-  if( pm->ps->groundEntityNum != ENTITYNUM_NONE
-      && ( pm->ps->pm_flags & PMF_CHARGE ) )
+  if( pm->ps->groundEntityNum != ENTITYNUM_NONE &&
+      ( pm->ps->pm_flags & PMF_CHARGE ) )
   {
     pm->ps->pm_flags &= ~PMF_CHARGE;
     pm->ps->weaponTime += LEVEL3_POUNCE_REPEAT;
@@ -590,19 +582,12 @@ static qboolean PM_CheckPounce( void )
   pml.walking = qfalse;
   pm->ps->pm_flags |= PMF_CHARGE;
   pm->ps->groundEntityNum = ENTITYNUM_NONE;
-  if( BG_OC_PMOCPounce() )
-  {
-    BG_OC_PMPounce();
-  }
+  if( pm->ps->weapon == WP_ALEVEL3 )
+    jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
+                    LEVEL3_POUNCE_JUMP_MAG / LEVEL3_POUNCE_TIME;
   else
-  {
-    if( pm->ps->weapon == WP_ALEVEL3 )
-      jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
-                      LEVEL3_POUNCE_JUMP_MAG / LEVEL3_POUNCE_TIME;
-    else
-      jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
-                      LEVEL3_POUNCE_JUMP_MAG_UPG / LEVEL3_POUNCE_TIME_UPG;
-  }
+    jumpMagnitude = pm->ps->stats[ STAT_MISC ] *
+                    LEVEL3_POUNCE_JUMP_MAG_UPG / LEVEL3_POUNCE_TIME_UPG;
   VectorMA( pm->ps->velocity, jumpMagnitude, pml.forward, pm->ps->velocity );
   PM_AddEvent( EV_JUMP );
 
@@ -632,7 +617,6 @@ static qboolean PM_CheckPounce( void )
   return qtrue;
 }
 
-
 /*
 =============
 PM_CheckWallJump
@@ -647,131 +631,125 @@ static qboolean PM_CheckWallJump( void )
   float   upFraction = 1.5f;
   trace_t trace;
 
-  if(BG_OC_PMOCWallJump())
+  if( !( BG_Class( pm->ps->stats[ STAT_CLASS ] )->abilities & SCA_WALLJUMPER ) )
+    return qfalse;
+
+  ProjectPointOnPlane( movedir, pml.forward, refNormal );
+  VectorNormalize( movedir );
+  
+  if( pm->cmd.forwardmove < 0 )
+    VectorNegate( movedir, movedir );
+  
+  //allow strafe transitions
+  if( pm->cmd.rightmove )
   {
-    BG_OC_PMCheckWallJump();
+    VectorCopy( pml.right, movedir );
+    
+    if( pm->cmd.rightmove < 0 )
+      VectorNegate( movedir, movedir );
+  }
+  
+  //trace into direction we are moving
+  VectorMA( pm->ps->origin, 0.25f, movedir, point );
+  pm->trace( &trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask );
+  
+  if( trace.fraction < 1.0f &&
+      !( trace.surfaceFlags & ( SURF_SKY | SURF_SLICK ) ) &&
+      trace.plane.normal[ 2 ] < MIN_WALK_NORMAL )
+  {
+    if( !VectorCompare( trace.plane.normal, pm->ps->grapplePoint ) )
+    {
+      VectorCopy( trace.plane.normal, pm->ps->grapplePoint );
+    }
+  }
+  else
+    return qfalse;
+  
+  if( pm->ps->pm_flags & PMF_RESPAWNED )
+    return qfalse;    // don't allow jump until all buttons are up
+  
+  if( pm->cmd.upmove < 10 )
+    // not holding jump
+    return qfalse;
+
+  if( pm->ps->pm_flags & PMF_TIME_WALLJUMP )
+    return qfalse;
+
+  // must wait for jump to be released
+  if( pm->ps->pm_flags & PMF_JUMP_HELD &&
+      pm->ps->grapplePoint[ 2 ] == 1.0f )
+  {
+    // clear upmove so cmdscale doesn't lower running speed
+    pm->cmd.upmove = 0;
+    return qfalse;
+  }
+
+  pm->ps->pm_flags |= PMF_TIME_WALLJUMP;
+  pm->ps->pm_time = 200;
+
+  pml.groundPlane = qfalse;   // jumping away
+  pml.walking = qfalse;
+  pm->ps->pm_flags |= PMF_JUMP_HELD;
+
+  pm->ps->groundEntityNum = ENTITYNUM_NONE;
+
+  ProjectPointOnPlane( forward, pml.forward, pm->ps->grapplePoint );
+  ProjectPointOnPlane( right, pml.right, pm->ps->grapplePoint );
+
+  VectorScale( pm->ps->grapplePoint, normalFraction, dir );
+
+  if( pm->cmd.forwardmove > 0 )
+    VectorMA( dir, cmdFraction, forward, dir );
+  else if( pm->cmd.forwardmove < 0 )
+    VectorMA( dir, -cmdFraction, forward, dir );
+
+  if( pm->cmd.rightmove > 0 )
+    VectorMA( dir, cmdFraction, right, dir );
+  else if( pm->cmd.rightmove < 0 )
+    VectorMA( dir, -cmdFraction, right, dir );
+
+  VectorMA( dir, upFraction, refNormal, dir );
+  VectorNormalize( dir );
+
+  VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
+            dir, pm->ps->velocity );
+
+  //for a long run of wall jumps the velocity can get pretty large, this caps it
+  if( VectorLength( pm->ps->velocity ) > LEVEL2_WALLJUMP_MAXSPEED )
+  {
+    VectorNormalize( pm->ps->velocity );
+    VectorScale( pm->ps->velocity, LEVEL2_WALLJUMP_MAXSPEED, pm->ps->velocity );
+  }
+
+  PM_AddEvent( EV_JUMP );
+
+  if( pm->cmd.forwardmove >= 0 )
+  {
+    if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
+      PM_ForceLegsAnim( LEGS_JUMP );
+    else
+      PM_ForceLegsAnim( NSPA_JUMP );
+
+    pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
   }
   else
   {
-    if( !( BG_Class( pm->ps->stats[ STAT_CLASS ] )->abilities & SCA_WALLJUMPER ) )
-      return qfalse;
-
-    ProjectPointOnPlane( movedir, pml.forward, refNormal );
-    VectorNormalize( movedir );
-    
-    if( pm->cmd.forwardmove < 0 )
-      VectorNegate( movedir, movedir );
-    
-    //allow strafe transitions
-    if( pm->cmd.rightmove )
-    {
-      VectorCopy( pml.right, movedir );
-      
-      if( pm->cmd.rightmove < 0 )
-        VectorNegate( movedir, movedir );
-    }
-    
-    //trace into direction we are moving
-    VectorMA( pm->ps->origin, 0.25f, movedir, point );
-    pm->trace( &trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask );
-    
-    if( trace.fraction < 1.0f &&
-        !( trace.surfaceFlags & ( SURF_SKY | SURF_SLICK ) ) &&
-        trace.plane.normal[ 2 ] < MIN_WALK_NORMAL )
-    {
-      if( !VectorCompare( trace.plane.normal, pm->ps->grapplePoint ) )
-      {
-        VectorCopy( trace.plane.normal, pm->ps->grapplePoint );
-      }
-    }
+    if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
+      PM_ForceLegsAnim( LEGS_JUMPB );
     else
-      return qfalse;
-    
-    if( pm->ps->pm_flags & PMF_RESPAWNED )
-      return qfalse;    // don't allow jump until all buttons are up
-    
-    if( pm->cmd.upmove < 10 )
-      // not holding jump
-      return qfalse;
+      PM_ForceLegsAnim( NSPA_JUMPBACK );
 
-    if( pm->ps->pm_flags & PMF_TIME_WALLJUMP )
-      return qfalse;
-
-    // must wait for jump to be released
-    if( pm->ps->pm_flags & PMF_JUMP_HELD &&
-        pm->ps->grapplePoint[ 2 ] == 1.0f )
-    {
-      // clear upmove so cmdscale doesn't lower running speed
-      pm->cmd.upmove = 0;
-      return qfalse;
-    }
-
-    pm->ps->pm_flags |= PMF_TIME_WALLJUMP;
-    pm->ps->pm_time = 200;
-
-    pml.groundPlane = qfalse;   // jumping away
-    pml.walking = qfalse;
-    pm->ps->pm_flags |= PMF_JUMP_HELD;
-
-    pm->ps->groundEntityNum = ENTITYNUM_NONE;
-
-    ProjectPointOnPlane( forward, pml.forward, pm->ps->grapplePoint );
-    ProjectPointOnPlane( right, pml.right, pm->ps->grapplePoint );
-
-    VectorScale( pm->ps->grapplePoint, normalFraction, dir );
-
-    if( pm->cmd.forwardmove > 0 )
-      VectorMA( dir, cmdFraction, forward, dir );
-    else if( pm->cmd.forwardmove < 0 )
-      VectorMA( dir, -cmdFraction, forward, dir );
-
-    if( pm->cmd.rightmove > 0 )
-      VectorMA( dir, cmdFraction, right, dir );
-    else if( pm->cmd.rightmove < 0 )
-      VectorMA( dir, -cmdFraction, right, dir );
-
-    VectorMA( dir, upFraction, refNormal, dir );
-    VectorNormalize( dir );
-
-    VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
-              dir, pm->ps->velocity );
-
-    //for a long run of wall jumps the velocity can get pretty large, this caps it
-    if( VectorLength( pm->ps->velocity ) > LEVEL2_WALLJUMP_MAXSPEED )
-    {
-      VectorNormalize( pm->ps->velocity );
-      VectorScale( pm->ps->velocity, LEVEL2_WALLJUMP_MAXSPEED, pm->ps->velocity );
-    }
-
-    PM_AddEvent( EV_JUMP );
-
-    if( pm->cmd.forwardmove >= 0 )
-    {
-      if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
-        PM_ForceLegsAnim( LEGS_JUMP );
-      else
-        PM_ForceLegsAnim( NSPA_JUMP );
-
-      pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-    }
-    else
-    {
-      if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
-        PM_ForceLegsAnim( LEGS_JUMPB );
-      else
-        PM_ForceLegsAnim( NSPA_JUMPBACK );
-
-      pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
-    }
-
-    return qtrue;
+    pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
   }
 
-//  return qfalse;  // should never get here
+  return qtrue;
 }
 
-
-
+/*
+=============
+PM_CheckJump
+=============
+*/
 static qboolean PM_CheckJump( void )
 {
   vec3_t normal;
@@ -787,7 +765,6 @@ static qboolean PM_CheckJump( void )
         pm->ps->weapon == WP_ALEVEL3_UPG ) &&
       pm->ps->stats[ STAT_MISC ] > 0 )
     return qfalse;
-
 
   //can't jump and charge at the same time
   if( ( pm->ps->weapon == WP_ALEVEL4 ) &&
@@ -831,6 +808,7 @@ static qboolean PM_CheckJump( void )
     pm->ps->pm_flags |= PMF_TIME_WALLJUMP;
     pm->ps->pm_time = 200;
   }
+
   pml.groundPlane = qfalse;   // jumping away
   pml.walking = qfalse;
   pm->ps->pm_flags |= PMF_JUMP_HELD;
@@ -843,19 +821,12 @@ static qboolean PM_CheckJump( void )
 
   // jump away from wall
   BG_GetClientNormal( pm->ps, normal );
+  
+  if( pm->ps->velocity[ 2 ] < 0 )
+    pm->ps->velocity[ 2 ] = 0;
 
-  if( BG_OC_PMNeedJumpChange() )
-  {
-    BG_OC_PMJumpChange();
-  }
-  else
-  {
-    if( pm->ps->velocity[ 2 ] < 0 )
-      pm->ps->velocity[ 2 ] = 0;
-
-    VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
-              normal, pm->ps->velocity );
-  }
+  VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
+            normal, pm->ps->velocity );
 
   PM_AddEvent( EV_JUMP );
 
@@ -937,128 +908,96 @@ Checks the dodge key and starts a human dodge or sprint
 */
 static qboolean PM_CheckDodge( void )
 {
-  vec3_t right, forward, velocity = { 0.f, 0.f, 0.f };
+  vec3_t right, forward, velocity = { 0.0f, 0.0f, 0.0f };
   float jump, sideModifier;
   int i;
+  
+  if( pm->ps->stats[ STAT_TEAM ] != TEAM_HUMANS )
+    return qfalse;
 
-  if( BG_OC_PMOCDodge() )
+  // Landed a dodge
+  if( ( pm->ps->pm_flags & PMF_CHARGE ) &&
+      pm->ps->groundEntityNum != ENTITYNUM_NONE )
   {
-    BG_OC_PMCheckDodge();
+    pm->ps->pm_flags = ( pm->ps->pm_flags & ~PMF_CHARGE ) | PMF_TIME_LAND;
+    pm->ps->pm_time = HUMAN_DODGE_TIMEOUT;
   }
+
+  // Reasons why we can't start a dodge or sprint
+  if( pm->ps->pm_type != PM_NORMAL || pm->ps->stats[ STAT_STAMINA ] < 0 ||
+      ( pm->ps->pm_flags & PMF_DUCKED ) )
+    return qfalse;
+
+  // Can't dodge forward
+  if( pm->cmd.forwardmove > 0 )
+    return qfalse;
+
+  // Reasons why we can't start a dodge only
+  if( pm->ps->pm_flags & ( PMF_TIME_LAND | PMF_CHARGE ) ||
+      pm->ps->groundEntityNum == ENTITYNUM_NONE ||
+      !( pm->cmd.buttons & BUTTON_DODGE ) )
+    return qfalse;
+
+  // Dodge direction specified with movement keys
+  if( ( !pm->cmd.rightmove && !pm->cmd.forwardmove ) || pm->cmd.upmove )
+    return qfalse;
+
+  AngleVectors( pm->ps->viewangles, NULL, right, NULL );
+  forward[ 0 ] = -right[ 1 ];
+  forward[ 1 ] = right[ 0 ];
+  forward[ 2 ] = 0.0f;
+
+  // Dodge magnitude is based on the jump magnitude scaled by the modifiers
+  jump = BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude;
+  if( pm->cmd.rightmove && pm->cmd.forwardmove )
+    jump *= ( 0.5f * M_SQRT2 );
+  
+  // Weaken dodge if slowed
+  if( ( pm->ps->stats[ STAT_STATE ] & SS_SLOWLOCKED )  ||
+      ( pm->ps->stats[ STAT_STATE ] & SS_CREEPSLOWED ) ||
+      ( pm->ps->eFlags & EF_POISONCLOUDED ) )
+    sideModifier = HUMAN_DODGE_SLOWED_MODIFIER;
   else
+    sideModifier = HUMAN_DODGE_SIDE_MODIFIER;
+
+  // The dodge sets minimum velocity
+  if( pm->cmd.rightmove )
   {
-    if( pm->ps->stats[ STAT_TEAM ] != TEAM_HUMANS )
-      return qfalse;
-
-    // Landed a dodge
-    if( ( pm->ps->pm_flags & PMF_CHARGE ) &&
-        pm->ps->groundEntityNum != ENTITYNUM_NONE )
-    {
-      pm->ps->pm_flags = ( pm->ps->pm_flags & ~PMF_CHARGE ) | PMF_TIME_LAND;
-      pm->ps->pm_time = HUMAN_DODGE_TIMEOUT;
-    }
-
-    // Reasons to stop a sprint
-    if( BG_OC_PMNeedAlternateStopSprintCheck() )
-    {
-      if( BG_OC_PMAlternateStopSprintCheck() )
-        pm->ps->stats[ STAT_STATE ] &= ~SS_SPEEDBOOST;
-    }
-    else
-    {
-      /*if( pm->cmd.forwardmove <= 0 || pm->cmd.upmove < 0 ||
-          pm->ps->pm_type != PM_NORMAL || pm->cmd.buttons & BUTTON_WALKING )
-      {
-        pm->ps->stats[ STAT_STATE ] &= ~SS_SPEEDBOOST;
-      }*/
-    }
-
-    // Reasons why we can't start a dodge or sprint
-    if( pm->ps->pm_type != PM_NORMAL || pm->ps->stats[ STAT_STAMINA ] < 0 ||
-        ( pm->ps->pm_flags & PMF_DUCKED ) )
-      return qfalse;
-
-    // Start a sprint instead of forward leaps
-    /*if( pm->cmd.forwardmove > 0 &&
-        ( ( pm->cmd.buttons & BUTTON_DODGE ) ||
-          ( pm->ps->persistant[ PERS_STATE ] & PS_ALWAYSSPRINT ) ) )
-    {
-      if( pm->cmd.buttons & BUTTON_WALKING )
-        return qfalse;
-      pm->ps->stats[ STAT_STATE ] |= SS_SPEEDBOOST;
-      return qfalse;
-    }*/
-
-    //can't dodge forward
-    if( pm->cmd.forwardmove > 0 )
-      return qfalse;
-    // Reasons why we can't start a dodge only
-    if( pm->ps->pm_flags & ( PMF_TIME_LAND | PMF_CHARGE ) ||
-        pm->ps->groundEntityNum == ENTITYNUM_NONE ||
-        !( pm->cmd.buttons & BUTTON_DODGE ) )
-      return qfalse;
-
-    if( BG_OC_PMNoDodge() )
-      return qfalse;
-
-    // Dodge direction specified with movement keys
-    if( ( !pm->cmd.rightmove && !pm->cmd.forwardmove ) || pm->cmd.upmove )
-      return qfalse;
-    AngleVectors( pm->ps->viewangles, NULL, right, NULL );
-    forward[ 0 ] = -right[ 1 ];
-    forward[ 1 ] = right[ 0 ];
-    forward[ 2 ] = 0.;
-
-    // Dodge magnitude is based on the jump magnitude scaled by the modifiers
-    jump = BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude;
-    if( pm->cmd.rightmove && pm->cmd.forwardmove )
-      jump *= 0.707107; // sqrt(2) / 2
-
-    //weaken dodge if slowed
-    if( ( pm->ps->stats[ STAT_STATE ] & SS_SLOWLOCKED )  ||
-        ( pm->ps->stats[ STAT_STATE ] & SS_CREEPSLOWED ) ||
-        ( pm->ps->eFlags & EF_POISONCLOUDED ) )
-      sideModifier = HUMAN_DODGE_SLOWED_MODIFIER;
-    else
-      sideModifier = HUMAN_DODGE_SIDE_MODIFIER;
-
-    // The dodge sets minimum velocity
-    if( pm->cmd.rightmove )
-    {
-      if( pm->cmd.rightmove < 0 )
-        VectorNegate( right, right );
-      VectorMA( velocity, jump * sideModifier, right, velocity );
-    }
-    if( pm->cmd.forwardmove )
-    {
-      if( pm->cmd.forwardmove < 0 )
-        VectorNegate( forward, forward );
-      VectorMA( velocity, jump * sideModifier, forward, velocity );
-    }
-    velocity[ 2 ] = jump * HUMAN_DODGE_UP_MODIFIER;
-
-    // Make sure client has minimum velocity
-    for( i = 0; i < 3; i++ )
-      if( ( velocity[ i ] < 0.f &&
-            pm->ps->velocity[ i ] > velocity[ i ] ) ||
-          ( velocity[ i ] > 0.f &&
-            pm->ps->velocity[ i ] < velocity[ i ] ) )
-        pm->ps->velocity[ i ] = velocity[ i ];
-
-    // Jumped away
-    pml.groundPlane = qfalse;
-    pml.walking = qfalse;
-    pm->ps->groundEntityNum = ENTITYNUM_NONE;
-    pm->ps->pm_flags |= PMF_CHARGE;
-    pm->ps->stats[ STAT_STAMINA ] -= STAMINA_DODGE_TAKE;
-    pm->ps->legsAnim = ( ( pm->ps->legsAnim & ANIM_TOGGLEBIT ) ^
-                         ANIM_TOGGLEBIT ) | LEGS_JUMP;
-    PM_AddEvent( EV_JUMP );
-
-    return qtrue;
+    if( pm->cmd.rightmove < 0 )
+      VectorNegate( right, right );
+    VectorMA( velocity, jump * sideModifier, right, velocity );
   }
 
-//  return qfalse;  // should never get here
+  if( pm->cmd.forwardmove )
+  {
+    if( pm->cmd.forwardmove < 0 )
+      VectorNegate( forward, forward );
+    VectorMA( velocity, jump * sideModifier, forward, velocity );
+  }
+
+  velocity[ 2 ] = jump * HUMAN_DODGE_UP_MODIFIER;
+
+  // Make sure client has minimum velocity
+  for( i = 0; i < 3; i++ )
+  {
+    if( ( velocity[ i ] < 0.0f &&
+          pm->ps->velocity[ i ] > velocity[ i ] ) ||
+        ( velocity[ i ] > 0.0f &&
+          pm->ps->velocity[ i ] < velocity[ i ] ) )
+      pm->ps->velocity[ i ] = velocity[ i ];
+  }
+
+  // Jumped away
+  pml.groundPlane = qfalse;
+  pml.walking = qfalse;
+  pm->ps->groundEntityNum = ENTITYNUM_NONE;
+  pm->ps->pm_flags |= PMF_CHARGE;
+  pm->ps->stats[ STAT_STAMINA ] -= STAMINA_DODGE_TAKE;
+  pm->ps->legsAnim = ( ( pm->ps->legsAnim & ANIM_TOGGLEBIT ) ^
+                       ANIM_TOGGLEBIT ) | LEGS_JUMP;
+  PM_AddEvent( EV_JUMP );
+
+  return qtrue;
 }
 
 //============================================================================
@@ -1449,7 +1388,6 @@ static void PM_WalkMove( void )
     return;
   }
 
-
   if( PM_CheckJump( ) || PM_CheckPounce( ) )
   {
     // jumped away
@@ -1800,11 +1738,6 @@ static void PM_CrashLand( void )
   delta = vel + t * acc;
   delta = delta*delta * 0.0001;
 
-  if(BG_OC_PMNeedCrashLand())
-  {
-    BG_OC_PMCrashLand();
-  }
-
   // never take falling damage if completely underwater
   if( pm->waterlevel == 3 )
     return;
@@ -1957,7 +1890,6 @@ static void PM_GroundTraceMissed( void )
   pml.walking = qfalse;
 }
 
-
 /*
 =============
 PM_GroundClimbTrace
@@ -2054,7 +1986,8 @@ static void PM_GroundClimbTrace( void )
     }
 
     //if we hit something
-	if( BG_OC_PMGROUNDTRACEHITCHECK )
+    if( trace.fraction < 1.0f && !( trace.surfaceFlags & ( SURF_SKY | SURF_SLICK ) ) && 
+        !( trace.entityNum != ENTITYNUM_WORLD && i != 4 ) )
     {
       if( i == 2 || i == 3 )
       {
@@ -2063,7 +1996,7 @@ static void PM_GroundClimbTrace( void )
 
         VectorCopy( trace.endpos, pm->ps->origin );
       }
-
+      
       //calculate a bunch of stuff...
       CrossProduct( trace.plane.normal, surfNormal, traceCROSSsurf );
       VectorNormalize( traceCROSSsurf );
@@ -2247,7 +2180,6 @@ static void PM_GroundClimbTrace( void )
   PM_AddTouchEnt( trace.entityNum );
 }
 
-
 /*
 =============
 PM_GroundTrace
@@ -2259,7 +2191,7 @@ static void PM_GroundTrace( void )
   vec3_t      refNormal = { 0.0f, 0.0f, 1.0f };
   trace_t     trace;
 
-  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) && !BG_OC_GetNoWallWalk( ) )
+  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) )
   {
     if( pm->ps->persistant[ PERS_STATE ] & PS_WALLCLIMBINGTOGGLE )
     {
@@ -2354,11 +2286,6 @@ static void PM_GroundTrace( void )
       PM_GroundTraceMissed( );
       pml.groundPlane = qfalse;
       pml.walking = qfalse;
-
-      if( BG_OC_PMOCGroundTraceWallJump() )
-      {
-        BG_OC_PMGroundTraceWallJump();
-      }
 
       return;
     }
@@ -2578,7 +2505,7 @@ static void PM_Footsteps( void )
   // calculate speed and cycle to be used for
   // all cyclic walking effects
   //
-  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) && ( pml.groundPlane ) && !BG_OC_GetNoWallWalk( ) )
+  if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) && ( pml.groundPlane ) )
   {
     // FIXME: yes yes i know this is wrong
     pm->xyspeed = sqrt( pm->ps->velocity[ 0 ] * pm->ps->velocity[ 0 ]
@@ -2844,7 +2771,7 @@ static void PM_BeginWeaponChange( int weapon )
   if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
   {
     PM_StartTorsoAnim( TORSO_DROP );
-    //PM_StartWeaponAnim( WANIM_DROP );
+    PM_StartWeaponAnim( WANIM_DROP );
   }
 }
 
@@ -2873,7 +2800,7 @@ static void PM_FinishWeaponChange( void )
   if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
   {
     PM_StartTorsoAnim( TORSO_RAISE );
-    //PM_StartWeaponAnim( WANIM_RAISE );
+    PM_StartWeaponAnim( WANIM_RAISE );
   }
 }
 
@@ -2886,15 +2813,17 @@ PM_TorsoAnimation
 */
 static void PM_TorsoAnimation( void )
 {
-  if( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL )
-    return;
-
   if( pm->ps->weaponstate == WEAPON_READY )
   {
-    if( pm->ps->weapon == WP_BLASTER )
-      PM_ContinueTorsoAnim( TORSO_STAND2 );
-    else
-      PM_ContinueTorsoAnim( TORSO_STAND );
+    if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
+    {
+      if( pm->ps->weapon == WP_BLASTER )
+        PM_ContinueTorsoAnim( TORSO_STAND2 );
+      else
+        PM_ContinueTorsoAnim( TORSO_STAND );
+    }
+
+    PM_ContinueWeaponAnim( WANIM_IDLE );
   }
 }
 
@@ -2914,11 +2843,11 @@ static void PM_Weapon( void )
   qboolean      attack3 = pm->cmd.buttons & BUTTON_USE_HOLDABLE;
 
   // Ignore weapons in some cases
-  if( pm->ps->persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT || 
-      pm->ps->stats[ STAT_STATE ] & SS_HOVELING )
+  if( pm->ps->persistant[ PERS_SPECSTATE ] != SPECTATOR_NOT ||
+      ( pm->ps->stats[ STAT_STATE ] & SS_HOVELING ) )
     return;
 
-  // check for dead player
+  // Check for dead player
   if( pm->ps->stats[ STAT_HEALTH ] <= 0 )
   {
     pm->ps->weapon = WP_NONE;
@@ -2929,16 +2858,17 @@ static void PM_Weapon( void )
   if( pm->ps->weapon == WP_ALEVEL3 || pm->ps->weapon == WP_ALEVEL3_UPG )
   {
     int max;
-
+    
     max = pm->ps->weapon == WP_ALEVEL3 ? LEVEL3_POUNCE_TIME :
                                          LEVEL3_POUNCE_TIME_UPG;
     if( pm->cmd.buttons & BUTTON_ATTACK2 )
       pm->ps->stats[ STAT_MISC ] += pml.msec;
     else
       pm->ps->stats[ STAT_MISC ] -= pml.msec;
+
     if( pm->ps->stats[ STAT_MISC ] > max )
       pm->ps->stats[ STAT_MISC ] = max;
-    if( pm->ps->stats[ STAT_MISC ] < 0 )
+    else if( pm->ps->stats[ STAT_MISC ] < 0 )
       pm->ps->stats[ STAT_MISC ] = 0;
   }
 
@@ -2957,21 +2887,22 @@ static void PM_Weapon( void )
         {
           int charge = pml.msec;
           vec3_t dir,vel;
-          AngleVectors(pm->ps->viewangles, dir, NULL, NULL);
-          VectorCopy(pm->ps->velocity,vel);
+
+          AngleVectors( pm->ps->viewangles, dir, NULL, NULL );
+          VectorCopy( pm->ps->velocity, vel );
           vel[2] = 0;
           dir[2] = 0;
-          VectorNormalize(vel);
-          VectorNormalize(dir);
+          VectorNormalize( vel );
+          VectorNormalize( dir );
 
-          charge *= DotProduct(dir,vel);
+          charge *= DotProduct( dir, vel );
 
           pm->ps->stats[ STAT_MISC ] += charge;
         }
         else
           pm->ps->stats[ STAT_MISC ] = 0;
       }
-
+      
       // Charge button released
       else if( !( pm->ps->stats[ STAT_STATE ] & SS_CHARGING ) )
       {
@@ -3117,7 +3048,6 @@ static void PM_Weapon( void )
   if( pm->ps->weaponstate == WEAPON_RAISING )
   {
     pm->ps->weaponstate = WEAPON_READY;
-
     if( !( pm->ps->persistant[ PERS_STATE ] & PS_NONSEGMODEL ) )
     {
       if( pm->ps->weapon == WP_BLASTER )
@@ -3125,6 +3055,8 @@ static void PM_Weapon( void )
       else
         PM_ContinueTorsoAnim( TORSO_STAND );
     }
+
+    PM_ContinueWeaponAnim( WANIM_IDLE );
 
     return;
   }
@@ -3139,10 +3071,6 @@ static void PM_Weapon( void )
       PM_AddEvent( EV_NOAMMO );
       pm->ps->weaponTime += 500;
     }
-    // I commented this out because it was preventing changing weapons
-    // with no ammo, but I'm not sure why it was there in the first place
-    //else
-    //  pm->ps->weaponTime += 50;
 
     if( pm->ps->weaponstate == WEAPON_FIRING )
       pm->ps->weaponstate = WEAPON_READY;
@@ -3169,7 +3097,7 @@ static void PM_Weapon( void )
 
   // check for end of clip
   if( !BG_Weapon( pm->ps->weapon )->infiniteAmmo &&
-      ( pm->ps->ammo <= 0 || pm->ps->pm_flags & PMF_WEAPON_RELOAD ) &&
+      ( pm->ps->ammo <= 0 || ( pm->ps->pm_flags & PMF_WEAPON_RELOAD ) ) &&
       pm->ps->clips > 0 )
   {
     pm->ps->pm_flags &= ~PMF_WEAPON_RELOAD;
@@ -3177,6 +3105,7 @@ static void PM_Weapon( void )
 
     //drop the weapon
     PM_StartTorsoAnim( TORSO_DROP );
+    PM_StartWeaponAnim( WANIM_RELOAD );
 
     pm->ps->weaponTime += BG_Weapon( pm->ps->weapon )->reloadTime;
     return;
@@ -3187,7 +3116,7 @@ static void PM_Weapon( void )
   {
     case WP_ALEVEL0:
       //venom is only autohit
-        return;
+      return;
 
     case WP_ALEVEL3:
     case WP_ALEVEL3_UPG:
@@ -3199,7 +3128,7 @@ static void PM_Weapon( void )
 
     case WP_LUCIFER_CANNON:
       attack3 = qfalse;
-
+      
       // Prevent firing of the Lucifer Cannon after an overcharge
       if( pm->ps->weaponstate == WEAPON_NEEDS_RESET )
       {
@@ -3211,7 +3140,7 @@ static void PM_Weapon( void )
       // Can't fire secondary while primary is charging
       if( attack1 || pm->ps->stats[ STAT_MISC ] > 0 )
         attack2 = qfalse;
-
+        
       if( ( attack1 || pm->ps->stats[ STAT_MISC ] == 0 ) && !attack2 )
       {
         pm->ps->weaponTime = 0;
@@ -3351,40 +3280,77 @@ static void PM_Weapon( void )
         if( pm->ps->weaponstate == WEAPON_READY )
         {
           PM_StartTorsoAnim( TORSO_ATTACK );
+          PM_StartWeaponAnim( WANIM_ATTACK1 );
         }
         break;
 
       case WP_BLASTER:
         PM_StartTorsoAnim( TORSO_ATTACK2 );
+        PM_StartWeaponAnim( WANIM_ATTACK1 );
         break;
 
       default:
         PM_StartTorsoAnim( TORSO_ATTACK );
+        PM_StartWeaponAnim( WANIM_ATTACK1 );
         break;
     }
   }
   else
   {
-    if( pm->ps->weapon == WP_ALEVEL4 )
-    {
-      //hack to get random attack animations
-      int num = abs( pm->ps->commandTime ) % 3;
+    int num = rand( );
 
-      if( num == 0 )
-        PM_ForceLegsAnim( NSPA_ATTACK1 );
-      else if( num == 1 )
-        PM_ForceLegsAnim( NSPA_ATTACK2 );
-      else if( num == 2 )
-        PM_ForceLegsAnim( NSPA_ATTACK3 );
-    }
-    else
+    //FIXME: it would be nice to have these hard coded policies in
+    //       weapon.cfg
+    switch( pm->ps->weapon )
     {
-      if( attack1 )
-        PM_ForceLegsAnim( NSPA_ATTACK1 );
-      else if( attack2 )
-        PM_ForceLegsAnim( NSPA_ATTACK2 );
-      else if( attack3 )
-        PM_ForceLegsAnim( NSPA_ATTACK3 );
+      case WP_ALEVEL1_UPG:
+      case WP_ALEVEL1:
+        if( attack1 )
+        {
+          num %= 6;
+          PM_ForceLegsAnim( NSPA_ATTACK1 );
+          PM_StartWeaponAnim( WANIM_ATTACK1 + num );
+        }
+        break;
+
+      case WP_ALEVEL2_UPG:
+        if( attack2 )
+        {
+          PM_ForceLegsAnim( NSPA_ATTACK2 );
+          PM_StartWeaponAnim( WANIM_ATTACK7 );
+        }
+      case WP_ALEVEL2:
+        if( attack1 )
+        {
+          num %= 6;
+          PM_ForceLegsAnim( NSPA_ATTACK1 );
+          PM_StartWeaponAnim( WANIM_ATTACK1 + num );
+        }
+        break;
+
+      case WP_ALEVEL4:
+        num %= 3;
+        PM_ForceLegsAnim( NSPA_ATTACK1 + num );
+        PM_StartWeaponAnim( WANIM_ATTACK1 + num );
+        break;
+
+      default:
+        if( attack1 )
+        {
+          PM_ForceLegsAnim( NSPA_ATTACK1 );
+          PM_StartWeaponAnim( WANIM_ATTACK1 );
+        }
+        else if( attack2 )
+        {
+          PM_ForceLegsAnim( NSPA_ATTACK2 );
+          PM_StartWeaponAnim( WANIM_ATTACK2 );
+        }
+        else if( attack3 )
+        {
+          PM_ForceLegsAnim( NSPA_ATTACK3 );
+          PM_StartWeaponAnim( WANIM_ATTACK3 );
+        }
+        break;
     }
 
     pm->ps->torsoTimer = TIMER_ATTACK;
@@ -3407,7 +3373,6 @@ static void PM_Weapon( void )
     // Stay on the safe side
     if( pm->ps->ammo < 0 )
       pm->ps->ammo = 0;
-
   }
 
   //FIXME: predicted angles miss a problem??
@@ -3683,6 +3648,7 @@ void PmoveSingle( pmove_t *pmove )
     pmove->cmd.buttons = BUTTON_TALK;
     pmove->cmd.forwardmove = 0;
     pmove->cmd.rightmove = 0;
+
     if( pmove->cmd.upmove > 0 )
       pmove->cmd.upmove = 0;
   }
@@ -3710,9 +3676,11 @@ void PmoveSingle( pmove_t *pmove )
 
   AngleVectors( pm->ps->viewangles, pml.forward, pml.right, pml.up );
 
-  // not holding jump
   if( pm->cmd.upmove < 10 )
+  {
+    // not holding jump
     pm->ps->pm_flags &= ~PMF_JUMP_HELD;
+  }
 
   // decide if backpedaling animations should be used
   if( pm->cmd.forwardmove < 0 )
@@ -3784,7 +3752,7 @@ void PmoveSingle( pmove_t *pmove )
     PM_LadderMove( );
   else if( pml.walking )
   {
-    if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER && !BG_OC_GetNoWallWalk( ) ) &&
+    if( BG_ClassHasAbility( pm->ps->stats[ STAT_CLASS ], SCA_WALLCLIMBER ) &&
         ( pm->ps->stats[ STAT_STATE ] & SS_WALLCLIMBING ) )
       PM_ClimbMove( ); // walking on any surface
     else
@@ -3859,7 +3827,6 @@ void Pmove( pmove_t *pmove )
       if( msec > 66 )
         msec = 66;
     }
-
 
     pmove->cmd.serverTime = pmove->ps->commandTime + msec;
     PmoveSingle( pmove );

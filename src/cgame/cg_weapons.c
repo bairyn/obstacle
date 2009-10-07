@@ -382,12 +382,6 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, token))
-	  {
-		wim->impactSound[ index ] = 0;
-        continue;
-	  }
-
       wim->impactSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
       continue;
@@ -410,12 +404,6 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
-
-      if(strstr(cg_disableWeaponSounds.string, token))
-	  {
-		wim->impactFleshSound[ index ] = 0;
-        continue;
-	  }
 
       wim->impactFleshSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
@@ -482,12 +470,6 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, token))
-	  {
-		wim->firingSound = 0;
-        continue;
-	  }
-
       wim->firingSound = trap_S_RegisterSound( token, qfalse );
 
       continue;
@@ -497,12 +479,6 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
-
-      if(strstr(cg_disableWeaponSounds.string, token))
-	  {
-		wim->missileSound = 0;
-        continue;
-	  }
 
       wim->missileSound = trap_S_RegisterSound( token, qfalse );
 
@@ -526,12 +502,6 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       token = COM_Parse( text_p );
       if( !token )
         break;
-
-      if(strstr(cg_disableWeaponSounds.string, token))
-	  {
-		wim->flashSound[ index ] = 0;
-        continue;
-	  }
 
       wim->flashSound[ index ] = trap_S_RegisterSound( token, qfalse );
 
@@ -693,12 +663,6 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       if( !token )
         break;
 
-      if(strstr(cg_disableWeaponSounds.string, token))
-	  {
-		wi->readySound = 0;
-        continue;
-	  }
-
       wi->readySound = trap_S_RegisterSound( token, qfalse );
 
       continue;
@@ -790,8 +754,7 @@ void CG_RegisterWeapon( int weaponNum )
 
   Com_sprintf( path, MAX_QPATH, "models/weapons/%s/animation.cfg", BG_Weapon( weaponNum )->name );
 
-  if( !cg_suppressWAnimWarnings.integer && 
-      !CG_ParseWeaponAnimationFile( path, weaponInfo ) )
+  if( !CG_ParseWeaponAnimationFile( path, weaponInfo ) )
     Com_Printf( S_COLOR_RED "ERROR: failed to parse %s\n", path );
 
   // calc midpoint for rotation
@@ -839,7 +802,6 @@ CG_SetWeaponLerpFrameAnimation
 may include ANIM_TOGGLEBIT
 ===============
 */
-/* compiler warns that this function is not used until I backport weaponAnim
 static void CG_SetWeaponLerpFrameAnimation( weapon_t weapon, lerpFrame_t *lf, int newAnimation )
 {
   animation_t *anim;
@@ -858,7 +820,6 @@ static void CG_SetWeaponLerpFrameAnimation( weapon_t weapon, lerpFrame_t *lf, in
   if( cg_debugAnim.integer )
     CG_Printf( "Anim: %i\n", newAnimation );
 }
-*/
 
 /*
 ===============
@@ -867,7 +828,6 @@ CG_WeaponAnimation
 */
 static void CG_WeaponAnimation( centity_t *cent, int *old, int *now, float *backLerp )
 {
-/* FIXME: oh shit.
   lerpFrame_t   *lf = &cent->pe.weapon;
   entityState_t *es = &cent->currentState;
 
@@ -880,7 +840,6 @@ static void CG_WeaponAnimation( centity_t *cent, int *old, int *now, float *back
   *old      = lf->oldFrame;
   *now      = lf->frame;
   *backLerp = lf->backlerp;
-*/
 }
 
 /*
@@ -1100,13 +1059,14 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
   }
 
   // Lucifer cannon charge warning beep
-  // FIXME: should not send this to aliens at all, rather than just ignoring it
   if( weaponNum == WP_LUCIFER_CANNON &&
       ( cent->currentState.eFlags & EF_WARN_CHARGE ) &&
-      cg.snap->ps.stats[ STAT_TEAM ] != TEAM_ALIENS )          
+      cg.snap->ps.stats[ STAT_TEAM ] != TEAM_ALIENS )
+  {
     trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin,
                             vec3_origin, ps ? cgs.media.lCannonWarningSound :
                                               cgs.media.lCannonWarningSound2 );
+  }
 
   if( !noGunModel )
   {
@@ -1418,7 +1378,7 @@ void CG_DrawItemSelect( rectDef_t *rect, vec4_t color )
   int           numItems = 0, selectedItem = 0;
   int           length;
   qboolean      vertical;
-  centity_t     *cent;
+  centity_t *cent;
   playerState_t *ps;
 
   cent = &cg_entities[ cg.snap->ps.clientNum ];
@@ -1431,10 +1391,16 @@ void CG_DrawItemSelect( rectDef_t *rect, vec4_t color )
   if( !( cg.snap->ps.pm_flags & PMF_FOLLOW ) )
   {
     // first make sure that whatever it selected is actually selectable
-    if( cg.weaponSelect <= 32 && !CG_WeaponSelectable( cg.weaponSelect ) )
-      CG_NextWeapon_f( );
-    else if( cg.weaponSelect > 32 && !CG_UpgradeSelectable( cg.weaponSelect - 32 ) )
-      CG_NextWeapon_f( );
+    if( cg.weaponSelect < 32 )
+    {
+      if( !CG_WeaponSelectable( cg.weaponSelect ) )
+        CG_NextWeapon_f( );
+    }
+    else
+    {
+      if( !CG_UpgradeSelectable( cg.weaponSelect - 32 ) )
+        CG_NextWeapon_f( );
+    }
   }
 
   // showing weapon select clears pickup item display, but not the blend blob
@@ -1467,7 +1433,6 @@ void CG_DrawItemSelect( rectDef_t *rect, vec4_t color )
     colinfo[ numItems ] = 0;
     if( !BG_Upgrade( i )->usable )
       colinfo[ numItems ] = 2;
-
 
     if( i == cg.weaponSelect - 32 )
       selectedItem = numItems;
@@ -1505,23 +1470,23 @@ void CG_DrawItemSelect( rectDef_t *rect, vec4_t color )
     {
       switch( colinfo[ item ] )
       {
-        case 0:
-          color = colorCyan;
-          break;
-        case 1:
-          color = colorRed;
-          break;
-        case 2:
-          color = colorMdGrey;
-          break;
+       case 0:
+         color = colorCyan;
+         break;
+       case 1:
+         color = colorRed;
+         break;
+       case 2:
+         color = colorMdGrey;
+         break;
       }
       color[3] = 0.5;
       trap_R_SetColor( color );
 
-      if( items[ item ] <= 32 )
+      if( items[ item ] < 32 )
         CG_DrawPic( x, y, iconWidth, iconHeight,
                     cg_weapons[ items[ item ] ].weaponIcon );
-      else if( items[ item ] > 32 )
+      else
         CG_DrawPic( x, y, iconWidth, iconHeight,
                     cg_upgrades[ items[ item ] - 32 ].upgradeIcon );
     }
@@ -1552,7 +1517,7 @@ void CG_DrawItemSelectText( rectDef_t *rect, float scale, int textStyle )
   trap_R_SetColor( color );
 
   // draw the selected name
-  if( cg.weaponSelect <= 32 )
+  if( cg.weaponSelect < 32 )
   {
     if( cg_weapons[ cg.weaponSelect ].registered &&
         BG_InventoryContainsWeapon( cg.weaponSelect, cg.snap->ps.stats ) )
@@ -1565,7 +1530,7 @@ void CG_DrawItemSelectText( rectDef_t *rect, float scale, int textStyle )
       }
     }
   }
-  else if( cg.weaponSelect > 32 )
+  else
   {
     if( cg_upgrades[ cg.weaponSelect - 32 ].registered &&
         BG_InventoryContainsUpgrade( cg.weaponSelect - 32, cg.snap->ps.stats ) )
@@ -1611,12 +1576,12 @@ void CG_NextWeapon_f( void )
     if( cg.weaponSelect == 64 )
       cg.weaponSelect = 0;
 
-    if( cg.weaponSelect <= 32 )
+    if( cg.weaponSelect < 32 )
     {
       if( CG_WeaponSelectable( cg.weaponSelect ) )
         break;
     }
-    else if( cg.weaponSelect > 32 )
+    else
     {
       if( CG_UpgradeSelectable( cg.weaponSelect - 32 ) )
         break;
@@ -1655,12 +1620,12 @@ void CG_PrevWeapon_f( void )
     if( cg.weaponSelect == -1 )
       cg.weaponSelect = 63;
 
-    if( cg.weaponSelect <= 32 )
+    if( cg.weaponSelect < 32 )
     {
       if( CG_WeaponSelectable( cg.weaponSelect ) )
         break;
     }
-    else if( cg.weaponSelect > 32 )
+    else
     {
       if( CG_UpgradeSelectable( cg.weaponSelect - 32 ) )
         break;
@@ -1866,12 +1831,21 @@ void CG_MissileHitEntity( weapon_t weaponNum, weaponMode_t weaponMode,
 
   if( weapon->wim[ weaponMode ].alwaysImpact )
   {
-    //note to self: this is why i shouldn't code while sleepy
-    int sound = IMPACTSOUND_DEFAULT;
-    if( cg_entities[ entityNum ].currentState.eType == ET_PLAYER ||
-        ( cg_entities[ entityNum ].currentState.eType == ET_BUILDABLE &&
-          BG_Buildable( cg_entities[ entityNum ].currentState.modelindex )->team == TEAM_ALIENS ) )
-        sound = IMPACTSOUND_FLESH;
+    int sound;
+
+    if( cg_entities[ entityNum ].currentState.eType == ET_PLAYER )
+    {
+      // Players
+      sound = IMPACTSOUND_FLESH;
+    }
+    else if( cg_entities[ entityNum ].currentState.eType == ET_BUILDABLE &&
+             BG_Buildable( cg_entities[ entityNum ].currentState.modelindex )->team == TEAM_ALIENS )
+    {
+      // Alien buildables
+      sound = IMPACTSOUND_FLESH;
+    }
+    else
+      sound = IMPACTSOUND_DEFAULT;
           
     CG_MissileHitWall( weaponNum, weaponMode, 0, origin, dir, sound, charge );
   }

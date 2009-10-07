@@ -63,8 +63,6 @@ void G_UpdatePTRConnection( gclient_t *client )
   {
     client->pers.connection->clientTeam = client->pers.teamSelection;
     client->pers.connection->clientCredit = client->pers.credit;
-
-    G_OC_PTRCUpdate();
   }
 }
 

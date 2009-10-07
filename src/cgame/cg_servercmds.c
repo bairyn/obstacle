@@ -165,7 +165,6 @@ void CG_SetConfigValues( void )
 
   cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
   cg.warmup = atoi( CG_ConfigString( CS_WARMUP ) );
-  CG_OC_SetConfigStrings();
 }
 
 
@@ -230,7 +229,7 @@ static void CG_AnnounceAlienStageTransistion( stage_t from, stage_t to )
     return;
 
   trap_S_StartLocalSound( cgs.media.alienStageTransition, CHAN_ANNOUNCER );
-  CG_CenterPrint( "We have evolved!", NULL, 200, GIANTCHAR_WIDTH * 4 );
+  CG_CenterPrint( "We have evolved!", 200, GIANTCHAR_WIDTH * 4 );
 }
 
 /*
@@ -244,7 +243,7 @@ static void CG_AnnounceHumanStageTransistion( stage_t from, stage_t to )
     return;
 
   trap_S_StartLocalSound( cgs.media.humanStageTransition, CHAN_ANNOUNCER );
-  CG_CenterPrint( "Reinforcements have arrived!", NULL, 200, GIANTCHAR_WIDTH * 4 );
+  CG_CenterPrint( "Reinforcements have arrived!", 200, GIANTCHAR_WIDTH * 4 );
 }
 
 /*
@@ -379,7 +378,6 @@ static void CG_ConfigStringModified( void )
   {
     CG_ShaderStateChanged( );
   }
-  CG_OC_CONFIGSTRINGMODIFIED
 }
 
 
@@ -420,7 +418,7 @@ static void CG_MapRestart( void )
 
   // play the "fight" sound if this is a restart without warmup
   if( cg.warmup == 0 )
-    CG_CenterPrint( "FIGHT!", NULL, 120, GIANTCHAR_WIDTH * 2 );
+    CG_CenterPrint( "FIGHT!", 120, GIANTCHAR_WIDTH * 2 );
 
   trap_Cvar_Set( "cg_thirdPerson", "0" );
 }
@@ -433,8 +431,8 @@ CG_Menu
 void CG_Menu( int menu, int arg )
 {
   const char *cmd;              // command to send
-  const char *longMsg   = NULL;	// command parameter
-  const char *shortMsg  = NULL;	// non-modal version of message
+  const char *longMsg  = NULL; // command parameter
+  const char *shortMsg = NULL; // non-modal version of message
   const char *dialog;
   dialogType_t type = 0; // controls which cg_disable var will switch it off
   
@@ -502,17 +500,38 @@ void CG_Menu( int menu, int arg )
       type      = DT_COMMAND;
       break;
 
+    case MN_A_TEAMLOCKED:
+      longMsg   = "The alien team is locked. You cannot join the aliens "
+                  "at this time.";
+      shortMsg  = "The alien team is locked";
+      type      = DT_COMMAND;
+      break;
+
+    case MN_H_TEAMLOCKED:
+      longMsg   = "The human team is locked. You cannot join the humans "
+                  "at this time.";
+      shortMsg  = "The human team is locked";
+      type      = DT_COMMAND;
+      break;
+
+    case MN_PLAYERLIMIT:
+      longMsg   = "The maximum number of playing clients has been reached. "
+                  "Please wait until slots become available.";
+      shortMsg  = "No free player slots";
+      type      = DT_COMMAND;
+      break;
+
     case MN_A_TEAMCHANGEBUILDTIMER:
       longMsg   = "You cannot leave the Alien team until your build timer "
                   "has expired.";
-      shortMsg  = "You cannot change teams until your build timer expires.";
+      shortMsg  = "You cannot change teams until your build timer expires";
       type      = DT_COMMAND;
       break;
 
     case MN_H_TEAMCHANGEBUILDTIMER:
       longMsg   = "You cannot leave the Human team until your build timer "
                   "has expired.";
-      shortMsg  = "You cannot change teams until your build timer expires.";
+      shortMsg  = "You cannot change teams until your build timer expires";
       type      = DT_COMMAND;
       break;
 
@@ -578,7 +597,7 @@ void CG_Menu( int menu, int arg )
     case MN_B_NORMAL:
       longMsg   = "Cannot build on this surface. The surface is too steep or "
                   "unsuitable for building. Please choose another site for this "
-	                "structure.";
+                  "structure.";
       shortMsg  = "Cannot build on this surface";
       type      = DT_BUILD;
       break;
@@ -773,7 +792,7 @@ void CG_Menu( int menu, int arg )
 
     case MN_A_NOEROOM:
       longMsg   = "There is no room to evolve here. Move away from walls or other "
-                   "nearby objects and try again.";
+                  "nearby objects and try again.";
       shortMsg  = "There is no room to evolve here";
       type      = DT_ARMOURYEVOLVE;
       break;
@@ -820,8 +839,9 @@ void CG_Menu( int menu, int arg )
 
     case MN_A_INFEST:
       trap_Cvar_Set( "ui_currentClass",
-                     va( "%d %d",  cg.snap->ps.stats[ STAT_CLASS ],
-                                                      cg.snap->ps.persistant[ PERS_CREDIT ] ) );
+         va( "%d %d", cg.snap->ps.stats[ STAT_CLASS ],
+                      cg.snap->ps.persistant[ PERS_CREDIT ] ) );
+
       cmd       = "menu tremulous_alienupgrade\n";
       type      = DT_INTERACTIVE;
       break;
@@ -864,11 +884,13 @@ void CG_Menu( int menu, int arg )
     default:
       Com_Printf( "cgame: debug: no such menu %d\n", menu );
   }
-
+  
   if( type == DT_ARMOURYEVOLVE && cg_disableUpgradeDialogs.integer )
     return;
+
   if( type == DT_BUILD && cg_disableBuildDialogs.integer )
     return;
+
   if( type == DT_COMMAND && cg_disableCommandDialogs.integer )
     return;
 
@@ -1071,21 +1093,31 @@ static void CG_ParseVoice( void )
   } 
 }
 
+/*
+=================
+CG_CenterPrint_f
+=================
+*/
 static void CG_CenterPrint_f( void )
 {
-  char message[ MAX_STRING_CHARS ], find[ MAX_STRING_CHARS ];
-
-  strncpy( message, CG_Argv( 1 ), sizeof( message ) );
-  strncpy( find, CG_Argv( 2 ), sizeof( find ) );
-
-  CG_CenterPrint( message, ( find[ 0 ] ) ? ( find ) : ( NULL ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+  CG_CenterPrint( CG_Argv( 1 ), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 }
 
+/*
+=================
+CG_Print_f
+=================
+*/
 static void CG_Print_f( void )
 {
   CG_Printf( "%s", CG_Argv( 1 ) );
 }
 
+/*
+=================
+CG_Chat_f
+=================
+*/
 static void CG_Chat_f( void )
 {
   char     cmd[ 6 ], text[ MAX_SAY_TEXT ];
@@ -1112,24 +1144,47 @@ static void CG_Chat_f( void )
   CG_Printf( "%s\n", text );
 }
 
+/*
+=================
+CG_ClientLevelShot_f
+=================
+*/
 static void CG_ClientLevelShot_f( void )
 {
   cg.levelShot = qtrue;
 }
 
+/*
+=================
+CG_ServerMenu_f
+=================
+*/
 static void CG_ServerMenu_f( void )
 {
-  if( trap_Argc( ) == 2 && !cg.demoPlayback )
-    CG_Menu( atoi( CG_Argv( 1 ) ), 0 );
-  else if( trap_Argc( ) == 3 && !cg.demoPlayback )
-    CG_Menu( atoi( CG_Argv( 1 ) ), atoi( CG_Argv( 2 ) ) );
+  if( !cg.demoPlayback )
+  {
+    if( trap_Argc( ) == 2 )
+      CG_Menu( atoi( CG_Argv( 1 ) ), 0 );
+    else if( trap_Argc( ) == 3 )
+      CG_Menu( atoi( CG_Argv( 1 ) ), atoi( CG_Argv( 2 ) ) );
+  }
 }
 
+/*
+=================
+CG_ServerCloseMenus_f
+=================
+*/
 static void CG_ServerCloseMenus_f( void )
 {
   trap_SendConsoleCommand( "closemenus\n" );
 }
 
+/*
+=================
+CG_PoisonCloud_f
+=================
+*/
 static void CG_PoisonCloud_f( void )
 {
   cg.poisonedTime = cg.time;
@@ -1142,25 +1197,35 @@ static void CG_PoisonCloud_f( void )
   }
 }
 
+/*
+=================
+CG_PTRRequest_f
+=================
+*/
 static void CG_PTRRequest_f( void )
 {
   trap_SendClientCommand( va( "ptrcverify %d", CG_ReadPTRCode( ) ) );
 }
 
+/*
+=================
+CG_PTRIssue_f
+=================
+*/
 static void CG_PTRIssue_f( void )
 {
   if( trap_Argc( ) == 2 )
     CG_WritePTRCode( atoi( CG_Argv( 1 ) ) );
 }
 
+/*
+=================
+CG_PTRConfirm_f
+=================
+*/
 static void CG_PTRConfirm_f( void )
 {
   trap_SendConsoleCommand( "menu ptrc_popmenu\n" );
-}
-
-static void CG_SetLayouts_f( void )
-{
-  trap_SendConsoleCommand( va( "ui_setLayouts \"%s\"", CG_Argv( 1 ) ) );
 }
 
 static consoleCommand_t svcommands[ ] =
@@ -1180,9 +1245,7 @@ static consoleCommand_t svcommands[ ] =
   { "voice", CG_ParseVoice },
   { "ptrcrequest", CG_PTRRequest_f },
   { "ptrcissue", CG_PTRIssue_f },
-  { "ptrcconfirm", CG_PTRConfirm_f },
-  { "setLayouts", CG_SetLayouts_f }
-  CG_OC_SERVERCMDS
+  { "ptrcconfirm", CG_PTRConfirm_f }
 };
 
 /*
