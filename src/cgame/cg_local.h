@@ -730,8 +730,8 @@ typedef struct
   int         score;                      // updated by score servercmds
   int         location;                   // location index for team mode
   int         health;                     // you only get this info about your teammates
-  int         armor;
-  int         curWeapon;
+  int         upgrade; 
+  int         curWeaponClass;             // sends current weapon for H, current class for A
 
   int         handicap;
 
@@ -1012,19 +1012,14 @@ typedef struct
   int           scoreFadeTime;
   char          killerName[ MAX_NAME_LENGTH ];
   char          spectatorList[ MAX_STRING_CHARS ];  // list of names
-  int           spectatorLen;                       // length of list
-  float         spectatorWidth;                     // width in device units
   int           spectatorTime;                      // next time to offset
-  int           spectatorPaintX;                    // current paint x
-  int           spectatorPaintX2;                   // current paint x
-  int           spectatorOffset;                    // current offset from start
-  int           spectatorPaintLen;                  // current offset from start
+  float         spectatorOffset;                    // current offset from start
 
   // centerprinting
   int           centerPrintTime;
   int           centerPrintCharWidth;
   int           centerPrintY;
-  char          centerPrint[ 1024 ];
+  char          centerPrint[ MAX_STRING_CHARS ];
   int           centerPrintLines;
 
   // low ammo warning state
@@ -1193,6 +1188,7 @@ typedef struct
   qhandle_t   scannerBlipShader;
   qhandle_t   scannerLineShader;
 
+  qhandle_t   teamOverlayShader;
 
   qhandle_t   numberShaders[ 11 ];
 
@@ -1356,17 +1352,11 @@ typedef struct
   char          mapname[ MAX_QPATH ];
   qboolean      markDeconstruct;        // Whether or not buildables are marked
 
-  int           voteTime;
-  int           voteYes;
-  int           voteNo;
-  qboolean      voteModified;           // beep whenever changed
-  char          voteString[ MAX_STRING_TOKENS ];
-
-  int           teamVoteTime[ 2 ];
-  int           teamVoteYes[ 2 ];
-  int           teamVoteNo[ 2 ];
-  qboolean      teamVoteModified[ 2 ];  // beep whenever changed
-  char          teamVoteString[ 2 ][ MAX_STRING_TOKENS ];
+  int           voteTime[ NUM_TEAMS ];
+  int           voteYes[ NUM_TEAMS ];
+  int           voteNo[ NUM_TEAMS ];
+  qboolean      voteModified[ NUM_TEAMS ];// beep whenever changed
+  char          voteString[ NUM_TEAMS ][ MAX_STRING_TOKENS ];
 
   int           levelStartTime;
 
@@ -1394,6 +1384,8 @@ typedef struct
   vec3_t        inlineModelMidpoints[ MAX_MODELS ];
 
   clientInfo_t  clientinfo[ MAX_CLIENTS ];
+
+  int teaminfoReceievedTime;
 
   // corpse info
   clientInfo_t  corpseinfo[ MAX_CLIENTS ];
@@ -1451,6 +1443,9 @@ extern  vmCvar_t    cg_drawChargeBar;
 extern  vmCvar_t    cg_drawCrosshair;
 extern  vmCvar_t    cg_drawCrosshairNames;
 extern  vmCvar_t    cg_crosshairSize;
+extern  vmCvar_t    cg_drawTeamOverlay;
+extern  vmCvar_t    cg_teamOverlayMaxPlayers;
+extern  vmCvar_t    cg_teamOverlayUserinfo;
 extern  vmCvar_t    cg_draw2D;
 extern  vmCvar_t    cg_animSpeed;
 extern  vmCvar_t    cg_debugAnim;
@@ -1483,6 +1478,7 @@ extern  vmCvar_t    cg_synchronousClients;
 extern  vmCvar_t    cg_stats;
 extern  vmCvar_t    cg_paused;
 extern  vmCvar_t    cg_blood;
+extern  vmCvar_t    cg_teamOverlayUserinfo;
 extern  vmCvar_t    cg_teamChatsOnly;
 extern  vmCvar_t    cg_noVoiceChats;
 extern  vmCvar_t    cg_noVoiceText;
@@ -1542,6 +1538,8 @@ extern  vmCvar_t    cg_voice;
 
 extern  vmCvar_t    cg_emoticons;
 
+extern  vmCvar_t    cg_chatTeamPrefix;
+
 //
 // cg_main.c
 //
@@ -1596,26 +1594,24 @@ void        CG_FillRect( float x, float y, float width, float height, const floa
 void        CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader );
 void        CG_DrawFadePic( float x, float y, float width, float height, vec4_t fcolor,
                             vec4_t tcolor, float amount, qhandle_t hShader );
+void        CG_SetClipRegion( float x, float y, float w, float h );
+void        CG_ClearClipRegion( void );
 
 int         CG_DrawStrlen( const char *str );
 
 float       *CG_FadeColor( int startMsec, int totalMsec );
 void        CG_TileClear( void );
 void        CG_ColorForHealth( vec4_t hcolor );
-void        CG_GetColorForHealth( int health, int armor, vec4_t hcolor );
-
 void        CG_DrawRect( float x, float y, float width, float height, float size, const float *color );
 void        CG_DrawSides(float x, float y, float w, float h, float size);
 void        CG_DrawTopBottom(float x, float y, float w, float h, float size);
 qboolean    CG_WorldToScreen( vec3_t point, float *x, float *y );
 char        *CG_KeyBinding( const char *bind );
-
+char        CG_GetColorCharForHealth( int clientnum );
 
 //
 // cg_draw.c
 //
-extern  int sortedTeamPlayers[ TEAM_MAXOVERLAY ];
-extern  int numSortedTeamPlayers;
 
 void        CG_AddLagometerFrameInfo( void );
 void        CG_AddLagometerSnapshotInfo( snapshot_t *snap );
@@ -1995,6 +1991,7 @@ void          trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity,
 int           trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 void          trap_R_RenderScene( const refdef_t *fd );
 void          trap_R_SetColor( const float *rgba ); // NULL = 1,1,1,1
+void          trap_R_SetClipRegion( const float *region );
 void          trap_R_DrawStretchPic( float x, float y, float w, float h,
                                      float s1, float t1, float s2, float t2, qhandle_t hShader );
 void          trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );

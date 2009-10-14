@@ -1173,7 +1173,7 @@ void ClientUserinfoChanged( int clientNum )
     "n\\%s\\t\\%i\\model\\%s\\c1\\%s\\c2\\%s\\"
     "hc\\%i\\ig\\%16s\\v\\%s",
     client->pers.netname, client->pers.teamSelection, model, c1, c2,
-    client->pers.maxHealth, BG_ClientListString( &client->sess.ignoreList ),
+    client->pers.maxHealth, Com_ClientListString( &client->sess.ignoreList ),
     client->pers.voice );
 
   trap_SetConfigstring( CS_PLAYERS + clientNum, userinfo );
@@ -1436,8 +1436,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
   }
 
   // toggle the teleport bit so the client knows to not lerp
-  flags = ent->client->ps.eFlags & ( EF_TELEPORT_BIT | EF_VOTED | EF_TEAMVOTED );
-  flags ^= EF_TELEPORT_BIT;
+  flags = ( ent->client->ps.eFlags & EF_TELEPORT_BIT ) ^ EF_TELEPORT_BIT;
   G_UnlaggedClear( ent );
 
   // clear everything but the persistant data
@@ -1689,13 +1688,13 @@ void ClientDisconnect( int clientNum )
 
   G_admin_namelog_update( ent->client, qtrue );
   G_LeaveTeam( ent );
-  G_Vote( ent, qfalse );
+  G_Vote( ent, TEAM_NONE, qfalse );
 
   // stop any following clients
   for( i = 0; i < level.maxclients; i++ )
   {
     // remove any /ignore settings for this clientNum
-    BG_ClientListRemove( &level.clients[ i ].sess.ignoreList, clientNum );
+    Com_ClientListRemove( &level.clients[ i ].sess.ignoreList, clientNum );
   }
 
   // send effect if they were completely connected

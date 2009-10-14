@@ -115,7 +115,7 @@ itemDef
   aspectBias ALIGN_RIGHT
   visible MENU_TRUE
   decoration
-  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 1
+  forecolor 1 1 1 1
   textalign ALIGN_RIGHT
   textscale 0.3
   ownerdraw CG_PLAYER_LOCATION
@@ -147,6 +147,19 @@ itemDef
   textscale 0.3
   ownerdraw CG_DEMO_PLAYBACK
   background "ui/assets/forwardarrow.tga"
+}
+
+//TEAM OVERLAY
+itemDef
+{
+  name "teamoverlay"
+  rect BORDER 120 160 128
+  style WINDOW_STYLE_EMPTY
+  visible MENU_TRUE
+  decoration
+  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.75
+  textscale 1.0
+  ownerdraw CG_TEAMOVERLAY
 }
 
 //SNAPSHOT

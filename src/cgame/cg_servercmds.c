@@ -79,17 +79,14 @@ CG_ParseTeamInfo
 static void CG_ParseTeamInfo( void )
 {
   int   i;
+  int   count;
   int   client;
 
-  numSortedTeamPlayers = atoi( CG_Argv( 1 ) );
-  if( numSortedTeamPlayers < 0 || numSortedTeamPlayers > TEAM_MAXOVERLAY )
-  {
-    CG_Error( "CG_ParseTeamInfo: numSortedTeamPlayers out of range (%d)",
-      numSortedTeamPlayers );
-    return;
-  }
+  count = atoi( CG_Argv( 1 ) );
 
-  for( i = 0; i < numSortedTeamPlayers; i++ )
+  cgs.teaminfoReceievedTime = cg.time;
+
+  for( i = 0; i < count; i++ )
   {
     client = atoi( CG_Argv( i * 5 + 2 ) );
     if( client < 0 || client >= MAX_CLIENTS )
@@ -98,12 +95,10 @@ static void CG_ParseTeamInfo( void )
       return;
     }
 
-    sortedTeamPlayers[ i ] = client;
-
     cgs.clientinfo[ client ].location = atoi( CG_Argv( i * 5 + 3 ) );
     cgs.clientinfo[ client ].health = atoi( CG_Argv( i * 5 + 4 ) );
-    cgs.clientinfo[ client ].armor = atoi( CG_Argv( i * 5 + 5 ) );
-    cgs.clientinfo[ client ].curWeapon = atoi( CG_Argv( i * 5 + 6 ) );
+    cgs.clientinfo[ client ].curWeaponClass = atoi( CG_Argv( i * 5 + 5 ) );
+    cgs.clientinfo[ client ].upgrade = atoi( CG_Argv( i * 5 + 6 ) );
   }
 }
 
@@ -160,8 +155,25 @@ Called on load to set the initial values from configure strings
 */
 void CG_SetConfigValues( void )
 {
-  sscanf( CG_ConfigString( CS_STAGES ), "%d %d %d %d %d %d", &cgs.alienStage, &cgs.humanStage,
-      &cgs.alienCredits, &cgs.humanCredits, &cgs.alienNextStageThreshold, &cgs.humanNextStageThreshold );
+  const char *alienStages = CG_ConfigString( CS_ALIEN_STAGES );
+  const char *humanStages = CG_ConfigString( CS_HUMAN_STAGES );
+
+  if( alienStages[0] )
+  {
+    sscanf( alienStages, "%d %d %d", &cgs.alienStage, &cgs.alienCredits,
+        &cgs.alienNextStageThreshold );
+  }
+  else
+    cgs.alienStage = cgs.alienCredits = cgs.alienNextStageThreshold = 0;
+
+
+  if( humanStages[0] )
+  {
+    sscanf( humanStages, "%d %d %d", &cgs.humanStage, &cgs.humanCredits,
+        &cgs.humanNextStageThreshold );
+  }
+  else
+    cgs.humanStage = cgs.humanCredits = cgs.humanNextStageThreshold = 0;
 
   cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
   cg.warmup = atoi( CG_ConfigString( CS_WARMUP ) );
@@ -273,83 +285,69 @@ static void CG_ConfigStringModified( void )
     CG_ParseServerinfo( );
   else if( num == CS_WARMUP )
     CG_ParseWarmup( );
-  else if( num == CS_STAGES )
+  else if( num == CS_ALIEN_STAGES )
   {
     stage_t oldAlienStage = cgs.alienStage;
+
+    if( str[0] )
+    {
+      sscanf( str, "%d %d %d", &cgs.alienStage, &cgs.alienCredits,
+          &cgs.alienNextStageThreshold );
+
+      if( cgs.alienStage != oldAlienStage )
+        CG_AnnounceAlienStageTransistion( oldAlienStage, cgs.alienStage );
+    }
+    else
+    {
+      cgs.alienStage = cgs.alienCredits = cgs.alienNextStageThreshold = 0;
+    }
+  }
+  else if( num == CS_HUMAN_STAGES )
+  {
     stage_t oldHumanStage = cgs.humanStage;
 
-    sscanf( str, "%d %d %d %d %d %d",
-        &cgs.alienStage, &cgs.humanStage,
-        &cgs.alienCredits, &cgs.humanCredits,
-        &cgs.alienNextStageThreshold, &cgs.humanNextStageThreshold );
+    if( str[0] )
+    {
+      sscanf( str, "%d %d %d", &cgs.humanStage, &cgs.humanCredits,
+          &cgs.humanNextStageThreshold );
 
-    if( cgs.alienStage != oldAlienStage )
-      CG_AnnounceAlienStageTransistion( oldAlienStage, cgs.alienStage );
-
-    if( cgs.humanStage != oldHumanStage )
-      CG_AnnounceHumanStageTransistion( oldHumanStage, cgs.humanStage );
+      if( cgs.humanStage != oldHumanStage )
+        CG_AnnounceHumanStageTransistion( oldHumanStage, cgs.humanStage );
+    }
+    else
+    {
+      cgs.humanStage = cgs.humanCredits = cgs.humanNextStageThreshold = 0;
+    }
   }
   else if( num == CS_LEVEL_START_TIME )
     cgs.levelStartTime = atoi( str );
-  else if( num == CS_VOTE_TIME )
+  else if( num >= CS_VOTE_TIME && num < CS_VOTE_TIME + NUM_TEAMS )
   {
-    cgs.voteTime = atoi( str );
-    cgs.voteModified = qtrue;
+    cgs.voteTime[ num - CS_VOTE_TIME ] = atoi( str );
+    cgs.voteModified[ num - CS_VOTE_TIME ] = qtrue;
 
-    if( cgs.voteTime )
-      trap_Cvar_Set( "ui_voteActive", "1" );
-    else
-      trap_Cvar_Set( "ui_voteActive", "0" );
+    if( num - CS_VOTE_TIME == TEAM_NONE )
+      trap_Cvar_Set( "ui_voteActive", cgs.voteTime[ TEAM_NONE ] ? "1" : "0" );
+    else if( num - CS_VOTE_TIME == TEAM_ALIENS )
+      trap_Cvar_Set( "ui_alienTeamVoteActive",
+        cgs.voteTime[ TEAM_ALIENS ] ? "1" : "0" );
+    else if( num - CS_VOTE_TIME == TEAM_HUMANS )
+      trap_Cvar_Set( "ui_humanTeamVoteActive",
+        cgs.voteTime[ TEAM_HUMANS ] ? "1" : "0" );
   }
-  else if( num == CS_VOTE_YES )
+  else if( num >= CS_VOTE_YES && num < CS_VOTE_YES + NUM_TEAMS )
   {
-    cgs.voteYes = atoi( str );
-    cgs.voteModified = qtrue;
+    cgs.voteYes[ num - CS_VOTE_YES ] = atoi( str );
+    cgs.voteModified[ num - CS_VOTE_YES ] = qtrue;
   }
-  else if( num == CS_VOTE_NO )
+  else if( num >= CS_VOTE_NO && num < CS_VOTE_NO + NUM_TEAMS )
   {
-    cgs.voteNo = atoi( str );
-    cgs.voteModified = qtrue;
+    cgs.voteNo[ num - CS_VOTE_NO ] = atoi( str );
+    cgs.voteModified[ num - CS_VOTE_NO ] = qtrue;
   }
-  else if( num == CS_VOTE_STRING )
-    Q_strncpyz( cgs.voteString, str, sizeof( cgs.voteString ) );
-  else if( num >= CS_TEAMVOTE_TIME && num <= CS_TEAMVOTE_TIME + 1 )
-  {
-    int cs_offset = num - CS_TEAMVOTE_TIME;
-
-    cgs.teamVoteTime[ cs_offset ] = atoi( str );
-    cgs.teamVoteModified[ cs_offset ] = qtrue;
-
-    if( cs_offset == 0 )
-    {
-      if( cgs.teamVoteTime[ cs_offset ] )
-        trap_Cvar_Set( "ui_humanTeamVoteActive", "1" );
-      else
-        trap_Cvar_Set( "ui_humanTeamVoteActive", "0" );
-    }
-    else if( cs_offset == 1 )
-    {
-      if( cgs.teamVoteTime[ cs_offset ] )
-        trap_Cvar_Set( "ui_alienTeamVoteActive", "1" );
-      else
-        trap_Cvar_Set( "ui_alienTeamVoteActive", "0" );
-    }
-  }
-  else if( num >= CS_TEAMVOTE_YES && num <= CS_TEAMVOTE_YES + 1 )
-  {
-    cgs.teamVoteYes[ num - CS_TEAMVOTE_YES ] = atoi( str );
-    cgs.teamVoteModified[ num - CS_TEAMVOTE_YES ] = qtrue;
-  }
-  else if( num >= CS_TEAMVOTE_NO && num <= CS_TEAMVOTE_NO + 1 )
-  {
-    cgs.teamVoteNo[ num - CS_TEAMVOTE_NO ] = atoi( str );
-    cgs.teamVoteModified[ num - CS_TEAMVOTE_NO ] = qtrue;
-  }
-  else if( num >= CS_TEAMVOTE_STRING && num <= CS_TEAMVOTE_STRING + 1 )
-  {
-    Q_strncpyz( cgs.teamVoteString[ num - CS_TEAMVOTE_STRING ], str,
-      sizeof( cgs.teamVoteString[ num - CS_TEAMVOTE_STRING ] ) );
-  }
+  else if( num >= CS_VOTE_STRING && num < CS_VOTE_STRING + NUM_TEAMS )
+    Q_strncpyz( cgs.voteString[ num - CS_VOTE_STRING ], str,
+      sizeof( cgs.voteString[ num - CS_VOTE_STRING ] ) );
   else if( num == CS_INTERMISSION )
     cg.intermissionStarted = atoi( str );
   else if( num >= CS_MODELS && num < CS_MODELS+MAX_MODELS )
@@ -406,7 +404,7 @@ static void CG_MapRestart( void )
 
   cg.intermissionStarted = qfalse;
 
-  cgs.voteTime = 0;
+  cgs.voteTime[ TEAM_NONE ] = 0;
 
   cg.mapRestart = qtrue;
 
@@ -914,47 +912,110 @@ void CG_Menu( int menu, int arg )
 CG_Say
 =================
 */
-static void CG_Say( int clientNum, char *text )
+static void CG_Say( int clientNum, saymode_t mode, const char *text )
 {
   clientInfo_t *ci;
-  char sayText[ MAX_SAY_TEXT ] = {""};
-  
-  if( clientNum < 0 || clientNum >= MAX_CLIENTS )
-    return;
+  char *prefix, *name;
+  qboolean isIgnored = qfalse;
+  char *location = "";
+  char tcolor = COLOR_WHITE;
+  char color;
 
-  ci = &cgs.clientinfo[ clientNum ];
-  Com_sprintf( sayText, sizeof( sayText ),
-    "%s: " S_COLOR_WHITE S_COLOR_GREEN "%s" S_COLOR_WHITE "\n",
-    ci->name, text );
-  
-  if( BG_ClientListTest( &cgs.ignoreList, clientNum ) )
-    CG_Printf( "[skipnotify]%s", sayText );
+  if( clientNum >= 0 && clientNum < MAX_CLIENTS )
+    ci = &cgs.clientinfo[ clientNum ];
   else
-    CG_Printf( "%s", sayText );
-}
+    ci = NULL;
 
-/*
-=================
-CG_SayTeam
-=================
-*/
-static void CG_SayTeam( int clientNum, char *text )
-{
-  clientInfo_t *ci;
-  char sayText[ MAX_SAY_TEXT ] = {""};
 
-  if( clientNum < 0 || clientNum >= MAX_CLIENTS )
-    return;
-
-  ci = &cgs.clientinfo[ clientNum ];
-  Com_sprintf( sayText, sizeof( sayText ),
-    "%s: " S_COLOR_CYAN "%s" S_COLOR_WHITE "\n",
-    ci->name, text );
-
-  if( BG_ClientListTest( &cgs.ignoreList, clientNum ) )
-    CG_Printf( "[skipnotify]%s", sayText );
+  if( ci )
+  {
+    name = ci->name;
+    if( ci->team == TEAM_ALIENS )
+      tcolor = COLOR_RED;
+    else if( ci->team == TEAM_HUMANS )
+      tcolor = COLOR_CYAN;
+  }
   else
-    CG_Printf( "%s", sayText );
+    name = "console";
+
+  if( ci && cg_chatTeamPrefix.integer )
+    prefix = va( "^%c[%c] " S_COLOR_WHITE, 
+                 tcolor, toupper( *( BG_TeamName( ci->team ) ) ) );
+  else
+    prefix = "";
+
+  if( mode == SAY_TEAM || mode == SAY_AREA )
+  // don't always use "unknown"
+  if( ci && ci->location > 0 && ci->location < MAX_LOCATIONS )
+  {
+    const char *s = CG_ConfigString( CS_LOCATIONS + ci->location );
+    if( *s )
+      location = va( " (%s" S_COLOR_WHITE ")", s );
+  }
+
+  if( ci && Com_ClientListContains( &cgs.ignoreList, clientNum ) )
+    isIgnored = qtrue;
+
+  switch( mode )
+  {
+    case SAY_ALL:
+      if( isIgnored || ( ci && cg_teamChatsOnly.integer ) )
+        CG_Printf( "[skipnotify]%s%s: " S_COLOR_GREEN "%s\n",
+                   prefix, name, text );
+      else
+        CG_Printf( "%s%s: " S_COLOR_GREEN "%s\n", prefix, name, text );
+      break;
+    case SAY_TEAM:
+      CG_Printf( "%s(%s)%s: " S_COLOR_CYAN "%s\n",
+                 prefix, name, location, text );
+      break;
+    case SAY_ADMINS:
+      CG_Printf( "%s[ADMIN]%s: " S_COLOR_MAGENTA "%s\n", prefix, name, text );
+      break;
+    case SAY_ADMINS_PUBLIC:
+      CG_Printf( "%s[PLAYER]%s: " S_COLOR_MAGENTA "%s\n", prefix, name, text );
+      break;
+    case SAY_AREA:
+      CG_Printf( "%s<%s>: " S_COLOR_BLUE "%s\n", prefix, name, text );
+      break;
+    case SAY_PRIVMSG:
+    case SAY_TPRIVMSG:
+      color = ( mode == SAY_TPRIVMSG ) ? COLOR_CYAN : COLOR_GREEN;
+      if( isIgnored )
+        CG_Printf( "[skipnotify]%s" S_COLOR_YELLOW " -> " S_COLOR_WHITE "%s: "
+                   "^%c%s\n", name, cgs.clientinfo[ cg.clientNum ].name, color,
+                   text );
+      else
+      {
+        CG_Printf( "%s" S_COLOR_YELLOW " -> " S_COLOR_WHITE "%s: ^%c%s\n",
+                   name, cgs.clientinfo[ cg.clientNum ].name, color, text );
+        CG_CenterPrint( va( "^%cPrivate message from: " S_COLOR_WHITE "%s", 
+                            color, name ), 200, GIANTCHAR_WIDTH * 4 );
+      }
+      break;
+    case SAY_RAW:
+      CG_Printf( "%s\n", text );
+      break;
+  }
+
+  switch( mode )
+  {
+    case SAY_TEAM:
+    case SAY_AREA:
+    case SAY_TPRIVMSG:
+      if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+      {
+        trap_S_StartLocalSound( cgs.media.alienTalkSound, CHAN_LOCAL_SOUND );
+        break;
+      }
+      else if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
+      {
+        trap_S_StartLocalSound( cgs.media.humanTalkSound, CHAN_LOCAL_SOUND );
+        break;
+      }
+    default: 
+      trap_S_StartLocalSound( cgs.media.talkSound, CHAN_LOCAL_SOUND );
+  }
 }
 
 /*
@@ -1055,10 +1116,10 @@ static void CG_ParseVoice( void )
     switch( vChan )
     {
       case VOICE_CHAN_ALL:
-        CG_Say( clientNum, sayText );
+        CG_Say( clientNum, SAY_ALL, sayText );
         break;
       case VOICE_CHAN_TEAM:
-        CG_SayTeam( clientNum, sayText );
+        CG_Say( clientNum, SAY_TEAM, sayText );
         break;
       default:
         break;
@@ -1074,7 +1135,7 @@ static void CG_ParseVoice( void )
     return;
 
   // don't play audio track for lamers
-  if( BG_ClientListTest( &cgs.ignoreList, clientNum ) )
+  if( Com_ClientListContains( &cgs.ignoreList, clientNum ) )
     return;
 
   switch( vChan )
@@ -1120,28 +1181,13 @@ CG_Chat_f
 */
 static void CG_Chat_f( void )
 {
-  char     cmd[ 6 ], text[ MAX_SAY_TEXT ];
-  qboolean team;
+  char     id[ 3 ];
+  char     mode[ 3 ];
 
-  trap_Argv( 0, cmd, sizeof( cmd ) );
-  team = Q_stricmp( cmd, "chat" );
+  trap_Argv( 1, id, sizeof( id ) );
+  trap_Argv( 2, mode, sizeof( mode ) );
 
-  if( team && cg_teamChatsOnly.integer )
-    return;
-
-  Q_strncpyz( text, CG_Argv( 1 ), sizeof( text ) );
-
-  if( Q_stricmpn( text, "[skipnotify]", 12 ) )
-  {
-    if( team && cg.snap->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
-      trap_S_StartLocalSound( cgs.media.alienTalkSound, CHAN_LOCAL_SOUND );
-    else if( team && cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
-      trap_S_StartLocalSound( cgs.media.humanTalkSound, CHAN_LOCAL_SOUND );
-    else
-      trap_S_StartLocalSound( cgs.media.talkSound, CHAN_LOCAL_SOUND );
-  }
-
-  CG_Printf( "%s\n", text );
+  CG_Say( atoi( id ), atoi( mode ), CG_Argv( 3 ) );
 }
 
 /*
@@ -1234,7 +1280,6 @@ static consoleCommand_t svcommands[ ] =
   { "cs", CG_ConfigStringModified },
   { "print", CG_Print_f },
   { "chat", CG_Chat_f },
-  { "tchat", CG_Chat_f },
   { "scores", CG_ParseScores },
   { "tinfo", CG_ParseTeamInfo },
   { "map_restart", CG_MapRestart },

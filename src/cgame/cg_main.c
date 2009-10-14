@@ -32,6 +32,7 @@ displayContextDef_t cgDC;
 
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum );
 void CG_Shutdown( void );
+static char *CG_VoIPString( void );
 
 /*
 ================
@@ -83,6 +84,9 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3,
     case CG_EVENT_HANDLING:
       CG_EventHandling( arg0 );
       return 0;
+
+    case CG_VOIP_STRING:
+      return (intptr_t)CG_VoIPString( );
 
     default:
       CG_Error( "vmMain: unknown command %i", command );
@@ -150,6 +154,9 @@ vmCvar_t  cg_stats;
 vmCvar_t  cg_paused;
 vmCvar_t  cg_blood;
 vmCvar_t  cg_teamChatsOnly;
+vmCvar_t  cg_drawTeamOverlay;
+vmCvar_t  cg_teamOverlayMaxPlayers;
+vmCvar_t  cg_teamOverlayUserinfo;
 vmCvar_t  cg_noPrintDuplicate;
 vmCvar_t  cg_noVoiceChats;
 vmCvar_t  cg_noVoiceText;
@@ -210,6 +217,7 @@ vmCvar_t  cg_voice;
 
 vmCvar_t  cg_emoticons;
 
+vmCvar_t  cg_chatTeamPrefix;
 
 typedef struct
 {
@@ -264,6 +272,9 @@ static cvarTable_t cvarTable[ ] =
   { &cg_thirdPersonPitchFollow, "cg_thirdPersonPitchFollow", "0", 0 },
   { &cg_thirdPersonShoulderViewMode, "cg_thirdPersonShoulderViewMode", "1", CVAR_ARCHIVE },
   { &cg_stats, "cg_stats", "0", 0 },
+  { &cg_drawTeamOverlay, "cg_drawTeamOverlay", "1", CVAR_ARCHIVE },
+  { &cg_teamOverlayMaxPlayers, "cg_teamOverlayMaxPlayers", "8", CVAR_ARCHIVE },
+  { &cg_teamOverlayUserinfo, "teamoverlay", "1", CVAR_ARCHIVE|CVAR_USERINFO },
   { &cg_teamChatsOnly, "cg_teamChatsOnly", "0", CVAR_ARCHIVE },
   { &cg_noPrintDuplicate, "cg_noPrintDuplicate", "0", CVAR_ARCHIVE },
   { &cg_noVoiceChats, "cg_noVoiceChats", "0", CVAR_ARCHIVE },
@@ -337,7 +348,9 @@ static cvarTable_t cvarTable[ ] =
   
   { &cg_voice, "voice", "default", CVAR_USERINFO|CVAR_ARCHIVE},
 
-  { &cg_emoticons, "cg_emoticons", "1", CVAR_LATCH|CVAR_ARCHIVE}
+  { &cg_emoticons, "cg_emoticons", "1", CVAR_LATCH|CVAR_ARCHIVE},
+
+  { &cg_chatTeamPrefix, "cg_chatTeamPrefix", "1", CVAR_ARCHIVE}
 };
 
 static int   cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -419,6 +432,7 @@ void CG_UpdateCvars( void )
   // check for modications here
 
   CG_SetUIVars( );
+
 }
 
 
@@ -738,6 +752,8 @@ static void CG_RegisterGraphics( void )
   cgs.media.scannerBlipShader         = trap_R_RegisterShader( "gfx/2d/blip" );
   cgs.media.scannerLineShader         = trap_R_RegisterShader( "gfx/2d/stalk" );
 
+  cgs.media.teamOverlayShader         = trap_R_RegisterShader( "gfx/2d/teamoverlay" );
+
   cgs.media.tracerShader              = trap_R_RegisterShader( "gfx/misc/tracer" );
 
   cgs.media.backTileShader            = trap_R_RegisterShader( "console" );
@@ -873,15 +889,10 @@ void CG_BuildSpectatorString( void )
   for( i = 0; i < MAX_CLIENTS; i++ )
   {
     if( cgs.clientinfo[ i ].infoValid && cgs.clientinfo[ i ].team == TEAM_NONE )
-      Q_strcat( cg.spectatorList, sizeof( cg.spectatorList ), va( "%s     " S_COLOR_WHITE, cgs.clientinfo[ i ].name ) );
-  }
-
-  i = strlen( cg.spectatorList );
-
-  if( i != cg.spectatorLen )
-  {
-    cg.spectatorLen = i;
-    cg.spectatorWidth = -1;
+    {
+      Q_strcat( cg.spectatorList, sizeof( cg.spectatorList ),
+          va( S_COLOR_WHITE "%s     ", cgs.clientinfo[ i ].name ) );
+    }
   }
 }
 
@@ -1426,9 +1437,9 @@ static qboolean CG_ClientIsReady( int clientNum )
 {
   clientList_t ready;
 
-  BG_ClientListParse( &ready, CG_ConfigString( CS_CLIENTS_READY ) );
+  Com_ClientListParse( &ready, CG_ConfigString( CS_CLIENTS_READY ) );
 
-  return BG_ClientListTest( &ready, clientNum );
+  return Com_ClientListContains( &ready, clientNum );
 }
 
 static const char *CG_FeederItemText( float feederID, int index, int column, qhandle_t *handle )
@@ -1757,14 +1768,17 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   // get the gamestate from the client system
   trap_GetGameState( &cgs.gameState );
 
-  // copy vote display strings so they don't show up blank if we see 
+  // copy vote display strings so they don't show up blank if we see
   // the same one directly after connecting
-  Q_strncpyz( cgs.voteString, CG_ConfigString( CS_VOTE_STRING ), 
+  Q_strncpyz( cgs.voteString[ TEAM_NONE ],
+      CG_ConfigString( CS_VOTE_STRING + TEAM_NONE ),
       sizeof( cgs.voteString ) );
-  Q_strncpyz( cgs.teamVoteString[ 0 ], CG_ConfigString( CS_TEAMVOTE_STRING + 0 ), 
-      sizeof( cgs.teamVoteString[ 0 ] ) );
-  Q_strncpyz( cgs.teamVoteString[ 1 ], CG_ConfigString( CS_TEAMVOTE_STRING + 1 ),
-      sizeof( cgs.teamVoteString[ 1 ] ) );
+  Q_strncpyz( cgs.voteString[ TEAM_ALIENS ],
+      CG_ConfigString( CS_VOTE_STRING + TEAM_ALIENS ),
+      sizeof( cgs.voteString[ TEAM_ALIENS ] ) );
+  Q_strncpyz( cgs.voteString[ TEAM_HUMANS ],
+      CG_ConfigString( CS_VOTE_STRING + TEAM_ALIENS ),
+      sizeof( cgs.voteString[ TEAM_HUMANS ] ) );
 
   // check version
   s = CG_ConfigString( CS_GAME_VERSION );
@@ -1836,3 +1850,55 @@ void CG_Shutdown( void )
   // some mods may need to do cleanup work here,
   // like closing files or archiving session data
 }
+
+/*
+================
+CG_VoIPString
+================
+*/
+static char *CG_VoIPString( void )
+{
+  // a generous overestimate of the space needed for 0,1,2...61,62,63
+  static char voipString[ MAX_CLIENTS * 4 ];
+  char voipSendTarget[ MAX_CVAR_VALUE_STRING ];
+
+  trap_Cvar_VariableStringBuffer( "cl_voipSendTarget", voipSendTarget,
+                                  sizeof( voipSendTarget ) );
+
+  if( Q_stricmp( voipSendTarget, "team" ) == 0 )
+  {
+    int i, slen, nlen;
+    for( slen = i = 0; i < cgs.maxclients; i++ )
+    {
+      if( !cgs.clientinfo[ i ].infoValid || i == cg.clientNum )
+        continue;
+      if( cgs.clientinfo[ i ].team != cgs.clientinfo[ cg.clientNum ].team )
+        continue;
+
+      nlen = Q_snprintf( &voipString[ slen ], sizeof( voipString ) - slen,
+                         "%s%d", ( slen > 0 ) ? "," : "", i );
+      if( slen + nlen + 1 >= sizeof( voipString ) )
+      {
+        CG_Printf( S_COLOR_YELLOW "WARNING: voipString overflowed\n" );
+        break;
+      }
+
+      slen += nlen;
+    }
+
+    // Notice that if the snprintf was truncated, slen was not updated
+    // so this will remove any trailing commas or partially-completed numbers
+    voipString[ slen ] = '\0';
+  }
+  else if( Q_stricmp( voipSendTarget, "crosshair" ) == 0 )
+    Com_sprintf( voipString, sizeof( voipString ), "%d",
+                 CG_CrosshairPlayer( ) );
+  else if( Q_stricmp( voipSendTarget, "attacker" ) == 0 )
+    Com_sprintf( voipString, sizeof( voipString ), "%d",
+                 CG_LastAttacker( ) );
+  else
+    return NULL;
+
+  return voipString;
+}
+

@@ -87,12 +87,12 @@ enum
 enum
 {
   FEEDER_SERVERS,        // servers
-  FEEDER_FEATURED,       // featured servers
   FEEDER_MAPS,           // all maps available, in graphic format
   FEEDER_ALIENTEAM_LIST, // alien team members
   FEEDER_HUMANTEAM_LIST, // human team members
   FEEDER_TEAM_LIST,      // team members for team voting
   FEEDER_PLAYER_LIST,    // players
+  FEEDER_NEWS,           // news
   FEEDER_MODS,           // list of available mods
   FEEDER_DEMOS,          // list of available demo files
   FEEDER_SERVERSTATUS,   // server status
@@ -155,6 +155,7 @@ enum
   CG_PLAYER_CHARGE_BAR,
   CG_PLAYER_CROSSHAIR,
   CG_PLAYER_LOCATION,
+  CG_TEAMOVERLAY,
   CG_PLAYER_CREDITS_FRACTION,
 
   CG_KILLER,
