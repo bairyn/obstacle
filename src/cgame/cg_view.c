@@ -1443,6 +1443,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
   else
     CG_AddSpeed( sqrt( cg.snap->ps.velocity[ 0 ] * cg.snap->ps.velocity[ 0 ] + cg.snap->ps.velocity[ 1 ] * cg.snap->ps.velocity[ 1 ] ) );
 
+  // update speedometer
+  CG_AddSpeed( );
+
   // build cg.refdef
   inwater = CG_CalcViewValues( );
 

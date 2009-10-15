@@ -1620,24 +1620,23 @@ static void CG_DrawTimer( rectDef_t *rect, float text_x, float text_y,
 CG_DrawTeamOverlay
 =================
 */
-
 static void CG_DrawTeamOverlay( rectDef_t *rect, float scale, vec4_t color )
 {
-  char *s;
-  int i;
-  float x = rect->x;
-  float y, dx;
+  char         *s;
+  int          i;
+  float        x = rect->x;
+  float        y, dx;
   clientInfo_t *ci, *pci;
-  vec4_t tcolor;
-  float iconSize = rect->h/8.0f;
-  float leftMargin = 4.0f;
-  float iconTopMargin = 2.0f;
-  float midSep = 2.0f;
-  float backgroundWidth = rect->w;
-  float fontScale = 0.30f;
-  int maxDisplayCount = 0;
-  int displayCount = 0;
-  weapon_t curWeapon = WP_NONE;
+  vec4_t       tcolor;
+  float        iconSize = rect->h / 8.0f;
+  float        leftMargin = 4.0f;
+  float        iconTopMargin = 2.0f;
+  float        midSep = 2.0f;
+  float        backgroundWidth = rect->w;
+  float        fontScale = 0.30f;
+  int          maxDisplayCount = 0;
+  int          displayCount = 0;
+  weapon_t     curWeapon = WP_NONE;
 
   if( cg.predictedPlayerState.pm_type == PM_SPECTATOR )
     return;
@@ -1645,10 +1644,10 @@ static void CG_DrawTeamOverlay( rectDef_t *rect, float scale, vec4_t color )
   if( !cg_drawTeamOverlay.integer || !cg_teamOverlayMaxPlayers.integer )
     return;
 
-  if( !cgs.teaminfoReceievedTime ) return;
+  if( !cgs.teaminfoReceievedTime )
+    return;
 
   pci = cgs.clientinfo + cg.snap->ps.clientNum;
-
 
   for( i = 0; i < MAX_CLIENTS; i++ )
   {
@@ -2133,6 +2132,9 @@ static void CG_DrawLagometer( rectDef_t *rect, float text_x, float text_y,
 }
 
 #define SPEEDOMETER_NUM_SAMPLES 160
+#define SPEEDOMETER_DRAW_TEXT   0x1
+#define SPEEDOMETER_DRAW_GRAPH  0x2
+#define SPEEDOMETER_IGNORE_Z    0x4
 float speedSamples[ SPEEDOMETER_NUM_SAMPLES ];
 // array indices
 int oldestSpeedSample = 0;
@@ -2145,8 +2147,18 @@ CG_AddSpeed
 append a speed to the sample history
 ===================
 */
-void CG_AddSpeed( float speed )
+void CG_AddSpeed( void )
 {
+  float speed;
+  vec3_t vel;
+
+  VectorCopy( cg.snap->ps.velocity, vel );
+
+  if( cg_drawSpeed.integer & SPEEDOMETER_IGNORE_Z )
+    vel[ 2 ] = 0;
+
+  speed = VectorLength( vel );
+
   if( speed > speedSamples[ maxSpeedSample ] )
   {
     maxSpeedSample = oldestSpeedSample;
@@ -2170,44 +2182,45 @@ void CG_AddSpeed( float speed )
   oldestSpeedSample %= SPEEDOMETER_NUM_SAMPLES;
 }
 
-#define SPEEDOMETER_MIN_RANGE 900
-
 /*
 ===================
+CG_DrawSpeedText
+CG_DrawSpeedGraph
 CG_DrawSpeed
 ===================
 */
-static void CG_DrawSpeed( rectDef_t *rect, float text_x, float text_y, 
-                          float scale, vec4_t textColor )
+#define SPEEDOMETER_MIN_RANGE 900
+#define SPEED_MED 1000.f
+#define SPEED_FAST 1600.f
+
+static void CG_DrawSpeedGraph( rectDef_t *rect, vec4_t foreColor,
+                               vec4_t backColor )
 {
   int i;
-  float val, max = speedSamples[ maxSpeedSample ], top;
-  vec4_t slow = { 0.0, 0.0, 1.0, 1.0 };
-  vec4_t medium = { 0.0, 1.0, 0.0, 1.0 };
-  vec4_t fast = { 1.0, 0.0, 0.0, 1.0 };
-  vec4_t color = { 0, 0, 0, 1 };
-  char speedstr[ 9 ]; // won't need more than 99999999 I'd think
+  float val, max, top;
+  // colour of graph is interpolated between these values
+  const vec3_t slow = { 0.0, 0.0, 1.0 };
+  const vec3_t medium = { 0.0, 1.0, 0.0 };
+  const vec3_t fast = { 1.0, 0.0, 0.0 };
+  vec4_t color;
+
+  max = speedSamples[ maxSpeedSample ];
   if( max < SPEEDOMETER_MIN_RANGE )
     max = SPEEDOMETER_MIN_RANGE;
 
-  if( !cg_drawSpeedometer.integer )
-    return;
-
-  textColor[ 3 ] = 0.25;
-  trap_R_SetColor( textColor );
-  textColor[ 3 ] = 1;
+  trap_R_SetColor( backColor );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, cgs.media.whiteShader );
+
+  Vector4Copy( foreColor, color );
 
   for( i = 1; i < SPEEDOMETER_NUM_SAMPLES; i++ )
   {
     val = speedSamples[ ( oldestSpeedSample + i ) % SPEEDOMETER_NUM_SAMPLES ];
-#define SPEED_MED 600.f
-#define SPEED_FAST 1800.f
-#define SPEED_DIFF (SPEED_FAST - SPEED_MED)
     if( val < SPEED_MED )
       VectorLerp( val / SPEED_MED, slow, medium, color );
     else if( val < SPEED_FAST )
-      VectorLerp( ( val - SPEED_MED ) / SPEED_DIFF, medium, fast, color );
+      VectorLerp( ( val - SPEED_MED ) / ( SPEED_FAST - SPEED_MED ),
+                  medium, fast, color );
     else
       VectorCopy( fast, color );
     trap_R_SetColor( color );
@@ -2216,15 +2229,39 @@ static void CG_DrawSpeed( rectDef_t *rect, float text_x, float text_y,
                 rect->w / (float)SPEEDOMETER_NUM_SAMPLES, val * rect->h / max,
                 cgs.media.whiteShader );
   }
-  if( val > 99999 )
-    val = 99999;
   trap_R_SetColor( NULL );
+}
+
+static void CG_DrawSpeedText( rectDef_t *rect, float text_x, float text_y,
+                              float scale, vec4_t foreColor )
+{
+  char speedstr[ 16 ];
+  float val;
+  vec4_t color;
+
+  VectorCopy( foreColor, color );
+  color[ 3 ] = 1;
+
+  if( oldestSpeedSample == 0 )
+    val = speedSamples[ SPEEDOMETER_NUM_SAMPLES - 1 ];
+  else
+    val = speedSamples[ oldestSpeedSample - 1 ];
+
   Com_sprintf( speedstr, sizeof( speedstr ), "%d", (int)val );
-  textColor[ 3 ] = 0.5f;
+
   UI_Text_Paint(
       rect->x + ( rect->w - UI_Text_Width( speedstr, scale, 0 ) ) / 2.0f,
       rect->y + ( rect->h + UI_Text_Height( speedstr, scale, 0 ) ) / 2.0f,
-      scale, textColor, speedstr, 0, 0, ITEM_TEXTSTYLE_NORMAL );
+      scale, color, speedstr, 0, 0, ITEM_TEXTSTYLE_NORMAL );
+}
+
+static void CG_DrawSpeed( rectDef_t *rect, float text_x, float text_y, 
+                          float scale, vec4_t foreColor, vec4_t backColor )
+{
+  if( cg_drawSpeed.integer & SPEEDOMETER_DRAW_GRAPH )
+    CG_DrawSpeedGraph( rect, foreColor, backColor );
+  if( cg_drawSpeed.integer & SPEEDOMETER_DRAW_TEXT )
+    CG_DrawSpeedText( rect, text_x, text_y, scale, foreColor );
 }
 
 /*
@@ -2703,6 +2740,9 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
       break;
     case CG_TEAMOVERLAY:
       CG_DrawTeamOverlay( &rect, scale, foreColor );
+      break;
+    case CG_SPEEDOMETER:
+      CG_DrawSpeed( &rect, text_x, text_y, scale, foreColor, backColor );
       break;
 
     case CG_DEMO_PLAYBACK:

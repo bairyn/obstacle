@@ -1156,7 +1156,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
 
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
-      "ban %s \"1s%s\" vote kick", level.clients[ clientNum ].pers.ip,
+      "!ban %s \"1s%s\" vote kick", level.clients[ clientNum ].pers.ip,
       g_adminTempBan.string );
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
@@ -1181,7 +1181,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         return;
       }
       Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
-        "!mute %i", clientNum );
+        "!mute %d", clientNum );
       Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ),
         "Mute player \'%s\'", name );
     }
@@ -1194,7 +1194,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         return;
       }
       Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
-        "!unmute %i", clientNum );
+        "!unmute %d", clientNum );
       Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ),
         "Un-Mute player \'%s\'", name );
     }
@@ -1336,7 +1336,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
 
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
-      "denybuild %d", clientNum );
+      "!denybuild %d", clientNum );
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
       "Take away building rights from '%s'", name );
@@ -1351,7 +1351,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
 
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
-      "allowbuild %d", clientNum );
+      "!allowbuild %d", clientNum );
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
       "Allow '%s' to build", name );
@@ -1393,18 +1393,15 @@ void Cmd_CallVote_f( gentity_t *ent )
   ent->client->pers.voteCount++;
 
   // start the voting
-  level.voteTime = level.time;
-  level.voteYes = 0;
-  level.voteNo = 0;
-  ent->client->pers.vote = qtrue;
+  level.voteTime[ team ] = level.time;
+  trap_SetConfigstring( CS_VOTE_TIME + team,
+    va( "%d", level.voteTime[ team ] ) );
+  trap_SetConfigstring( CS_VOTE_STRING + team,
+    level.voteDisplayString[ team ] );
 
-  for( i = 0; i < level.maxclients; i++ )
-    level.clients[i].ps.eFlags &= ~EF_VOTED;
-
-  trap_SetConfigstring( CS_VOTE_TIME, va( "%i", level.voteTime ) );
-  trap_SetConfigstring( CS_VOTE_STRING, level.voteDisplayString );
-  trap_SetConfigstring( CS_VOTE_YES, "0" );
-  trap_SetConfigstring( CS_VOTE_NO, "0" );
+  //ent->client->pers.voteCount++;
+  //ent->client->pers.vote[ team ] = qtrue;
+  //G_Vote( ent, team, qtrue );
 }
 
 /*
