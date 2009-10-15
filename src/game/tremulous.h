@@ -99,16 +99,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL3_CLAW_RANGE           TREMULOUS_VALUE(72.0f, 96.0f)
 #define LEVEL3_CLAW_U_RANGE         TREMULOUS_VALUE(LEVEL3_CLAW_RANGE + 3.0f, LEVEL3_CLAW_RANGE + 8.0f)
 #define LEVEL3_CLAW_WIDTH           TREMULOUS_VALUE(12.0f, 16.0f)
-#define LEVEL3_CLAW_REPEAT          700
+#define LEVEL3_CLAW_REPEAT          TREMULOUS_VALUE(900, 700)
 #define LEVEL3_CLAW_K_SCALE         1.0f
-#define LEVEL3_CLAW_U_REPEAT        600
+#define LEVEL3_CLAW_U_REPEAT        TREMULOUS_VALUE(800, 600)
 #define LEVEL3_CLAW_U_K_SCALE       1.0f
 #define LEVEL3_POUNCE_DMG           ADM(100)
 #define LEVEL3_POUNCE_RANGE         TREMULOUS_VALUE(54.0f, 72.0f)
 #define LEVEL3_POUNCE_UPG_RANGE     TREMULOUS_VALUE(LEVEL3_POUNCE_RANGE + 3.0f, LEVEL3_POUNCE_RANGE + 0.0f)
 #define LEVEL3_POUNCE_WIDTH         TREMULOUS_VALUE(14.0f, 16.0f)
-#define LEVEL3_POUNCE_TIME          700      // msec for full Dragoon pounce
-#define LEVEL3_POUNCE_TIME_UPG      700      // msec for full Adv. Dragoon pounce
+#define LEVEL3_POUNCE_TIME          TREMULOUS_VALUE(900, 700)      // msec for full Dragoon pounce
+#define LEVEL3_POUNCE_TIME_UPG      TREMULOUS_VALUE(900, 700)      // msec for full Adv. Dragoon pounce
 #define LEVEL3_POUNCE_TIME_MIN      200      // msec before which pounce cancels  
 #define LEVEL3_POUNCE_REPEAT        400      // msec before a new pounce starts
 #define LEVEL3_POUNCE_SPEED_MOD     0.75f    // walking speed modifier for pounce charging
@@ -124,7 +124,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL4_CLAW_RANGE           TREMULOUS_VALUE(100.0f, 128.0f)
 #define LEVEL4_CLAW_WIDTH           TREMULOUS_VALUE(14.0f, 20.0f)
 #define LEVEL4_CLAW_HEIGHT          20.0f
-#define LEVEL4_CLAW_REPEAT          750
+#define LEVEL4_CLAW_REPEAT          800
 #define LEVEL4_CLAW_K_SCALE         1.0f
 
 #define LEVEL4_TRAMPLE_DMG             TREMULOUS_VALUE(ADM(111), ADM(110))
@@ -291,7 +291,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define HIVE_BP                     12
 #define HIVE_BT                     20000
-#define HIVE_HEALTH                 ABHM(175)
+#define HIVE_HEALTH                 ABHM(125)
 #define HIVE_REGEN                  10
 #define HIVE_SPLASHDAMAGE           30
 #define HIVE_SPLASHRADIUS           200
@@ -442,17 +442,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CHAINGUN_SPREAD             900
 #define CHAINGUN_DMG                HDM(5)
 
-#define PRIFLE_PRICE                400
-#define PRIFLE_CLIPS                40
-#define PRIFLE_MAXCLIPS             5
-#define PRIFLE_REPEAT               100
-#define PRIFLE_K_SCALE              1.0f
-#define PRIFLE_RELOAD               2000
-#define PRIFLE_DMG                  HDM(9)
-#define PRIFLE_SPEED                1200
-#define PRIFLE_SIZE                 5
-
-#define FLAMER_PRICE                450
+#define FLAMER_PRICE                400
 #define FLAMER_GAS                  150
 #define FLAMER_REPEAT               200
 #define FLAMER_K_SCALE              1.0f
@@ -462,6 +452,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define FLAMER_LIFETIME             700.0f
 #define FLAMER_SPEED                300.0f
 #define FLAMER_LAG                  0.65f    // the amount of player velocity that is added to the fireball
+
+#define PRIFLE_PRICE                450
+#define PRIFLE_CLIPS                40
+#define PRIFLE_MAXCLIPS             5
+#define PRIFLE_REPEAT               100
+#define PRIFLE_K_SCALE              1.0f
+#define PRIFLE_RELOAD               2000
+#define PRIFLE_DMG                  HDM(9)
+#define PRIFLE_SPEED                1200
+#define PRIFLE_SIZE                 5
 
 #define LCANNON_PRICE               600
 #define LCANNON_AMMO                80

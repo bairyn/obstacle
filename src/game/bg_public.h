@@ -58,14 +58,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // 6 UNUSED
 // 7 UNUSED
 #define CS_VOTE_TIME        8
-#define CS_VOTE_STRING      9
-#define CS_VOTE_YES         10
-#define CS_VOTE_NO          11
-
-#define CS_TEAMVOTE_TIME    12
-#define CS_TEAMVOTE_STRING  14
-#define CS_TEAMVOTE_YES     16
-#define CS_TEAMVOTE_NO      18
+#define CS_VOTE_STRING      (CS_VOTE_TIME + NUM_TEAMS)
+#define CS_VOTE_YES         (CS_VOTE_STRING + NUM_TEAMS)
+#define CS_VOTE_NO          (CS_VOTE_YES + NUM_TEAMS)
 
 #define CS_GAME_VERSION     20
 #define CS_LEVEL_START_TIME 21    // so the timer only shows the current level
@@ -75,7 +70,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_BOTINFO          25
 #define CS_CLIENTS_READY    26
 
-#define CS_STAGES           29
+#define CS_ALIEN_STAGES     29
+#define CS_HUMAN_STAGES     30
 
 BG_OC_CS
 
@@ -305,8 +301,6 @@ typedef enum
 #define EF_MOVER_STOP       0x00001000    // will push otherwise
 #define EF_POISONCLOUDED    0x00002000    // player hit with basilisk gas
 #define EF_CONNECTION       0x00004000    // draw a connection trouble sprite
-#define EF_VOTED            0x00008000    // already cast a vote
-#define EF_TEAMVOTED        0x00010000    // already cast a vote
 #define EF_BLOBLOCKED       0x00020000    // caught by a trapper
 #define EF_WARN_CHARGE      0x00040000    // Lucifer Cannon is about to overcharge
 
@@ -353,8 +347,8 @@ typedef enum
   WP_LAS_GUN,
   WP_MASS_DRIVER,
   WP_CHAINGUN,
-  WP_PULSE_RIFLE,
   WP_FLAMER,
+  WP_PULSE_RIFLE,
   WP_LUCIFER_CANNON,
   WP_GRENADE,
 
@@ -804,10 +798,7 @@ typedef struct animation_s
 #define ANIM_FORCEBIT     0x40
 
 // Time between location updates
-#define TEAM_LOCATION_UPDATE_TIME   1000
-
-// How many players on the overlay
-#define TEAM_MAXOVERLAY   32
+#define TEAM_LOCATION_UPDATE_TIME   500
 
 // player classes
 typedef enum
@@ -909,6 +900,7 @@ typedef enum
   MOD_ATUBE,
   MOD_OVERMIND,
   MOD_DECONSTRUCT,
+  MOD_REPLACE,
   MOD_NOCREEP
 } meansOfDeath_t;
 
@@ -1249,17 +1241,6 @@ qboolean BG_UpgradeIsAllowed( upgrade_t upgrade );
 qboolean BG_ClassIsAllowed( class_t class );
 qboolean BG_BuildableIsAllowed( buildable_t buildable );
 weapon_t BG_PrimaryWeapon( int stats[ ] );
-
-typedef struct 
-{
-  unsigned int hi;
-  unsigned int lo;
-} clientList_t;
-qboolean BG_ClientListTest( clientList_t *list, int clientNum );
-void BG_ClientListAdd( clientList_t *list, int clientNum );
-void BG_ClientListRemove( clientList_t *list, int clientNum );
-char *BG_ClientListString( clientList_t *list );
-void BG_ClientListParse( clientList_t *list, const char *s );
 
 // Friendly Fire Flags
 #define FFF_HUMANS         1

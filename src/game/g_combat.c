@@ -127,6 +127,7 @@ char *modNames[ ] =
   "MOD_ATUBE",
   "MOD_OVERMIND",
   "MOD_DECONSTRUCT",
+  "MOD_REPLACE",
   "MOD_NOCREEP"
 };
 
@@ -259,9 +260,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
   G_LogPrintf("Kill: %i %i %i: %s^7 killed %s^7 by %s\n",
     killer, self->s.number, meansOfDeath, killerName,
     self->client->pers.netname, obit );
-
-  // close any menus the client has open
-  G_CloseMenus( self->client->ps.clientNum );
 
   // deactivate all upgrades
   for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
@@ -939,6 +937,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       BG_Class( targ->client->ps.stats[ STAT_CLASS ] )->knockbackScale );
   }
 
+  // Too much knockback from falling really far makes you "bounce" and 
+  //  looks silly. However, none at all also looks bad. Cap it.
+  if( mod == MOD_FALLING && knockback > 50 ) 
+    knockback = 50;
+
   if( knockback > 200 )
     knockback = 200;
 
@@ -1015,32 +1018,24 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       // check if friendly fire has been disabled
       if( !g_friendlyFire.integer )
       {
-        if( !g_friendlyFireHumans.integer &&
-            targ->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
-        {
-          return;
-        }
-
-        if( !g_friendlyFireAliens.integer &&
-             targ->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
-        {
-          return;
-        }
+        return;
       }
     }
 
-    if( targ->s.eType == ET_BUILDABLE && attacker->client )
+    if( targ->s.eType == ET_BUILDABLE && attacker->client &&
+        mod != MOD_DECONSTRUCT && mod != MOD_REPLACE )
     {
       if( targ->buildableTeam == attacker->client->pers.teamSelection )
       {
-        if( !g_friendlyBuildableFire.integer )
+        if( !g_friendlyBuildableFire.integer && mod != MOD_DECONSTRUCT
+            && mod != MOD_SUICIDE )
           return;
       }
 
       // base is under attack warning if DCC'd
       if( targ->buildableTeam == TEAM_HUMANS && G_FindDCC( targ ) &&
           level.time > level.humanBaseAttackTimer &&
-          mod != MOD_DECONSTRUCT && mod != MOD_SUICIDE && !G_OC_NoDamageAlert() )
+          mod != MOD_SUICIDE && !G_OC_NoDamageAlert() )
       {
         level.humanBaseAttackTimer = level.time + DC_ATTACK_PERIOD;
         G_BroadcastEvent( EV_DCC_ATTACK, 0 );
@@ -1372,7 +1367,8 @@ void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
   if( !actor || !actor->client )
     return;
 
-  if( actor->client->ps.stats[ STAT_TEAM ] ==
+  if( mod != MOD_REPLACE &&
+    actor->client->ps.stats[ STAT_TEAM ] ==
     BG_Buildable( self->s.modelindex )->team )
   {
     G_TeamCommand( actor->client->ps.stats[ STAT_TEAM ],
@@ -1382,7 +1378,7 @@ void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
         actor->client->pers.netname ) );
   }
 
-  if( mod == MOD_DECONSTRUCT )
+  if( mod == MOD_DECONSTRUCT || mod == MOD_REPLACE )
     G_LogPrintf( "Decon: %d %d %d: %s^7 deconstructed %s\n",
       actor->client->ps.clientNum,
       self->s.modelindex,

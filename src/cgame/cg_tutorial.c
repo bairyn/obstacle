@@ -35,7 +35,8 @@ static bind_t bindings[ ] =
 {
   { "+button2",       "Activate Upgrade",       { -1, -1 } },
   { "+speed",         "Run/Walk",               { -1, -1 } },
-  { "+button6",       "Sprint/Dodge",           { -1, -1 } },
+  { "+button6",       "Dodge",                  { -1, -1 } },
+  { "+button8",       "Sprint",                 { -1, -1 } },
   { "+moveup",        "Jump",                   { -1, -1 } },
   { "+movedown",      "Crouch",                 { -1, -1 } },
   { "+attack",        "Primary Attack",         { -1, -1 } },
@@ -221,23 +222,22 @@ static void CG_AlienBuilderText( char *text, playerState_t *ps )
     }
   }
 
-  if( ps->stats[ STAT_CLASS ] == PCL_ALIEN_BUILDER0 ||
-      ps->stats[ STAT_CLASS ] == PCL_ALIEN_BUILDER0_UPG )
+  if( ( ps->stats[ STAT_BUILDABLE ] & ~SB_VALID_TOGGLEBIT ) == BA_NONE )
   {
-    if( ( ps->stats[ STAT_BUILDABLE ] & ~SB_VALID_TOGGLEBIT ) == BA_NONE )
-    {
-      Q_strcat( text, MAX_TUTORIAL_TEXT,
-          va( "Press %s to swipe\n",
-            CG_KeyNameForCommand( "+button5" ) ) );
-    }
+    Q_strcat( text, MAX_TUTORIAL_TEXT,
+        va( "Press %s to swipe\n",
+          CG_KeyNameForCommand( "+button5" ) ) );
+  }
 
+  if( ps->stats[ STAT_CLASS ] == PCL_ALIEN_BUILDER0_UPG )
+  {
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to launch a projectile\n",
-          CG_KeyNameForCommand( "+button2" ) ) );
+        CG_KeyNameForCommand( "+button2" ) ) );
 
     Q_strcat( text, MAX_TUTORIAL_TEXT,
         va( "Press %s to walk on walls\n",
-          CG_KeyNameForCommand( "+movedown" ) ) );
+        CG_KeyNameForCommand( "+movedown" ) ) );
   }
 }
 
@@ -529,11 +529,11 @@ static void CG_HumanText( char *text, playerState_t *ps )
         CG_KeyNameForCommand( "+button7" ) ) );
 
   Q_strcat( text, MAX_TUTORIAL_TEXT,
-      va( "Press %s and forward to sprint\n",
-        CG_KeyNameForCommand( "+button6" ) ) );
+      va( "Press %s and any direction to sprint\n",
+        CG_KeyNameForCommand( "+button8" ) ) );
 
   Q_strcat( text, MAX_TUTORIAL_TEXT,
-      va( "Press %s and another direction to dodge\n",
+      va( "Press %s and back, left-strafe, or right-strafe to dodge\n",
         CG_KeyNameForCommand( "+button6" ) ) );
 }
 

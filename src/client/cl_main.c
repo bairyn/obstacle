@@ -191,7 +191,7 @@ void CL_UpdateVoipIgnore(const char *idstr, qboolean ignore)
 		if ((id >= 0) && (id < MAX_CLIENTS)) {
 			clc.voipIgnore[id] = ignore;
 			CL_AddReliableCommand(va("voip %s %d",
-			                         ignore ? "ignore" : "unignore", id));
+			                         ignore ? "ignore" : "unignore", id), qfalse);
 			Com_Printf("VoIP: %s ignoring player #%d\n",
 			            ignore ? "Now" : "No longer", id);
 			return;
@@ -212,6 +212,58 @@ void CL_UpdateVoipGain(const char *idstr, float gain)
 			Com_Printf("VoIP: player #%d gain now set to %f\n", id, gain);
 		}
 	}
+}
+
+/*
+================
+CL_VoipParseTargets
+
+Sets clc.voipTarget{1,2,3} by asking the cgame to produce a string and then
+parsing it as a series of client numbers
+Perhaps it would be better to allow the cgame to set the three integers
+directly, but this way we can change the net protocol without changing the
+vmcall
+================
+*/
+static void CL_VoipParseTargets( void )
+{
+  const char *target = cl_voipSendTarget->string;
+  intptr_t p = VM_Call( cgvm, CG_VOIP_STRING );
+
+  if( p )
+    target = VM_ExplicitArgPtr( cgvm, p );
+
+  if( !target[ 0 ] || Q_stricmp( target, "all" ) == 0 )
+    clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0x7FFFFFFF;
+  else if( Q_stricmp( target, "none" ) == 0 )
+    clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0;
+  else
+  {
+    char *end;
+    int val;
+    clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0;
+
+    while( 1 )
+    {
+      while( *target && !isdigit( *target ) )
+        target++;
+      if( !*target )
+        break;
+
+      val = strtol( target, &end, 10 );
+      assert( target != end );
+      if( val < 0 || val >= MAX_CLIENTS )
+        Com_Printf( S_COLOR_YELLOW "WARNING: VoIP target %d is not a valid "
+                    "client number\n", val );
+      else if( val < 31 )
+        clc.voipTarget1 |= 1 << val;
+      else if( ( val -= 31 ) < 31 )
+        clc.voipTarget2 |= 1 << val;
+      else if( ( val -= 31 ) < 31 )
+        clc.voipTarget3 |= 1 << val;
+      target = end;
+    }
+  }
 }
 
 void CL_Voip_f( void )
@@ -251,11 +303,11 @@ void CL_Voip_f( void )
 		}
 	} else if (strcmp(cmd, "muteall") == 0) {
 		Com_Printf("VoIP: muting incoming voice\n");
-		CL_AddReliableCommand("voip muteall");
+		CL_AddReliableCommand("voip muteall", qfalse);
 		clc.voipMuteAll = qtrue;
 	} else if (strcmp(cmd, "unmuteall") == 0) {
 		Com_Printf("VoIP: unmuting incoming voice\n");
-		CL_AddReliableCommand("voip unmuteall");
+		CL_AddReliableCommand("voip unmuteall", qfalse);
 		clc.voipMuteAll = qfalse;
 	} else {
 		Com_Printf("usage: voip [un]ignore <playerID#>\n"
@@ -348,6 +400,7 @@ void CL_CaptureVoip(void)
 		S_MasterGain(cl_voipGainDuringCapture->value);
 		S_StartCapture();
 		CL_VoipNewGeneration();
+		CL_VoipParseTargets();
 	}
 
 	if ((cl_voipSend->integer) || (finalFrame)) { // user wants to capture audio?
@@ -457,17 +510,25 @@ The given command will be transmitted to the server, and is gauranteed to
 not have future usercmd_t executed before it is executed
 ======================
 */
-void CL_AddReliableCommand( const char *cmd ) {
-	int		index;
-
+void CL_AddReliableCommand(const char *cmd, qboolean isDisconnectCmd)
+{
+	int unacknowledged = clc.reliableSequence - clc.reliableAcknowledge;
+	
 	// if we would be losing an old command that hasn't been acknowledged,
 	// we must drop the connection
-	if ( clc.reliableSequence - clc.reliableAcknowledge > MAX_RELIABLE_COMMANDS ) {
-		Com_Error( ERR_DROP, "Client command overflow" );
+	// also leave one slot open for the disconnect command in this case.
+	
+	if ((isDisconnectCmd && unacknowledged > MAX_RELIABLE_COMMANDS) ||
+	    (!isDisconnectCmd && unacknowledged >= MAX_RELIABLE_COMMANDS))
+	{
+		if(com_errorEntered)
+			return;
+		else
+			Com_Error(ERR_DROP, "Client command overflow");
 	}
-	clc.reliableSequence++;
-	index = clc.reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
-	Q_strncpyz( clc.reliableCommands[ index ], cmd, sizeof( clc.reliableCommands[ index ] ) );
+
+	Q_strncpyz(clc.reliableCommands[++clc.reliableSequence & (MAX_RELIABLE_COMMANDS - 1)],
+		   cmd, sizeof(*clc.reliableCommands));
 }
 
 /*
@@ -1276,7 +1337,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 	// send a disconnect message to the server
 	// send it a few times in case one is dropped
 	if ( cls.state >= CA_CONNECTED ) {
-		CL_AddReliableCommand( "disconnect" );
+		CL_AddReliableCommand("disconnect", qtrue);
 		CL_WritePacket();
 		CL_WritePacket();
 		CL_WritePacket();
@@ -1335,9 +1396,9 @@ void CL_ForwardCommandToServer( const char *string ) {
 	}
 
 	if ( Cmd_Argc() > 1 ) {
-		CL_AddReliableCommand( string );
+		CL_AddReliableCommand(string, qfalse);
 	} else {
-		CL_AddReliableCommand( cmd );
+		CL_AddReliableCommand(cmd, qfalse);
 	}
 }
 
@@ -1404,44 +1465,9 @@ void CL_ForwardToServer_f( void ) {
 	
 	// don't forward the first argument
 	if ( Cmd_Argc() > 1 ) {
-		CL_AddReliableCommand( Cmd_Args() );
+		CL_AddReliableCommand(Cmd_Args(), qfalse);
 	}
 }
-
-/*
-==================
-CL_Setenv_f
-
-Mostly for controlling voodoo environment variables
-==================
-*/
-void CL_Setenv_f( void ) {
-	int argc = Cmd_Argc();
-
-	if ( argc > 2 ) {
-		char buffer[1024];
-		int i;
-
-		strcpy( buffer, Cmd_Argv(1) );
-		strcat( buffer, "=" );
-
-		for ( i = 2; i < argc; i++ ) {
-			strcat( buffer, Cmd_Argv( i ) );
-			strcat( buffer, " " );
-		}
-
-		putenv( buffer );
-	} else if ( argc == 2 ) {
-		char *env = getenv( Cmd_Argv(1) );
-
-		if ( env ) {
-			Com_Printf( "%s=%s\n", Cmd_Argv(1), env );
-		} else {
-			Com_Printf( "%s undefined\n", Cmd_Argv(1));
-		}
-	}
-}
-
 
 /*
 ==================
@@ -1644,7 +1670,7 @@ void CL_SendPureChecksums( void ) {
 	// if we are pure we need to send back a command with our referenced pk3 checksums
 	Com_sprintf(cMsg, sizeof(cMsg), "cp %d %s", cl.serverId, FS_ReferencedPakPureChecksums());
 
-	CL_AddReliableCommand( cMsg );
+	CL_AddReliableCommand(cMsg, qfalse);
 }
 
 /*
@@ -1653,7 +1679,7 @@ CL_ResetPureClientAtServer
 =================
 */
 void CL_ResetPureClientAtServer( void ) {
-	CL_AddReliableCommand( va("vdr") );
+	CL_AddReliableCommand("vdr", qfalse);
 }
 
 /*
@@ -1816,11 +1842,13 @@ void CL_DownloadsComplete( void ) {
 		CL_cURL_Shutdown();
 		if( clc.cURLDisconnected ) {
 			if(clc.downloadRestart) {
-				FS_Restart(clc.checksumFeed);
+                if( !clc.activeCURLNotGameRelated )
+                    FS_Restart(clc.checksumFeed);
 				clc.downloadRestart = qfalse;
 			}
 			clc.cURLDisconnected = qfalse;
-			CL_Reconnect_f();
+            if( !clc.activeCURLNotGameRelated )
+                CL_Reconnect_f();
 			return;
 		}
 	}
@@ -1833,7 +1861,7 @@ void CL_DownloadsComplete( void ) {
 		FS_Restart(clc.checksumFeed); // We possibly downloaded a pak, restart the file system to load it
 
 		// inform the server so we get new gamestate info
-		CL_AddReliableCommand( "donedl" );
+		CL_AddReliableCommand("donedl", qfalse);
 
 		// by sending the donedl command we request a new gamestate
 		// so we don't want to load stuff yet
@@ -1903,7 +1931,7 @@ void CL_BeginDownload( const char *localName, const char *remoteName ) {
 	// Stop any errant looping sounds that may be playing
 	S_ClearLoopingSounds( qtrue );
 
-	CL_AddReliableCommand( va("download %s", remoteName) );
+	CL_AddReliableCommand( va("download %s", remoteName), qfalse );
 }
 
 /*
@@ -2262,7 +2290,7 @@ void CL_InitServerInfo( serverInfo_t *server, netadr_t *address ) {
 	server->clients = 0;
 	server->hostName[0] = '\0';
 	server->mapName[0] = '\0';
-	server->label = NULL;
+	server->label[0] = '\0';
 	server->maxClients = 0;
 	server->maxPing = 0;
 	server->minPing = 0;
@@ -2325,47 +2353,25 @@ CL_GSRFeaturedLabel
 
 Parses from the data an arbitrary text string labelling the servers in the
 following getserversresponse packet.
-Either this matches an existing label, or it is copied into a new one.
-The relevant buffer, or NULL, is returned, and *data is advanced as appropriate
+The result is copied to *buf, and *data is advanced as appropriate
 ===================
 */
-char *CL_GSRFeaturedLabel( byte **data )
+void CL_GSRFeaturedLabel( byte **data, char *buf, int size )
 {
-	char label[ MAX_FEATLABEL_CHARS ] = { 0 }, *l = label;
-	int  i;
+	char *l = buf;
+	buf[0] = '\0';
 
 	// copy until '\0' which indicates field break
 	// or slash which indicates beginning of server list
 	while( **data && **data != '\\' && **data != '/' )
 	{
-		if( l < &label[ sizeof( label ) - 1 ] )
+		if( l < &buf[ size - 1 ] )
 			*l = **data;
-		else if( l == &label[ sizeof( label ) - 1 ] )
+		else if( l == &buf[ size - 1 ] )
 			Com_DPrintf( S_COLOR_YELLOW "Warning: "
 				"CL_GSRFeaturedLabel: overflow\n" );
 		l++, (*data)++;
 	}
-
-	if( !label[ 0 ] )
-		return NULL;
-
-	// find the label in the stored array
-	for( i = 0; i < cls.numFeaturedServerLabels; i++ )
-	{
-		l = cls.featuredServerLabels[ i ];
-		if( strcmp( label, l ) == 0 )
-			return l;
-	}
-	if( i == MAX_FEATURED_LABELS )
-	{
-		Com_DPrintf( S_COLOR_YELLOW "Warning: CL_GSRFeaturedLabel: "
-			"ran out of label space, dropping %s\n", label );
-		return NULL;
-	}
-	if( i == 0 )
-		l = cls.featuredServerLabels[ 0 ];
-	Q_strncpyz( l, label, sizeof( *cls.featuredServerLabels ) );
-	return l;
 }
 
 #define MAX_SERVERSPERPACKET	256
@@ -2381,7 +2387,7 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 	int				numservers;
 	byte*			buffptr;
 	byte*			buffend;
-	char			*label = NULL;
+	char			label[MAX_FEATLABEL_CHARS];
 	
 	Com_DPrintf("CL_ServersResponsePacket%s\n",
 		(extended) ? " (extended)" : "");
@@ -2392,7 +2398,6 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 		cls.numGlobalServerAddresses = 0;
 		cls.numMasterPackets = 0;
 		cls.receivedMasterPackets = 0;
-		cls.numFeaturedServerLabels = 0;
 	}
 
 	// parse through server response string
@@ -2434,8 +2439,7 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 				"%d of %d\n", ind, cls.numMasterPackets );
 			cls.receivedMasterPackets |= ( 1 << ( ind - 1 ) );
 
-			label = CL_GSRFeaturedLabel( &buffptr );
-			Com_DPrintf( "CL_GSRFeaturedLabel: %s\n", label );
+			CL_GSRFeaturedLabel( &buffptr, label, sizeof( label ) );
 		}
 		// now skip to the server list
 		for(; buffptr < buffend && *buffptr != '\\' && *buffptr != '/';
@@ -2496,7 +2500,7 @@ void CL_ServersResponsePacket( const netadr_t* from, msg_t *msg, qboolean extend
 		serverInfo_t *server = &cls.globalServers[count];
 
 		CL_InitServerInfo( server, &addresses[i] );
-		server->label = label;
+		Q_strncpyz( server->label, label, sizeof( server->label ) );
 		// advance to next slot
 		count++;
 	}
@@ -2778,7 +2782,7 @@ void CL_CheckUserinfo( void ) {
 	if(cvar_modifiedFlags & CVAR_USERINFO)
 	{
 		cvar_modifiedFlags &= ~CVAR_USERINFO;
-		CL_AddReliableCommand( va("userinfo \"%s\"", Cvar_InfoString( CVAR_USERINFO ) ) );
+		CL_AddReliableCommand(va("userinfo \"%s\"", Cvar_InfoString( CVAR_USERINFO ) ), qfalse);
 	}
 }
 
@@ -3424,7 +3428,6 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("globalservers", CL_GlobalServers_f);
 	Cmd_AddCommand ("rcon", CL_Rcon_f);
 	Cmd_SetCommandCompletionFunc( "rcon", CL_CompleteRcon );
-	Cmd_AddCommand ("setenv", CL_Setenv_f );
 	Cmd_AddCommand ("ping", CL_Ping_f );
 	Cmd_AddCommand ("serverstatus", CL_ServerStatus_f );
 	Cmd_AddCommand ("showip", CL_ShowIP_f );
@@ -3491,7 +3494,6 @@ void CL_Shutdown( void ) {
 	Cmd_RemoveCommand ("localservers");
 	Cmd_RemoveCommand ("globalservers");
 	Cmd_RemoveCommand ("rcon");
-	Cmd_RemoveCommand ("setenv");
 	Cmd_RemoveCommand ("ping");
 	Cmd_RemoveCommand ("serverstatus");
 	Cmd_RemoveCommand ("showip");

@@ -30,11 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 menuDef_t *menuScoreboard = NULL;
 
-int drawTeamOverlayModificationCount = -1;
-
-int   sortedTeamPlayers[ TEAM_MAXOVERLAY ];
-int   numSortedTeamPlayers;
-
 static void CG_AlignText( rectDef_t *rect, const char *text, float scale,
                           float w, float h,
                           int align, int valign,
@@ -1131,10 +1126,13 @@ static void CG_DrawMOTD( rectDef_t *rect, float text_x, float text_y,
                          int textalign, int textvalign, int textStyle )
 {
   const char  *s;
+  char parsed[ MAX_STRING_CHARS ];
 
   s = CG_ConfigString( CS_MOTD );
 
-  UI_DrawTextBlock( rect, text_x, text_y, color, scale, textalign, textvalign, textStyle, s );
+  Q_ParseNewlines( parsed, s, sizeof( parsed ) );
+
+  UI_DrawTextBlock( rect, text_x, text_y, color, scale, textalign, textvalign, textStyle, parsed );
 }
 
 static void CG_DrawHostname( rectDef_t *rect, float text_x, float text_y,
@@ -1146,7 +1144,7 @@ static void CG_DrawHostname( rectDef_t *rect, float text_x, float text_y,
 
   info = CG_ConfigString( CS_SERVERINFO );
 
-  Q_strncpyz( buffer, Info_ValueForKey( info, "sv_hostname" ), 1024 );
+  UI_EscapeEmoticons( buffer, Info_ValueForKey( info, "sv_hostname" ), sizeof( buffer ) );
   Q_CleanStr( buffer );
 
   UI_DrawTextBlock( rect, text_x, text_y, color, scale, textalign, textvalign, textStyle, buffer );
@@ -1266,88 +1264,44 @@ static void CG_DrawKiller( rectDef_t *rect, float scale, vec4_t color,
 }
 
 
+#define SPECTATORS_PIXELS_PER_SECOND 30.0f
+
+/*
+==================
+CG_DrawTeamSpectators
+==================
+*/
 static void CG_DrawTeamSpectators( rectDef_t *rect, float scale, int textvalign, vec4_t color, qhandle_t shader )
 {
   float y;
+  char  *text = cg.spectatorList;
+  float textWidth = UI_Text_Width( text, scale, 0 );
 
-  if( cg.spectatorLen )
+  CG_AlignText( rect, text, scale, 0.0f, 0.0f, ALIGN_LEFT, textvalign, NULL, &y );
+
+  if( textWidth > rect->w )
   {
-    float maxX;
+    // The text is too wide to fit, so scroll it
+    int now = trap_Milliseconds( );
+    int delta = now - cg.spectatorTime;
 
-    if( cg.spectatorWidth == -1 )
-    {
-      cg.spectatorWidth = 0;
-      cg.spectatorPaintX = rect->x + 1;
-      cg.spectatorPaintX2 = -1;
-    }
+    CG_SetClipRegion( rect->x, rect->y, rect->w, rect->h );
 
-    if( cg.spectatorOffset > cg.spectatorLen )
-    {
-      cg.spectatorOffset = 0;
-      cg.spectatorPaintX = rect->x + 1;
-      cg.spectatorPaintX2 = -1;
-    }
+    UI_Text_Paint( rect->x - cg.spectatorOffset, y, scale, color, text, 0, 0, 0 );
+    UI_Text_Paint( rect->x + textWidth - cg.spectatorOffset, y, scale, color, text, 0, 0, 0 );
 
-    if( cg.time > cg.spectatorTime )
-    {
-      cg.spectatorTime = cg.time + 10;
+    CG_ClearClipRegion( );
 
-      if( cg.spectatorPaintX <= rect->x + 2 )
-      {
-        if( cg.spectatorOffset < cg.spectatorLen )
-        {
-          // skip colour directives
-          if( Q_IsColorString( &cg.spectatorList[ cg.spectatorOffset ] ) )
-            cg.spectatorOffset += 2;
-          else
-          {
-            cg.spectatorPaintX += UI_Text_Width( &cg.spectatorList[ cg.spectatorOffset ], scale, 1 ) - 1;
-            cg.spectatorOffset++;
-          }
-        }
-        else
-        {
-          cg.spectatorOffset = 0;
+    cg.spectatorOffset += ( delta / 1000.0f ) * SPECTATORS_PIXELS_PER_SECOND;
 
-          if( cg.spectatorPaintX2 >= 0 )
-            cg.spectatorPaintX = cg.spectatorPaintX2;
-          else
-            cg.spectatorPaintX = rect->x + rect->w - 2;
+    while( cg.spectatorOffset > textWidth )
+      cg.spectatorOffset -= textWidth;
 
-          cg.spectatorPaintX2 = -1;
-        }
-      }
-      else
-      {
-        cg.spectatorPaintX--;
-
-        if( cg.spectatorPaintX2 >= 0 )
-          cg.spectatorPaintX2--;
-      }
-    }
-
-    maxX = rect->x + rect->w - 2;
-    CG_AlignText( rect, NULL, 0.0f, 0.0f, UI_Text_EmHeight( scale ),
-                  ALIGN_LEFT, textvalign, NULL, &y );
-
-    UI_Text_Paint_Limit( &maxX, cg.spectatorPaintX, y, scale, color,
-                         &cg.spectatorList[ cg.spectatorOffset ], 0, 0 );
-
-    if( cg.spectatorPaintX2 >= 0 )
-    {
-      float maxX2 = rect->x + rect->w - 2;
-      UI_Text_Paint_Limit( &maxX2, cg.spectatorPaintX2, y, scale,
-                           color, cg.spectatorList, 0, cg.spectatorOffset );
-    }
-
-    if( cg.spectatorOffset && maxX > 0 )
-    {
-      // if we have an offset ( we are skipping the first part of the string ) and we fit the string
-      if( cg.spectatorPaintX2 == -1 )
-        cg.spectatorPaintX2 = rect->x + rect->w - 2;
-    }
-    else
-      cg.spectatorPaintX2 = -1;
+    cg.spectatorTime = now;
+  }
+  else
+  {
+    UI_Text_Paint( rect->x, y, scale, color, text, 0, 0, 0 );
   }
 }
 
@@ -1658,6 +1612,123 @@ static void CG_DrawTimer( rectDef_t *rect, float text_x, float text_y,
     c[ 1 ] = '\0';
 
     UI_Text_Paint( text_x + tx + i * w, text_y + ty, scale, color, c, 0, 0, textStyle );
+  }
+}
+
+/*
+=================
+CG_DrawTeamOverlay
+=================
+*/
+
+static void CG_DrawTeamOverlay( rectDef_t *rect, float scale, vec4_t color )
+{
+  char *s;
+  int i;
+  float x = rect->x;
+  float y, dx;
+  clientInfo_t *ci, *pci;
+  vec4_t tcolor;
+  float iconSize = rect->h/8.0f;
+  float leftMargin = 4.0f;
+  float iconTopMargin = 2.0f;
+  float midSep = 2.0f;
+  float backgroundWidth = rect->w;
+  float fontScale = 0.30f;
+  int maxDisplayCount = 0;
+  int displayCount = 0;
+  weapon_t curWeapon = WP_NONE;
+
+  if( cg.predictedPlayerState.pm_type == PM_SPECTATOR )
+    return;
+
+  if( !cg_drawTeamOverlay.integer || !cg_teamOverlayMaxPlayers.integer )
+    return;
+
+  if( !cgs.teaminfoReceievedTime ) return;
+
+  pci = cgs.clientinfo + cg.snap->ps.clientNum;
+
+
+  for( i = 0; i < MAX_CLIENTS; i++ )
+  {
+    ci = cgs.clientinfo + i;
+    if( ci->infoValid && pci != ci && ci->team == pci->team)
+      maxDisplayCount++;
+  }
+
+  if( maxDisplayCount > cg_teamOverlayMaxPlayers.integer )
+    maxDisplayCount = cg_teamOverlayMaxPlayers.integer;
+
+  iconSize *= scale;
+  leftMargin *= scale;
+  iconTopMargin *= scale;
+  midSep *= scale;
+  backgroundWidth *= scale;
+  fontScale *= scale;
+
+  y = rect->y - (float) maxDisplayCount * ( iconSize / 2.0f );
+
+  tcolor[ 0 ] = 1.0f;
+  tcolor[ 1 ] = 1.0f;
+  tcolor[ 2 ] = 1.0f;
+  tcolor[ 3 ] = color[ 3 ];
+
+  for( i = 0; i < MAX_CLIENTS && displayCount < maxDisplayCount; i++ )
+  {
+    ci = cgs.clientinfo + i;
+
+    if( !ci->infoValid || pci == ci || ci->team != pci->team )
+      continue;
+
+    dx = 0.f;
+    trap_R_SetColor( color );
+    CG_DrawPic( x, y-iconSize+iconTopMargin, backgroundWidth, 
+                iconSize, cgs.media.teamOverlayShader );
+    trap_R_SetColor( tcolor );
+    if( ci->health <= 0 || !ci->curWeaponClass )
+    {
+      dx = -iconSize;
+      s = va( "%s^7", ci->name );
+    }
+    else
+    {
+      if( ci->team == TEAM_HUMANS )
+        curWeapon = ci->curWeaponClass;
+      else if( ci->team == TEAM_ALIENS )
+        curWeapon = BG_Class( ci->curWeaponClass )->startWeapon;
+
+      CG_DrawPic( x+leftMargin, y-iconSize+iconTopMargin, iconSize, iconSize, 
+                  cg_weapons[ curWeapon ].weaponIcon );
+      if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_HUMANS )
+      {
+        if( ci->upgrade != UP_NONE )
+        {
+          CG_DrawPic( x+iconSize+leftMargin, y-iconSize+iconTopMargin,
+                      iconSize, iconSize, cg_upgrades[ ci->upgrade ].upgradeIcon );
+          dx = iconSize;
+        }
+      }
+      else
+      {
+        if( curWeapon == WP_ABUILD2 || curWeapon == WP_ALEVEL1_UPG || 
+            curWeapon == WP_ALEVEL2_UPG || curWeapon == WP_ALEVEL3_UPG )
+        {
+          CG_DrawPic( x+iconSize+leftMargin, y-iconSize+iconTopMargin, 
+                      iconSize, iconSize, cgs.media.upgradeClassIconShader );
+          dx = iconSize;
+        }
+      }
+      s = va( "%s^7 [^%c%d^7] ^7%s", ci->name,
+              CG_GetColorCharForHealth( i ),
+              ci->health,
+              CG_ConfigString( CS_LOCATIONS + ci->location ) );
+    }
+    trap_R_SetColor( NULL );
+    UI_Text_Paint( x+iconSize+leftMargin+midSep+dx, y, fontScale, tcolor, s, 
+                   0, 0, ITEM_TEXTSTYLE_NORMAL );
+    y += iconSize;
+    displayCount++;
   }
 }
 
@@ -2370,6 +2441,7 @@ static void CG_DrawLocation( rectDef_t *rect, float scale, int textalign, vec4_t
   centity_t     *locent;
   float         maxX;
   float         tx = rect->x, ty = rect->y;
+
   maxX = rect->x + rect->w;
 
   locent = CG_GetPlayerLocation( );
@@ -2379,9 +2451,13 @@ static void CG_DrawLocation( rectDef_t *rect, float scale, int textalign, vec4_t
     location = CG_ConfigString( CS_LOCATIONS );
 
   if( UI_Text_Width( location, scale, 0 ) < rect->w ) 
+  {
     CG_AlignText( rect, location, scale, 0.0f, 0.0f, textalign, VALIGN_CENTER, &tx, &ty );
+    UI_Text_Paint( tx, ty, scale, color, location, 0, 0, ITEM_TEXTSTYLE_NORMAL );
+  }
+  else
+    UI_Text_Paint_Limit( &maxX, tx, ty, scale, color, location, 0, 0 );
 
-  UI_Text_Paint_Limit( &maxX, tx, ty, scale, color, location, 0, 0 );
   trap_R_SetColor( NULL );
 }
 
@@ -2413,10 +2489,20 @@ static void CG_DrawCrosshairNames( rectDef_t *rect, float scale, int textStyle )
     return;
   }
 
+  // add health from overlay info to the crosshair client name
   name = cgs.clientinfo[ cg.crosshairClientNum ].name;
+  if( cg_teamOverlayUserinfo.integer &&
+      cg.snap->ps.stats[ STAT_TEAM ] != TEAM_NONE &&
+      cgs.teaminfoReceievedTime )
+  {
+    name = va( "%s ^7[^%c%d^7]", name,
+               CG_GetColorCharForHealth( cg.crosshairClientNum ),
+               cgs.clientinfo[ cg.crosshairClientNum ].health );
+  }
+
   w = UI_Text_Width( name, scale, 0 );
-  x = rect->x + rect->w / 2;
-  UI_Text_Paint( x - w / 2, rect->y + rect->h, scale, color, name, 0, 0, textStyle );
+  x = rect->x + rect->w / 2.0f;
+  UI_Text_Paint( x - w / 2.0f, rect->y + rect->h, scale, color, name, 0, 0, textStyle );
   trap_R_SetColor( NULL );
 }
 
@@ -2615,6 +2701,9 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
     case CG_LAGOMETER:
       CG_DrawLagometer( &rect, text_x, text_y, scale, foreColor );
       break;
+    case CG_TEAMOVERLAY:
+      CG_DrawTeamOverlay( &rect, scale, foreColor );
+      break;
 
     case CG_DEMO_PLAYBACK:
       CG_DrawDemoPlayback( &rect, foreColor, shader );
@@ -2806,9 +2895,16 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
   mix_cp_t *i, *cp = NULL;
   char *s;
   qboolean replaced = qfalse;
+  char newlineParsed[ MAX_STRING_CHARS ];
+  const char *wrapped;
+  static int maxWidth = (int)( ( 2.0f / 3.0f ) * (float)SCREEN_WIDTH );
 
   if( !str )
     return;
+
+  Q_ParseNewlines( newlineParsed, str, sizeof( newlineParsed ) );
+
+  wrapped = Item_Text_Wrap( newlineParsed, 0.5f, maxWidth );
 
   // first attempt to find something to replace
   for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
@@ -2866,7 +2962,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
     return;
   }
 
-  Q_strncpyz( cp->message, str, sizeof( cp->message ) );
+  Q_strncpyz( cp->message.centerPrint, wrapped, sizeof( cp->message ) );
 
   cp->time = cg.time;
   if( !replaced || !cg_staticCenterPrints.integer )
@@ -2961,7 +3057,7 @@ static void CG_DrawCenterString( void )
       {
         char linebuffer[ 1024 ];
 
-        for( l = 0; l < 50; l++ )
+        for( l = 0; l < sizeof(linebuffer); l++ )
         {
           if( !start[ l ] || start[ l ] == '\n' )
             break;
@@ -3004,32 +3100,39 @@ static void CG_DrawCenterString( void )
 CG_DrawVote
 =================
 */
-static void CG_DrawVote( void )
+static void CG_DrawVote( team_t team )
 {
   char    *s;
   int     sec;
   vec4_t  white = { 1.0f, 1.0f, 1.0f, 1.0f };
   char    yeskey[ 32 ], nokey[ 32 ];
 
-  if( !cgs.voteTime )
+  if( !cgs.voteTime[ team ] )
     return;
 
   // play a talk beep whenever it is modified
-  if( cgs.voteModified )
+  if( cgs.voteModified[ team ] )
   {
-    cgs.voteModified = qfalse;
+    cgs.voteModified[ team ] = qfalse;
     trap_S_StartLocalSound( cgs.media.talkSound, CHAN_LOCAL_SOUND );
   }
-
-  sec = ( VOTE_TIME - ( cg.time - cgs.voteTime ) ) / 1000;
+  
+  sec = ( VOTE_TIME - ( cg.time - cgs.voteTime[ team ] ) ) / 1000;
 
   if( sec < 0 )
     sec = 0;
-  Q_strncpyz( yeskey, CG_KeyBinding( "vote yes" ), sizeof( yeskey ) ); 
-  Q_strncpyz( nokey, CG_KeyBinding( "vote no" ), sizeof( nokey ) ); 
-  s = va( "VOTE(%i): [%s]Yes:%i [%s]No:%i  \"%s\"", sec, yeskey, cgs.voteYes,
-          nokey, cgs.voteNo, cgs.voteString );
-  UI_Text_Paint( 8, 340, 0.3f, white, s, 0, 0, ITEM_TEXTSTYLE_NORMAL );
+
+  Q_strncpyz( yeskey,
+    CG_KeyBinding( va( "%svote yes", team == TEAM_NONE ? "" : "team" ) ),
+    sizeof( yeskey ) );
+  Q_strncpyz( nokey,
+    CG_KeyBinding( va( "%svote no", team == TEAM_NONE ? "" : "team" ) ),
+    sizeof( nokey ) );
+  s = va( "%sVOTE(%i): \"%s\"  [%s]Yes:%i [%s]No:%i",
+    team == TEAM_NONE ? "" : "TEAM", sec, cgs.voteString[ team ],
+    yeskey, cgs.voteYes[ team ], nokey, cgs.voteNo[ team ] );
+  UI_Text_Paint( 8, team == TEAM_NONE ? 340 : 360, 0.3f, white, s, 0, 0,
+    ITEM_TEXTSTYLE_NORMAL );
 }
 
 /*
@@ -3114,6 +3217,7 @@ static qboolean CG_DrawScoreboard( void )
   {
     if( firstTime )
     {
+      cg.spectatorTime = trap_Milliseconds();
       CG_SetScoreSelection( menuScoreboard );
       firstTime = qfalse;
     }
@@ -3247,8 +3351,8 @@ static void CG_Draw2D( void )
 
   Menu_Paint( menu, qtrue );
 
-  CG_DrawVote( );
-  CG_DrawTeamVote( );
+  CG_DrawVote( TEAM_NONE );
+  CG_DrawVote( cg.predictedPlayerState.stats[ STAT_TEAM ] );
   CG_DrawQueue( );
 
   // don't draw center string if scoreboard is up

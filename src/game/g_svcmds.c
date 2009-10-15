@@ -354,7 +354,6 @@ static void Svcmd_MapRotation_f( void )
 static void Svcmd_TeamMessage_f( void )
 {
   char   teamNum[ 2 ];
-  const char*   prefix;
   team_t team;
 
   if( trap_Argc( ) < 3 )
@@ -372,11 +371,8 @@ static void Svcmd_TeamMessage_f( void )
     return;
   }
 
-  prefix = BG_TeamName( team );
-  prefix = va( "[%c] ", toupper( *prefix ) );
-
-  G_TeamCommand( team, va( "tchat \"(console): " S_COLOR_CYAN "%s\"", ConcatArgs( 2 ) ) );
-  G_LogPrintf( "sayteam: %sconsole: " S_COLOR_CYAN "%s\n", prefix, ConcatArgs( 2 ) );
+  G_TeamCommand( team, va( "chat -1 %d \"%s\"", SAY_TEAM, ConcatArgs( 2 ) ) );
+  G_LogPrintf( "SayTeam: -1 \"console\": %s\n", ConcatArgs( 2 ) );
 }
 
 static void Svcmd_CenterPrint_f( void )
@@ -473,13 +469,13 @@ static void Svcmd_PrintQueue_f( void )
 
   trap_Argv( 1, team, sizeof( team ) );
 
-  switch( team[0] )
+  switch( G_TeamFromString( team ) )
   {
-    case 'a':
+    case TEAM_ALIENS:
       G_PrintSpawnQueue( &level.alienSpawnQueue );
       break;
 
-    case 'h':
+    case TEAM_HUMANS:
       G_PrintSpawnQueue( &level.humanSpawnQueue );
       break;
 
@@ -488,13 +484,7 @@ static void Svcmd_PrintQueue_f( void )
   }
 }
 
-static void Svcmd_Chat_f( void )
-{
-  trap_SendServerCommand( -1, va( "chat \"%s\"", ConcatArgs( 1 ) ) );
-  G_LogPrintf("chat: %s\n", ConcatArgs( 1 ) );
-}
-
-// dumb wrapper for "a" and "m" and "say"
+// dumb wrapper for "a", "m", "chat", and "say"
 static void Svcmd_MessageWrapper( void )
 {
   char cmd[ 5 ];
@@ -505,7 +495,22 @@ static void Svcmd_MessageWrapper( void )
   else if( !Q_stricmp( cmd, "m" ) )
     Cmd_PrivateMessage_f( NULL );
   else if( !Q_stricmp( cmd, "say" ) )
-    G_Say( NULL, NULL, SAY_ALL, ConcatArgs( 1 ) );
+    G_Say( NULL, SAY_ALL, ConcatArgs( 1 ) );
+  else if( !Q_stricmp( cmd, "chat" ) )
+    G_Say( NULL, SAY_RAW, ConcatArgs( 1 ) );
+}
+
+static void Svcmd_SuddenDeath_f( void )
+{
+  char secs[ 5 ];
+  int  offset;
+  trap_Argv( 1, secs, sizeof( secs ) );
+  offset = atoi( secs );
+
+  level.suddenDeathBeginTime = level.time - level.startTime + offset * 1000;
+  trap_SendServerCommand( -1,
+    va( "cp \"Sudden Death will begin in %d second%s\"",
+      offset, offset == 1 ? "" : "s" ) );
 }
 
 struct
@@ -533,9 +538,10 @@ struct
   { "cp", qtrue, Svcmd_CenterPrint_f },
   { "say_team", qtrue, Svcmd_TeamMessage_f },
   { "say", qtrue, Svcmd_MessageWrapper },
-  { "chat", qtrue, Svcmd_Chat_f },
+  { "chat", qtrue, Svcmd_MessageWrapper },
   { "m", qtrue, Svcmd_MessageWrapper },
-  { "a", qtrue, Svcmd_MessageWrapper }
+  { "a", qtrue, Svcmd_MessageWrapper },
+  { "suddendeath", qfalse, Svcmd_SuddenDeath_f }
 };
 
 /*

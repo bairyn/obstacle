@@ -387,9 +387,8 @@ typedef struct
   // used to save persistant[] values while in SPECTATOR_FOLLOW mode
   int                 credit;
 
-  // votes
-  qboolean            vote;
-  qboolean            teamVote;
+  qboolean            voted[ NUM_TEAMS ];
+  qboolean            vote[ NUM_TEAMS ];
 
   // flood protection
   int                 floodDemerits;
@@ -404,6 +403,8 @@ typedef struct
   int                 adminLevel;
   char                voice[ MAX_VOICE_NAME_LEN ];
   qboolean            useUnlagged;  
+  // keep track of other players' info for tinfo
+  char                cinfo[ MAX_CLIENTS ][ 16 ];
 
   // misc
   int                 crashTime;
@@ -614,14 +615,14 @@ typedef struct
   int               warmupModificationCount;      // for detecting if g_warmup is changed
 
   // voting state
-  char              voteString[MAX_STRING_CHARS];
-  char              voteDisplayString[MAX_STRING_CHARS];
-  int               voteTime;                     // level.time vote was called
-  float             votePassThreshold;            // need at least this percent to pass
-  int               voteExecuteTime;              // time the vote is executed
-  int               voteYes;
-  int               voteNo;
-  int               numVotingClients;             // set by CalculateRanks
+  int               voteThreshold[ NUM_TEAMS ];   // need at least this percent to pass
+  char              voteString[ NUM_TEAMS ][ MAX_STRING_CHARS ];
+  char              voteDisplayString[ NUM_TEAMS ][ MAX_STRING_CHARS ];
+  int               voteTime[ NUM_TEAMS ];        // level.time vote was called
+  int               voteExecuteTime[ NUM_TEAMS ]; // time the vote is executed
+  int               voteYes[ NUM_TEAMS ];
+  int               voteNo[ NUM_TEAMS ];
+  int               numVotingClients[ NUM_TEAMS ];// set by CalculateRanks
 
   // team voting state
   char              teamVoteString[ 2 ][ MAX_STRING_CHARS ];
@@ -651,7 +652,6 @@ typedef struct
   vec3_t            intermission_origin;          // also used for spectator spawns
   vec3_t            intermission_angle;
 
-  qboolean          locationLinked;               // target_locations get linked
   gentity_t         *locationHead;                // head of the location list
 
   int               numAlienSpawns;
@@ -689,7 +689,6 @@ typedef struct
 
   team_t            lastWin;
 
-  qboolean          suddenDeath;
   int               suddenDeathBeginTime;
   timeWarning_t     suddenDeathWarning;
   timeWarning_t     timelimitWarning;
@@ -766,7 +765,7 @@ void      G_ToggleFollow( gentity_t *ent );
 void      G_MatchOnePlayer( int *plist, int num, char *err, int len );
 int       G_ClientNumberFromString( char *s );
 int       G_ClientNumbersFromString( char *s, int *plist, int max );
-void      G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText );
+void      G_Say( gentity_t *ent, saymode_t mode, const char *chatText );
 int       G_SayArgc( void );
 qboolean  G_SayArgv( int n, char *buffer, int bufferLength );
 char      *ConcatArgs( int start );
@@ -1051,15 +1050,13 @@ void G_MapConfigs( const char *mapname );
 void CalculateRanks( void );
 void FindIntermissionPoint( void );
 void G_RunThink( gentity_t *ent );
-void QDECL G_AdminMessage( const char *prefix, const char *fmt, ... );
+void G_AdminMessage( gentity_t *ent, const char *string );
 void QDECL G_LogPrintf( const char *fmt, ... );
 void SendScoreboardMessageToAllClients( void );
 void QDECL G_Printf( const char *fmt, ... );
 void QDECL G_Error( const char *fmt, ... );
-void G_Vote( gentity_t *ent, qboolean voting );
-void G_TeamVote( gentity_t *ent, qboolean voting );
-void CheckVote( void );
-void CheckTeamVote( team_t teamnum );
+void G_Vote( gentity_t *ent, team_t team, qboolean voting );
+void CheckVote( team_t teamnum );
 void LogExit( const char *string );
 int  G_TimeTilSuddenDeath( void );
 
@@ -1092,9 +1089,9 @@ qboolean  OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
 void      G_LeaveTeam( gentity_t *self );
 void      G_ChangeTeam( gentity_t *ent, team_t newTeam );
 gentity_t *Team_GetLocation( gentity_t *ent );
-qboolean  Team_GetLocationMsg( gentity_t *ent, char *loc, int loclen );
 void      TeamplayInfoMessage( gentity_t *ent );
 void      CheckTeamStatus( void );
+void      G_UpdateTeamConfigStrings( void );
 
 //
 // g_session.c
@@ -1146,10 +1143,7 @@ extern  vmCvar_t  g_maxNameChanges;
 
 extern  vmCvar_t  g_timelimit;
 extern  vmCvar_t  g_suddenDeathTime;
-extern  vmCvar_t  g_suddenDeath;
 extern  vmCvar_t  g_friendlyFire;
-extern  vmCvar_t  g_friendlyFireHumans;
-extern  vmCvar_t  g_friendlyFireAliens;
 extern  vmCvar_t  g_friendlyBuildableFire;
 extern  vmCvar_t  g_dretchPunt;
 extern  vmCvar_t  g_password;
@@ -1212,7 +1206,6 @@ extern  vmCvar_t  g_mapRotationNodes;
 extern  vmCvar_t  g_mapRotationStack;
 extern  vmCvar_t  g_nextMap;
 extern  vmCvar_t  g_initialMapRotation;
-extern  vmCvar_t  g_chatTeamPrefix;
 extern  vmCvar_t  g_sayAreaRange;
 
 extern  vmCvar_t  g_debugVoices;
@@ -1243,6 +1236,7 @@ extern  vmCvar_t  g_dretchPunt;
 extern  vmCvar_t  g_privateMessages;
 extern  vmCvar_t  g_specChat;
 extern  vmCvar_t  g_publicAdminMessages;
+extern  vmCvar_t  g_allowTeamOverlay;
 
 extern  vmCvar_t  g_disableCPMixes;
 
@@ -1274,6 +1268,7 @@ void      trap_DropClient( int clientNum, const char *reason );
 void      trap_SendServerCommand( int clientNum, const char *text );
 void      trap_SetConfigstring( int num, const char *string );
 void      trap_GetConfigstring( int num, char *buffer, int bufferSize );
+void      trap_SetConfigstringRestrictions( int num, const clientList_t *clientList );
 void      trap_GetUserinfo( int num, char *buffer, int bufferSize );
 void      trap_SetUserinfo( int num, const char *buffer );
 void      trap_GetServerinfo( char *buffer, int bufferSize );

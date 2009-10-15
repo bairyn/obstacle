@@ -285,11 +285,37 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len )
   gclient_t *client;
   char testName[ MAX_NAME_LENGTH ] = {""};
   char name2[ MAX_NAME_LENGTH ] = {""};
+  int alphaCount = 0;
 
   G_SanitiseString( name, name2, sizeof( name2 ) );
 
   if( !strcmp( name2, "unnamedplayer" ) )
     return qtrue;
+
+  if( !strcmp( name2, "console" ) )
+  {
+    Q_strncpyz( err, "The name 'console' is not allowed.", len );
+    return qfalse;
+  }
+
+  G_DecolorString( name, testName, sizeof( testName ) );
+  if( isdigit( testName[ 0 ] ) )
+  {
+    Q_strncpyz( err, "Names cannot begin with numbers", len );
+    return qfalse;
+  }
+
+  for( i = 0; testName[ i ]; i++)
+  {
+    if( isalpha( testName[ i ] ) )
+     alphaCount++;
+  }
+
+  if( alphaCount == 0 )
+  {
+    Q_strncpyz( err, "Names must contain letters", len );
+    return qfalse;
+  }
 
   for( i = 0; i < level.maxclients; i++ )
   {
@@ -831,7 +857,6 @@ qboolean G_admin_ban_check( gentity_t *ent, char *reason, int rlen )
   addr_t ip, test;
   int mask = -1;
 
-  *reason = '\0';
   t = trap_RealTime( NULL );
   // this happens when ip = localhost
   if( !G_AddressParse( ent->client->pers.ip, &ip, NULL ) )
@@ -2431,7 +2456,7 @@ qboolean G_admin_showbans( gentity_t *ent, int skiparg )
     }
     else
     {
-      for( i = 0; filter[ i ] && isdigit( filter[ i ] ); i++ );
+      for( i = filter[ 0 ] == '-'; filter[ i ] && isdigit( filter[ i ] ); i++ );
       if( filter[ i ] )
         G_SanitiseString( filter, name_match, sizeof( name_match ) );
       else
@@ -2761,33 +2786,18 @@ qboolean G_admin_endvote( gentity_t *ent, int skiparg )
   msg = va( "print \"^3!%s: ^7%s^7 decided that everyone voted %s\n\"",
     cmd, ( ent ) ? ent->client->pers.netname : "console",
     cancel ? "No" : "Yes" );
+  if( !level.voteTime[ team ] )
+  {
+    ADMP( va( "^3!%s: ^7no vote in progress\n", cmd ) );
+    return qfalse;
+  }
+  level.voteNo[ team ] = cancel ? level.numVotingClients[ team ] : 0;
+  level.voteYes[ team ] = cancel ? 0 : level.numVotingClients[ team ];
+  CheckVote( team );
   if( team == TEAM_NONE )
-  {
-    if( !level.voteTime )
-    {
-      ADMP( va( "^3!%s: ^7no vote in progress\n", cmd ) );
-      return qfalse;
-    }
-    level.voteNo = cancel ? MAX_CLIENTS : 0;
-    level.voteYes = cancel ? 0 : MAX_CLIENTS;
-    CheckVote();
     AP( msg );
-  }
   else
-  {
-    int offset = 0;
-    if( team == TEAM_ALIENS )
-      offset++;
-    if( !level.teamVoteTime[ offset ] )
-    {
-      ADMP( va( "^3!%s: ^7no vote in progress\n", cmd ) );
-      return qfalse;
-    }
-    level.teamVoteNo[ offset ] = cancel ? MAX_CLIENTS : 0;
-    level.teamVoteYes[ offset ] = cancel ? 0 : MAX_CLIENTS;
-    CheckTeamVote( team );
     G_TeamCommand( team, msg );
-  }
   return qtrue;
 }
 

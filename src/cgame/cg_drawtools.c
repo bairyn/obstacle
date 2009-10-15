@@ -172,7 +172,34 @@ void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader 
   trap_R_DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader );
 }
 
+/*
+================
+CG_SetClipRegion
+=================
+*/
+void CG_SetClipRegion( float x, float y, float w, float h )
+{
+  vec4_t clip;
 
+  CG_AdjustFrom640( &x, &y, &w, &h );
+
+  clip[ 0 ] = x;
+  clip[ 1 ] = y;
+  clip[ 2 ] = x + w;
+  clip[ 3 ] = y + h;
+
+  trap_R_SetClipRegion( clip );
+}
+
+/*
+================
+CG_ClearClipRegion
+=================
+*/
+void CG_ClearClipRegion( void )
+{
+  trap_R_SetClipRegion( NULL );
+}
 
 /*
 ================
@@ -321,30 +348,30 @@ CG_WorldToScreen
 */
 qboolean CG_WorldToScreen( vec3_t point, float *x, float *y )
 {
-	vec3_t  trans;
-	float   xc, yc;
-	float   px, py;
-	float   z;
+  vec3_t  trans;
+  float   xc, yc;
+  float   px, py;
+  float   z;
 
-	px = tan( cg.refdef.fov_x * M_PI / 360.0 );
-	py = tan( cg.refdef.fov_y * M_PI / 360.0 );
+  px = tan( cg.refdef.fov_x * M_PI / 360.0f );
+  py = tan( cg.refdef.fov_y * M_PI / 360.0f );
 
-	VectorSubtract( point, cg.refdef.vieworg, trans );
+  VectorSubtract( point, cg.refdef.vieworg, trans );
 
-	xc = 640.0f / 2.0f;
-	yc = 480.0f / 2.0f;
+  xc = 640.0f / 2.0f;
+  yc = 480.0f / 2.0f;
 
-	z = DotProduct( trans, cg.refdef.viewaxis[ 0 ] );
-	if( z <= 0.001f )
-		return qfalse;
+  z = DotProduct( trans, cg.refdef.viewaxis[ 0 ] );
+  if( z <= 0.001f )
+    return qfalse;
 
   if( x )
-	  *x = xc - DotProduct( trans, cg.refdef.viewaxis[ 1 ] ) * xc / ( z * px );
+    *x = xc - DotProduct( trans, cg.refdef.viewaxis[ 1 ] ) * xc / ( z * px );
 
   if( y )
-	  *y = yc - DotProduct( trans, cg.refdef.viewaxis[ 2 ] ) * yc / ( z * py );
+    *y = yc - DotProduct( trans, cg.refdef.viewaxis[ 2 ] ) * yc / ( z * py );
 
-	return qtrue;
+  return qtrue;
 }
 
 /*
@@ -375,4 +402,31 @@ char *CG_KeyBinding( const char *bind )
     Q_strcat( key, sizeof( key ), bind );
   }
   return key;
+}
+
+/*
+=================
+CG_GetColorCharForHealth
+=================
+*/
+char CG_GetColorCharForHealth( int clientnum )
+{
+  char health_char = '2';
+  int healthPercent;
+  int maxHealth;
+  int curWeaponClass = cgs.clientinfo[ clientnum ].curWeaponClass;
+
+  if( cgs.clientinfo[ clientnum ].team == TEAM_ALIENS )
+    maxHealth = BG_Class( curWeaponClass )->health;
+  else
+    maxHealth = BG_Class( PCL_HUMAN )->health;
+
+  healthPercent = (int) ( 100.0f * (float) cgs.clientinfo[ clientnum ].health
+                          / (float) maxHealth );
+
+  if( healthPercent < 33 )
+    health_char = '1';
+  else if( healthPercent < 67 )
+    health_char = '3';
+  return health_char;
 }
