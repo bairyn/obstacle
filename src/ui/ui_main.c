@@ -272,19 +272,52 @@ void UI_DrawRect( float x, float y, float width, float height, float size, const
 
 /*
 ==================
+UI_ServerInfoIsValid
+
+Return false if the infostring contains nonprinting characters, 
+ or if the hostname is blank/undefined
+==================
+*/
+static qboolean UI_ServerInfoIsValid( char *info )
+{
+  char *c;
+  int  len = 0;
+
+  for( c = info; *c; c++ )
+  {
+    if( !isprint( *c ) )
+      return qfalse;
+  }
+
+  for( c = Info_ValueForKey( info, "hostname" ); *c; c++ )
+  {
+    if( isgraph( *c ) )
+      len++;
+  }
+
+  if( len )
+    return qtrue;
+  else
+    return qfalse;
+}
+
+/*
+==================
 UI_InsertServerIntoDisplayList
 ==================
 */
 static void UI_InsertServerIntoDisplayList( int num, int position )
 {
-  int i;
+  int         i;
   static char info[MAX_STRING_CHARS];
 
   if( position < 0 || position > uiInfo.serverStatus.numDisplayServers )
     return;
 
-
   trap_LAN_GetServerInfo( ui_netSource.integer, num, info, MAX_STRING_CHARS );
+
+  if( !UI_ServerInfoIsValid( info ) ) // don't list servers with invalid info
+    return;
 
   uiInfo.serverStatus.numDisplayServers++;
 
@@ -390,6 +423,15 @@ serverStatusCvar_t serverStatusCvars[] = {
 UI_SortServerStatusInfo
 ==================
 */
+
+static int UI_SortServerStatusCompare( const void *a, const void *b )
+{
+  const char **la = (const char **)a;
+  const char **lb = (const char **)b;
+
+  return strcmp( la[0], lb[0] );
+}
+
 static void UI_SortServerStatusInfo( serverStatusInfo_t *info )
 {
   int i, j, index;
@@ -422,6 +464,11 @@ static void UI_SortServerStatusInfo( serverStatusInfo_t *info )
       }
     }
   }
+
+  // sort remaining cvars
+  qsort( info->lines + index,
+         info->numLines - index, sizeof( info->lines[ 0 ] ),
+         UI_SortServerStatusCompare );
 }
 
 /*
@@ -481,6 +528,8 @@ static int UI_GetServerStatusInfo( const char *serverAddress, serverStatusInfo_t
       if( info->numLines >= MAX_SERVERSTATUS_LINES )
         break;
     }
+
+    UI_SortServerStatusInfo( info );
 
     // get the player list
     if( info->numLines < MAX_SERVERSTATUS_LINES - 3 )
@@ -555,7 +604,6 @@ static int UI_GetServerStatusInfo( const char *serverAddress, serverStatusInfo_t
       }
     }
 
-    UI_SortServerStatusInfo( info );
     return qtrue;
   }
 
@@ -958,7 +1006,8 @@ static void UI_StopServerRefresh( void )
 
   if( count - uiInfo.serverStatus.numDisplayServers > 0 )
   {
-    Com_Printf( "%d servers not listed due to packet loss or pings higher than %d\n",
+    Com_Printf( "%d servers not listed due to packet loss, invalid info,"
+                " or pings higher than %d\n",
                 count - uiInfo.serverStatus.numDisplayServers,
                 ( int ) trap_Cvar_VariableValue( "cl_maxPing" ) );
   }

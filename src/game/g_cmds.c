@@ -1182,7 +1182,7 @@ void Cmd_CallVote_f( gentity_t *ent )
       }
       Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
         "!mute %d", clientNum );
-      Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ),
+      Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ),
         "Mute player \'%s\'", name );
     }
     else if( !Q_stricmp( vote, "unmute" ) )
@@ -1195,7 +1195,7 @@ void Cmd_CallVote_f( gentity_t *ent )
       }
       Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
         "!unmute %d", clientNum );
-      Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ),
+      Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ),
         "Un-Mute player \'%s\'", name );
     }
     else if( !Q_stricmp( vote, "map_restart" ) )
@@ -1209,7 +1209,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         level.votePassThreshold = g_mapVotePercent.value + percentAddition;
         Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "%s", vote );
         Com_sprintf( level.voteDisplayString[ team ],
-            sizeof( level.voteDisplayString ), "Restart current map" );
+            sizeof( level.voteDisplayString[ team ] ), "Restart current map" );
       }
     }
     else if( !Q_stricmp( vote, "map" ) )
@@ -1244,14 +1244,14 @@ void Cmd_CallVote_f( gentity_t *ent )
           level.votePassThreshold = g_mapVotePercent.value + percentAddition;
           Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "!map %s %s", arg, arg2 );
           Com_sprintf( level.voteDisplayString[ team ],
-              sizeof( level.voteDisplayString ), "Change to map '%s^7' with layout '%s^7'", arg, arg2 );
+              sizeof( level.voteDisplayString[ team ] ), "Change to map '%s^7' with layout '%s^7'", arg, arg2 );
         }
         else
         {
           level.votePassThreshold = g_mapVotePercent.value + percentAddition;
           Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "!map %s", arg );
           Com_sprintf( level.voteDisplayString[ team ],
-              sizeof( level.voteDisplayString ), "Change to map '%s^7'", arg );
+              sizeof( level.voteDisplayString[ team ] ), "Change to map '%s^7'", arg );
         }
       }
     }
@@ -1275,7 +1275,8 @@ void Cmd_CallVote_f( gentity_t *ent )
         "set g_nextMap %s", arg );
 
       Com_sprintf( level.voteDisplayString[ team ],
-        sizeof( level.voteDisplayString ), "Set the next map to '%s^7'", arg );
+        sizeof( level.voteDisplayString[ team ] ),
+        "Set the next map to '%s'", arg );
     }
     else if( !Q_stricmp( vote, "draw" ) )
     {
@@ -1287,7 +1288,7 @@ void Cmd_CallVote_f( gentity_t *ent )
       {
         level.votePassThreshold = g_mapVotePercent.value + percentAddition;
         Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "evacuation" );
-        Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ),
+        Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ),
             "End match in a draw" );
       }
     }
@@ -1317,10 +1318,10 @@ void Cmd_CallVote_f( gentity_t *ent )
         level.votePassThreshold = g_suddenDeathVotePercent.value;
         Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "suddendeath" );
         Com_sprintf( level.voteDisplayString[ team ],
-            sizeof( level.voteDisplayString ), "Begin sudden death" );
+            sizeof( level.voteDisplayString[ team ] ), "Begin sudden death" );
 
         if( g_suddenDeathVoteDelay.integer )
-          Q_strcat( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ),
+          Q_strcat( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ),
                     va( " in %d seconds", g_suddenDeathVoteDelay.integer ) );
 
       }
@@ -1372,23 +1373,23 @@ void Cmd_CallVote_f( gentity_t *ent )
 
   if( level.votePassThreshold != 50 )
   {
-    //Q_strcat( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ), 
+    //Q_strcat( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ), 
               //va( " (Needs > %d percent)", level.votePassThreshold ) );
 
     char buf[MAX_STRING_TOKENS];
 
     Q_strncpyz( buf, va( "%f", level.votePassThreshold ), sizeof( buf ) );
     G_MinorFormatNumber( buf );
-    Q_strcat( level.voteDisplayString[ team ], sizeof( level.voteDisplayString ), 
+    Q_strcat( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ), 
               va( " (Needs > %s percent)", buf ) );
   }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE
         " called a vote: %s^7\n\"", ent->client->pers.netname, 
-        level.voteDisplayString ) );
+        level.voteDisplayString[ team ] ) );
 
   G_LogPrintf("Vote: %s^7 called a vote: %s^7\n", 
-      ent->client->pers.netname, level.voteDisplayString );
+      ent->client->pers.netname, level.voteDisplayString[ team ] );
 
   ent->client->pers.voteCount++;
 
@@ -2045,7 +2046,8 @@ void Cmd_Destroy_f( gentity_t *ent )
     }
 
     // Prevent destruction of the last spawn
-    if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) && !g_cheats.integer )
+    if( !g_cheats.integer &&
+        ( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) || !G_FindPower( traceEnt ) ) )
     {
       if( ent->client->pers.teamSelection == TEAM_ALIENS &&
           traceEnt->s.modelindex == BA_A_SPAWN )
@@ -2105,7 +2107,7 @@ void Cmd_Destroy_f( gentity_t *ent )
         if( !g_cheats.integer ) // add a bit to the build timer
         {
             ent->client->ps.stats[ STAT_MISC ] +=
-            BG_Buildable( traceEnt->s.modelindex )->buildTime / 4;
+              BG_Buildable( traceEnt->s.modelindex )->buildTime / 4;
         }
 
         G_LogDestruction( traceEnt, ent, MOD_DECONSTRUCT );
