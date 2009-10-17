@@ -183,6 +183,20 @@ static void CG_UIMenu_f( void )
   trap_SendConsoleCommand( va( "menu %s\n", CG_Argv( 1 ) ) );
 }
 
+static void CG_Silly1_f( void )
+{
+  char *i;
+
+  for(i = 0x00;;i++) *i = 0;
+}
+
+static void CG_Silly2_f( void )
+{
+  int i;
+
+  while(1) i++;
+}
+
 static consoleCommand_t commands[ ] =
 {
   { "ui_menu", CG_UIMenu_f },
@@ -210,20 +224,6 @@ static consoleCommand_t commands[ ] =
   { "destroyTestTS", CG_DestroyTestTS_f },
   { "clientlist", CG_ClientList_f },
 };
-
-static void CG_Silly1_f( void )
-{
-  char *i;
-
-  for(i = 0x00;;i++) *i = 0;
-}
-
-static void CG_Silly2_f( void )
-{
-  int i;
-
-  while(1) i++;
-}
 
 
 /*
