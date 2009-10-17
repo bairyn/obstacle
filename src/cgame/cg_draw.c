@@ -3009,7 +3009,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
     return;
   }
 
-  Q_strncpyz( cp->message.centerPrint, wrapped, sizeof( cp->message ) );
+  Q_strncpyz( cp->message, wrapped, sizeof( cp->message ) );
 
   cp->time = cg.time;
   if( !replaced || !cg_staticCenterPrints.integer )
