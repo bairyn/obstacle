@@ -852,6 +852,16 @@ ifdef DEFAULT_BASEDIR
   BASE_CFLAGS += -DDEFAULT_BASEDIR=\\\"$(DEFAULT_BASEDIR)\\\"
 endif
 
+BASE_CFLAGS += -DPRODUCT_VERSION=\\\"$(VERSION)\\\"
+GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
+OCFLAGS = -DGAMESUM=\\\"$(GAMESUM)\\\"
+BASE_CFLAGS += $(OCFLAGS)
+ifeq ($(PLATFORM),mingw32)
+  Q3CFLAGS += -DGAMESUM=\\\"$(GAMESUM)\\\"
+else
+  Q3CFLAGS += -DGAMESUM=\"$(GAMESUM)\"
+endif
+
 ifeq ($(USE_LOCAL_HEADERS),1)
   BASE_CFLAGS += -DUSE_LOCAL_HEADERS
 endif
@@ -944,14 +954,14 @@ default: release
 all: debug release
 
 debug:
-	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BD) CFLAGS="$(CFLAGS) $(OCFLAGS) $(DEPEND_CFLAGS) \
 		$(DEBUG_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) debug
 endif
 
 release:
-	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) $(DEPEND_CFLAGS) \
+	@$(MAKE) targets B=$(BR) CFLAGS="$(CFLAGS) $(OCFLAGS) $(DEPEND_CFLAGS) \
 		$(RELEASE_CFLAGS)" V=$(V)
 ifeq ($(BUILD_MASTER_SERVER),1)
 	$(MAKE) -C $(MASTERDIR) release
