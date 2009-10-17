@@ -2678,9 +2678,6 @@ void CG_OwnerDraw( float x, float y, float w, float h, float text_x,
     case CG_HUMANS_SCORE_LABEL:
       CG_DrawTeamLabel( &rect, TEAM_HUMANS, text_x, text_y, foreColor, scale, textalign, textvalign, textStyle );
       break;
-    case CG_SPEEDOMETER:
-      CG_DrawSpeed( &rect, text_x, text_y, scale, foreColor );
-      break;
 
     //loading screen
     case CG_LOAD_LEVELSHOT:
