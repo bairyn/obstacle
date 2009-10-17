@@ -1424,10 +1424,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
                             ( cg.chaseFollow && cg.snap->ps.pm_flags & PMF_FOLLOW) );
 
   // update speedometer
-  if( cg_speedometerXYZ.integer )
-    CG_AddSpeed( VectorLength( cg.snap->ps.velocity ) );
-  else
-    CG_AddSpeed( sqrt( cg.snap->ps.velocity[ 0 ] * cg.snap->ps.velocity[ 0 ] + cg.snap->ps.velocity[ 1 ] * cg.snap->ps.velocity[ 1 ] ) );
+  CG_AddSpeed( );
 
   // update speedometer
   CG_AddSpeed( );

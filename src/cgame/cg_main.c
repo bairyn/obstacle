@@ -119,7 +119,6 @@ vmCvar_t  cg_drawTimer;
 vmCvar_t  cg_drawClock;
 vmCvar_t  cg_drawPlayerTimer;
 vmCvar_t  cg_drawSpeedometer;
-vmCvar_t  cg_speedometerXYZ;
 vmCvar_t  cg_drawFPS;
 vmCvar_t  cg_drawDemoState;
 vmCvar_t  cg_drawSnapshot;
@@ -242,7 +241,6 @@ static cvarTable_t cvarTable[ ] =
   { &cg_disableWeaponSounds, "cg_disableWeaponSounds", "", CVAR_ARCHIVE  },
   { &cg_drawPlayerTimer, "cg_drawPlayerTimer", "0", CVAR_ARCHIVE  },
   { &cg_drawSpeedometer, "cg_drawSpeedometer", "0", CVAR_ARCHIVE  },
-  { &cg_speedometerXYZ, "cg_speedometerXYZ", "0", CVAR_ARCHIVE  },
 
   { &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
   { &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
