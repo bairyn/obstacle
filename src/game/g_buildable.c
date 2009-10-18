@@ -3141,7 +3141,7 @@ G_FreeMarkedBuildables
 Free up build points for a team by deconstructing marked buildables
 ===============
 */
---void G_FreeMarkedBuildables( gentity_t *deconner )
+void G_FreeMarkedBuildables( gentity_t *deconner, char *buffer, int size )
 {
   int       i;
   int bNum;

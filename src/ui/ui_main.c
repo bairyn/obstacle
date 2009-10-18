@@ -3934,6 +3934,11 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
     Com_sprintf( resolution, sizeof( resolution ), "Custom (%dx%d)", w, h );
     return resolution;
   }
+  else if( feederID == FEEDER_SCRIMWEAPONS )
+  {
+    if( index >= 0 && index < uiInfo.scrimWeaponCount )
+      return uiInfo.scrimWeaponList[ index ].text;
+  }
 
   return "";
 }
@@ -4073,6 +4078,10 @@ static void UI_FeederSelection( float feederID, int index )
     trap_Cvar_Set( "r_width", va( "%d", uiInfo.resolutions[ index ].w ) );
     trap_Cvar_Set( "r_height", va( "%d", uiInfo.resolutions[ index ].h ) );
   }
+  else if( feederID == FEEDER_SCRIMWEAPONS )
+  {
+	trap_Cvar_Set( "ui_scrimWeapon", uiInfo.scrimWeaponList[index].v.text );
+  }
 }
 
 static int UI_FeederInitialise( float feederID )
@@ -4088,11 +4097,6 @@ static int UI_FeederInitialise( float feederID )
       if( w == uiInfo.resolutions[ i ].w && h == uiInfo.resolutions[ i ].h )
         return i;
     }
-  }
-  else if( feederID == FEEDER_SCRIMWEAPONS )
-  {
-    if( index >= 0 && index < uiInfo.scrimWeaponCount )
-      return uiInfo.scrimWeaponList[ index ].text;
   }
 
   return 0;
@@ -4185,10 +4189,6 @@ void UI_ParseResolutions( void )
     uiInfo.resolutions[ uiInfo.numResolutions ].w = atoi( w );
     uiInfo.resolutions[ uiInfo.numResolutions ].h = atoi( h );
     uiInfo.numResolutions++;
-  }
-  else if( feederID == FEEDER_SCRIMWEAPONS )
-  {
-	trap_Cvar_Set("ui_scrimWeapon", uiInfo.scrimWeaponList[index].v.text);
   }
 }
 

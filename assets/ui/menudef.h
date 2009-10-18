@@ -109,7 +109,10 @@ enum
   FEEDER_TREMHUMANBUILD,       // human buildables
   FEEDER_IGNORE_LIST,          // ignored players
   FEEDER_HELP_LIST,            // help topics
-  FEEDER_RESOLUTIONS           // display resolutions
+  FEEDER_RESOLUTIONS,          // display resolutions
+  FEEDER_SCRIMTREMTEAMS,       // scrim teams
+  FEEDER_SCRIMWEAPONS,         // scrim weapons
+  FEEDER_LAYOUTS               // layouts for the selected map
 };
 
 // display flags
@@ -213,7 +216,9 @@ enum
   UI_HSELLINFOPANE,
   UI_ABUILDINFOPANE,
   UI_HBUILDINFOPANE,
-  UI_HELPINFOPANE
+  UI_HELPINFOPANE,
+
+  UI_SCRIMTEAMINFOPANE
 };
 
 #endif

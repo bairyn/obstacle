@@ -615,7 +615,8 @@ typedef struct
   int               warmupModificationCount;      // for detecting if g_warmup is changed
 
   // voting state
-  int               voteThreshold[ NUM_TEAMS ];   // need at least this percent to pass
+  //int               voteThreshold[ NUM_TEAMS ];   // need at least this percent to pass
+  float             voteThreshold[ NUM_TEAMS ];   // need at least this percent to pass
   char              voteString[ NUM_TEAMS ][ MAX_STRING_CHARS ];
   char              voteDisplayString[ NUM_TEAMS ][ MAX_STRING_CHARS ];
   int               voteTime[ NUM_TEAMS ];        // level.time vote was called
