@@ -225,15 +225,8 @@ static qboolean admin_permission( char *flags, const char *flag, qboolean *perm 
 
 g_admin_cmd_t *G_admin_cmd( const char *cmd )
 {
-  int i;
-
-  for( i = 0; i < adminNumCmds; i++ )
-  {
-    if( !Q_stricmp( g_admin_cmds[ i ].keyword, cmd ) )
-      return &g_admin_cmds[ i ];
-  }
-
-  return NULL;
+  return bsearch( cmd, g_admin_cmds, adminNumCmds, sizeof( g_admin_cmd_t ),
+    cmdcmp );
 }
 
 g_admin_level_t *G_admin_level( const int l )
@@ -689,12 +682,11 @@ static int admin_listadmins( gentity_t *ent, int start, char *search )
         colorlen += 2;
     }
 
-    ADMBP( va( "%4i %4i %*s^7 (*%s) %s\n",
+    ADMBP( va( "%4i %4i %*s^7 %s\n",
       i,
       l ? l->level : 0,
       admin_level_maxname + colorlen,
       lname,
-      vic->client->pers.guid + 24,
       vic->client->pers.netname ) );
     drawn++;
   }
@@ -710,8 +702,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search )
       if( !strstr( name, search ) )
         continue;
 
-      // verify we don't have the same guid/name pair in connected players
-      // since we don't want to draw the same player twice
+      // we don't want to draw the same player twice
       for( j = 0; j < level.maxclients; j++ )
       {
         vic = &g_entities[ j ];
@@ -737,12 +728,11 @@ static int admin_listadmins( gentity_t *ent, int start, char *search )
         colorlen += 2;
     }
 
-    ADMBP( va( "%4i %4i %*s^7 (*%s) %s\n",
+    ADMBP( va( "%4i %4i %*s^7 %s\n",
       ( i + MAX_CLIENTS ),
       a->level,
       admin_level_maxname + colorlen,
       lname,
-      a->guid + 24,
       a->name ) );
     drawn++;
   }
@@ -1153,7 +1143,8 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
           lc, ac, bc, cc ) );
   if( lc == 0 )
     admin_default_levels();
-  // reset adminLevel
+
+  // restore admin mapping
   for( i = 0; i < level.maxclients; i++ )
   {
     if( level.clients[ i ].pers.connected != CON_DISCONNECTED )
@@ -1602,10 +1593,9 @@ qboolean G_admin_ban( gentity_t *ent, int skiparg )
         G_SanitiseString( g_admin_namelog[ i ]->name[ j ], n2, sizeof( n2 ) );
         if( strstr( n2, s2 ) )
         {
-          ADMBP( va( "%s (*%s) %15s ^7'%s^7'\n",
+          ADMBP( va( "%s %15s ^7'%s^7'\n",
            ( g_admin_namelog[ i ]->slot > -1 ) ?
              va( "^3%-2d", g_admin_namelog[ i ]->slot ) : "- ",
-           g_admin_namelog[ i ]->guid + 24,
            g_admin_namelog[ i ]->ip,
            g_admin_namelog[ i ]->name[ j ] ) );
         }
@@ -2118,13 +2108,16 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
   int             i, j;
   gclient_t       *p;
   char            c, t; // color and team letter
-  char            *registeredname = NULL;
+  char            *registeredname;
   char            lname[ MAX_NAME_LENGTH ];
   char            muted, denied;
   int             colorlen;
   char            namecleaned[ MAX_NAME_LENGTH ];
   char            name2cleaned[ MAX_NAME_LENGTH ];
-  g_admin_level_t *l, *d = G_admin_level( 0 );
+  g_admin_level_t *l;
+  g_admin_level_t *d = G_admin_level( 0 );
+  qboolean        hint;
+  qboolean        canset = G_admin_permission( ent, "setlevel" );
 
   ADMBP_begin();
   ADMBP( va( "^3!listplayers: ^7%d players connected:\n",
@@ -2137,33 +2130,39 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
     if( p->pers.connected == CON_CONNECTING )
     {
       t = 'C';
-      c = COLOR_CYAN;
+      c = COLOR_YELLOW;
     }
     else
     {
       t = toupper( *( BG_TeamName( p->pers.teamSelection ) ) );
       if( p->pers.teamSelection == TEAM_HUMANS )
-        c = COLOR_BLUE;
+        c = COLOR_CYAN;
       else if( p->pers.teamSelection == TEAM_ALIENS )
         c = COLOR_RED;
       else
-        c = COLOR_YELLOW;
+        c = COLOR_WHITE;
     }
 
     muted = p->pers.muted ? 'M' : ' ';
     denied = p->pers.denyBuild ? 'B' : ' ';
 
     l = d;
-    if( ( !ent || !G_admin_permission( &g_entities[ i ], ADMF_INCOGNITO ) ) &&
-        p->pers.admin )
+    registeredname = NULL;
+    hint = canset;
+    if( p->pers.admin )
     {
-      l = G_admin_level( p->pers.admin->level );
-      G_SanitiseString( p->pers.netname,
-                        namecleaned, sizeof( namecleaned ) );
-      G_SanitiseString( p->pers.admin->name,
-                        name2cleaned, sizeof( name2cleaned ) );
-      if( Q_stricmp( namecleaned, name2cleaned ) )
-        registeredname = p->pers.admin->name;
+      if( hint )
+        hint = admin_higher( ent, &g_entities[ i ] );
+      if( hint || !G_admin_permission( &g_entities[ i ], ADMF_INCOGNITO ) )
+      {
+        l = G_admin_level( p->pers.admin->level );
+        G_SanitiseString( p->pers.netname, namecleaned,
+                          sizeof( namecleaned ) );
+        G_SanitiseString( p->pers.admin->name,
+                          name2cleaned, sizeof( name2cleaned ) );
+        if( Q_stricmp( namecleaned, name2cleaned ) )
+          registeredname = p->pers.admin->name;
+      }
     }
 
     if( l )
@@ -2175,14 +2174,14 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
         colorlen += 2;
     }
 
-    ADMBP( va( "%2i ^%c%c^7 %-2i %*s^7 (*%s) ^1%c%c^7 %s^7 %s%s%s\n",
+    ADMBP( va( "%2i ^%c%c^7 %-2i^2%c^7 %*s^7 ^1%c%c^7 %s^7 %s%s%s\n",
               i,
               c,
               t,
               l ? l->level : 0,
+              hint ? '*' : ' ',
               admin_level_maxname + colorlen,
               lname,
-              p->pers.guid + 24,
               muted,
               denied,
               p->pers.netname,
