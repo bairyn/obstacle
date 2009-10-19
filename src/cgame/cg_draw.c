@@ -2956,12 +2956,6 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
   Q_strncpyz( buf, wrapped, sizeof( buf ) );
 
-  // strip trailing newlines
-  if( buf[ 0 ] && ( buf[ strlen( buf ) - 1 ] == '\n' || buf[ strlen( buf ) - 1 ] == '\r' ) )
-  {
-    buf[ strlen( wrapped) ] = '\0';
-  }
-
   // first find something to replace
   for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
   {
@@ -2976,7 +2970,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
     if( i->active )
     {
-      if( ( Q_strncmp( buf, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  If find matches the message exactly, then it will be replaced  TODO revise comment
+      if( ( Q_strncmp( str, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  If find matches the message exactly, then it will be replaced  TODO revise comment
       {
         i->active = qfalse;
 
@@ -3018,7 +3012,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
     return;
   }
 
-  Q_strncpyz( cp->message, buf, sizeof( cp->message ) );
+  Q_strncpyz( cp->message, str, sizeof( cp->message ) );
 
   cp->time = cg.time;
   if( !replaced || !cg_staticCenterPrints.integer )
@@ -3099,7 +3093,7 @@ static void CG_DrawCenterString( void )
             buf[ k++ ] = *start++;
           buf[ k ] = 0;
 
-          hu = cg.centerPrint[ j ].lines * (UI_Text_Height( buf, 0.5, 0 ) + 6);
+          hu = cg.centerPrint[ j ].lines * ( UI_Text_Height( buf, 0.5, 0 ) + 6 );
           yl[ id ] += hu;
           yt[ id ] += hu;
           i->y     += hu;
@@ -3127,7 +3121,7 @@ static void CG_DrawCenterString( void )
         h = UI_Text_Height( linebuffer, 0.5, 0 );
         x = ( SCREEN_WIDTH - w ) / 2;
         UI_Text_Paint( x, y + h, 0.5, color, linebuffer, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE );
-        y += h + 6;
+        y += h + 3;
 
         while( *start && ( *start != '\n' ) )
           start++;

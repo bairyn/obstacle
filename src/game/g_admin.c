@@ -1205,7 +1205,7 @@ qboolean G_admin_register( gentity_t *ent, int skiparg )
   
   if( ent->client->pers.admin )
   {
-    level = ent>-client->pers.admin->level
+    level = ent->client->pers.admin->level;
   }
 
   if( level == 0 )

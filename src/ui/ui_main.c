@@ -2377,7 +2377,6 @@ void UI_SetLayouts_f( void )
   const char *layouts = UI_Argv(1);
 
   uiInfo.layoutCount = 0;
-
   while(*layouts && i < sizeof(buf) - 1)
   {
     if(*layouts == ' ')
