@@ -842,6 +842,7 @@ static qboolean PM_CheckJump( void )
   {
     BG_OC_PMJumpChange();
   }
+  else
   {
     if( pm->ps->velocity[ 2 ] < 0 )
       pm->ps->velocity[ 2 ] = 0;
