@@ -2953,6 +2953,12 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
   wrapped = Item_Text_Wrap( newlineParsed, 0.5f, maxWidth );
 
+  // strip trailing newlines
+  if( wrapped[0] && ( wrapped[ strlen( wrapped ) - 1 ] == '\n' || wrapped[ strlen( wrapped ) - 1 ] == '\r' ) )
+  {
+    wrapped[ strlen( wrapped) ] = '\0';
+  }
+
   // first find something to replace
   for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
   {
