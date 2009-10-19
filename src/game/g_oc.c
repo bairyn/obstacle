@@ -342,6 +342,7 @@ qboolean G_admin_hide_check(char *userinfo, char *reason, int rlen, int *hidden,
   return qfalse;
 }
 
+int G_admin_parse_time(const char *time);
 qboolean G_admin_hide(void *ent, int skiparg)
 {
   int seconds;
