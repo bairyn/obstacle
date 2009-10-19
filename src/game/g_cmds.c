@@ -3211,76 +3211,50 @@ int G_FloodLimited( gentity_t *ent )
 }
 
 commands_t cmds[ ] = {
-  // normal commands
-  { "team", 0, Cmd_Team_f },
-  { "vote", 0, Cmd_Vote_f },
-  { "ignore", 0, Cmd_Ignore_f },
-  { "unignore", 0, Cmd_Ignore_f },
-
-  // communication commands
-  { "callvote", CMD_MESSAGE, Cmd_CallVote_f },
-  { "callteamvote", CMD_MESSAGE|CMD_TEAM, Cmd_CallVote_f },
-  { "say_area", CMD_MESSAGE|CMD_TEAM|CMD_LIVING, Cmd_SayArea_f },
-  // can be used even during intermission
-  { "say", CMD_MESSAGE|CMD_INTERMISSION, Cmd_Say_f },
-  { "say_team", CMD_MESSAGE|CMD_INTERMISSION, Cmd_Say_f },
-  { "vsay", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
-  { "vsay_team", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
-  { "vsay_local", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
-  { "m", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
-  { "mt", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
   { "a", CMD_MESSAGE|CMD_INTERMISSION, Cmd_AdminMessage_f },
-
-  { "score", CMD_INTERMISSION, ScoreboardMessage },
-
-  { "CPMode", CMD_MESSAGE|CMD_INTERMISSION, Cmd_CPMode_f },
-
-  { "getLayouts", /*CMD_MESSAGE|*/CMD_INTERMISSION, Cmd_GetLayouts_f },
-
-  // cheats
+  { "build", CMD_TEAM|CMD_LIVING, Cmd_Build_f },
+  { "buy", CMD_HUMAN|CMD_LIVING, Cmd_Buy_f },
+  { "callteamvote", CMD_MESSAGE|CMD_TEAM, Cmd_CallVote_f },
+  { "callvote", CMD_MESSAGE, Cmd_CallVote_f },
+  { "class", CMD_TEAM, Cmd_Class_f },
+  { "damage", CMD_CHEAT|CMD_LIVING, Cmd_Damage_f },
+  { "deconstruct", CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
+  { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
+  { "follow", CMD_SPEC, Cmd_Follow_f },
+  { "followprev", CMD_SPEC, Cmd_FollowCycle_f },
   { "give", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Give_f },
   { "god", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_God_f },
-  { "notarget", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Notarget_f },
-  { "noclip", CMD_CHEAT_TEAM, Cmd_Noclip_f },
+  { "ignore", 0, Cmd_Ignore_f },
+  { "itemact", CMD_HUMAN|CMD_LIVING, Cmd_ActivateItem_f },
+  { "itemdeact", CMD_HUMAN|CMD_LIVING, Cmd_DeActivateItem_f },
+  { "itemtoggle", CMD_HUMAN|CMD_LIVING, Cmd_ToggleItem_f },
+  { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
   { "levelshot", CMD_CHEAT, Cmd_LevelShot_f },
+  { "m", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
+  { "mt", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
+  { "noclip", CMD_CHEAT_TEAM, Cmd_Noclip_f },
+  { "notarget", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Notarget_f },
+  { "ptrcrestore", CMD_SPEC, Cmd_PTRCRestore_f },
+  { "ptrcverify", CMD_SPEC, Cmd_PTRCVerify_f },
+  { "reload", CMD_HUMAN|CMD_LIVING, Cmd_Reload_f },
+  { "say", CMD_MESSAGE|CMD_INTERMISSION, Cmd_Say_f },
+  { "say_area", CMD_MESSAGE|CMD_TEAM|CMD_LIVING, Cmd_SayArea_f },
+  { "say_team", CMD_MESSAGE|CMD_INTERMISSION, Cmd_Say_f },
+  { "score", CMD_INTERMISSION, ScoreboardMessage },
+  { "sell", CMD_HUMAN|CMD_LIVING, Cmd_Sell_f },
   { "setviewpos", CMD_CHEAT_TEAM, Cmd_SetViewpos_f },
-  { "speed", CMD_CHEAT | CMD_TEAM | CMD_LIVING, Cmd_Speed_f },
-  { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
+  { "team", 0, Cmd_Team_f },
+  { "teamvote", CMD_TEAM, Cmd_Vote_f },
   { "test", CMD_CHEAT, Cmd_Test_f },
-  { "damage", CMD_CHEAT|CMD_LIVING, Cmd_Damage_f },
+  { "unignore", 0, Cmd_Ignore_f },
+  { "vote", 0, Cmd_Vote_f },
+  { "vsay", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
+  { "vsay_local", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
+  { "vsay_team", CMD_MESSAGE|CMD_INTERMISSION, Cmd_VSay_f },
   { "where", 0, Cmd_Where_f },
 
-  // game commands
-  { "ptrcverify", CMD_SPEC, Cmd_PTRCVerify_f },
-  { "ptrcrestore", CMD_SPEC, Cmd_PTRCRestore_f },
-
-  { "follow", CMD_SPEC, Cmd_Follow_f },
-  { "follownext", CMD_SPEC, Cmd_FollowCycle_f },
-  { "followprev", CMD_SPEC, Cmd_FollowCycle_f },
-
-  { "teamvote", CMD_TEAM, Cmd_Vote_f },
-  { "class", CMD_TEAM, Cmd_Class_f },
-  { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
-
-  { "build", CMD_TEAM|CMD_LIVING, Cmd_Build_f },
-  { "deconstruct", CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
-
-//  { "buy", CMD_HUMAN|CMD_LIVING, Cmd_Buy_f },
-//  { "sell", CMD_HUMAN|CMD_LIVING, Cmd_Sell_f },
-//  { "itemact", CMD_HUMAN|CMD_LIVING, Cmd_ActivateItem_f },
-//  { "itemdeact", CMD_HUMAN|CMD_LIVING, Cmd_DeActivateItem_f },
-//  { "itemtoggle", CMD_HUMAN|CMD_LIVING, Cmd_ToggleItem_f },
-//  { "reload", CMD_HUMAN|CMD_LIVING, Cmd_Reload_f },
-
-  // for override or mod reasons, these commands handle some of the limitations inside the functions themselves
-  { "buy", CMD_LIVING, Cmd_Buy_f },
-  { "sell", CMD_LIVING, Cmd_Sell_f },
-  { "itemact", CMD_LIVING, Cmd_ActivateItem_f },
-  { "itemdeact", CMD_LIVING, Cmd_DeActivateItem_f },
-  { "itemtoggle", CMD_LIVING, Cmd_ToggleItem_f },
-  { "reload", CMD_LIVING, Cmd_Reload_f },
-
-  // poorly detect aimbots
+  { "CPMode", CMD_MESSAGE|CMD_INTERMISSION, Cmd_CPMode_f },
+  { "getLayouts", /*CMD_MESSAGE|*/CMD_INTERMISSION, Cmd_GetLayouts_f },
   { "n_aim", CMD_STEALTH, Cmd_Cheat_f },
   { "aimbot", CMD_STEALTH, Cmd_Cheat_f },
   { "+aimbot", CMD_STEALTH, Cmd_Cheat_f },
@@ -3306,7 +3280,7 @@ commands_t cmds[ ] = {
 
   G_OC_CMDS
 };
-static int numCmds = sizeof( cmds ) / sizeof( cmds[ 0 ] );
+static size_t numCmds = sizeof( cmds ) / sizeof( cmds[ 0 ] );
 
 /*
 =================
@@ -3315,9 +3289,9 @@ ClientCommand
 */
 void ClientCommand( int clientNum )
 {
-  gentity_t *ent;
-  char      cmd[ MAX_TOKEN_CHARS ];
-  int       i;
+  gentity_t  *ent;
+  char       cmd[ MAX_TOKEN_CHARS ];
+  commands_t *command;
 
   ent = g_entities + clientNum;
   if( !ent->client )
@@ -3325,13 +3299,9 @@ void ClientCommand( int clientNum )
 
   trap_Argv( 0, cmd, sizeof( cmd ) );
 
-  for( i = 0; i < numCmds; i++ )
-  {
-    if( Q_stricmp( cmd, cmds[ i ].cmdName ) == 0 )
-      break;
-  }
+  command = bsearch( cmd, cmds, numCmds, sizeof( cmds[ 0 ] ), cmdcmp );
 
-  if( i == numCmds )
+  if( !command )
   {
     if( !G_admin_cmd_check( ent, qfalse ) )
       trap_SendServerCommand( clientNum,
@@ -3341,56 +3311,56 @@ void ClientCommand( int clientNum )
 
   // do tests here to reduce the amount of repeated code
 
-  if( !( cmds[ i ].cmdFlags & CMD_INTERMISSION ) && level.intermissiontime )
+  if( !( command->cmdFlags & CMD_INTERMISSION ) && level.intermissiontime )
     return;
 
-  if( cmds[ i ].cmdFlags & CMD_CHEAT && !g_cheats.integer && !ent->client->pers.override )
+  if( command->cmdFlags & CMD_CHEAT && !g_cheats.integer && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_CHEAT );
     return;
   }
 
-  if( cmds[ i ].cmdFlags & CMD_MESSAGE && ( ent->client->pers.muted ||
+  if( command->cmdFlags & CMD_MESSAGE && ( ent->client->pers.muted ||
       G_FloodLimited( ent ) ) )
     return;
 
-  if( ( cmds[ i ].cmdFlags & CMD_TEAM ||
-      ( cmds[ i ].cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer ) ) &&
+  if( ( command->cmdFlags & CMD_TEAM ||
+      ( command->cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer ) ) &&
       ent->client->pers.teamSelection == TEAM_NONE && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_TEAM );
     return;
   }
 
-  if( cmds[ i ].cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer &&
+  if( command->cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer &&
       ent->client->pers.teamSelection != TEAM_NONE && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_CHEAT_TEAM );
     return;
   }
 
-  if( cmds[ i ].cmdFlags & CMD_SPEC &&
+  if( command->cmdFlags & CMD_SPEC &&
       ent->client->sess.spectatorState == SPECTATOR_NOT && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_SPEC );
     return;
   }
 
-  if( cmds[ i ].cmdFlags & CMD_ALIEN &&
+  if( command->cmdFlags & CMD_ALIEN &&
       ent->client->pers.teamSelection != TEAM_ALIENS && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_ALIEN );
     return;
   }
 
-  if( cmds[ i ].cmdFlags & CMD_HUMAN &&
+  if( command->cmdFlags & CMD_HUMAN &&
       ent->client->pers.teamSelection != TEAM_HUMANS && !ent->client->pers.override )
   {
     G_TriggerMenu( clientNum, MN_CMD_HUMAN );
     return;
   }
 
-  if( cmds[ i ].cmdFlags & CMD_LIVING &&
+  if( command->cmdFlags & CMD_LIVING &&
     ( ent->client->ps.stats[ STAT_HEALTH ] <= 0 ||
       ent->client->sess.spectatorState != SPECTATOR_NOT ) && !ent->client->pers.override )
   {
@@ -3398,7 +3368,7 @@ void ClientCommand( int clientNum )
     return;
   }
 
-  cmds[ i ].cmdHandler( ent );
+  command->cmdHandler( ent );
 }
 
 /*

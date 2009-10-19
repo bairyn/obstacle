@@ -1319,6 +1319,12 @@ int BG_LoadEmoticons( char names[ ][ MAX_EMOTICON_NAME_LEN ], int widths[ ] );
 
 char *BG_TeamName( team_t team );
 
+typedef struct
+{
+  const char *name;
+} dummyCmd_t;
+int cmdcmp( const void *a, const void *b );
+
 #ifndef ISDEFINED_BG_STRTOLOWER__
 #define ISDEFINED_BG_STRTOLOWER__
 void BG_StrToLower( char *s );

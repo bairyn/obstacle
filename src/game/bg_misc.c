@@ -4167,3 +4167,7 @@ void BG_StrToLower( char *s )
     }
 }
 
+int cmdcmp( const void *a, const void *b )
+{
+  return Q_stricmp( (const char *)a, ((dummyCmd_t *)b)->name );
+}
