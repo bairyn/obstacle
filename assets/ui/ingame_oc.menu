@@ -284,7 +284,6 @@
       type ITEM_TYPE_BIND
       text "Hide / Unhide:"
       cvar "hide"
-      type ITEM_TYPE_BIND
       text "Teleport to Checkpoint:"
       cvar "teleportToCheckpoint"
       rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
