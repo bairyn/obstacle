@@ -3706,6 +3706,11 @@ static const char *UI_FeederItemText( float feederID, int index, int column, qha
     int actual;
     return UI_SelectedMap( index, &actual );
   }
+  else if( feederID == FEEDER_LAYOUTS )
+  {
+    if( index >= 0 && index < uiInfo.layoutCount )
+      return uiInfo.layoutList[index].text;
+  }
   else if( feederID == FEEDER_SERVERS )
   {
     if( index >= 0 && index < UI_FeederCount( feederID ) )
