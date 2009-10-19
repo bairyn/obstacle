@@ -2945,6 +2945,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
   char newlineParsed[ MAX_STRING_CHARS ];
   const char *wrapped;
   static int maxWidth = (int)( ( 2.0f / 3.0f ) * (float)SCREEN_WIDTH );
+  char buf[ MAX_STRING_CHARS ];
 
   if( !str )
     return;
@@ -2953,10 +2954,12 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
   wrapped = Item_Text_Wrap( newlineParsed, 0.5f, maxWidth );
 
+  Q_strncpyz( buf, wrapped, sizeof( buf ) );
+
   // strip trailing newlines
-  if( wrapped[0] && ( wrapped[ strlen( wrapped ) - 1 ] == '\n' || wrapped[ strlen( wrapped ) - 1 ] == '\r' ) )
+  if( buf[ 0 ] && ( buf[ strlen( buf ) - 1 ] == '\n' || buf[ strlen( buf ) - 1 ] == '\r' ) )
   {
-    wrapped[ strlen( wrapped) ] = '\0';
+    buf[ strlen( wrapped) ] = '\0';
   }
 
   // first find something to replace
@@ -2973,7 +2976,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
     if( i->active )
     {
-      if( ( Q_strncmp( wrapped, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  if find matches the message exactly, then it will be replaced
+      if( ( Q_strncmp( buf, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  If find matches the message exactly, then it will be replaced  TODO revise comment
       {
         i->active = qfalse;
 
@@ -3015,7 +3018,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
     return;
   }
 
-  Q_strncpyz( cp->message, wrapped, sizeof( cp->message ) );
+  Q_strncpyz( cp->message, buf, sizeof( cp->message ) );
 
   cp->time = cg.time;
   if( !replaced || !cg_staticCenterPrints.integer )
@@ -3096,7 +3099,7 @@ static void CG_DrawCenterString( void )
             buf[ k++ ] = *start++;
           buf[ k ] = 0;
 
-          hu = cg.centerPrint[ j ].lines * (UI_Text_Height( buf, 0.5, 0 ));
+          hu = cg.centerPrint[ j ].lines * (UI_Text_Height( buf, 0.5, 0 ) + 6);
           yl[ id ] += hu;
           yt[ id ] += hu;
           i->y     += hu;
