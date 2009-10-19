@@ -2953,12 +2953,12 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
   wrapped = Item_Text_Wrap( newlineParsed, 0.5f, maxWidth );
 
-  // first attempt to find something to replace
+  // first find something to replace
   for( i = cg.centerPrint; i < cg.centerPrint + MAX_CP; i++ )
   {
     if( i->active )
     {
-      if( i->time > i->time + cg_centertime.value )
+      if( cg.time > i->time + 1000 * cg_centertime.value )
       {
         // the cp has faded away
         i->active = qfalse;
@@ -2967,7 +2967,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
 
     if( i->active )
     {
-      if( ( Q_strncmp( str, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  if find matches the message exactly, then it will be replaced
+      if( ( Q_strncmp( wrapped, i->message, sizeof( i->message ) ) == 0 ) || ( find && strstr( i->message, find ) ) )  // can clear every CP by passing an empty string.  (The server should never pass an empty string.  If it does, NULL is passed instead).  if find matches the message exactly, then it will be replaced
       {
         i->active = qfalse;
 
@@ -2987,7 +2987,7 @@ void CG_CenterPrint( const char *str, const char *find, int y, int charWidth )
     {
       if( i->active )
       {
-        if( i->time > i->time + cg_centertime.value )
+        if( cg.time > i->time + 1000 * cg_centertime.value )
         {
           // the cp has faded away
           i->active = qfalse;
@@ -3058,7 +3058,7 @@ static void CG_DrawCenterString( void )
 
     if( i->active )
     {
-      if( i->time > i->time + cg_centertime.value )
+      if( cg.time > i->time + 1000 * cg_centertime.value )
       {
         i->active = qfalse;
           continue;
