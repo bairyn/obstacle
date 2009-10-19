@@ -137,13 +137,7 @@ static void CG_ParseWarmup( void )
   info = CG_ConfigString( CS_WARMUP );
 
   warmup = atoi( info );
-  cg.warmupCount = -1;
-
-  if( warmup == 0 && cg.warmup )
-  {
-  }
-
-  cg.warmup = warmup;
+  cg.warmupTime = warmup;
 }
 
 /*
@@ -176,7 +170,7 @@ void CG_SetConfigValues( void )
     cgs.humanStage = cgs.humanCredits = cgs.humanNextStageThreshold = 0;
 
   cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
-  cg.warmup = atoi( CG_ConfigString( CS_WARMUP ) );
+  cg.warmupTime = atoi( CG_ConfigString( CS_WARMUP ) );
 }
 
 
@@ -414,10 +408,6 @@ static void CG_MapRestart( void )
 
   // we really should clear more parts of cg here and stop sounds
 
-  // play the "fight" sound if this is a restart without warmup
-  if( cg.warmup == 0 )
-    CG_CenterPrint( "FIGHT!", 120, GIANTCHAR_WIDTH * 2 );
-
   trap_Cvar_Set( "cg_thirdPerson", "0" );
 }
 
@@ -516,6 +506,13 @@ void CG_Menu( int menu, int arg )
       longMsg   = "The maximum number of playing clients has been reached. "
                   "Please wait until slots become available.";
       shortMsg  = "No free player slots";
+      type      = DT_COMMAND;
+      break;
+
+    case MN_WARMUP:
+      longMsg   = "You must wait until the warmup time is finished "
+                  "before joining a team. ";
+      shortMsg  = "You cannot join a team during warmup.";
       type      = DT_COMMAND;
       break;
 
@@ -915,17 +912,18 @@ CG_Say
 static void CG_Say( int clientNum, saymode_t mode, const char *text )
 {
   clientInfo_t *ci;
-  char *prefix, *name;
-  char *ignore = "";
-  char *location = "";
-  char tcolor = COLOR_WHITE;
-  char color;
+  char         *name;
+  char         prefix[ 11 ] = "";
+  char         *ignore = "";
+  int          locationNum = 0;
+  char         *location = "";
+  char         tcolor = COLOR_WHITE;
+  char         color;
 
   if( clientNum >= 0 && clientNum < MAX_CLIENTS )
     ci = &cgs.clientinfo[ clientNum ];
   else
     ci = NULL;
-
 
   if( ci )
   {
@@ -939,18 +937,27 @@ static void CG_Say( int clientNum, saymode_t mode, const char *text )
     name = "console";
 
   if( ci && cg_chatTeamPrefix.integer )
-    prefix = va( "[^%c%c" S_COLOR_WHITE "] " S_COLOR_WHITE, 
+    Com_sprintf( prefix, sizeof( prefix ), "[^%c%c" S_COLOR_WHITE "] " S_COLOR_WHITE, 
                  tcolor, toupper( *( BG_TeamName( ci->team ) ) ) );
-  else
-    prefix = "";
 
-  if( mode == SAY_TEAM || mode == SAY_AREA )
-  // don't always use "unknown"
-  if( ci && ci->location > 0 && ci->location < MAX_LOCATIONS )
+  if( ci && ( mode == SAY_TEAM || mode == SAY_AREA ) )
   {
-    const char *s = CG_ConfigString( CS_LOCATIONS + ci->location );
-    if( *s )
-      location = va( " (%s" S_COLOR_WHITE ")", s );
+    if( clientNum == cg.snap->ps.clientNum )
+    {
+      centity_t     *locent;
+
+      locent = CG_GetPlayerLocation( );
+      locationNum = locent->currentState.generic1;
+    }
+    else
+      locationNum = ci->location;
+
+    if( locationNum > 0 && locationNum < MAX_LOCATIONS )
+    {
+        const char *s = CG_ConfigString( CS_LOCATIONS + locationNum );
+        if( *s )
+          location = va( " (%s" S_COLOR_WHITE ")", s );
+    }
   }
 
   if( ci && Com_ClientListContains( &cgs.ignoreList, clientNum ) )
@@ -976,7 +983,7 @@ static void CG_Say( int clientNum, saymode_t mode, const char *text )
       CG_Printf( "%s%s[PLAYER]%s: " S_COLOR_MAGENTA "%s\n", ignore, prefix, name, text );
       break;
     case SAY_AREA:
-      CG_Printf( "%s%s<%s>: " S_COLOR_BLUE "%s\n", ignore, prefix, name, text );
+      CG_Printf( "%s%s<%s>%s: " S_COLOR_BLUE "%s\n", ignore, prefix, name, location, text );
       break;
     case SAY_PRIVMSG:
     case SAY_TPRIVMSG:

@@ -275,6 +275,7 @@ typedef struct
   int               spectatorTime;    // for determining next-in-line to play
   spectatorState_t  spectatorState;
   int               spectatorClient;  // for chasecam and follow mode
+  team_t            restartTeam; //for !restart keepteams and !restart switchteams
   clientList_t      ignoreList;
 } clientSession_t;
 
@@ -315,6 +316,7 @@ typedef struct
   int                 teamChangeTime;     // level.time of last team change
   qboolean            joinedATeam;        // used to tell when a PTR code is valid
   connectionRecord_t  *connection;
+  g_admin_admin_t     *admin;
 
   int                 aliveSeconds;       // time player has been alive in seconds
 
@@ -336,7 +338,6 @@ typedef struct
   char                ip[ 40 ];
   qboolean            muted;
   qboolean            denyBuild;
-  int                 adminLevel;
   char                voice[ MAX_VOICE_NAME_LEN ];
   qboolean            useUnlagged;  
   // keep track of other players' info for tinfo
@@ -1040,6 +1041,7 @@ extern  vmCvar_t  g_cheats;
 extern  vmCvar_t  g_maxclients;     // allow this many total, including spectators
 extern  vmCvar_t  g_maxGameClients;   // allow this many active
 extern  vmCvar_t  g_restarted;
+extern  vmCvar_t  g_lockTeamsAtStart;
 extern  vmCvar_t  g_minCommandPeriod;
 extern  vmCvar_t  g_minNameChangePeriod;
 extern  vmCvar_t  g_maxNameChanges;
@@ -1125,7 +1127,6 @@ extern  vmCvar_t  g_layoutAuto;
 extern  vmCvar_t  g_emoticonsAllowedInNames;
 
 extern  vmCvar_t  g_admin;
-extern  vmCvar_t  g_adminLog;
 extern  vmCvar_t  g_adminParseSay;
 extern  vmCvar_t  g_adminTempBan;
 extern  vmCvar_t  g_adminMaxBan;
@@ -1155,7 +1156,6 @@ void      trap_Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *
 void      trap_Cvar_Update( vmCvar_t *cvar );
 void      trap_Cvar_Set( const char *var_name, const char *value );
 int       trap_Cvar_VariableIntegerValue( const char *var_name );
-float     trap_Cvar_VariableValue( const char *var_name );
 void      trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 void      trap_LocateGameData( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t,
                                playerState_t *gameClients, int sizeofGameClient );

@@ -62,6 +62,7 @@ vmCvar_t  g_synchronousClients;
 vmCvar_t  g_warmup;
 vmCvar_t  g_doWarmup;
 vmCvar_t  g_restarted;
+vmCvar_t  g_lockTeamsAtStart;
 vmCvar_t  g_logFile;
 vmCvar_t  g_logFileSync;
 vmCvar_t  g_blood;
@@ -128,7 +129,6 @@ vmCvar_t  g_layoutAuto;
 vmCvar_t  g_emoticonsAllowedInNames;
 
 vmCvar_t  g_admin;
-vmCvar_t  g_adminLog;
 vmCvar_t  g_adminParseSay;
 vmCvar_t  g_adminTempBan;
 vmCvar_t  g_adminMaxBan;
@@ -151,6 +151,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { NULL, "gamename", GAME_VERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
   { &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
+  { &g_lockTeamsAtStart, "g_lockTeamsAtStart", "0", CVAR_ROM, 0, qfalse  },
   { NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "P", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "ff", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
@@ -173,8 +174,8 @@ static cvarTable_t   gameCvarTable[ ] =
 
   { &g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE  },
 
-  { &g_warmup, "g_warmup", "20", CVAR_ARCHIVE, 0, qtrue  },
-  { &g_doWarmup, "g_doWarmup", "0", 0, 0, qtrue  },
+  { &g_warmup, "g_warmup", "10", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_doWarmup, "g_doWarmup", "0", CVAR_ARCHIVE, 0, qtrue  },
   { &g_logFile, "g_logFile", "games.log", CVAR_ARCHIVE, 0, qfalse  },
   { &g_logFileSync, "g_logFileSync", "0", CVAR_ARCHIVE, 0, qfalse  },
 
@@ -255,7 +256,6 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_emoticonsAllowedInNames, "g_emoticonsAllowedInNames", "1", CVAR_LATCH|CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_admin, "g_admin", "admin.dat", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_adminLog, "g_adminLog", "admin.log", CVAR_ARCHIVE, 0, qfalse  },
   { &g_adminParseSay, "g_adminParseSay", "1", CVAR_ARCHIVE, 0, qfalse  },
   { &g_adminTempBan, "g_adminTempBan", "2m", CVAR_ARCHIVE, 0, qfalse  },
   { &g_adminMaxBan, "g_adminMaxBan", "2w", CVAR_ARCHIVE, 0, qfalse  },
@@ -448,9 +448,6 @@ void G_RegisterCvars( void )
     if( cv->vmCvar )
       cv->modificationCount = cv->vmCvar->modificationCount;
   }
-
-  // check some things
-  level.warmupModificationCount = g_warmup.modificationCount;
 }
 
 /*
@@ -644,6 +641,13 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   G_UpdateTeamConfigStrings( );
 
   G_ResetPTRConnections( );
+  
+  if( g_lockTeamsAtStart.integer )
+  {
+    level.alienTeamLocked = qtrue;
+    level.humanTeamLocked = qtrue;
+    trap_Cvar_Set( "g_lockTeamsAtStart", "0" );
+  }
 }
 
 /*
@@ -1635,7 +1639,7 @@ void G_AdminMessage( gentity_t *ent, const char *msg )
   char    string[ 1024 ];
   int     i;
 
-  Com_sprintf( string, sizeof( string ), "chat %d %d \"" S_COLOR_MAGENTA "%s\"",
+  Com_sprintf( string, sizeof( string ), "chat %d %d \"%s\"",
     ent ? ent - g_entities : -1, 
     G_admin_permission( ent, ADMF_ADMINCHAT ) ? SAY_ADMINS : SAY_ADMINS_PUBLIC,
     msg );
@@ -1972,7 +1976,7 @@ void CheckExitRules( void )
     return;
   }
 
-  if( g_timelimit.integer && !level.warmupTime )
+  if( g_timelimit.integer )
   {
     if( level.time - level.startTime >= g_timelimit.integer * 60000 )
     {
