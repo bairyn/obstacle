@@ -1288,7 +1288,7 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   // check for local client
   if( !strcmp( client->pers.ip, "localhost" ) )
     client->pers.localClient = qtrue;
-  client->pers.adminLevel = G_admin_level( ent );
+  client->pers.admin = G_admin_admin( client->pers.guid );
 
   client->pers.connected = CON_CONNECTING;
 
@@ -1305,11 +1305,25 @@ char *ClientConnect( int clientNum, qboolean firstTime )
 
   // don't do the "xxx connected" messages if they were caried over from previous level
   if( firstTime )
-    trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " connected\n\"", client->pers.netname ) );
+    trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " connected\n\"", 
+                                    client->pers.netname ) );
+
+  if( client->pers.admin )
+    G_admin_authlog( ent );
 
   // count current clients and rank for scoreboard
   CalculateRanks( );
   G_admin_namelog_update( client, qfalse );
+  
+
+  // if this is after !restart keepteams or !restart switchteams, apply said selection
+  if ( client->sess.restartTeam != TEAM_NONE )
+  {
+    G_ChangeTeam( ent, client->sess.restartTeam );
+    client->sess.restartTeam = TEAM_NONE;
+  }
+
+  
   return NULL;
 }
 

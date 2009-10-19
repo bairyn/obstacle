@@ -142,8 +142,8 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg );
 qboolean G_admin_permission( gentity_t *ent, const char *flag );
 qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len );
 void G_admin_namelog_update( gclient_t *ent, qboolean disconnect );
-int G_admin_level( gentity_t *ent );
-int G_admin_parse_time( const char *time );
+g_admin_admin_t *G_admin_admin( const char *guid );
+void G_admin_authlog( gentity_t *ent );
 
 qboolean admin_higher( gentity_t *admin, gentity_t *victim );
 

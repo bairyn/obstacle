@@ -54,6 +54,7 @@ static void CG_Obituary( entityState_t *ent )
     CG_Error( "CG_Obituary: target out of range" );
 
   ci = &cgs.clientinfo[ target ];
+  gender = ci->gender;
 
   if( attacker < 0 || attacker >= MAX_CLIENTS )
   {
@@ -81,7 +82,12 @@ static void CG_Obituary( entityState_t *ent )
   switch( mod )
   {
     case MOD_SUICIDE:
-      message = "suicides";
+      if( gender == GENDER_FEMALE )
+        message = "killed herself";
+      else if( gender == GENDER_NEUTER )
+        message = "killed itself";
+      else
+        message = "killed himself";
       break;
     case MOD_FALLING:
       message = "fell fowl to gravity";
@@ -96,7 +102,7 @@ static void CG_Obituary( entityState_t *ent )
       message = "melted";
       break;
     case MOD_LAVA:
-      message = "does a back flip into the lava";
+      message = "did a back flip into the lava";
       break;
     case MOD_TARGET_LASER:
       message = "saw the light";
@@ -138,7 +144,6 @@ static void CG_Obituary( entityState_t *ent )
 
   if( attacker == target )
   {
-    gender = ci->gender;
     switch( mod )
     {
       case MOD_FLAMER_SPLASH:
