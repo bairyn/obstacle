@@ -1201,9 +1201,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
 
 qboolean G_admin_register( gentity_t *ent, int skiparg )
 {
-  int level = 0;
-
-  level = G_admin_level(ent);
+  int level = ent->client->pers.admin->level;
 
   if( level == 0 )
     level = 1;
