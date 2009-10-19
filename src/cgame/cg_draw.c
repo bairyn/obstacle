@@ -3096,7 +3096,7 @@ static void CG_DrawCenterString( void )
             buf[ k++ ] = *start++;
           buf[ k ] = 0;
 
-          hu = cg.centerPrint[ j ].lines * (UI_Text_Height( buf, 0.5, 0 ) + 6);
+          hu = cg.centerPrint[ j ].lines * (UI_Text_Height( buf, 0.5, 0 ));
           yl[ id ] += hu;
           yt[ id ] += hu;
           i->y     += hu;
