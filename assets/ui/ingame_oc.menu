@@ -199,9 +199,10 @@
     {
       name settings
       group ocGrp
-      type ITEM_TYPE_YESNO
-      text "Show Speedometer:"
-      cvar "cg_drawSpeedometer"
+      type ITEM_TYPE_MULTI
+      text "Draw Speed:"
+      cvar "cg_drawSpeed"
+      cvarFloatList { "No" 0  "Yes" 7  "Yes, Without Ignoring Horizontal Velocity" 3  "Text Only" 5  "Graph Only" 6  "Text Only, Without Ignoring Horizontal Velocity" 1  "Graph Only, Without Ignoring Horizontal Velocity" 2 }
       rect OCONTENT_X (CONTENT_Y+(1*ELEM_H)) CONTENT_W ELEM_H
       textalign ALIGN_RIGHT
       textvalign VALIGN_CENTER
