@@ -28,7 +28,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define VERSION "BobsOC-2.0-dev"
 //#define BUILDID MTOSTRING(GAMESUM)  // this doesn't work with QVM's
-#define BUILDID GAMESUM
+//#define BUILDID GAMESUM  // TODO FIXME: uncomment this after qvm's recognize macros
+#define BUILDID "TODO FIXME"
 
 level_locals_t  level;
 

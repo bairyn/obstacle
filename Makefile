@@ -857,8 +857,10 @@ GAMESUM=$(shell cat [Mm]akefile src/game/*.[ch] | md5sum - | cut -d' ' -f 1)
 OCFLAGS = -DGAMESUM=\\\"$(GAMESUM)\\\"
 BASE_CFLAGS += $(OCFLAGS)
 ifeq ($(PLATFORM),mingw32)
-  Q3CFLAGS += -DGAMESUM=\\\"$(GAMESUM)\\\"
+#Q3CFLAGS += -DGAMESUM=\\\"$(GAMESUM)\\\"
+  Q3CFLAGS += -DGAMESUM=\"$(GAMESUM)\"
 else
+#Q3CFLAGS += -DGAMESUM=\"$(GAMESUM)\"
   Q3CFLAGS += -DGAMESUM=\"$(GAMESUM)\"
 endif
 
