@@ -246,7 +246,7 @@ qboolean CG_ConsoleCommand( void )
   if( !sorted )
   {
     sorted = qtrue;
-    qsort( commands, sizeof( commands ) / sizeof( commands[ 0 ]), sizeof( commands[ 0 ] ), cmdcmp );
+    qsort( commands, sizeof( commands ) / sizeof( commands[ 0 ]), sizeof( commands[ 0 ] ), cmdcmpq );
   }
 
   cmd = bsearch( CG_Argv( 0 ), commands,

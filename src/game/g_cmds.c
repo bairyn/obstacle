@@ -3297,7 +3297,7 @@ void ClientCommand( int clientNum )
   if( !sorted )
   {
     sorted = qtrue;
-    qsort( cmds, numCmds, sizeof( cmds [ 0 ] ), cmdcmp );
+    qsort( cmds, numCmds, sizeof( cmds [ 0 ] ), cmdcmpq );
   }
 
   ent = g_entities + clientNum;

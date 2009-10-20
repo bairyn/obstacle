@@ -4171,3 +4171,8 @@ int cmdcmp( const void *a, const void *b )
 {
   return Q_stricmp( (const char *)a, ((dummyCmd_t *)b)->name );
 }
+
+int cmdcmpq( const void *a, const void *b )
+{
+  return Q_stricmp( ((dummyCmd_t *)a)->name, ((dummyCmd_t *)b)->name );
+}

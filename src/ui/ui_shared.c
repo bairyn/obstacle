@@ -2269,17 +2269,15 @@ static int commandComp( const void *a, const void *b )
   return Q_stricmp( (const char *)a, ((commandDef_t *)b)->name );
 }
 
+static int commandCompq( const void *a, const void *b )
+{
+  return Q_stricmp( ((commandDef_t *)a)->name, ((commandDef_t *)b)->name );
+}
+
 void Item_RunScript( itemDef_t *item, const char *s )
 {
   char script[1024], *p;
   commandDef_t *cmd;
-  static qboolean sorted = qfalse;
-
-  if( !sorted )
-  {
-    sorted = qtrue;
-    qsort( commandList, scriptCommandCount, sizeof( commandDef_t ), commandComp );
-  }
 
   memset( script, 0, sizeof( script ) );
 
@@ -2291,7 +2289,14 @@ void Item_RunScript( itemDef_t *item, const char *s )
     while( 1 )
     {
       const char *command;
+	  static qboolean sorted = qfalse;
       // expect command then arguments, ; ends command, NULL ends script
+
+	  if( !sorted )
+	  {
+		sorted = qtrue;
+		qsort( command, commandList, scriptCommandCount, sizeof( commandDef_t ), commandComp );
+	  }
 
       if( !String_Parse( &p, &command ) )
         return;

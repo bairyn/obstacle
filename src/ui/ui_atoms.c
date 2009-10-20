@@ -182,7 +182,7 @@ qboolean UI_ConsoleCommand( int realTime )
   if( !sorted )
   {
     sorted = qtrue;
-    qsort( commands, sizeof( commands ) / sizeof( commands[ 0 ] ), sizeof( commands[ 0 ] ), cmdcmp );
+    qsort( commands, sizeof( commands ) / sizeof( commands[ 0 ] ), sizeof( commands[ 0 ] ), cmdcmpq );
   }
 
   cmd = bsearch( UI_Argv( 0 ), commands,

@@ -1327,7 +1327,7 @@ static void CG_ServerCommand( void )
   if( !sorted )
   {
     sorted = qtrue;
-    qsort( svcommands, sizeof( svcommands ) / sizeof( svcommands[ 0 ]), sizeof( svcommands[ 0 ] ), cmdcmp );
+    qsort( svcommands, sizeof( svcommands ) / sizeof( svcommands[ 0 ]), sizeof( svcommands[ 0 ] ), cmdcmpq );
   }
 
   cmd = CG_Argv( 0 );

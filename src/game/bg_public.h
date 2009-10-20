@@ -1325,6 +1325,7 @@ typedef struct
   const char *name;
 } dummyCmd_t;
 int cmdcmp( const void *a, const void *b );
+int cmdcmpq( const void *a, const void *b );
 
 #ifndef ISDEFINED_BG_STRTOLOWER__
 #define ISDEFINED_BG_STRTOLOWER__
