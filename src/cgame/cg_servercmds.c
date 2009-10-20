@@ -1322,7 +1322,7 @@ static void CG_ServerCommand( void )
 {
   const char       *cmd;
   consoleCommand_t *command;
-  static int sorted = qfalse;
+  static qboolean sorted = qfalse;
 
   if( !sorted )
   {

@@ -3292,7 +3292,7 @@ void ClientCommand( int clientNum )
   gentity_t  *ent;
   char       cmd[ MAX_TOKEN_CHARS ];
   commands_t *command;
-  static int sorted = qfalse;
+  static qboolean sorted = qfalse;
 
   if( !sorted )
   {

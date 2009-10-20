@@ -177,7 +177,7 @@ UI_ConsoleCommand
 qboolean UI_ConsoleCommand( int realTime )
 {
   struct uicmd *cmd;
-  static int sorted = qfalse;
+  static qboolean sorted = qfalse;
 
   if( !sorted )
   {
