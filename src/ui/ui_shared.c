@@ -2295,7 +2295,7 @@ void Item_RunScript( itemDef_t *item, const char *s )
 	  if( !sorted )
 	  {
 		sorted = qtrue;
-		qsort( command, commandList, scriptCommandCount, sizeof( commandDef_t ), commandComp );
+		qsort( commandList, scriptCommandCount, sizeof( commandDef_t ), commandCompq );
 	  }
 
       if( !String_Parse( &p, &command ) )
