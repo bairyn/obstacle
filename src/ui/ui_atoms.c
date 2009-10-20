@@ -153,7 +153,7 @@ static void UI_MessageMode_f( void )
     Menus_ActivateByName( "say" );
 }
 
-struct
+struct uicmd
 {
   char *cmd;
   void ( *function )( void );
