@@ -2274,6 +2274,13 @@ void Item_RunScript( itemDef_t *item, const char *s )
   char script[1024], *p;
   commandDef_t *cmd;
   memset( script, 0, sizeof( script ) );
+  static int sorted = qfalse;
+
+  if( !sorted )
+  {
+    sorted = qtrue;
+    qsort( commandList, scriptCommandCount, sizeof( commandDef_t ), commandComp );
+  }
 
   if( item && s && s[0] )
   {

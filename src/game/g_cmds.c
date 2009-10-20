@@ -3292,6 +3292,13 @@ void ClientCommand( int clientNum )
   gentity_t  *ent;
   char       cmd[ MAX_TOKEN_CHARS ];
   commands_t *command;
+  static int sorted = qfalse;
+
+  if( !sorted )
+  {
+    sorted = qtrue;
+    qsort( cmds, numCmds, sizeof( cmds [ 0 ] ), cmdcmp );
+  }
 
   ent = g_entities + clientNum;
   if( !ent->client )

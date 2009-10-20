@@ -1322,6 +1322,13 @@ static void CG_ServerCommand( void )
 {
   const char       *cmd;
   consoleCommand_t *command;
+  static int sorted = qfalse;
+
+  if( !sorted )
+  {
+    sorted = qtrue;
+    qsort( svcommands, sizeof( svcommands ) / sizeof( svcommands[ 0 ]), sizeof( svcommands[ 0 ] ), cmdcmp );
+  }
 
   cmd = CG_Argv( 0 );
   command = bsearch( cmd, svcommands, sizeof( svcommands ) /

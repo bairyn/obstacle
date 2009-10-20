@@ -176,7 +176,16 @@ UI_ConsoleCommand
 */
 qboolean UI_ConsoleCommand( int realTime )
 {
-  struct uicmd *cmd = bsearch( UI_Argv( 0 ), commands,
+  struct uicmd *cmd;
+  static int sorted = qfalse;
+
+  if( !sorted )
+  {
+    sorted = qtrue;
+    qsort( commands, sizeof( commands ) / sizeof( commands[ 0 ] ), sizeof( commands[ 0 ] ), cmdcmp );
+  }
+
+  cmd = bsearch( UI_Argv( 0 ), commands,
     sizeof( commands ) / sizeof( commands[ 0 ] ), sizeof( commands[ 0 ] ),
     cmdcmp );
 

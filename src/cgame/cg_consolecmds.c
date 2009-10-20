@@ -241,6 +241,13 @@ Cmd_Argc() / Cmd_Argv()
 qboolean CG_ConsoleCommand( void )
 {
   consoleCommand_t *cmd;
+  static int sorted = qfalse;
+
+  if( !sorted )
+  {
+    sorted = qtrue;
+    qsort( commands, sizeof( commands ) / sizeof( commands[ 0 ]), sizeof( commands[ 0 ] ), cmdcmp );
+  }
 
   cmd = bsearch( CG_Argv( 0 ), commands,
     sizeof( commands ) / sizeof( commands[ 0 ]), sizeof( commands[ 0 ] ),
