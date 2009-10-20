@@ -247,6 +247,14 @@ static qboolean admin_permission( char *flags, const char *flag, qboolean *perm 
 
 g_admin_cmd_t *G_admin_cmd( const char *cmd )
 {
+  static qboolean sorted = qfalse;
+
+  if( !sorted )
+  {
+    sorted = qtrue;
+    qsort( cmd, g_admin_cmds, adminNumCmds, sizeof( g_admin_cmd_t ), cmdcmpq );
+  }
+
   return bsearch( cmd, g_admin_cmds, adminNumCmds, sizeof( g_admin_cmd_t ),
     cmdcmp );
 }
