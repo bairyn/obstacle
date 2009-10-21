@@ -252,7 +252,7 @@ g_admin_cmd_t *G_admin_cmd( const char *cmd )
   if( !sorted )
   {
     sorted = qtrue;
-    qsort( cmd, g_admin_cmds, adminNumCmds, sizeof( g_admin_cmd_t ), cmdcmpq );
+    qsort( g_admin_cmds, adminNumCmds, sizeof( g_admin_cmd_t ), cmdcmpq );
   }
 
   return bsearch( cmd, g_admin_cmds, adminNumCmds, sizeof( g_admin_cmd_t ),
