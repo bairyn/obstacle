@@ -942,14 +942,16 @@ static void CG_Say( int clientNum, saymode_t mode, const char *text )
     Com_sprintf( prefix, sizeof( prefix ), "[^%c%c" S_COLOR_WHITE "] " S_COLOR_WHITE, 
                  tcolor, toupper( *( BG_TeamName( ci->team ) ) ) );
 
-  if( ci && ( mode == SAY_TEAM || mode == SAY_AREA ) )
+  if( ci && ( mode == SAY_TEAM || mode == SAY_AREA ) && 
+      cg.snap->ps.pm_type != PM_INTERMISSION )
   {
     if( clientNum == cg.snap->ps.clientNum )
     {
       centity_t     *locent;
 
       locent = CG_GetPlayerLocation( );
-      locationNum = locent->currentState.generic1;
+      if( locent )
+        locationNum = locent->currentState.generic1;
     }
     else
       locationNum = ci->location;

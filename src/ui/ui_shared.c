@@ -2192,9 +2192,10 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
     s++;
     count++;
 
-    if( maxX )
-      *maxX = x;
   }
+
+  if( maxX )
+      *maxX = x;
 
   // paint cursor
   if( cursorPos >= 0 )
@@ -3462,21 +3463,10 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
 
           if( newItem && ( newItem->type == ITEM_TYPE_EDITFIELD || newItem->type == ITEM_TYPE_NUMERICFIELD ) )
             g_editItem = newItem;
-          else
-          {
-            releaseFocus = qtrue;
-            goto exit;
-          }
-
           break;
 
         case K_ENTER:
         case K_KP_ENTER:
-        case K_ESCAPE:
-        case K_MOUSE1:
-        case K_MOUSE2:
-        case K_MOUSE3:
-        case K_MOUSE4:
           releaseFocus = qtrue;
           goto exit;
 
@@ -4030,7 +4020,6 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
     else if( key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3 )
     {
       g_editingField = qfalse;
-      Item_RunScript( g_editItem, g_editItem->onTextEntry );
       g_editItem = NULL;
       Display_MouseMove( NULL, DC->cursorx, DC->cursory );
     }
