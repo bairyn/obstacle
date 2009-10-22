@@ -127,7 +127,7 @@ itemDef
 itemDef
 {
   name "location"
-  rect (STAT_X-55) ((4*BORDER)+(5*STAT_H)) (STAT_W+60) STAT_H
+  rect (STAT_X-75) ((4*BORDER)+(4*STAT_H)) (STAT_W+75) STAT_H
   aspectBias ALIGN_RIGHT
   visible MENU_TRUE
   decoration
@@ -163,19 +163,6 @@ itemDef
   textscale 0.3
   ownerdraw CG_DEMO_PLAYBACK
   background "ui/assets/forwardarrow.tga"
-}
-
-//TEAM OVERLAY
-itemDef
-{
-  name "teamoverlay"
-  rect BORDER 120 160 128
-  style WINDOW_STYLE_EMPTY
-  visible MENU_TRUE
-  decoration
-  forecolor COMMON_HUD_R COMMON_HUD_G COMMON_HUD_B 0.75
-  textscale 1.0
-  ownerdraw CG_TEAMOVERLAY
 }
 
 //SNAPSHOT

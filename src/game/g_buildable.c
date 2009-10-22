@@ -1937,7 +1937,7 @@ void HRepeater_Think( gentity_t *self )
       if( ent->s.eType != ET_BUILDABLE )
         continue;
 
-      if( ent->s.modelindex == BA_H_REACTOR && ent->spawned )
+      if( ent->s.modelindex == BA_H_REACTOR && ent->spawned && ent->health > 0 )
         reactor = qtrue;
     }
   }
@@ -3422,7 +3422,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
     //check that there is a parent reactor when building a repeater
     if( buildable == BA_H_REPEATER )
     {
-      tempent = G_FindBuildable( BA_H_REACTOR );
+      tempent = G_Reactor( );
 
       if( tempent == NULL ) // No reactor
         reason = IBE_RPTNOREAC;   
@@ -3725,9 +3725,9 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
       va( "print \"%s ^2built^7 by %s%s%s\n\"",
         BG_Buildable( built->s.modelindex )->humanName,
         builder->client->pers.netname,
-        ( removed[0] ) ? "^7, replacing " : "",
+        ( removed[0] ) ? "^7, ^3replacing^7 " : "",
         removed ) );
-    G_LogPrintf( "Build: %d %d %d: %s^7 is building %s\n",
+    G_LogPrintf( "Build: %d %d %d: %s^7 is ^2building^7 %s\n",
       builder->client->ps.clientNum,
       built->s.modelindex,
       level.numBuildablesForRemoval,

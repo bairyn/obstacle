@@ -1219,11 +1219,11 @@ void Cmd_CallVote_f( gentity_t *ent )
               va( "print \"callvote: Sudden Death has already begun\n\"") );
         return;
       }
-      if( g_suddenDeathTime.integer > 0 &&
+      if( level.suddenDeathBeginTime > 0 &&
           G_TimeTilSuddenDeath() <= g_suddenDeathVoteDelay.integer * 1000 )
       {
         trap_SendServerCommand( ent - g_entities, 
-              va( "print \"callvote: Sudden Death is already immenent\n\"") );
+              va( "print \"callvote: Sudden Death is imminent\n\"") );
         return;
       }
       level.voteThreshold[ team ] = g_suddenDeathVotePercent.integer;
@@ -1460,6 +1460,8 @@ void Cmd_Class_f( gentity_t *ent )
   vec3_t    mins, maxs;
   int       num;
   gentity_t *other;
+  int       oldBoostTime = -1;
+  vec3_t    oldVel;
 
   clientNum = ent->client - level.clients;
   trap_Argv( 1, s, sizeof( s ) );
@@ -1593,7 +1595,6 @@ void Cmd_Class_f( gentity_t *ent )
       {
         if( cost >= 0 )
         {
-          int oldBoostTime = -1;
 
           ent->client->pers.evolveHealthFraction = (float)ent->client->ps.stats[ STAT_HEALTH ] /
             (float)BG_Class( currentClass )->health;
@@ -1608,12 +1609,14 @@ void Cmd_Class_f( gentity_t *ent )
           ent->client->pers.classSelection = newClass;
           ClientUserinfoChanged( clientNum );
           VectorCopy( infestOrigin, ent->s.pos.trBase );
+          VectorCopy( ent->client->ps.velocity, oldVel );
 
           if( ent->client->ps.stats[ STAT_STATE ] & SS_BOOSTED )
             oldBoostTime = ent->client->boostedTime;
 
           ClientSpawn( ent, ent, ent->s.pos.trBase, ent->s.apos.trBase );
 
+          VectorCopy( oldVel, ent->client->ps.velocity );
           if( oldBoostTime > 0 )
           {
             ent->client->boostedTime = oldBoostTime;
@@ -1679,7 +1682,7 @@ void Cmd_Destroy_f( gentity_t *ent )
     }
 
     // Cancel deconstruction
-    if( g_markDeconstruct.integer && traceEnt->deconstruct )
+    if( deconstruct && g_markDeconstruct.integer && traceEnt->deconstruct )
     {
       traceEnt->deconstruct = qfalse;
       return;
