@@ -291,7 +291,7 @@ void ScoreboardMessage( gentity_t *ent )
     stringlength += j;
   }
 
-  trap_SendServerCommand( ent-g_entities, va( "scores %i %i %i%s", i,
+  trap_SendServerCommand( ent-g_entities, va( "scores %i %i%s",
     level.alienKills, level.humanKills, string ) );
 }
 
@@ -1042,6 +1042,9 @@ void Cmd_CallVote_f( gentity_t *ent )
       va( "print \"%s: a vote is already in progress\n\"", cmd ) );
     return;
   }
+
+  if( level.voteExecuteTime[ team ] )
+    G_ExecuteVote( team );
 
   level.voteThreshold[ team ] = 50;
 
@@ -2900,6 +2903,7 @@ commands_t cmds[ ] = {
   { "deconstruct", CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
   { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
   { "follow", CMD_SPEC, Cmd_Follow_f },
+  { "follownext", CMD_SPEC, Cmd_FollowCycle_f },
   { "followprev", CMD_SPEC, Cmd_FollowCycle_f },
   { "give", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Give_f },
   { "god", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_God_f },
