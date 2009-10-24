@@ -651,7 +651,7 @@ extern int oc_gameMode;
 		} \
 	} while(0)
 
-	#define G_CG_OC_NoTurretDroop() ((BG_OC_OCMode()) ? (1) : (0))
+	#define G_OC_NoTurretDroop() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define G_OC_SelectAlienSpawnPoint() G_OC_SelectHumanSpawnPoint()
 
