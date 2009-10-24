@@ -423,13 +423,22 @@ static void CG_DrawPlayerStaminaBolt( rectDef_t *rect, vec4_t backColor,
   float         stamina = cg.snap->ps.stats[ STAT_STAMINA ];
   vec4_t        color;
 
-  if( stamina < 0 )
-    Vector4Copy( backColor, color );
-  else if( cg.predictedPlayerState.stats[ STAT_STATE ] & SS_SPEEDBOOST )
-    Vector4Lerp( ( sin( cg.time / 150.0f ) + 1 ) / 2,
-                 backColor, foreColor, color );
+  if( cg.predictedPlayerState.stats[ STAT_STATE ] & SS_SPEEDBOOST )
+  {
+    if( stamina >= 0 )
+      Vector4Lerp( ( sin( cg.time / 150.0f ) + 1 ) / 2,
+                   backColor, foreColor, color );
+    else
+      Vector4Lerp( ( sin( cg.time / 2000.0f ) + 1 ) / 2,
+                   backColor, foreColor, color );
+  }
   else
-    Vector4Copy( foreColor, color );
+  {
+    if( stamina < 0 )
+      Vector4Copy( backColor, color );
+    else
+      Vector4Copy( foreColor, color );
+  }
 
   trap_R_SetColor( color );
   CG_DrawPic( rect->x, rect->y, rect->w, rect->h, shader );
@@ -1419,10 +1428,10 @@ static void CG_DrawStageReport( rectDef_t *rect, float text_x, float text_y,
     if( cgs.alienNextStageThreshold < 0 )
       Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d", cgs.alienStage + 1 );
     else if( kills == 1 )
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, 1 kill for next stage",
+      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, 1 frag for next stage",
           cgs.alienStage + 1 );
     else
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d kills for next stage",
+      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d frags for next stage",
           cgs.alienStage + 1, kills );
   }
   else if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
@@ -2258,8 +2267,15 @@ static void CG_DrawSpeedText( rectDef_t *rect, float text_x, float text_y,
 
   VectorCopy( foreColor, color );
   color[ 3 ] = 1;
-
-  if( oldestSpeedSample == 0 )
+  if( cg.predictedPlayerState.clientNum == cg.clientNum )
+  {
+    vec3_t vel;
+    VectorCopy( cg.predictedPlayerState.velocity, vel );
+    if( cg_drawSpeed.integer & SPEEDOMETER_IGNORE_Z )
+      vel[ 2 ] = 0;
+    val = VectorLength( vel );
+  }
+  else if( oldestSpeedSample == 0 )
     val = speedSamples[ SPEEDOMETER_NUM_SAMPLES - 1 ];
   else
     val = speedSamples[ oldestSpeedSample - 1 ];
@@ -2511,11 +2527,15 @@ static void CG_DrawLocation( rectDef_t *rect, float scale, int textalign, vec4_t
 
   // need to skip horiz. align if it's too long, but valign must be run either way
   if( UI_Text_Width( location, scale, 0 ) < rect->w )
+  {
     CG_AlignText( rect, location, scale, 0.0f, 0.0f, textalign, VALIGN_CENTER, &tx, &ty );
+    UI_Text_Paint( tx, ty, scale, color, location, 0, 0, ITEM_TEXTSTYLE_NORMAL );
+  }
   else
+  {
     CG_AlignText( rect, location, scale, 0.0f, 0.0f, ALIGN_NONE, VALIGN_CENTER, &tx, &ty );
-
-  UI_Text_Paint_Limit( &maxX, tx, ty, scale, color, location, 0, 0 );
+    UI_Text_Paint_Limit( &maxX, tx, ty, scale, color, location, 0, 0 );
+  }
 
   trap_R_SetColor( NULL );
 }

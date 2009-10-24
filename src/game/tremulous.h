@@ -107,8 +107,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL3_POUNCE_RANGE         TREMULOUS_VALUE(54.0f, 72.0f)
 #define LEVEL3_POUNCE_UPG_RANGE     TREMULOUS_VALUE(LEVEL3_POUNCE_RANGE + 3.0f, LEVEL3_POUNCE_RANGE + 0.0f)
 #define LEVEL3_POUNCE_WIDTH         TREMULOUS_VALUE(14.0f, 16.0f)
-#define LEVEL3_POUNCE_TIME          TREMULOUS_VALUE(900, 700)      // msec for full Dragoon pounce
-#define LEVEL3_POUNCE_TIME_UPG      TREMULOUS_VALUE(900, 700)      // msec for full Adv. Dragoon pounce
+#define LEVEL3_POUNCE_TIME          TREMULOUS_VALUE(800, 700)      // msec for full Dragoon pounce
+#define LEVEL3_POUNCE_TIME_UPG      TREMULOUS_VALUE(800, 700)      // msec for full Adv. Dragoon pounce
 #define LEVEL3_POUNCE_TIME_MIN      200      // msec before which pounce cancels  
 #define LEVEL3_POUNCE_REPEAT        400      // msec before a new pounce starts
 #define LEVEL3_POUNCE_SPEED_MOD     0.75f    // walking speed modifier for pounce charging
