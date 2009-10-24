@@ -1285,6 +1285,8 @@ Think function for Alien Hive
 */
 void AHive_Think( gentity_t *self )
 {
+  int       start;
+
   AGeneric_Think( self );
 
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink + G_OC_AlienBuildableOptimizedThinkTime();
@@ -1304,11 +1306,12 @@ void AHive_Think( gentity_t *self )
 
     VectorAdd( self->s.origin, range, maxs );
     VectorSubtract( self->s.origin, range, mins );
+
     num = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
-    
-    for( i = 0; i < num; i++ )
+    start = rand( ) % num;
+    for( i = start; i < num + start; i++ )
     {
-      if( AHive_CheckTarget( self, g_entities + entityList[ i ] ) )
+      if( AHive_CheckTarget( self, g_entities + entityList[ i % num ] ) )
         return;
     }
   }
@@ -1697,10 +1700,14 @@ Used by ATrapper_Think to locate enemy gentities
 void ATrapper_FindEnemy( gentity_t *ent, int range )
 {
   gentity_t *target;
+  int       i;
+  int       start;
 
   //iterate through entities
-  for( target = g_entities; target < &g_entities[ level.num_entities ]; target++ )
+  start = rand( ) % level.num_entities;
+  for( i = start; i < level.num_entities + start; i++ )
   {
+    target = g_entities + ( i % level.num_entities );
     //if target is not valid keep searching
     if( !ATrapper_CheckTarget( ent, target, range ) )
       continue;
@@ -1782,6 +1789,27 @@ static void G_SuicideIfNoPower( gentity_t *self )
   else
   {
     self->count = -1;
+  }
+}
+
+/*
+================
+G_IdlePowerState
+
+Set buildable idle animation to match power state
+================
+*/
+static void G_IdlePowerState( gentity_t *self )
+{
+  if( self->powered )
+  {
+    if( self->s.torsoAnim == BANIM_IDLE3 )
+      G_SetIdleBuildableAnim( self, BG_Buildable( self->s.modelindex )->idleAnim );
+  }
+  else
+  {
+    if( self->s.torsoAnim != BANIM_IDLE3 )
+      G_SetIdleBuildableAnim( self, BANIM_IDLE3 );
   }
 }
 
@@ -1998,6 +2026,8 @@ void HRepeater_Think( gentity_t *self )
     // if the repeater is inside of another power zone then disappear
     G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_SUICIDE );
   }
+
+  G_IdlePowerState( self );
 
   // Initialise the zone once the repeater has spawned
   if( self->spawned && ( !self->usesBuildPointZone || !level.buildPointZones[ self->buildPointZone ].active ) )
@@ -2283,16 +2313,18 @@ void HMedistat_Think( gentity_t *self )
 
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
 
+  self->powered = G_FindPower( self );
+  G_OC_DefaultHumanPowered();
+  G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
+
   G_SuicideIfNoPower( self );
+  G_IdlePowerState( self );
 
   //clear target's healing flag
   if( self->enemy && self->enemy->client )
     self->enemy->client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_ACTIVE;
 
   //make sure we have power
-  self->powered = G_FindPower( self );
-  G_OC_DefaultHumanPowered();
-  G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
   if( !self->powered )
   {
     if( self->active )
@@ -2522,6 +2554,7 @@ void HMGTurret_FindEnemy( gentity_t *self )
   vec3_t    mins, maxs;
   int       i, num;
   gentity_t *target;
+  int       start;
 
   if( self->enemy )
     self->enemy->targeted = NULL;
@@ -2533,9 +2566,10 @@ void HMGTurret_FindEnemy( gentity_t *self )
   VectorAdd( self->s.origin, range, maxs );
   VectorSubtract( self->s.origin, range, mins );
   num = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
-  for( i = 0; i < num; i++ )
+  start = rand( ) % num;
+  for( i = start; i < num + start ; i++ )
   {
-    target = &g_entities[ entityList[ i ] ];
+    target = &g_entities[ entityList[ i % num ] ];
     if( !HMGTurret_CheckTarget( self, target, qtrue ) )
       continue;
     if( target->flags & FL_NOTARGET )
@@ -2547,6 +2581,62 @@ void HMGTurret_FindEnemy( gentity_t *self )
   }
 }
 
+/*
+================
+HMGTurret_State
+
+Raise or lower MG turret towards desired state
+================
+*/
+enum {
+  MGT_STATE_INACTIVE,
+  MGT_STATE_DROP,
+  MGT_STATE_RISE,
+  MGT_STATE_ACTIVE
+};
+
+static qboolean HMGTurret_State( gentity_t *self, int state )
+{
+  float angle;
+
+  if( self->waterlevel == state )
+    return qfalse;
+
+  angle = AngleNormalize180( self->s.angles2[ PITCH ] );
+
+  if( state == MGT_STATE_INACTIVE )
+  {
+    if( angle < MGTURRET_VERTICALCAP )
+    {
+      if( self->waterlevel != MGT_STATE_DROP )
+      {
+        self->speed = 0.25f;
+        self->waterlevel = MGT_STATE_DROP;
+      }
+      else
+        self->speed *= 1.25f;
+
+      self->s.angles2[ PITCH ] = 
+        MIN( MGTURRET_VERTICALCAP, angle + self->speed );
+      return qtrue;
+    }
+    else
+      self->waterlevel = MGT_STATE_INACTIVE;
+  }
+  else if( state == MGT_STATE_ACTIVE )
+  {
+    if( !self->enemy && angle > 0.0f )
+    {
+      self->waterlevel = MGT_STATE_RISE;
+      self->s.angles2[ PITCH ] =
+        MAX( 0.0f, angle - MGTURRET_ANGULARSPEED * 0.5f );
+    }
+    else
+      self->waterlevel = MGT_STATE_ACTIVE;
+  }
+
+  return qfalse;
+}
 
 /*
 ================
@@ -2563,13 +2653,20 @@ void HMGTurret_Think( gentity_t *self )
   // Turn off client side muzzle flashes
   self->s.eFlags &= ~EF_FIRING;
 
-  G_SuicideIfNoPower( self );
-
-  // If not powered or spawned don't do anything
   self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
+
+  G_SuicideIfNoPower( self );
+  G_IdlePowerState( self );
+
+  // If not powered or spawned don't do anything
   if( !self->powered )
   {
+    // if power loss drop turret
+    if( self->spawned &&
+        HMGTurret_State( self, MGT_STATE_INACTIVE ) && !G_OC_NoTurretDroop() )
+      return;
+
     self->nextthink = level.time + POWER_REFRESH_TIME;
     return;
   }
@@ -2583,6 +2680,8 @@ void HMGTurret_Think( gentity_t *self )
     self->turretSpinupTime = -1;
     HMGTurret_FindEnemy( self );
   }
+  // if newly powered raise turret
+  HMGTurret_State( self, MGT_STATE_ACTIVE );
   if( !self->enemy )
     return;
 
@@ -2638,6 +2737,7 @@ void HTeslaGen_Think( gentity_t *self )
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink + G_OC_HumanBuildableOptimizedThinkTime();
 
   G_SuicideIfNoPower( self );
+  G_IdlePowerState( self );
 
   //if not powered don't do anything and check again for power next think
   self->powered = G_FindPower( self );
@@ -3831,6 +3931,7 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
   VectorCopy( angles, built->s.angles );
   built->s.angles[ PITCH ] = 0.0f;
   built->s.angles2[ YAW ] = angles[ YAW ];
+  built->s.angles2[ PITCH ] = MGTURRET_VERTICALCAP;
   built->s.pos.trType = BG_Buildable( buildable )->traj;
   built->s.pos.trTime = level.time;
   built->physicsBounce = BG_Buildable( buildable )->bounce;
