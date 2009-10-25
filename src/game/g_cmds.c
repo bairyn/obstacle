@@ -758,6 +758,27 @@ void G_Say( gentity_t *ent, saymode_t mode, const char *chatText )
   }
 }
 
+/*
+==================
+Cmd_ActionMessage_f
+
+This is just a wrapper for convenience when speaking from the console
+==================
+*/
+static void Cmd_ActionMessage_f( gentity_t *ent )
+{
+  char text[ MAX_SAY_TEXT ];
+
+  Com_sprintf( text, sizeof( text ), "/me %s", ConcatArgs( 1 ) );
+
+  G_Say( ent, SAY_ALL, text );
+}
+
+/*
+==================
+Cmd_SayArea_f
+==================
+*/
 static void Cmd_SayArea_f( gentity_t *ent )
 {
   int    entityList[ MAX_GENTITIES ];
@@ -1650,6 +1671,7 @@ void Cmd_Destroy_f( gentity_t *ent )
   gentity_t   *traceEnt;
   char        cmd[ 12 ];
   qboolean    deconstruct = qtrue;
+  qboolean    lastSpawn = qfalse;
 
   if( ent->client->pers.denyBuild )
   {
@@ -1684,7 +1706,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       return;
     }
 
-    // Cancel deconstruction
+    // Cancel deconstruction (unmark)
     if( deconstruct && g_markDeconstruct.integer && traceEnt->deconstruct )
     {
       traceEnt->deconstruct = qfalse;
@@ -1692,27 +1714,24 @@ void Cmd_Destroy_f( gentity_t *ent )
     }
 
     // Prevent destruction of the last spawn
-    if( !g_cheats.integer &&
-        ( !g_markDeconstruct.integer || !G_FindPower( traceEnt ) ) )
+    if( ent->client->pers.teamSelection == TEAM_ALIENS &&
+        traceEnt->s.modelindex == BA_A_SPAWN )
     {
-      if( ent->client->pers.teamSelection == TEAM_ALIENS &&
-          traceEnt->s.modelindex == BA_A_SPAWN )
-      {
-        if( level.numAlienSpawns <= 1 )
-        {
-          G_TriggerMenu( ent->client->ps.clientNum, MN_B_LASTSPAWN );
-          return;
-        }
-      }
-      else if( ent->client->pers.teamSelection == TEAM_HUMANS &&
-               traceEnt->s.modelindex == BA_H_SPAWN )
-      {
-        if( level.numHumanSpawns <= 1 )
-        {
-          G_TriggerMenu( ent->client->ps.clientNum, MN_B_LASTSPAWN );
-          return;
-        }
-      }
+      if( level.numAlienSpawns <= 1 )
+        lastSpawn = qtrue;
+    }
+    else if( ent->client->pers.teamSelection == TEAM_HUMANS &&
+             traceEnt->s.modelindex == BA_H_SPAWN )
+    {
+      if( level.numHumanSpawns <= 1 )
+        lastSpawn = qtrue;
+    }
+
+    if( lastSpawn && !g_cheats.integer &&
+        !g_markDeconstruct.integer )
+    {
+      G_TriggerMenu( ent->client->ps.clientNum, MN_B_LASTSPAWN );
+      return;
     }
 
     // Don't allow destruction of hovel with granger inside
@@ -1721,7 +1740,10 @@ void Cmd_Destroy_f( gentity_t *ent )
 
     // Don't allow destruction of buildables that cannot be rebuilt
     if( G_TimeTilSuddenDeath( ) <= 0 )
+    {
+      G_TriggerMenu( ent->client->ps.clientNum, MN_B_SUDDENDEATH );
       return;
+    }
 
     if( !g_markDeconstruct.integer ||
         ( ent->client->pers.teamSelection == TEAM_HUMANS &&
@@ -1743,7 +1765,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       }
       else if( g_markDeconstruct.integer &&
                ( ent->client->pers.teamSelection != TEAM_HUMANS ||
-                 G_FindPower( traceEnt ) ) )
+                 G_FindPower( traceEnt ) || lastSpawn ) )
       {
         traceEnt->deconstruct     = qtrue; // Mark buildable for deconstruction
         traceEnt->deconstructTime = level.time;
@@ -2914,6 +2936,7 @@ commands_t cmds[ ] = {
   { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
   { "levelshot", CMD_CHEAT, Cmd_LevelShot_f },
   { "m", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
+  { "me", CMD_MESSAGE|CMD_INTERMISSION, Cmd_ActionMessage_f },
   { "mt", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
   { "noclip", CMD_CHEAT_TEAM, Cmd_Noclip_f },
   { "notarget", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Notarget_f },
