@@ -1012,7 +1012,7 @@ static void CG_Say( int clientNum, saymode_t mode, const char *text )
                  maybeColon, color, text );
       if( !ignore[0] )
         CG_CenterPrint( va( "%sPrivate message from: " S_COLOR_WHITE "%s", 
-                            color, name ), 200, GIANTCHAR_WIDTH * 4 );
+                            color, name ), NULL, 200, GIANTCHAR_WIDTH * 4 );
       break;
     case SAY_RAW:
       CG_Printf( "%s\n", text );
