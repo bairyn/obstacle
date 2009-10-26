@@ -238,8 +238,8 @@ static cvarTable_t cvarTable[ ] =
   CG_OC_DCVARS
 
   { &cg_disableWeaponSounds, "cg_disableWeaponSounds", "", CVAR_ARCHIVE  },
-  { &cg_drawPlayerTimer, "cg_drawPlayerTimer", "0", CVAR_ARCHIVE  },
-  { &cg_drawSpeedometer, "cg_drawSpeedometer", "0", CVAR_ARCHIVE  },
+  { &cg_drawPlayerTimer, "cg_drawPlayerTimer", "1", CVAR_ARCHIVE  },
+  { &cg_drawSpeedometer, "cg_drawSpeedometer", "7", CVAR_ARCHIVE  },
 
   { &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
   { &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
