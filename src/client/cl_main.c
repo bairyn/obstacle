@@ -1941,11 +1941,25 @@ CL_NextDownload
 A download completed or failed
 =================
 */
-void CL_NextDownload(void) {
+void CL_NextDownload(void)
+{
 	char *s;
 	char *remoteName, *localName;
 	qboolean useCURL = qfalse;
 	int prompt;
+
+	// A download has finished, check whether this matches a referenced checksum
+	if(*clc.downloadName && !clc.activeCURLNotGameRelated)
+	{
+		char *zippath = FS_BuildOSPath(Cvar_VariableString("fs_homepath"), clc.downloadName, "");
+		zippath[strlen(zippath)-1] = '\0';
+
+		if(!FS_CompareZipChecksum(zippath))
+			Com_Error(ERR_DROP, "Incorrect checksum for file: %s", clc.downloadName);
+	}
+
+	*clc.downloadTempName = *clc.downloadName = 0;
+	Cvar_Set("cl_downloadName", "");
 
 	// We are looking to start a download here
 	if (*clc.downloadList) {
@@ -1954,8 +1968,9 @@ void CL_NextDownload(void) {
 		prompt = com_downloadPrompt->integer;
 		if( !( prompt & DLP_TYPE_MASK ) &&
 		    !( cl_allowDownload->integer & DLF_ENABLE ) ) {
-			char files[ MAX_INFO_STRING ], *name, *head, *pure_msg,
-			*url_msg = "";
+			char files[ MAX_INFO_STRING ] = "";
+			char *name, *head, *pure_msg;
+			char *url_msg = "";
 			int i = 0, others = 0, swap = 0, max_list = 12;
 
 			// Set the download URL message
@@ -1981,8 +1996,9 @@ void CL_NextDownload(void) {
 				*head = 0;
 
 				if( i++ < max_list ) {
-					Com_sprintf( files, sizeof( files ), "%s%s%s",
-					             files, i > 1 ? ", " : "", name );
+					if( i > 1 )
+						Q_strcat( files, sizeof( files ), ", " );
+					Q_strcat( files, sizeof( files ), name );
 				} else {
 					others++;
 				}
@@ -2000,9 +2016,8 @@ void CL_NextDownload(void) {
 			} while( *head );
 
 			if( others ) {
-				Com_sprintf( files, sizeof( files ),
-				             "%s (%d other file%s)\n", files, others,
-				              others > 1 ? "s" : "" );
+				Q_strcat( files, sizeof( files ), va( "(%d other file%s)\n", 
+						  others, others > 1 ? "s" : "" ) );
 			}
 
 			// Set the pure message
@@ -2135,6 +2150,10 @@ void CL_InitDownloads(void) {
 		Cvar_Set( "com_downloadPrompt", "0" );
 		if ( *clc.downloadList ) {
 			cls.state = CA_CONNECTED;
+
+			*clc.downloadTempName = *clc.downloadName = 0;
+			Cvar_Set( "cl_downloadName", "" );
+
 			CL_NextDownload();
 			return;
 		}
@@ -3941,6 +3960,7 @@ void CL_GlobalServers_f( void ) {
 	}
 
 	NET_OutOfBandPrint( NS_SERVER, to, "%s", command );
+	CL_RequestMotd();
 }
 
 

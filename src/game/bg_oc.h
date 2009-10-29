@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _G_OC_H
 #define _G_OC_H
 
-/* Nasty preprocessor abuse begins here. */
+/* Preprocessor abuse begins here. */
 
 /*
  * bg_oc.h
@@ -173,31 +173,35 @@ extern int oc_gameMode;
 	extern g_admin_hide_t *g_admin_hides[MAX_ADMIN_HIDES];
 
 	#define G_OC_ADMINWRITE \
-	for(i = 0; i < MAX_ADMIN_HIDES && g_admin_hides[i]; i++) \
 	{ \
-		/* don't write expired hides */ \
-		/* if expires is 0, then it's a perm hide */ \
-		if(g_admin_hides[i]->expires != 0 && (g_admin_hides[i]->expires - t) < 1) \
-			continue; \
+		g_admin_hide_t *h; \
  \
-		trap_FS_Write("[hide]\n", 7, f); \
-		trap_FS_Write("name    = ", 10, f); \
-		admin_writeconfig_string(g_admin_hides[i]->name, f); \
-		trap_FS_Write("guid    = ", 10, f); \
-		admin_writeconfig_string(g_admin_hides[i]->guid, f); \
-		trap_FS_Write("ip      = ", 10, f); \
-		admin_writeconfig_string(g_admin_hides[i]->ip, f); \
-		trap_FS_Write("reason  = ", 10, f); \
-		admin_writeconfig_string(g_admin_hides[i]->reason, f); \
-		trap_FS_Write("made    = ", 10, f); \
-		admin_writeconfig_string(g_admin_hides[i]->made, f); \
-		trap_FS_Write("expires = ", 10, f); \
-		admin_writeconfig_int(g_admin_hides[i]->expires, f); \
-		trap_FS_Write("hider  = ", 10, f); \
-		admin_writeconfig_string(g_admin_hides[i]->hider, f); \
-		trap_FS_Write("hidden = ", 10, f); \
-		admin_writeconfig_int(g_admin_hides[i]->hidden, f); \
-		trap_FS_Write("\n", 1, f); \
+		for(h = g_admin_hides; h; h = h->next)
+		{ \
+			/* don't write expired hides */ \
+			/* if expires is 0, then it's a perm hide */ \
+			if(h->expires != 0 && h->expires <= t) \
+				continue; \
+ \
+			trap_FS_Write("[hide]\n", 7, f); \
+			trap_FS_Write("name    = ", 10, f); \
+			admin_writeconfig_string(h->name, f); \
+			trap_FS_Write("guid    = ", 10, f); \
+			admin_writeconfig_string(h->guid, f); \
+			trap_FS_Write("ip      = ", 10, f); \
+			admin_writeconfig_string(h->ip, f); \
+			trap_FS_Write("reason  = ", 10, f); \
+			admin_writeconfig_string(h->reason, f); \
+			trap_FS_Write("made    = ", 10, f); \
+			admin_writeconfig_string(h->made, f); \
+			trap_FS_Write("expires = ", 10, f); \
+			admin_writeconfig_int(h->expires, f); \
+			trap_FS_Write("hider  = ", 10, f); \
+			admin_writeconfig_string(h->hider, f); \
+			trap_FS_Write("hidden = ", 10, f); \
+			admin_writeconfig_int(h->hidden, f); \
+			trap_FS_Write("\n", 1, f); \
+		}
 	}
 
 	#define G_OC_ADMINREADDEC \
@@ -252,12 +256,13 @@ extern int oc_gameMode;
 	#define G_OC_ADMINREADOPEN \
     else if(!Q_stricmp(t, "[hide]")) \
     { \
-      if(hc >= MAX_ADMIN_HIDES) \
-        return qfalse; \
-      h = BG_Alloc(sizeof(g_admin_hide_t)); \
-      g_admin_hides[hc++] = h; \
+      if(h) \
+        h = h->next = BG_Alloc(sizeof(g_admin_hide_t)); \
+      else \
+        h = g_admin_hides = BG_Alloc(sizeof(g_admin_hide_t)); \
       hide_open = qtrue; \
       level_open = ban_open = admin_open = command_open = qfalse; \
+      hc++; \
     }
 
 	#define G_OC_ADMINNUM (va(", %d hides", hc))
@@ -748,9 +753,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		else if(self->timestamp > level.time ) \
+		else if(self->timestamp > level.time) \
 		{ \
-			VectorCopy(self->r.currentOrigin, self->s.pos.trBase ); \
+			VectorCopy(self->r.currentOrigin, self->s.pos.trBase); \
 			self->s.pos.trType = TR_STATIONARY; \
 			self->s.pos.trTime = level.time; \
  \
@@ -887,8 +892,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!ent->client) \
 			break; \
  \
-		AngleVectors(ent->client->ps.viewangles, forward, right, up ); \
-		CalcMuzzlePoint(ent, forward, right, up, muzzle ); \
+		AngleVectors(ent->client->ps.viewangles, forward, right, up); \
+		CalcMuzzlePoint(ent, forward, right, up, muzzle); \
  \
 		if(!ent->client->pers.scrimTeam || ent->client->pers.override || G_admin_canEditOC(ent)) \
 		{ \
@@ -3193,7 +3198,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(pml.groundTrace.plane.normal[2] > 0.99995f && pm->ps->velocity[2] < 0) \
 			pm->ps->velocity[2] = 0; \
  \
-		VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[STAT_CLASS] )->jumpMagnitude, \
+		VectorMA(pm->ps->velocity, BG_Class(pm->ps->stats[STAT_CLASS])->jumpMagnitude, \
 				normal, pm->ps->velocity); \
 	} while(0)
 
@@ -3218,7 +3223,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 #if 1
 	#ifndef ISDEFINED_BG_STRTOLOWER__
 	#define ISDEFINED_BG_STRTOLOWER__
-	void BG_StrToLower(char *s );
+	void BG_StrToLower(char *s);
 	#endif
 #endif /* if 1 */
 

@@ -1193,6 +1193,7 @@ typedef struct
   float         chargeMeterValue;
   qhandle_t     lastHealthCross;
   float         healthCrossFade;
+  int           nearUsableBuildable;
   
   int           nextWeaponClickTime;
 
