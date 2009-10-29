@@ -500,6 +500,11 @@ static void Svcmd_MessageWrapper( void )
     G_Say( NULL, SAY_RAW, ConcatArgs( 1 ) );
 }
 
+static void Svcmd_ListMapsWrapper( void )
+{
+  Cmd_ListMaps_f( NULL );
+}
+
 static void Svcmd_SuddenDeath_f( void )
 {
   char secs[ 5 ];
@@ -534,6 +539,7 @@ struct svcmd
   { "humanWin", qfalse, Svcmd_TeamWin_f },
   { "layoutLoad", qfalse, Svcmd_LayoutLoad_f },
   { "layoutSave", qfalse, Svcmd_LayoutSave_f },
+  { "listmaps", qtrue, Svcmd_ListMapsWrapper },
   { "m", qtrue, Svcmd_MessageWrapper },
   { "mapRotation", qfalse, Svcmd_MapRotation_f },
   { "printqueue", qfalse, Svcmd_PrintQueue_f },
@@ -563,7 +569,7 @@ qboolean  ConsoleCommand( void )
   if( !command )
   {
     // see if this is an admin command
-    if( G_admin_cmd_check( NULL, qfalse ) )
+    if( G_admin_cmd_check( NULL ) )
       return qtrue;
 
     if( g_dedicated.integer )
@@ -579,3 +585,30 @@ qboolean  ConsoleCommand( void )
   return qtrue;
 }
 
+void G_RegisterCommands( void )
+{
+  int i;
+
+  for( i = 0; i < sizeof( svcmds ) / sizeof( svcmds[ 0 ] ); i++ )
+  {
+    if( svcmds[ i ].dedicated && !g_dedicated.integer )
+      continue;
+    trap_AddCommand( svcmds[ i ].cmd );
+  }
+
+  G_admin_register_cmds( );
+}
+
+void G_UnregisterCommands( void )
+{
+  int i;
+
+  for( i = 0; i < sizeof( svcmds ) / sizeof( svcmds[ 0 ] ); i++ )
+  {
+    if( svcmds[ i ].dedicated && !g_dedicated.integer )
+      continue;
+    trap_RemoveCommand( svcmds[ i ].cmd );
+  }
+
+  G_admin_unregister_cmds( );
+}
