@@ -914,7 +914,6 @@ typedef enum
   MOD_ATUBE,
   MOD_OVERMIND,
   MOD_DECONSTRUCT,
-  MOD_REPLACE,
   MOD_NOCREEP
 } meansOfDeath_t;
 

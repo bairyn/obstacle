@@ -72,20 +72,20 @@ qboolean G_admin_canEditOC(void *ent)
 	return qtrue;
 }
 
-qboolean G_admin_editoc(void *ent_v, int skiparg)
+qboolean G_admin_editoc(void *ent_v)
 {
   gentity_t *ent = (gentity_t *)ent_v;
   gentity_t *client;
   char command[MAX_ADMIN_CMD_LEN];
   int i;
-  G_SayArgv(skiparg+1, command, sizeof(command));
+  trap_Argv(1, command, sizeof(command));
   if(BG_OC_OCMode())
   {
     if(!Q_stricmp(command, "0") || !Q_stricmp(command, "off"))
     {
-      AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
+      AP(va("print \"^3editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
-      G_LogPrintf(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
+      G_LogPrintf(va("print \"^3editoc: ^7Admin cheating and oc editing ^5DISABLED^7 to ^2off^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
       level.ocEditMode = 0;
       for(i = 0; i < level.maxclients; i++)
@@ -97,9 +97,9 @@ qboolean G_admin_editoc(void *ent_v, int skiparg)
     }
     else if(!Q_stricmp(command, "1") || !Q_stricmp(command, "allwithflag"))
     {
-      AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
+      AP(va("print \"^3editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
-      G_LogPrintf(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
+      G_LogPrintf(va("print \"^3editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^2allwithflag^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
       level.ocEditMode = 1;
       for(i = 0; i < level.maxclients; i++)
@@ -111,9 +111,9 @@ qboolean G_admin_editoc(void *ent_v, int skiparg)
     }
     else if(!Q_stricmp(command, "2") || !Q_stricmp(command, "all"))
     {
-      AP(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
+      AP(va("print \"^3editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
-      G_LogPrintf(va("print \"^3!editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
+      G_LogPrintf(va("print \"^3editoc: ^7Admin cheating and oc editing ^5ENABLED^7 to ^1all^7 by ^7%s^7\n\"",
               (ent) ? ent->client->pers.netname : "console"));
       level.ocEditMode = 2;
       for(i = 0; i < level.maxclients; i++)
@@ -135,24 +135,24 @@ qboolean G_admin_editoc(void *ent_v, int skiparg)
   return qtrue;
 }
 
-qboolean G_admin_layoutsave(void *ent, int skiparg)
+qboolean G_admin_layoutsave(void *ent)
 {
   char layout[MAX_QPATH];
   char command[MAX_ADMIN_CMD_LEN], *cmd;
   char output[MAX_STRING_CHARS];
 
-  G_SayArgv(skiparg, command, sizeof(command));
+  trap_Argv(0, command, sizeof(command));
   cmd = command;
   if(cmd && *cmd == '!')
     cmd++;
 
-  if(G_SayArgc() < 2 + skiparg)
+  if(trap_Argc() < 2)
   {
-    ADMP(va("^3!%s: ^7usage: !%s [layout]\n", cmd, cmd));
+    ADMP(va("^3%s: ^7usage: !%s [layout]\n", cmd, cmd));
     return qfalse;
   }
 
-  G_SayArgv(skiparg + 1, layout, sizeof(layout));
+  trap_Argv(1, layout, sizeof(layout));
   BG_StrToLower(layout);
 
   if(!(*layout == 'o' && *(layout + 1) == 'c') || !(g_ocReview.integer && Q_stricmp(cmd, "layoutsave")))
@@ -160,7 +160,7 @@ qboolean G_admin_layoutsave(void *ent, int skiparg)
     trap_SendConsoleCommand(EXEC_APPEND, va("layoutsave %s", layout));
     Q_strncpyz(output, va("layout saved as '%s'", layout), sizeof(output));
     EXCOLOR(output);
-    AP(va("print \"^3!layoutsave: ^7%s^7 by ^7%s^7\n\"", output,
+    AP(va("print \"^3layoutsave: ^7%s^7 by ^7%s^7\n\"", output,
             (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
   }
   else
@@ -168,34 +168,34 @@ qboolean G_admin_layoutsave(void *ent, int skiparg)
     trap_SendConsoleCommand(EXEC_APPEND, va("layoutsave %s_review", layout));
     Q_strncpyz(output, va("layout saved for review as '%s_review'", layout), sizeof(output));
     EXCOLOR(output);
-    AP(va("print \"^3!layoutsave: ^7%s^7 by ^7%s^7\n\"", output,
+    AP(va("print \"^3layoutsave: ^7%s^7 by ^7%s^7\n\"", output,
             (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
   }
   return qtrue;
 }
 
-qboolean G_admin_devmap(void *ent, int skiparg)
+qboolean G_admin_devmap(void *ent)
 {
   char map[MAX_QPATH];
   char layout[MAX_QPATH] = { "" };
 
-  if(G_SayArgc() < 2 + skiparg)
+  if(trap_Argc() < 2)
   {
-    ADMP("^3!devmap: ^7usage: !devmap [map] (layout)\n");
+    ADMP("^3devmap: ^7usage: !devmap [map] (layout)\n");
     return qfalse;
   }
 
-  G_SayArgv(skiparg + 1, map, sizeof(map));
+  trap_Argv(1, map, sizeof(map));
 
   if(!trap_FS_FOpenFile(va("maps/%s.bsp", map), NULL, FS_READ))
   {
-    ADMP(va("^3!devmap: ^7invalid map name '%s'\n", map));
+    ADMP(va("^3devmap: ^7invalid map name '%s'\n", map));
     return qfalse;
   }
 
-  if(G_SayArgc() > 2 + skiparg)
+  if(trap_Argc() > 2)
   {
-    G_SayArgv(skiparg + 2, layout, sizeof(layout));
+    trap_Argv(2, layout, sizeof(layout));
     if(!Q_stricmp(layout, "*BUILTIN*") ||
       trap_FS_FOpenFile(va("layouts/%s/%s.dat", map, layout),
         NULL, FS_READ) > 0)
@@ -204,14 +204,14 @@ qboolean G_admin_devmap(void *ent, int skiparg)
     }
     else
     {
-      ADMP(va("^3!devmap: ^7invalid layout name '%s'\n", layout));
+      ADMP(va("^3devmap: ^7invalid layout name '%s'\n", layout));
       return qfalse;
     }
   }
 
   trap_SendConsoleCommand(EXEC_APPEND, va("devmap %s", map));
   level.restarted = qtrue;
-  AP(va("print \"^3!devmap: ^7map '%s' started by %s^7 with cheats %s\n\"", map,
+  AP(va("print \"^3devmap: ^7map '%s' started by %s^7 with cheats %s\n\"", map,
           (ent) ? ((gentity_t *) ent)->client->pers.netname : "console",
           (layout[0]) ? va("(forcing layout '%s')", layout) : ""));
   return qtrue;
@@ -273,7 +273,7 @@ static qboolean admin_create_hide(gentity_t *ent, char *netname, char *guid, cha
     ;
   if(i == MAX_ADMIN_HIDES)
   {
-    ADMP("^3!hides: ^7too many hides\n");
+    ADMP("^3hides: ^7too many hides\n");
     BG_Free(h);
     return qfalse;
   }
@@ -343,7 +343,7 @@ qboolean G_admin_hide_check(char *userinfo, char *reason, int rlen, int *hidden,
 }
 
 int G_admin_parse_time(const char *time);
-qboolean G_admin_hide(void *ent, int skiparg)
+qboolean G_admin_hide(void *ent)
 {
   int seconds;
   char secs[7];
@@ -355,36 +355,36 @@ qboolean G_admin_hide(void *ent, int skiparg)
 
   if(!BG_OC_OCMode())
   {
-    ADMP("^3!hide: ^7can only be used during an obstacle course\n");
+    ADMP("^3hide: ^7can only be used during an obstacle course\n");
     return qfalse;
   }
 //  // admins can still hide
 //  if(!g_allowHide.integer)
 //  {
-//    ADMP("^3!hide: ^7hiding has been disabled\n");
+//    ADMP("^3hide: ^7hiding has been disabled\n");
 //    return qfalse;
 //  }
 
-  if(G_SayArgc() < 2 + skiparg)
+  if(trap_Argc() < 2)
   {
-    ADMP("^3!hide: ^7usage: !hide [name|slot#] (reason)\n");
+    ADMP("^3hide: ^7usage: !hide [name|slot#] (reason)\n");
     return qfalse;
   }
-  G_SayArgv(skiparg, command, sizeof(command));
+  trap_Argv(0, command, sizeof(command));
   cmd = command;
   if(cmd && *cmd == '!')
     cmd++;
-  G_SayArgv(1 + skiparg, name, sizeof(name));
-  reason = G_SayConcatArgs(2 + skiparg);
+  trap_Argv(1, name, sizeof(name));
+  reason = ConcatArgs(2);
   if((found = G_ClientNumbersFromString(name, pids, MAX_CLIENTS)) != 1)
   {
     G_MatchOnePlayer(pids, found, err, sizeof(err));
-    ADMP(va("^3!hide: ^7%s\n", err));
+    ADMP(va("^3hide: ^7%s\n", err));
     return qfalse;
   }
   if(!admin_higher(ent, &g_entities[pids[0]]))
   {
-    ADMP("^3!hide: ^7sorry, but your intended victim has a higher admin"
+    ADMP("^3hide: ^7sorry, but your intended victim has a higher admin"
         " level than you\n");
     return qfalse;
   }
@@ -404,22 +404,22 @@ qboolean G_admin_hide(void *ent, int skiparg)
     }
     vic->r.svFlags &= ~SVF_SINGLECLIENT;
     vic->client->pers.hidden = qfalse;
-    if(G_SayArgc() == 2 + skiparg)
+    if(trap_Argc() == 2)
     {
-        AP(va("print \"^3!unhide: ^7%s^7 has been unhidden by ^7%s\n\"",
+        AP(va("print \"^3unhide: ^7%s^7 has been unhidden by ^7%s\n\"",
                 vic->client->pers.netname,
                 (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
     }
     else
     {
-        G_SayArgv(2 + skiparg, secs, sizeof(secs));
+        trap_Argv(2, secs, sizeof(secs));
         seconds = G_admin_parse_time(secs);
         G_admin_duration(seconds, duration, sizeof(duration));
         admin_create_hide(ent, vic->client->pers.netname, vic->client->pers.guid, vic->client->pers.ip, seconds, (*reason) ? reason : "unhidden by admin", 0);
         admin_writeconfig();
 
         vic->client->pers.hiddenTime = level.time + seconds * 1000;
-        AP(va("print \"^3!unhide: ^7%s^7 has been unhidden by ^7%s; force duration: ^7%s^7\n\"",
+        AP(va("print \"^3unhide: ^7%s^7 has been unhidden by ^7%s; force duration: ^7%s^7\n\"",
                 vic->client->pers.netname,
                 (ent) ? ((gentity_t *) ent)->client->pers.netname : "console", duration));
     }
@@ -442,22 +442,22 @@ qboolean G_admin_hide(void *ent, int skiparg)
     vic->r.svFlags |= SVF_SINGLECLIENT;
     vic->r.singleClient = vic-g_entities;
     CPx(pids[0], "cp \"^1You've been hidden\"");
-    if(G_SayArgc() == 2 + skiparg)
+    if(trap_Argc() == 2)
     {
-        AP(va("print \"^3!hide: ^7%s^7 has been hidden by ^7%s\n\"",
+        AP(va("print \"^3hide: ^7%s^7 has been hidden by ^7%s\n\"",
                 vic->client->pers.netname,
                 (ent) ? ((gentity_t *) ent)->client->pers.netname : "console"));
     }
     else
     {
-        G_SayArgv(2 + skiparg, secs, sizeof(secs));
+        trap_Argv(2, secs, sizeof(secs));
         seconds = G_admin_parse_time(secs);
         G_admin_duration(seconds, duration, sizeof(duration));
         admin_create_hide(ent, vic->client->pers.netname, vic->client->pers.guid, vic->client->pers.ip, seconds, (*reason) ? reason : "hidden by admin", 1);
         admin_writeconfig();
 
         vic->client->pers.hiddenTime = level.time + seconds * 1000;
-        AP(va("print \"^3!hide: ^7%s^7 has been hidden by ^7%s; force duration: ^7%s^7\n\"",
+        AP(va("print \"^3hide: ^7%s^7 has been hidden by ^7%s; force duration: ^7%s^7\n\"",
                 vic->client->pers.netname,
                 (ent) ? ((gentity_t *) ent)->client->pers.netname : "console", duration));
     }
@@ -467,7 +467,7 @@ qboolean G_admin_hide(void *ent, int skiparg)
   return qtrue;
 }
 
-qboolean G_admin_showhides(void *ent, int skiparg)
+qboolean G_admin_showhides(void *ent)
 {
   int i, found = 0;
   int max = -1, count;
@@ -503,17 +503,17 @@ qboolean G_admin_showhides(void *ent, int skiparg)
 
   if(max < 0)
   {
-    ADMP("^3!showhides: ^7no hides to display\n");
+    ADMP("^3showhides: ^7no hides to display\n");
     return qfalse;
   }
 
-  if(G_SayArgc() >= 2 + skiparg)
+  if(trap_Argc() >= 2)
   {
-    G_SayArgv(1 + skiparg, filter, sizeof(filter));
-    if(G_SayArgc() >= 3 + skiparg)
+    trap_Argv(1, filter, sizeof(filter));
+    if(trap_Argc() >= 3)
     {
       start = atoi(filter);
-      G_SayArgv(2 + skiparg, filter, sizeof(filter));
+      trap_Argv(2, filter, sizeof(filter));
     }
     for(i = 0; i < sizeof(filter) && filter[i] ; i++)
     {
@@ -556,7 +556,7 @@ qboolean G_admin_showhides(void *ent, int skiparg)
 
   if(start > max)
   {
-    ADMP(va("^3!showhides: ^7%d is the last valid hides\n", max + 1));
+    ADMP(va("^3showhides: ^7%d is the last valid hides\n", max + 1));
     return qfalse;
   }
 
@@ -647,13 +647,13 @@ qboolean G_admin_showhides(void *ent, int skiparg)
 
   if(name_match[0] || ip_match)
   {
-    ADMBP(va("^3!showhides:^7 found %d matching hides by %s.  ",
+    ADMBP(va("^3showhides:^7 found %d matching hides by %s.  ",
              count,
              (ip_match) ? "IP" : "name"));
   }
   else
   {
-    ADMBP(va("^3!showhides:^7 showing hides %d - %d of %d (%d total).",
+    ADMBP(va("^3showhides:^7 showing hides %d - %d of %d (%d total).",
              (found) ? (start + 1) : 0,
              i,
              max + 1,
@@ -670,7 +670,7 @@ qboolean G_admin_showhides(void *ent, int skiparg)
   return qtrue;
 }
 
-qboolean G_admin_adjusthide(void *ent, int skiparg)
+qboolean G_admin_adjusthide(void *ent)
 {
   int hnum;
   int length;
@@ -682,25 +682,25 @@ qboolean G_admin_adjusthide(void *ent, int skiparg)
   char secs[7];
   char hiddenC[7];
 
-  if(G_SayArgc() < 3 + skiparg)
+  if(trap_Argc() < 3)
   {
-    ADMP("^3!adjusthide: ^7usage: !adjusthide [hide#] [time] [(c) hidden] [reason]\n");
+    ADMP("^3adjusthide: ^7usage: !adjusthide [hide#] [time] [(c) hidden] [reason]\n");
     return qfalse;
   }
-  G_SayArgv(1 + skiparg, hs, sizeof(hs));
+  trap_Argv(1, hs, sizeof(hs));
   hnum = atoi(hs);
   if(hnum < 1 || hnum > MAX_ADMIN_HIDES || !g_admin_hides[hnum - 1])
   {
-    ADMP("^3!adjusthide: ^7invalid hide#\n");
+    ADMP("^3adjusthide: ^7invalid hide#\n");
     return qfalse;
   }
 
-  G_SayArgv(2 + skiparg, secs, sizeof(secs));
-  G_SayArgv(3 + skiparg, hiddenC, sizeof(hiddenC));
+  trap_Argv(2, secs, sizeof(secs));
+  trap_Argv(3, hiddenC, sizeof(hiddenC));
   length = G_admin_parse_time(secs);
-  if(length < 0 && ((secs[0] == 'c' || secs[0] == 'C' || secs[0] == 'h' || secs[0] == 'H') && ((secs[1] == ' ' || secs[1] == '\t' || secs[1] == '-') || (secs[1] >= '0' && secs[1] <= '9') || (hiddenC[0] && hiddenC[0] >= '0' && hiddenC[0] <= '9'))) && G_SayArgc() > 3 + skiparg)
+  if(length < 0 && ((secs[0] == 'c' || secs[0] == 'C' || secs[0] == 'h' || secs[0] == 'H') && ((secs[1] == ' ' || secs[1] == '\t' || secs[1] == '-') || (secs[1] >= '0' && secs[1] <= '9') || (hiddenC[0] && hiddenC[0] >= '0' && hiddenC[0] <= '9'))) && trap_Argc() > 3)
   {
-    G_SayArgv(3 + skiparg, secs, sizeof(secs));
+    trap_Argv(3, secs, sizeof(secs));
     if(secs[1] == ' ')
     {
         char *p = &secs[1];
@@ -714,7 +714,7 @@ qboolean G_admin_adjusthide(void *ent, int skiparg)
     g_admin_hides[hnum - 1]->hidden = hidden;
   }
   else if(length < 0)
-    reason = G_SayConcatArgs(2 + skiparg);
+    reason = ConcatArgs(2);
   else
   {
     if(length != 0)
@@ -723,23 +723,23 @@ qboolean G_admin_adjusthide(void *ent, int skiparg)
       expires = 0;
     else
     {
-      ADMP("^3!adjusthide: ^7hide time must be positive\n");
+      ADMP("^3adjusthide: ^7hide time must be positive\n");
       return qfalse;
     }
 
     g_admin_hides[hnum - 1]->expires = expires;
     G_admin_duration((length) ? length : -1, duration, sizeof(duration));
-    reason = G_SayConcatArgs(3 + skiparg);
+    reason = ConcatArgs(3);
   }
   if(reason && *reason)
     Q_strncpyz(g_admin_hides[hnum - 1]->reason, reason,
       sizeof(g_admin_hides[hnum - 1]->reason));
-  AP(va("print \"^3!adjusthide: ^7hide #%d for %s^7 has been updated by %s^7 "
+  AP(va("print \"^3adjusthide: ^7hide #%d for %s^7 has been updated by %s^7 "
     "%s%s%s%s%s%s\n\"",
     hnum,
     g_admin_hides[hnum - 1]->name,
     (ent) ? ((gentity_t *) ent)->client->pers.netname : "console",
-    (length < 0 && ((secs[0] == 'c' || secs[0] == 'C' || secs[0] == 'h' || secs[0] == 'H') && ((secs[1] == ' ' || secs[1] == '\t' || secs[1] == '-') || (secs[1] >= '0' && secs[1] <= '9') || (hiddenC[0] && hiddenC[0] >= '0' && hiddenC[0] <= '9'))) && G_SayArgc() > 3 + skiparg) ? (hidden ? "hidden: hidden" : "hidden: unhidden") : "",
+    (length < 0 && ((secs[0] == 'c' || secs[0] == 'C' || secs[0] == 'h' || secs[0] == 'H') && ((secs[1] == ' ' || secs[1] == '\t' || secs[1] == '-') || (secs[1] >= '0' && secs[1] <= '9') || (hiddenC[0] && hiddenC[0] >= '0' && hiddenC[0] <= '9'))) && trap_Argc() > 3) ? (hidden ? "hidden: hidden" : "hidden: unhidden") : "",
     (length >= 0) ? "duration: " : "",
     duration,
     (length >= 0 && reason && *reason) ? ", " : "",
@@ -753,72 +753,72 @@ qboolean G_admin_adjusthide(void *ent, int skiparg)
   return qtrue;
 }
 
-qboolean G_admin_startscrim( void *entt, int skiparg )
+qboolean G_admin_startscrim(void *entt)
 {
   char win[ 7 ];
   gentity_t *ent = (gentity_t *) entt;
 
-  if( !BG_OC_OCMode() )
+  if(!BG_OC_OCMode())
   {
-    ADMP( va( "Can only be used during an obstacle course\n" ) );
+    ADMP(va("Can only be used during an obstacle course\n"));
     return qfalse;
   }
 
-  if( G_SayArgc() < 2 + skiparg )
+  if(trap_Argc() < 2)
   {
-    ADMP( "^3!startscrim: ^7usage: !startscrim [m/a] for all medis / armoury\n" );
+    ADMP("^3startscrim: ^7usage: !startscrim [m/a] for all medis / armoury\n");
     return qfalse;
   }
-  G_SayArgv( 1 + skiparg, win, sizeof( win ) );
+  trap_Argv(1, win, sizeof(win));
 
-  if( !win[0] || !( win[0] == 'm' || win[0] == 'a' ) )
+  if(!win[0] || !(win[0] == 'm' || win[0] == 'a'))
   {
-    ADMP( "^3!startscrim: ^7usage: !startscrim [m/a] for all medis / armoury\n" );
+    ADMP("^3startscrim: ^7usage: !startscrim [m/a] for all medis / armoury\n");
     return qfalse;
   }
 
-  if( win[0] == 'a' )
+  if(win[0] == 'a')
     level.ocScrimMode = G_OC_MODE_ARM;
   else
     level.ocScrimMode = G_OC_MODE_MEDI;
 
-  if( level.ocScrimMode == G_OC_MODE_ARM && level.totalArmouries <= 0 )
+  if(level.ocScrimMode == G_OC_MODE_ARM && level.totalArmouries <= 0)
   {
-    ADMP( "^3!startscrim: ^7there are no armouries for an arm scrim\n" );
+    ADMP("^3startscrim: ^7there are no armouries for an arm scrim\n");
     return qfalse;
   }
-  if( level.ocScrimMode == G_OC_MODE_MEDI && level.totalMedistations <= 0 )
+  if(level.ocScrimMode == G_OC_MODE_MEDI && level.totalMedistations <= 0)
   {
-    ADMP( "^3!startscrim: ^7there are no medis for a medi scrim\n" );
+    ADMP("^3startscrim: ^7there are no medis for a medi scrim\n");
     return qfalse;
   }
 
   level.ocStartTime = level.time;
   level.ocScrimState = G_OC_STATE_PREP;
 
-  AP( va( "print \"^3!startscrim: ^7%s^7 started the oc scrim - first team to use\n%s^7.^7\n\"", ( ent ) ? ent->client->pers.netname : "console", ( ( level.ocScrimMode == G_OC_MODE_ARM ) ? ( level.totalArmouries == 1 || BG_OC_TestLayoutFlag( level.layout, BG_OC_OCFLAG_ONEARM ) ? "the ^3armoury^7" : "every ^3armoury^7" ) : ( level.totalMedistations == 1 ? "the ^3medical station^7" : "every ^3medical station^7" ) ) ) );
+  AP(va("print \"^3startscrim: ^7%s^7 started the oc scrim - first team to use\n%s^7.^7\n\"", (ent) ? ent->client->pers.netname : "console", ((level.ocScrimMode == G_OC_MODE_ARM) ? (level.totalArmouries == 1 || BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM) ? "the ^3armoury^7" : "every ^3armoury^7") : (level.totalMedistations == 1 ? "the ^3medical station^7" : "every ^3medical station^7"))));
   return qtrue;
 }
 
-qboolean G_admin_endscrim( void *entt, int skiparg )
+qboolean G_admin_endscrim(void *entt)
 {
   gentity_t *ent = (gentity_t *) entt;
 
-  if( !BG_OC_OCMode() )
+  if(!BG_OC_OCMode())
   {
-    ADMP( va( "Can only be used during an obstacle course\n" ) );
+    ADMP(va("Can only be used during an obstacle course\n"));
     return qfalse;
   }
 
-  if( level.ocScrimState <= G_OC_STATE_NONE )
+  if(level.ocScrimState <= G_OC_STATE_NONE)
   {
-    ADMP( va( "Can only be used during an OC scrim\n" ) );
+    ADMP(va("Can only be used during an OC scrim\n"));
     return qfalse;
   }
 
-  G_OC_EndScrim( );
+  G_OC_EndScrim();
 
-  AP( va( "print \"^3!endscrim: ^7%s^7 ended the scrim^7\n\"", ( ent ) ? ent->client->pers.netname : "console" ) );
+  AP(va("print \"^3endscrim: ^7%s^7 ended the scrim^7\n\"", (ent) ? ent->client->pers.netname : "console"));
   return qtrue;
 }
 
@@ -3749,7 +3749,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	/// load stats file ///
 	len = trap_FS_FOpenFile(filename, &f, FS_READ);
-	if( len < 0 )
+	if(len < 0)
 	{
 		trap_FS_FCloseFile(f);
 		if(trap_FS_FOpenFile(filename, &f, FS_APPEND) < 0)
@@ -3770,12 +3770,12 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 	trap_FS_FCloseFile(f);
 
 	i = record = line[0] = 0;
-	while( *stat )
+	while(*stat)
 	{
-		if( i >= sizeof( line ) - 1 )
+		if(i >= sizeof(line) - 1)
 		{
-			G_LogPrintf( S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
-			filename, line );
+			G_LogPrintf(S_COLOR_RED "ERROR: line overflow in %s before \"%s\"\n",
+			filename, line);
 
 			BG_Free(statHead);
 
@@ -4975,7 +4975,7 @@ void Cmd_TestHidden_f(gentity_t *ent)
 		return;
 	}
 
-	G_SayArgv(1, name, sizeof(name));
+	trap_Argv(1, name, sizeof(name));
 	if((found = G_ClientNumbersFromString(name, pids, MAX_CLIENTS)) != 1)
 	{
 		G_MatchOnePlayer(pids, found, err, sizeof(err));

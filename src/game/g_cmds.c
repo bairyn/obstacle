@@ -782,11 +782,6 @@ void G_Say( gentity_t *ent, saymode_t mode, const char *chatText )
     other = &g_entities[ j ];
     G_SayTo( ent, other, mode, text );
   }
-
-  if( g_adminParseSay.integer )
-  {
-    G_admin_cmd_check ( ent, qtrue );
-  }
 }
 
 /*
@@ -817,8 +812,6 @@ static void Cmd_SayArea_f( gentity_t *ent )
   vec3_t range = { 1000.0f, 1000.0f, 1000.0f };
   vec3_t mins, maxs;
   char   *msg;
-  char cmd[ sizeof( "say_team" ) ];
-  int skiparg = 0;
 
   if( ent->client->pers.teamSelection == TEAM_NONE )
   {
@@ -833,20 +826,13 @@ static void Cmd_SayArea_f( gentity_t *ent )
     return;
   }
 
-  // Skip say/say_team if this was used from one of those
-  G_SayArgv( 0, cmd, sizeof( cmd ) );
-  if( !Q_stricmp( cmd, "say" ) || !Q_stricmp( cmd, "say_team" ) )
+  if( trap_Argc( ) < 2 )
   {
-    skiparg = 1;
-    G_SayArgv( 1, cmd, sizeof( cmd ) );
-  }
-  if( G_SayArgc( ) < 2 + skiparg )
-  {
-    ADMP( va( "usage: %s [message]\n", cmd ) );
+    ADMP( "usage: say_area [message]\n" );
     return;
   }
 
-  msg = G_SayConcatArgs( 1 + skiparg );
+  msg = ConcatArgs( 1 );
 
   for(i = 0; i < 3; i++ )
     range[ i ] = g_sayAreaRange.value;
@@ -881,42 +867,15 @@ Cmd_Say_f
 static void Cmd_Say_f( gentity_t *ent )
 {
   char    *p;
-  char    *args;
+  char    cmd[ MAX_TOKEN_CHARS ];
   saymode_t mode = SAY_ALL;
-
-  args = G_SayConcatArgs( 0 );
-  if( Q_stricmpn( args, "say_team ", 9 ) == 0 )
-    mode = SAY_TEAM;
-
-  // support parsing /m out of say text since some people have a hard
-  // time figuring out what the console is.
-  if( !Q_stricmpn( args, "say /m ", 7 ) ||
-      !Q_stricmpn( args, "say_team /m ", 12 ) ||
-      !Q_stricmpn( args, "say /mt ", 8 ) ||
-      !Q_stricmpn( args, "say_team /mt ", 13 ) )
-  {
-    Cmd_PrivateMessage_f( ent );
-    return;
-  }
-
-  // support parsing /a out of say text for the same reason
-  if( !Q_stricmpn( args, "say /a ", 7 ) ||
-      !Q_stricmpn( args, "say_team /a ", 12 ) )
-  {
-    Cmd_AdminMessage_f( ent );
-    return;
-  }
-
-  // support parsing /say_area out of say text for the same reason
-  if( !Q_stricmpn( args, "say /say_area ", 14 ) ||
-      !Q_stricmpn( args, "say_team /say_area ", 19 ) )
-  {
-    Cmd_SayArea_f( ent );
-    return;
-  }
 
   if( trap_Argc( ) < 2 )
     return;
+
+  trap_Argv( 0, cmd, sizeof( cmd ) );
+  if( Q_stricmp( cmd, "say_team" ) == 0 )
+    mode = SAY_TEAM;
 
   p = ConcatArgs( 1 );
 
@@ -1190,7 +1149,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
 
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
-      "!ban %s \"1s%s\" vote kick", level.clients[ clientNum ].pers.ip,
+      "ban %s \"1s%s\" vote kick", level.clients[ clientNum ].pers.ip,
       g_adminTempBan.string );
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
@@ -1214,10 +1173,11 @@ void Cmd_CallVote_f( gentity_t *ent )
           va( "print \"%s: admin is immune from vote mute\n\"", cmd ) );
         return;
       }
-      Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
-        "!mute %d", clientNum );
-      Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ),
-        "Mute player \'%s\'", name );
+      Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
+        "mute %d", clientNum );
+      Com_sprintf( level.voteDisplayString[ team ],
+        sizeof( level.voteDisplayString[ team ] ),
+        "Mute player '%s'", name );
     }
     else if( !Q_stricmp( vote, "unmute" ) )
     {
@@ -1227,10 +1187,11 @@ void Cmd_CallVote_f( gentity_t *ent )
           va( "print \"%s: player is not currently muted\n\"", cmd ) );
         return;
       }
-      Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
-        "!unmute %d", clientNum );
-      Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ),
-        "Un-Mute player \'%s\'", name );
+      Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
+        "unmute %d", clientNum );
+      Com_sprintf( level.voteDisplayString[ team ],
+        sizeof( level.voteDisplayString[ team ] ),
+        "Unmute player '%s'", name );
     }
     else if( !Q_stricmp( vote, "map_restart" ) )
     {
@@ -1364,7 +1325,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
 
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
-      "!denybuild %d", clientNum );
+      "denybuild %d", clientNum );
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
       "Take away building rights from '%s'", name );
@@ -1379,7 +1340,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
 
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
-      "!allowbuild %d", clientNum );
+      "allowbuild %d", clientNum );
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
       "Allow '%s' to build", name );
@@ -3087,6 +3048,108 @@ static void Cmd_Ignore_f( gentity_t *ent )
 
 /*
 =================
+Cmd_ListMaps_f
+
+List all maps on the server
+=================
+*/
+
+static int SortMaps( const void *a, const void *b )
+{
+  return strcmp( *(char **)a, *(char **)b );
+}
+
+#define MAX_MAPLIST_MAPS 256
+#define MAX_MAPLIST_ROWS 9
+void Cmd_ListMaps_f( gentity_t *ent )
+{
+  char search[ 16 ] = {""};
+  char fileList[ 4096 ] = {""};
+  char *fileSort[ MAX_MAPLIST_MAPS ];
+  char *filePtr, *p;
+  int  numFiles;
+  int  fileLen = 0;
+  int  shown = 0;
+  int  count = 0;
+  int  page = 0;
+  int  pages;
+  int  row, rows;
+  int  start, i, j;
+
+  if( trap_Argc( ) > 1 )
+  {
+    trap_Argv( 1, search, sizeof( search ) );
+    for( p = search; ( *p ) && isdigit( *p ); p++ );
+    if( !( *p ) )
+    {
+      page = atoi( search );
+      search[ 0 ] = '\0';
+    }
+    else if( trap_Argc( ) > 2 )
+    {
+      char lp[ 8 ];
+      trap_Argv( 2, lp, sizeof( lp ) );
+      page = atoi( lp );
+    }
+    if( page > 0 )
+      page--;
+  }
+
+  numFiles = trap_FS_GetFileList( "maps/", ".bsp",
+                                  fileList, sizeof( fileList ) );
+  filePtr = fileList;
+  for( i = 0; i < numFiles && count < MAX_MAPLIST_MAPS; i++, filePtr += fileLen + 1 )
+  {
+    fileLen = strlen( filePtr );
+    if ( fileLen < 5 )
+      continue;
+
+    filePtr[ fileLen - 4 ] = '\0';
+
+    if( search[ 0 ] && !strstr( filePtr, search ) )
+      continue;
+
+    fileSort[ count ] = filePtr;
+    count++;
+  }
+  qsort( fileSort, count, sizeof( fileSort[ 0 ] ), SortMaps );
+
+  rows = ( count + 2 ) / 3;
+  pages = ( rows + MAX_MAPLIST_ROWS - 1 ) / MAX_MAPLIST_ROWS;
+  if( page >= pages )
+    page = pages - 1;
+
+  start = page * MAX_MAPLIST_ROWS * 3;
+  if( count < start + ( 3 * MAX_MAPLIST_ROWS ) )
+    rows = ( count - start + 2 ) / 3;
+  else
+    rows = MAX_MAPLIST_ROWS;
+
+  ADMBP_begin( );
+  for( row = 0; row < rows; row++ )
+  {
+    for( i = start + row, j = 0; i < count && j < 3; i += rows, j++ )
+    {
+      ADMBP( va( "^7 %-20s", fileSort[ i ] ) );
+      shown++;
+    }
+    ADMBP( "\n" );
+  }
+  if ( search[ 0 ] )
+    ADMBP( va( "^3listmaps: ^7found %d maps matching '%s^7'", count, search ) );
+  else
+    ADMBP( va( "^3listmaps: ^7listing %d of %d maps", shown, count ) );
+  if( pages > 1 )
+    ADMBP( va( ", page %d of %d", page + 1, pages ) );
+  if( page + 1 < pages )
+    ADMBP( va( ", use 'listmaps %s%s%d' to see more",
+               search, ( search[ 0 ] ) ? " ": "", page + 2 ) );
+  ADMBP( ".\n" );
+  ADMBP_end( );
+}
+
+/*
+=================
 Cmd_Test_f
 =================
 */
@@ -3259,6 +3322,7 @@ commands_t cmds[ ] = {
   { "itemtoggle", CMD_HUMAN|CMD_LIVING, Cmd_ToggleItem_f },
   { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
   { "levelshot", CMD_CHEAT, Cmd_LevelShot_f },
+  { "listmaps", CMD_MESSAGE|CMD_INTERMISSION, Cmd_ListMaps_f },
   { "m", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
   { "me", CMD_MESSAGE|CMD_INTERMISSION, Cmd_ActionMessage_f },
   { "mt", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
@@ -3340,7 +3404,7 @@ void ClientCommand( int clientNum )
 
   if( !command )
   {
-    if( !G_admin_cmd_check( ent, qfalse ) )
+    if( !G_admin_cmd_check( ent ) )
       trap_SendServerCommand( clientNum,
         va( "print \"Unknown command %s\n\"", cmd ) );
     return;
@@ -3408,71 +3472,29 @@ void ClientCommand( int clientNum )
   command->cmdHandler( ent );
 }
 
-/*
-=================
-G_SayArgc
-G_SayArgv
-G_SayConcatArgs
-
-trap_Argc, trap_Argv, and ConcatArgs consider say text as a single argument
-These functions assemble the text and re-parse it on word boundaries
-=================
-*/
-int G_SayArgc( void )
+void G_ListCommands( gentity_t *ent )
 {
-  int c = 0;
-  char *s;
+  int   i;
+  char  out[ MAX_STRING_CHARS ] = "";
+  int   len, outlen;
 
-  s = ConcatArgs( 0 );
-  while( 1 )
+  outlen = 0;
+
+  for( i = 0; i < numCmds; i++ )
   {
-    while( *s == ' ' )
-      s++;
-    if( !*s )
-      break;
-    c++;
-    while( *s && *s != ' ' )
-      s++;
+    len = strlen( cmds[ i ].cmdName ) + 1;
+    if( len + outlen >= sizeof( out ) - 1 )
+    {
+      trap_SendServerCommand( ent - g_entities, va( "cmds%s\n", out ) );
+      outlen = 0;
+    }
+
+    strcpy( out + outlen, va( " %s", cmds[ i ].cmdName ) );
+    outlen += len;
   }
-  return c;
-}
 
-qboolean G_SayArgv( int n, char *buffer, int bufferLength )
-{
-  char *s;
-
-  if( bufferLength < 1 )
-    return qfalse;
-  if( n < 0 )
-    return qfalse;
-  s = G_SayConcatArgs( n );
-  if( !*s )
-    return qfalse;
-  while( *s && *s != ' ' && bufferLength > 1 )
-  {
-    *buffer++ = *s++;
-    bufferLength--;
-  }
-  *buffer = 0;
-  return qtrue;
-}
-
-char *G_SayConcatArgs( int start )
-{
-  char *s;
-
-  s = ConcatArgs( 0 );
-  while( 1 )
-  {
-    while( *s == ' ' )
-      s++;
-    if( !*s || start == 0 )
-      break;
-    start--;
-    while( *s && *s != ' ' )
-      s++;
-  }
-  return s;
+  trap_SendServerCommand( ent - g_entities, va( "cmds%s\n", out ) );
+  G_admin_cmdlist( ent );
 }
 
 void G_DecolorString( char *in, char *out, int len )
@@ -3499,7 +3521,6 @@ void Cmd_PrivateMessage_f( gentity_t *ent )
   char *msg;
   char color;
   int i, pcount;
-  int skipargs = 0;
   int count = 0;
   qboolean teamonly = qfalse;
 
@@ -3509,14 +3530,8 @@ void Cmd_PrivateMessage_f( gentity_t *ent )
     return;
   }
 
-  // parse arguments
-  G_SayArgv( 0, cmd, sizeof( cmd ) );
-  if( !Q_stricmp( cmd, "say" ) || !Q_stricmp( cmd, "say_team" ) )
-  {
-    skipargs = 1;
-    G_SayArgv( 1, cmd, sizeof( cmd ) );
-  }
-  if( G_SayArgc( ) < 3+skipargs )
+  trap_Argv( 0, cmd, sizeof( cmd ) );
+  if( trap_Argc( ) < 3 )
   {
     ADMP( va( "usage: %s [name|slot#] [message]\n", cmd ) );
     return;
@@ -3525,9 +3540,8 @@ void Cmd_PrivateMessage_f( gentity_t *ent )
   if( !Q_stricmp( cmd, "mt" ) || !Q_stricmp( cmd, "/mt" ) )
     teamonly = qtrue;
 
-  // figure out the name matches
-  G_SayArgv( 1+skipargs, name, sizeof( name ) );
-  msg = G_SayConcatArgs( 2+skipargs );
+  trap_Argv( 1, name, sizeof( name ) );
+  msg = ConcatArgs( 2 );
   pcount = G_ClientNumbersFromString( name, pids, MAX_CLIENTS );
 
   // send the message
@@ -3567,9 +3581,6 @@ Send a message to all active admins
 */
 void Cmd_AdminMessage_f( gentity_t *ent )
 {
-  char cmd[ sizeof( "say_team" ) ];
-  int skiparg = 0;
-
   // Check permissions and add the appropriate user [prefix]
   if( !G_admin_permission( ent, ADMF_ADMINCHAT ) )
   {
@@ -3585,19 +3596,12 @@ void Cmd_AdminMessage_f( gentity_t *ent )
     }
   }
 
-  // Skip say/say_team if this was used from one of those
-  G_SayArgv( 0, cmd, sizeof( cmd ) );
-  if( !Q_stricmp( cmd, "say" ) || !Q_stricmp( cmd, "say_team" ) )
+  if( trap_Argc( ) < 2 )
   {
-    skiparg = 1;
-    G_SayArgv( 1, cmd, sizeof( cmd ) );
-  }
-  if( G_SayArgc( ) < 2 + skiparg )
-  {
-    ADMP( va( "usage: %s [message]\n", cmd ) );
+    ADMP( "usage: a [message]\n" );
     return;
   }
 
-  G_AdminMessage( ent, G_SayConcatArgs( 1 + skiparg ) );
+  G_AdminMessage( ent, ConcatArgs( 1 ) );
 }
 

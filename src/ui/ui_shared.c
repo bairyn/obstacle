@@ -78,6 +78,7 @@ static int lastListBoxClickTime = 0;
 
 void Item_RunScript( itemDef_t *item, const char *s );
 void Item_SetupKeywordHash( void );
+static ID_INLINE qboolean Item_IsEditField( itemDef_t *item );
 void Menu_SetupKeywordHash( void );
 int BindingIDFromName( const char *name );
 qboolean Item_Bind_HandleKey( itemDef_t *item, int key, qboolean down );
@@ -1751,7 +1752,7 @@ void Script_SetFocus( itemDef_t *item, char **args )
         Item_RunScript( focusItem, focusItem->onFocus );
 
       // Edit fields get activated too
-      if( focusItem->type == ITEM_TYPE_EDITFIELD || focusItem->type == ITEM_TYPE_NUMERICFIELD )
+      if( Item_IsEditField( focusItem ) )
       {
         g_editingField = qtrue;
         g_editItem = focusItem;
@@ -1840,20 +1841,23 @@ void UI_EscapeEmoticons( char *dest, const char *src, int destsize )
 {
   int len;
   qboolean escaped;
+
   for( ; *src && destsize > 1; src++, destsize-- )
   {
-    if ( UI_Text_Emoticon( src, &escaped, &len, NULL, NULL ) && !escaped )
+    if( UI_Text_IsEmoticon( src, &escaped, &len, NULL, NULL ) && !escaped )
     {
       *dest++ = '[';
       destsize--;
     }
+
     *dest++ = *src;
   }
+
   *dest++ = '\0';
 }
 
-qboolean UI_Text_Emoticon( const char *s, qboolean *escaped,
-                           int *length, qhandle_t *h, int *width )
+qboolean UI_Text_IsEmoticon( const char *s, qboolean *escaped,
+                             int *length, qhandle_t *h, int *width )
 {
   char name[ MAX_EMOTICON_NAME_LEN ] = {""};
   const char *p = s;
@@ -1944,8 +1948,8 @@ float UI_Text_Width( const char *text, float scale, int limit )
         continue;
       }
 
-      if ( UI_Text_Emoticon( s, &emoticonEscaped, &emoticonLen, 
-                             NULL, &emoticonWidth ) )
+      if( UI_Text_IsEmoticon( s, &emoticonEscaped, &emoticonLen,
+                            NULL, &emoticonWidth ) )
       {
         if( emoticonEscaped )
           s++;
@@ -2132,7 +2136,7 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
         continue;
       }
 
-      if( UI_Text_Emoticon( s, &emoticonEscaped, &emoticonLen,
+      if( UI_Text_IsEmoticon( s, &emoticonEscaped, &emoticonLen,
                             &emoticonHandle, &emoticonWidth ) )
       {
         if( emoticonEscaped )
@@ -3462,10 +3466,16 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
         case K_KP_DOWNARROW:
         case K_UPARROW:
         case K_KP_UPARROW:
+          // Ignore these keys from the say field
+          if( item->type == ITEM_TYPE_SAYFIELD )
+            break;
+
           newItem = Menu_SetNextCursorItem( item->parent );
 
-          if( newItem && ( newItem->type == ITEM_TYPE_EDITFIELD || newItem->type == ITEM_TYPE_NUMERICFIELD ) )
+          if( newItem && Item_IsEditField( newItem ) )
+          {
             g_editItem = newItem;
+          }
           else
           {
             releaseFocus = qtrue;
@@ -3474,8 +3484,17 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
 
           break;
 
+        case K_MOUSE1:
+        case K_MOUSE2:
+        case K_MOUSE3:
+        case K_MOUSE4:
+          // Ignore these buttons from the say field
+          if( item->type == ITEM_TYPE_SAYFIELD )
+            break;
+          // FALLTHROUGH
         case K_ENTER:
         case K_KP_ENTER:
+        case K_ESCAPE:
           releaseFocus = qtrue;
           goto exit;
 
@@ -3615,6 +3634,7 @@ void Item_StartCapture( itemDef_t *item, int key )
   switch( item->type )
   {
     case ITEM_TYPE_EDITFIELD:
+    case ITEM_TYPE_SAYFIELD:
     case ITEM_TYPE_NUMERICFIELD:
     case ITEM_TYPE_LISTBOX:
     {
@@ -3722,62 +3742,45 @@ qboolean Item_HandleKey( itemDef_t *item, int key, qboolean down )
   if( !down )
     return qfalse;
 
+  // Edit fields are handled specially
+  if( Item_IsEditField( item ) )
+    return qfalse;
+
   switch( item->type )
   {
     case ITEM_TYPE_BUTTON:
       return qfalse;
-      break;
 
     case ITEM_TYPE_RADIOBUTTON:
       return qfalse;
-      break;
 
     case ITEM_TYPE_CHECKBOX:
       return qfalse;
-      break;
-
-    case ITEM_TYPE_EDITFIELD:
-    case ITEM_TYPE_NUMERICFIELD:
-      return qfalse;
-      break;
 
     case ITEM_TYPE_COMBO:
       return Item_Combobox_HandleKey( item, key );
-      break;
 
     case ITEM_TYPE_LISTBOX:
       return Item_ListBox_HandleKey( item, key, down, qfalse );
-      break;
 
     case ITEM_TYPE_YESNO:
       return Item_YesNo_HandleKey( item, key );
-      break;
 
     case ITEM_TYPE_MULTI:
       return Item_Multi_HandleKey( item, key );
-      break;
 
     case ITEM_TYPE_OWNERDRAW:
       return Item_OwnerDraw_HandleKey( item, key );
-      break;
 
     case ITEM_TYPE_BIND:
       return Item_Bind_HandleKey( item, key, down );
-      break;
 
     case ITEM_TYPE_SLIDER:
       return Item_Slider_HandleKey( item, key, down );
-      break;
-      //case ITEM_TYPE_IMAGE:
-      //  Item_Image_Paint(item);
-      //  break;
 
     default:
       return qfalse;
-      break;
   }
-
-  //return qfalse;
 }
 
 void Item_Action( itemDef_t *item )
@@ -4025,14 +4028,6 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
       inHandler = qfalse;
       return;
     }
-    else if( key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3 )
-    {
-      g_editingField = qfalse;
-      g_editItem = NULL;
-      Display_MouseMove( NULL, DC->cursorx, DC->cursory );
-    }
-    else if( key == K_TAB || key == K_UPARROW || key == K_DOWNARROW )
-      return;
   }
 
   if( menu == NULL )
@@ -4119,7 +4114,7 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
           if( Rect_ContainsPoint( Item_CorrectedTextRect( item ), DC->cursorx, DC->cursory ) )
             Item_Action( item );
         }
-        else if( item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_NUMERICFIELD )
+        else if( Item_IsEditField( item ) )
         {
           if( Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) )
           {
@@ -4172,7 +4167,7 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
     case K_ENTER:
       if( item )
       {
-        if( item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_NUMERICFIELD )
+        if( Item_IsEditField( item ) )
         {
           char buffer[ MAX_STRING_CHARS ] = { 0 };
 
@@ -4304,18 +4299,53 @@ void Item_TextColor( itemDef_t *item, vec4_t *newColor )
   }
 }
 
+static void SkipColorCodes( const char **text, char *lastColor )
+{
+  while( Q_IsColorString( *text ) )
+  {
+    lastColor[ 0 ] = (*text)[ 0 ];
+    lastColor[ 1 ] = (*text)[ 1 ];
+    (*text) += 2;
+  }
+}
+
+static void SkipWhiteSpace( const char **text, char *lastColor )
+{
+  while( **text )
+  {
+    SkipColorCodes( text, lastColor );
+
+    if( **text != '\n' && isspace( **text ) )
+      (*text)++;
+    else
+      break;
+  }
+}
+
+static void SkipEmoticons( const char **text )
+{
+  int      emoticonLen;
+  qboolean emoticonEscaped;
+
+  while( UI_Text_IsEmoticon( *text, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
+  {
+    if( emoticonEscaped )
+      (*text)++;
+    else
+      (*text) += emoticonLen;
+  }
+}
+
 const char *Item_Text_Wrap( const char *text, float scale, float width )
 {
   static char   out[ 8192 ] = "";
   char          *paint = out;
-  char          c[ 3 ] = "^7";
+  char          c[ 3 ] = "";
   const char    *p = text;
   const char    *eol;
   const char    *q = NULL, *qMinus1 = NULL;
   unsigned int  testLength;
   unsigned int  i;
-  int           emoticonLen;
-  qboolean      emoticonEscaped;
 
   if( strlen( text ) >= sizeof( out ) )
     return NULL;
@@ -4324,42 +4354,15 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
 
   while( *p )
   {
-    // Skip leading whitespace
-
-    while( *p )
-    {
-      if( Q_IsColorString( p ) )
-      {
-        c[ 0 ] = p[ 0 ];
-        c[ 1 ] = p[ 1 ];
-        p += 2;
-      }
-      else if( *p != '\n' && isspace( *p ) )
-        p++;
-      else
-        break;
-    }
-
-    if( !*p )
-      break;
-
-    Q_strcat( paint, out + sizeof( out ) - paint, c );
-
     testLength = 1;
-
     eol = p;
-
     q = p + 1;
 
-    while( Q_IsColorString( q ) )
-    {
-      c[ 0 ] = q[ 0 ];
-      c[ 1 ] = q[ 1 ];
-      q += 2;
-    }
+    SkipColorCodes( &q, c );
 
     while( UI_Text_Width( p, scale, testLength ) < width )
     {
+      // Remaining string is too short to wrap
       if( testLength >= strlen( p ) )
       {
         eol = p + strlen( p );
@@ -4367,44 +4370,18 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
       }
 
       // Point q at the end of the current testLength
-      q = p;
-
-      for( i = 0; i < testLength; )
+      for( q = p, i = 0; i < testLength; i++ )
       {
-        // Skip color escapes
-        while( Q_IsColorString( q ) )
-        {
-          c[ 0 ] = q[ 0 ];
-          c[ 1 ] = q[ 1 ];
-          q += 2;
-        }
-        while( UI_Text_Emoticon( q, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
-        {
-          if( emoticonEscaped )
-            q++;
-          else
-            q += emoticonLen;
-        }
+        SkipColorCodes( &q, c );
+        SkipEmoticons( &q );
 
         qMinus1 = q;
         q++;
-        i++;
       }
 
       // Some color escapes might still be present
-      while( Q_IsColorString( q ) )
-      {
-        c[ 0 ] = q[ 0 ];
-        c[ 1 ] = q[ 1 ];
-        q += 2;
-      }
-      while( UI_Text_Emoticon( q, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
-      {
-        if( emoticonEscaped )
-          q++;
-        else
-          q += emoticonLen;
-      }
+      SkipColorCodes( &q, c );
+      SkipEmoticons( &q );
 
       // Manual line break
       if( *q == '\n' )
@@ -4429,19 +4406,26 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
     strncpy( paint, p, eol - p );
 
     paint[ eol - p ] = '\0';
+    p = eol;
 
-    // Add a \n if it's not there already
-    if( out[ strlen( out ) - 1 ] != '\n' )
+    // Skip leading whitespace on next line and save the
+    // last color code
+    SkipWhiteSpace( &p, c );
+
+    if( out[ strlen( out ) - 1 ] == '\n' )
     {
-      Q_strcat( out, sizeof( out ), "\n " );
-      Q_strcat( out, sizeof( out ), c );
+      // The line is deliberately broken, clear the color
+      c[ 0 ] = '\0';
     }
     else
-      c[ 0 ] = '\0';
+    {
+      // Add a \n if it's not there already
+      Q_strcat( out, sizeof( out ), "\n" );
+    }
+
+    Q_strcat( out, sizeof( out ), c );
 
     paint = out + strlen( out );
-
-    p = eol;
   }
 
   return out;
@@ -6024,11 +6008,6 @@ void Item_Paint( itemDef_t *item )
     case ITEM_TYPE_CHECKBOX:
       break;
 
-    case ITEM_TYPE_EDITFIELD:
-    case ITEM_TYPE_NUMERICFIELD:
-      Item_TextField_Paint( item );
-      break;
-
     case ITEM_TYPE_COMBO:
       Item_Combobox_Paint( item );
       break;
@@ -6062,6 +6041,9 @@ void Item_Paint( itemDef_t *item )
       break;
 
     default:
+      if( Item_IsEditField( item ) )
+        Item_TextField_Paint( item );
+
       break;
   }
 
@@ -6419,6 +6401,7 @@ itemDataType_t Item_DataType( itemDef_t *item )
 
     case ITEM_TYPE_EDITFIELD:
     case ITEM_TYPE_NUMERICFIELD:
+    case ITEM_TYPE_SAYFIELD:
     case ITEM_TYPE_YESNO:
     case ITEM_TYPE_BIND:
     case ITEM_TYPE_SLIDER:
@@ -6430,6 +6413,25 @@ itemDataType_t Item_DataType( itemDef_t *item )
 
     case ITEM_TYPE_MODEL:
       return TYPE_MODEL;
+  }
+}
+
+/*
+===============
+Item_IsEditField
+===============
+*/
+static ID_INLINE qboolean Item_IsEditField( itemDef_t *item )
+{
+  switch( item->type )
+  {
+    case ITEM_TYPE_EDITFIELD:
+    case ITEM_TYPE_NUMERICFIELD:
+    case ITEM_TYPE_SAYFIELD:
+      return qtrue;
+
+    default:
+      return qfalse;
   }
 }
 
@@ -6631,6 +6633,7 @@ qboolean ItemParse_type( itemDef_t *item, int handle )
       break;
 
     case ITEM_TYPE_EDITFIELD:
+    case ITEM_TYPE_SAYFIELD:
     case ITEM_TYPE_NUMERICFIELD:
     case ITEM_TYPE_YESNO:
     case ITEM_TYPE_BIND:
@@ -6639,7 +6642,7 @@ qboolean ItemParse_type( itemDef_t *item, int handle )
       item->typeData.edit = UI_Alloc( sizeof( editFieldDef_t ) );
       memset( item->typeData.edit, 0, sizeof( editFieldDef_t ) );
 
-      if( item->type == ITEM_TYPE_EDITFIELD )
+      if( item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_SAYFIELD )
         item->typeData.edit->maxPaintChars = MAX_EDITFIELD;
       break;
 

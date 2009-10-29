@@ -100,14 +100,14 @@ extern int oc_gameMode;
 	}
 	g_admin_hide_t;
 
-	qboolean G_admin_editoc(void *ent, int skiparg);
-	qboolean G_admin_hide(void *ent, int skiparg);
-	qboolean G_admin_showhides(void *ent, int skiparg);
-	qboolean G_admin_devmap(void *ent, int skiparg);
-	qboolean G_admin_layoutsave(void *ent, int skiparg);
-	qboolean G_admin_adjusthide(void *ent, int skiparg);
-	qboolean G_admin_startscrim(void *ent, int skiparg);
-	qboolean G_admin_endscrim(void *ent, int skiparg);
+	qboolean G_admin_editoc(void *ent);
+	qboolean G_admin_hide(void *ent);
+	qboolean G_admin_showhides(void);
+	qboolean G_admin_devmap(void);
+	qboolean G_admin_layoutsave(void *ent);
+	qboolean G_admin_adjusthide(void *ent);
+	qboolean G_admin_startscrim(void *ent);
+	qboolean G_admin_endscrim(void *ent);
 
 	qboolean G_admin_canEditOC(void *ent);
 
@@ -1799,8 +1799,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{ \
 			const char *options = BG_OC_ParseLayoutFlags(arg2); \
 			level.voteThreshold[team] = g_mapVotePercent.value + percentAddition; \
-			/*Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "!changemap %s %s", arg, arg2);*/ \
-			Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "!map %s %s", arg, arg2); \
+			Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "changemap %s %s", arg, arg2); \
 			Com_sprintf(level.voteDisplayString[team], \
 			sizeof(level.voteDisplayString[team]), "Change to map '%s^7' using layout '%s^7'%s%s%s", arg, arg2, (*options) ? (" (layout uses flags '") : (""), options, (*options) ? ("')") : ("")); \
 		} \
@@ -1830,7 +1829,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(*level.layout) \
 		{ \
 			level.voteThreshold[team] = g_mapVotePercent.value + percentAddition; \
-			Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "!restart %s", level.layout); \
+			Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "restart %s", level.layout); \
 			Com_sprintf(level.voteDisplayString[team], \
 				sizeof(level.voteDisplayString[team]), "Restart current map using layout '%s^7'", level.layout); \
 		} \
@@ -1894,7 +1893,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), \
-			"!hide %d", clientNum); \
+			"hide %d", clientNum); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Hide player '%s'", name); \
 	} \
@@ -1928,7 +1927,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), \
-			"!unhide %i", clientNum); \
+			"unhide %i", clientNum); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Un-Hide player \'%s\'", name); \
 	} \
@@ -1965,7 +1964,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		level.voteThreshold[team] = g_startScrimVotePercent.value; \
-		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "!startscrim %c", arg[0]); \
+		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "startscrim %c", arg[0]); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Start a '%s^7' scrim^7", arg[0] == 'm' ? "^1medi^7" : "^2armoury^7"); \
 	} \
@@ -1978,7 +1977,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		level.voteThreshold[team] = g_endScrimVotePercent.value; \
-		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "!endscrim"); \
+		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "endscrim"); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), "End the scrim"); \
 	}
 
@@ -1992,7 +1991,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
-		if(!ent->client->pers.scrimTeam && strstr(level.voteString[team], "!startscrim")) \
+		if(!ent->client->pers.scrimTeam && strstr(level.voteString[team], "startscrim")) \
 		{ \
 			G_ClientPrint(ent, "You need to be on a scrim team to do this", CLIENT_NULL); \
 			return; \
