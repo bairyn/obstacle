@@ -127,7 +127,7 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_developer, "ui_developer", "0", CVAR_ARCHIVE | CVAR_CHEAT },
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
   { &ui_winner, "ui_winner", "", CVAR_ROM },
-  { &ui_chatCommands, "ui_chatCommands", "1", CVAR_ARCHIVE }
+  { &ui_chatCommands, "ui_chatCommands", "1", CVAR_ARCHIVE },
   { &ui_scrimTeamName, "ui_scrimTeamName", "UnnamedTeam", CVAR_ARCHIVE },
   { &ui_scrimWeapon, "ui_scrimWeapon", "rifle", CVAR_ARCHIVE },
 };

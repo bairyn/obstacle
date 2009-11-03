@@ -90,11 +90,6 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "[^3name|slot#^7]"
     },
 
-    {"help", G_admin_help, "help",
-      "display commands available to you or help on a specific command",
-      "(^5command^7)"
-    },
-
     {"info", G_admin_info, "h",
       "display the contents of server info files",
       "(^5subject^7)"
@@ -2067,16 +2062,16 @@ qboolean G_admin_override( gentity_t *ent )
     ADMP("Cheats are disabled.\n");
   }
 
-  G_SayArgv( skiparg, command, sizeof( command ) );
+  trap_Argv( 0, command, sizeof( command ) );
   cmd = command;
   if( cmd && *cmd == '!' )
     cmd++;
-  if( G_SayArgc() < 2 + skiparg )
+  if( trap_Argc() < 2 )
   {
     ADMP( va( "^3!%s: ^7usage: !%s [name|slot#]\n", cmd, cmd ) );
     return qfalse;
   }
-  G_SayArgv( 1 + skiparg, name, sizeof( name ) );
+  trap_Argv( 1, name, sizeof( name ) );
   if( ( found = G_ClientNumbersFromString( name, pids, MAX_CLIENTS ) ) != 1 )
   {
     G_MatchOnePlayer( pids, found, err, sizeof( err ) );
@@ -3010,7 +3005,7 @@ qboolean G_admin_lock( gentity_t *ent )
 void G_Unescape( char *input, char *output, int len );
 qboolean G_StringReplaceCvars( char *input, char *output, int len );
 
-qboolean G_admin_info( gentity_t *ent, int skiparg )
+qboolean G_admin_info( gentity_t *ent )
 {/*
   fileHandle_t infoFile;
   int length, i;
@@ -3018,9 +3013,9 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
   char *message, filename[ MAX_OSPATH ], messagebuf[ MESSAGEBUF_LEN ];
   for( i = 0; i < MESSAGEBUF_LEN; i++ )
     messagebuf[ i ] = '\0';
-  if( G_SayArgc() == 2 + skiparg )
-    G_SayArgv( 1 + skiparg, filename, sizeof( filename ) );
-  else if( G_SayArgc() == 1 + skiparg )
+  if( trap_Argc() == 2 )
+    trap_Argv( 1, filename, sizeof( filename ) );
+  else if( trap_Argc() == 1 )
     Q_strncpyz( filename, "default", sizeof( filename ) );
   else
   {
@@ -3091,9 +3086,9 @@ qboolean G_admin_info( gentity_t *ent, int skiparg )
       return qfalse;
     }
 
-  if( G_SayArgc() == 2 + skiparg )
-    G_SayArgv( 1 + skiparg, fileName, MAX_OSPATH );
-  else if( G_SayArgc() == 1 + skiparg )
+  if( trap_Argc() == 2 )
+    trap_Argv( 1, fileName, MAX_OSPATH );
+  else if( trap_Argc() == 1 )
     strcpy( fileName, "default" );
   else
   {
@@ -3365,5 +3360,6 @@ void G_admin_cleanup()
     BG_Free( c );
   }
   g_admin_commands = NULL;
+  G_OC_Cleanup();
   BG_DefragmentMemory( );
 }

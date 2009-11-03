@@ -89,6 +89,7 @@ extern int oc_gameMode;
 
 	typedef struct g_admin_hide
 	{
+		struct g_admin_hide *next;
 		char name[MAX_NAME_LENGTH];
 		char guid[33];
 		char ip[40];
@@ -100,10 +101,18 @@ extern int oc_gameMode;
 	}
 	g_admin_hide_t;
 
+	typedef struct g_admin_hideTest
+	{
+		char name[MAX_NAME_LENGTH];
+		char guid[33];
+		char ip[40];
+	}
+	g_admin_hideTest_t;
+
 	qboolean G_admin_editoc(void *ent);
 	qboolean G_admin_hide(void *ent);
-	qboolean G_admin_showhides(void);
-	qboolean G_admin_devmap(void);
+	qboolean G_admin_showhides(void *ent);
+	qboolean G_admin_devmap(void *ent);
 	qboolean G_admin_layoutsave(void *ent);
 	qboolean G_admin_adjusthide(void *ent);
 	qboolean G_admin_startscrim(void *ent);
@@ -111,66 +120,71 @@ extern int oc_gameMode;
 
 	qboolean G_admin_canEditOC(void *ent);
 
-	qboolean G_admin_hide_check(char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, int *id);
+	qboolean G_admin_hide_check(const char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, g_admin_hide_t **hideP);
 
-	#define G_OC_ADMINDEFS  /* FIXME: this causes the list to be out of order */ \
+	g_admin_hide_t *G_admin_findHide(const g_admin_hideTest_t *hide);
+
+	#define G_OC_ADMINDEFS \
 	, \
-	{"adjusthide", (qboolean(*)(gentity_t *, int))(G_admin_adjusthide), "hide", \
-      "change the duration, hidden or reason of a hide.  time is specified as numbers " \
-      "followed by units 'w' (weeks), 'd' (days), 'h' (hours) or 'm' (minutes)," \
-      " or seconds if no units are specified - if hidden is only" \
-      " arg, add c as first arg." \
-      " For example, to enable isHidden for slot #4, use" \
-      " !adjusthide 4 c 1.", \
-      "[^3hide#^7] (^5time^7) (^5chidden hidden^7) (^5reason^7)" \
+	{"adjusthide", (qboolean(*)(gentity_t *))(G_admin_adjusthide), "hide", \
+      "change the duration or reason of a hide.  duration is specified as " \
+      "numbers followed by units 'w' (weeks), 'd' (days), 'h' (hours) or " \
+      "'m' (minutes), or seconds if no units are specified.  If the duration is" \
+      " preceded by a + or -, the hide duration will be extended or shortened by" \
+      " the specified amount.  Hidden can be \"yes\" or \"no\".  Use two backspaces (\"\\\\\")" \
+      " if the reason should begin with a backslash.", \
+      "[^3hide#^7] (^5/mask^7) (^5duration^7) (^5(\\\\)reason^7) (^5\\hidden^7)" \
     }, \
  \
-    {"devmap", (qboolean(*)(gentity_t *, int))(G_admin_devmap), "devmap", \
+    {"devmap", (qboolean(*)(gentity_t *))(G_admin_devmap), "devmap", \
       "load a map with cheats (and optionally force layout)", \
       "[^3mapname^7] (^5layout^7)" \
     }, \
  \
-	{"editoc", (qboolean(*)(gentity_t *, int))(G_admin_editoc), "editoc", \
+	{"editoc", (qboolean(*)(gentity_t *))(G_admin_editoc), "editoc", \
 		"editoc", \
 		"[^30 - none|1 - admins|2 - all#^7]" \
 	}, \
  \
-	{"endscrim", (qboolean(*)(gentity_t *, int))(G_admin_endscrim), "scrim", \
+	{"endscrim", (qboolean(*)(gentity_t *))(G_admin_endscrim), "scrim", \
 		"Ends the scrim taking place", \
 		"" \
 	}, \
  \
-	{"hide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "hide", \
+	{"hide", (qboolean(*)(gentity_t *))(G_admin_hide), "hide", \
 		"hide a player", \
 		"[^3name|slot#^7]" \
 	}, \
  \
-	{"layoutsave", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), "layoutsave", \
+	{"layoutsave", (qboolean(*)(gentity_t *))(G_admin_layoutsave), "layoutsave", \
 		"save a map layout", \
 		"[^3layoutname^7]" \
 	}, \
  \
-	{"layoutsavereview", (qboolean(*)(gentity_t *, int))(G_admin_layoutsave), "editoc", \
+	{"layoutsavereview", (qboolean(*)(gentity_t *))(G_admin_layoutsave), "editoc", \
 		"save a map layout", \
 		"[^3layoutname^7]" \
 	}, \
  \
-	{"showhides", (qboolean(*)(gentity_t *, int))(G_admin_showhides), "hide", \
+	{"showhides", (qboolean(*)(gentity_t *))(G_admin_showhides), "hide", \
 		"display a (partial) list of active hides", \
 		"(^5start at hide#^7) (^5name|IP^7)" \
 	}, \
  \
-	{"startscrim", (qboolean(*)(gentity_t *, int))(G_admin_startscrim), "scrim", \
+	{"startscrim", (qboolean(*)(gentity_t *))(G_admin_startscrim), "scrim", \
 		"Starts a medical station scrim or an armoury scrim", \
 		"[^3m|a -- medical station or armoury scrim^7]" \
 	}, \
  \
-	{"unhide", (qboolean(*)(gentity_t *, int))(G_admin_hide), "hide", \
+	{"unhide", (qboolean(*)(gentity_t *))(G_admin_hide), "hide", \
 		"Un-Hide a player", \
 		"[^3name|slot#^7]" \
 	}
 
-	extern g_admin_hide_t *g_admin_hides[MAX_ADMIN_HIDES];
+	extern g_admin_hide_t *g_admin_hides;
+
+	#define ADMF_CAN_PERM_HIDE "CANPERMHIDE"
+	#define MAX_ADMIN_SHOWHIDES 10
 
 	#define G_OC_ADMINWRITE \
 	{ \
@@ -203,6 +217,19 @@ extern int oc_gameMode;
 			trap_FS_Write("\n", 1, f); \
 		} \
 	}
+
+	#define G_OC_Cleanup() \
+	do \
+	{ \
+		g_admin_hide_t *h; \
+ \
+		for(h = g_admin_hides; h; h = n); \
+		{ \
+			n = h->next; \
+			BG_Free(n); \
+		} \
+		g_admin_hides = NULL; \
+	} while(0)
 
 	#define G_OC_ADMINREADDEC \
 	g_admin_hide_t *h = NULL; \
@@ -279,6 +306,7 @@ extern int oc_gameMode;
 	#endif
 	typedef struct
 	{
+	//	struct g_oc_scrimTeam_t *next;
 		int       active;
 		char      name[50];  // MAX_NAME_LENGTH isn't here
 		int       time;
@@ -294,7 +322,6 @@ extern int oc_gameMode;
 		int       flags;
 		#define G_OC_SCRIMFLAG_EQUIPMENT     0x0001
 		#define G_OC_SCRIMFLAG_NOTSINGLETEAM 0x0002  // set when a player joins a team that already has another player in it and is never unset while the team exists
-	//	struct g_oc_scrimTeam_t *next;
 	} g_oc_scrimTeam_t;
 
 	#define G_OC_MAX_SCRIM_TEAMS ((G_OC_MAX_SCRIM_TEAMS_REAL) + (1))
@@ -383,7 +410,7 @@ extern int oc_gameMode;
 				return; \
 			} \
 		} \
-	} while(0);
+	} while(0)
 
 	#define G_OC_PostCheckVote() level.ocScrimVote = 0;
 
@@ -475,7 +502,8 @@ extern int oc_gameMode;
 	vmCvar_t g_unhideTimeCallvoteMinutes; \
 	vmCvar_t g_timelimitDrop; \
 	vmCvar_t g_startScrimVotePercent; \
-	vmCvar_t g_endScrimVotePercent;
+	vmCvar_t g_endScrimVotePercent; \
+	vmCvar_t g_adminMaxHide;
 
 	#define G_OC_EXTERNCVARS \
 	extern vmCvar_t g_alwaysSaveStats; \
@@ -492,7 +520,8 @@ extern int oc_gameMode;
 	extern vmCvar_t g_unhideTimeCallvoteMinutes; \
 	extern vmCvar_t g_timelimitDrop; \
 	extern vmCvar_t g_startScrimVotePercent; \
-	extern vmCvar_t g_endScrimVotePercent;
+	extern vmCvar_t g_endScrimVotePercent; \
+	extern vmCvar_t g_adminMaxHide;
 
 	#define G_OC_CVARTABLE \
 	{ &g_alwaysSaveStats, "g_alwaysSaveStats", "0", CVAR_ARCHIVE, 0, qtrue  }, \
@@ -509,7 +538,8 @@ extern int oc_gameMode;
 	{ &g_unhideTimeCallvoteMinutes, "g_unhideTimeCallvoteMinutes", "5", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_timelimitDrop, "g_timelimitDrop", "17.5", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_startScrimVotePercent, "g_startScrimVotePercent", "85", CVAR_ARCHIVE, 0, qtrue  }, \
-	{ &g_endScrimVotePercent, "g_endScrimVotePercent", "90", CVAR_ARCHIVE, 0, qtrue  },
+	{ &g_endScrimVotePercent, "g_endScrimVotePercent", "90", CVAR_ARCHIVE, 0, qtrue  }, \
+	{ &g_adminMaxHide, "g_adminMaxHide", "2w", CVAR_ARCHIVE, 0, qfalse  },
 
 	#define G_OC_LEVEL_LOCALS \
 	int totalMedistations; \
@@ -1021,12 +1051,16 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(level.totalMedistations && client->pers.medis && client->pers.medisLastCheckpoint) \
 		{ \
 			BG_Free(client->pers.medis); \
+			client->pers.medis = NULL; \
 			BG_Free(client->pers.medisLastCheckpoint); \
+			client->pers.medisLastCheckpoint = NULL; \
 		} \
 		if(level.totalArmouries && client->pers.arms && client->pers.armsLastCheckpoint) \
 		{ \
 			BG_Free(client->pers.arms); \
+			client->pers.medis = NULL; \
 			BG_Free(client->pers.armsLastCheckpoint); \
+			client->pers.medisLastCheckpoint = NULL; \
 		} \
  \
 		/* cleanly handle scrim teams */ \
