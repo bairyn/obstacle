@@ -176,7 +176,7 @@ extern int oc_gameMode;
 	{ \
 		g_admin_hide_t *h; \
  \
-		for(h = g_admin_hides; h; h = h->next)
+		for(h = g_admin_hides; h; h = h->next) \
 		{ \
 			/* don't write expired hides */ \
 			/* if expires is 0, then it's a perm hide */ \
@@ -201,7 +201,7 @@ extern int oc_gameMode;
 			trap_FS_Write("hidden = ", 10, f); \
 			admin_writeconfig_int(h->hidden, f); \
 			trap_FS_Write("\n", 1, f); \
-		}
+		} \
 	}
 
 	#define G_OC_ADMINREADDEC \
