@@ -1756,6 +1756,10 @@ void G_SendGameStat( team_t team )
   int       i, dataLength, entryLength;
   gclient_t *cl;
 
+  // games with cheats enabled are not very good for balance statistics
+  if( g_cheats.integer )
+    return;
+
   trap_Cvar_VariableStringBuffer( "mapname", map, sizeof( map ) );
 
   switch( team )
