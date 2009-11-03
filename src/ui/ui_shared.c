@@ -1949,7 +1949,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
       }
 
       if( UI_Text_IsEmoticon( s, &emoticonEscaped, &emoticonLen,
-                            NULL, &emoticonWidth ) )
+                              NULL, &emoticonWidth ) )
       {
         if( emoticonEscaped )
           s++;
@@ -2137,7 +2137,7 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
       }
 
       if( UI_Text_IsEmoticon( s, &emoticonEscaped, &emoticonLen,
-                            &emoticonHandle, &emoticonWidth ) )
+                              &emoticonHandle, &emoticonWidth ) )
       {
         if( emoticonEscaped )
           s++;
@@ -3927,6 +3927,55 @@ void  Menus_Activate( menuDef_t *menu )
   }
 }
 
+qboolean Menus_ReplaceActive( menuDef_t *menu )
+{
+  int i;
+  menuDef_t *active;
+
+  if( openMenuCount < 1 )
+    return qfalse;
+
+  active = menuStack[ openMenuCount - 1]; 
+
+  if( !( active->window.flags & WINDOW_HASFOCUS )  ||
+     !( active->window.flags & WINDOW_VISIBLE ) )
+  {
+    return qfalse;
+  }
+
+  if( menu == active )
+    return qfalse;
+
+  if( menu->itemCount != active->itemCount )
+    return qfalse;
+  
+  for( i = 0; i < menu->itemCount; i++ ) 
+  {
+    if( menu->items[ i ]->type != active->items[ i ]->type )
+      return qfalse;
+  }
+
+  active->window.flags &= ~( WINDOW_FADINGOUT | WINDOW_VISIBLE );
+  menu->window.flags |= ( WINDOW_HASFOCUS | WINDOW_VISIBLE );
+
+  menuStack[ openMenuCount - 1 ] = menu;
+  if( menu->onOpen )
+  {
+    itemDef_t item;
+    item.parent = menu;
+    Item_RunScript( &item, menu->onOpen );
+  }
+  
+  for( i = 0; i < menu->itemCount; i++ ) 
+  {
+      menu->items[ i ]->cursorPos = active->items[ i ]->cursorPos;
+      menu->items[ i ]->typeData.list->startPos = active->items[ i ]->typeData.list->startPos;
+      menu->items[ i ]->feederID = active->items[ i ]->feederID;
+      menu->items[ i ]->typeData.combo->cursorPos = active->items[ i ]->typeData.combo->cursorPos;
+  }
+  return qtrue;
+}
+
 int Display_VisibleMenuCount( void )
 {
   int i, count;
@@ -4014,6 +4063,10 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
       g_editItem = NULL;
       inHandler = qfalse;
       return;
+    }
+    else
+    {
+      Item_RunScript( g_editItem, g_editItem->onCharEntry );
     }
   }
 
@@ -4395,10 +4448,6 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
     paint[ eol - p ] = '\0';
     p = eol;
 
-    // Skip leading whitespace on next line and save the
-    // last color code
-    SkipWhiteSpace( &p, c );
-
     if( out[ strlen( out ) - 1 ] == '\n' )
     {
       // The line is deliberately broken, clear the color
@@ -4408,6 +4457,10 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
     {
       // Add a \n if it's not there already
       Q_strcat( out, sizeof( out ), "\n" );
+
+      // Skip leading whitespace on next line and save the
+      // last color code
+      SkipWhiteSpace( &p, c );
     }
 
     Q_strcat( out, sizeof( out ), c );
@@ -4961,6 +5014,7 @@ static bind_t g_bindings[] =
     { "teamvote no",  K_F4,          -1, -1, -1 },
     { "scoresUp",      K_KP_PGUP,    -1, -1, -1 },
     { "scoresDown",    K_KP_PGDN,    -1, -1, -1 },
+    { "screenshotJPEG",-1,           -1, -1, -1 },
     { "messagemode",  -1,            -1, -1, -1 },
     { "messagemode2", -1,            -1, -1, -1 }
   };
@@ -6158,6 +6212,26 @@ menuDef_t *Menus_ActivateByName( const char *p )
   return m;
 }
 
+menuDef_t *Menus_ReplaceActiveByName( const char *p )
+{
+  int i;
+  menuDef_t *m = NULL;
+
+  // Activate one menu
+
+  for( i = 0; i < menuCount; i++ )
+  {
+    if( Q_stricmp( Menus[i].window.name, p ) == 0 )
+    {
+      m = &Menus[i];
+      if(! Menus_ReplaceActive( m ) )
+        return NULL;
+      break;
+    }
+  }
+  return m;
+}
+
 
 void Item_Init( itemDef_t *item )
 {
@@ -6943,6 +7017,15 @@ qboolean ItemParse_onTextEntry( itemDef_t *item, int handle )
   return qtrue;
 }
 
+
+qboolean ItemParse_onCharEntry( itemDef_t *item, int handle )
+{
+  if( !PC_Script_Parse( handle, &item->onCharEntry ) )
+    return qfalse;
+
+  return qtrue;
+}
+
 qboolean ItemParse_action( itemDef_t *item, int handle )
 {
   if( !PC_Script_Parse( handle, &item->action ) )
@@ -7244,6 +7327,7 @@ keywordHash_t itemParseKeywords[] = {
   {"mouseEnterText", ItemParse_mouseEnterText, TYPE_ANY},
   {"mouseExitText", ItemParse_mouseExitText, TYPE_ANY},
   {"onTextEntry", ItemParse_onTextEntry, TYPE_ANY},
+  {"onCharEntry", ItemParse_onCharEntry, TYPE_ANY},
   {"action", ItemParse_action, TYPE_ANY},
   {"cvar", ItemParse_cvar, TYPE_ANY},
   {"maxChars", ItemParse_maxChars, TYPE_EDIT},
