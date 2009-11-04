@@ -226,7 +226,7 @@ extern int oc_gameMode;
 		for(h = g_admin_hides; h; h = n); \
 		{ \
 			n = h->next; \
-			BG_Free(n); \
+			BG_Free(h); \
 		} \
 		g_admin_hides = NULL; \
 	} while(0)
