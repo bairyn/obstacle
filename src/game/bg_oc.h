@@ -223,7 +223,7 @@ extern int oc_gameMode;
 	{ \
 		g_admin_hide_t *h; \
  \
-		for(h = g_admin_hides; h; h = n); \
+		for(h = g_admin_hides; h; h = n) \
 		{ \
 			n = h->next; \
 			BG_Free(h); \
