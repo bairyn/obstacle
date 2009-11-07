@@ -1843,7 +1843,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       }
       else
       {
-        if( !g_cheats.integer ) // add a bit to the build timer
+        if( !g_cheats.integer && !G_OC_NoBuildTimer() ) // add a bit to the build timer
         {
             ent->client->ps.stats[ STAT_MISC ] +=
               BG_Buildable( traceEnt->s.modelindex )->buildTime / 4;
