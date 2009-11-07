@@ -6,7 +6,9 @@
     "Your primary objective is to get to the armoury.  Some OC's have"
     "multiple armouries, most of which all will need to be used in order to"
     "win, unless the course uses the option 'OneArm'\n\n"
-
+  }
+  "^3Welcome (2)^7"
+  {
     "Most OC's have many medical stations built for bonus.  These are usually"
     "more difficult to reach than the armoury.  Healing hasn't"
     "been changed in the OC mod (medis will heal and give medkit).\n\n"
@@ -14,10 +16,16 @@
     "You can save your progress by activating a checkpoint (booster)."
     "Shoot, slice, or bite a checkpoint to activate it.  When you die, you"
     "will lose all unsaved your used medis and armouries.\n\n"
-
+  }
+  "^3Welcome (3)^7"
+  {
     "Some telenodes allow you to teleport.  Aim at the _base_ of one of"
     "these telenodes and press 'use' (default 'q') to teleport.\n\n"
 
+    "(See ^2/info playing-more^7 for more topics)"
+  }
+  "More^7"
+  {
     "(See ^2/info playing-more^7 for more topics)"
   }
 }
