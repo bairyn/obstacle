@@ -3984,18 +3984,6 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
 
   G_OC_BUILDABLEBUILT( built );
 
-  if( builder->client ) {
-    G_TeamCommand( builder->client->pers.teamSelection,
-      va( "print \"%s ^5placed^7 by %s^7\n\"",
-        BG_Buildable( built->s.modelindex )->humanName, 
-        builder->client->pers.netname ) );
-    G_LogPrintf("Build: %i %i 0: %s^7 is ^2building^7 %s\n",
-      builder->client->ps.clientNum,
-      built->s.modelindex,
-      builder->client->pers.netname, 
-      BG_Buildable( built->s.modelindex )->name );
-  }
-
   if( builder && builder->client )
   {
     G_TeamCommand( builder->client->ps.stats[ STAT_TEAM ],
