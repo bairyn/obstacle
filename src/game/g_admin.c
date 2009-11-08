@@ -90,7 +90,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "[^3name|slot#^7]"
     },
 
-    {"info", G_admin_info, "h",
+    {"info", G_admin_info, "info",
       "display the contents of server info files",
       "(^5subject^7)"
     },
