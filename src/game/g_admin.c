@@ -3077,7 +3077,7 @@ qboolean G_admin_info( gentity_t *ent )
   int  len, i=0;
   char *info, *infoPtr, *cr;
   char fileName[ MAX_OSPATH ];
-  char line[ MAX_STRING_CHARS ], linebuf[ MAX_STRING_CHARS ];
+  char line[ MAX_STRING_CHARS ];
 
   if( g_floodMinTime.integer && ent && ent->client )
     if ( G_FloodLimited( ent ) )
@@ -3128,10 +3128,12 @@ qboolean G_admin_info( gentity_t *ent )
     }
     line[ i++ ] = *info;
     line[ i ] = '\0';
-    if( *info == '\n' )
+    //if( *info == '\n' )
+#define CHUNKSIZE 1000
+	if( i >= CHUNKSIZE )
     {
       ADMP( line );
-      i = 0;
+      line[0] = i = 0;
     }
     info++;
   }
@@ -3140,8 +3142,9 @@ qboolean G_admin_info( gentity_t *ent )
 
   if( line[0] )
   {
-    ADMP( linebuf );
-    ADMP( "\n" );
+    ADMP( line );
+	if( line[strlen(line) - 1] != '\n' )
+      ADMP( "\n" );
   }
 
   BG_Free( info );
