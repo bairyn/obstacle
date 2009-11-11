@@ -844,6 +844,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(!BG_OC_OCMode()) \
 			break; \
  \
+		if(!ent || !ent->client) \
+			break; \
+ \
 		if(ent->client->pers.teamSelection != TEAM_ALIENS) \
 			break; \
  \
