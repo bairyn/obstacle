@@ -3703,13 +3703,13 @@ static qboolean G_OC_StatsEqual(stat_t *a, stat_t *b)
 
 static qboolean G_OC_SameGuy(stat_t *a, stat_t *b)
 {
-	if(strcmp(a->guid,     b->guid) == 0)
+	if(strcmp(a->guid,      b->guid) == 0 && strcmp(a->guid, "guid") != 0)
 		return qtrue;
 
-	if(strcmp(a->ip,       b->ip) == 0)
+	if(strcmp(a->ip,        b->ip) == 0 && strcmp(a_ip, "ip") != 0)
 		return qtrue;
 
-	if(strcmp(a->adminName, b->adminName) == 0 && strcmp(a->adminName, "noname"))
+	if(strcmp(a->adminName, b->adminName) == 0 && strcmp(a->adminName, "noname") != 0)
 		return qtrue;
 
 	return qfalse;
