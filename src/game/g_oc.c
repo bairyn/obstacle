@@ -3709,7 +3709,7 @@ static qboolean G_OC_SameGuy(stat_t *a, stat_t *b)
 	if(strcmp(a->ip,       b->ip) == 0)
 		return qtrue;
 
-	if(strcmp(a->adminName, b->adminName) == 0)
+	if(strcmp(a->adminName, b->adminName) == 0 && strcmp(a->adminName, "noname"))
 		return qtrue;
 
 	return qfalse;
