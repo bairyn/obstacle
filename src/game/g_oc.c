@@ -4350,12 +4350,12 @@ void Cmd_Stats_f(gentity_t *ent)
 				// always show date
 				//if(trap_Argc() < 4)
 				//{
-					//Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03d/%%03d%%s %%s%%03dm:%%02ds:%%03dms%%s\n\"", 32 - (strlen(name) - strlen(sanName)));
+					//Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03d/%%03d%%s %%s%%03dm:%%02ds:%%03dms%%s\n\"", 32 + 2 * (strlen(name) - strlen(sanName)));
 					//trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, count, medis, suffix2, prefix2, MINS(score), SECS(score), MSEC(score), suffix2));
 				//}
 				//else
 				//{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03d/%%03d%%s %%s%%03dm:%%02ds:%%03dms%%s - %%s\n\"", 32 - (strlen(name) - strlen(sanName)));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03d/%%03d%%s %%s%%03dm:%%02ds:%%03dms%%s - %%s\n\"", 32 + 2 * (strlen(name) - strlen(sanName)));
 					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, count, medis, suffix2, prefix2, MINS(score), SECS(score), MSEC(score), suffix2, dateTime));
 				//}
 			}
@@ -4481,12 +4481,12 @@ void Cmd_Stats_f(gentity_t *ent)
 				// always show date
 				//if(trap_Argc() < 4)
 				//{
-					//Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03dm:%%02ds:%%03dms%%s\n\"", 32 - (strlen(name) - strlen(sanName)));
+					//Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03dm:%%02ds:%%03dms%%s\n\"", 32 + 2 * (strlen(name) - strlen(sanName)));
 					//trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, MINS(score), SECS(score), MSEC(score), suffix2));
 				//}
 				//else
 				//{
-					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03dm:%%02ds:%%03dms^7 - %%s%%s\n\"", 32 - (strlen(name) - strlen(sanName)));
+					Com_sprintf(statString, sizeof(statString), "print \"#%%s%%d%%s: ^7%%%ds^7 - %%s%%03dm:%%02ds:%%03dms^7 - %%s%%s\n\"", 32 + 2 * (strlen(name) - strlen(sanName)));
 					trap_SendServerCommand(ent - g_entities, va(statString, prefix, record, suffix, name, prefix2, MINS(score), SECS(score), MSEC(score), suffix2, dateTime));
 				//}
 			}
