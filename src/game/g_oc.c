@@ -3007,7 +3007,7 @@ int G_OC_IsSingleScrim(void)  // are no more than one players per team active?
 	return 1;
 }
 
-static void G_OC_UpdateScrimTeamConfigString()
+static void G_OC_UpdateScrimTeamConfigString(void)
 {
 	int i;
 	char buf[MIN(1024, MAX_CVAR_VALUE_STRING)] = "", buf2[MIN(1024, MAX_CVAR_VALUE_STRING)];
