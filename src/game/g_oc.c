@@ -4074,6 +4074,35 @@ char *G_OC_WinStats(void *client, int count, int time)
 	return G_OC_Stats(filename, (gclient_t *) client, count, time);
 }
 
+/*
+==================
+G_StripColor
+
+Remove color codes from a string
+==================
+*/
+void G_StripColor( char *in, char *out, int len )
+{
+  --len;
+
+  while( *in && len > 0 )
+  {
+	  if( Q_IsColorString( in ) )
+	  {
+		  in += 2;    // skip color code
+		  continue;
+	  }
+
+	  if( *in >= 0x20 )
+	  {
+		  *out++ = tolower( *in );
+		  len--;
+	  }
+	  in++;
+  }
+  *out = 0;
+}
+
 
 /*
 =================
@@ -4316,7 +4345,8 @@ void Cmd_Stats_f(gentity_t *ent)
 					prefix2 = "^2";
 					suffix2 = "^7";
 				}
-				G_SanitiseString(name, sanName, sizeof(sanName));
+				//G_SanitiseString(name, sanName, sizeof(sanName));
+				G_StripColor(name, sanName, sizeof(sanName));
 				// always show date
 				//if(trap_Argc() < 4)
 				//{
@@ -4446,7 +4476,8 @@ void Cmd_Stats_f(gentity_t *ent)
 					prefix2 = "^2";
 					suffix2 = "^7";
 				}
-				G_SanitiseString(name, sanName, sizeof(sanName));
+				//G_SanitiseString(name, sanName, sizeof(sanName));
+				G_StripColor(name, sanName, sizeof(sanName));
 				// always show date
 				//if(trap_Argc() < 4)
 				//{
