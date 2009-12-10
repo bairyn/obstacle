@@ -151,7 +151,22 @@ extern int oc_gameMode;
 		"" \
 	}, \
  \
-	{"hide", (qboolean(*)(gentity_t *))(G_admin_hide), "hide", \
+	{"adminhide", (qboolean(*)(gentity_t *))(G_admin_hide), "adminhide", \
+		"hide a player", \
+		"[^3name|slot#^7]" \
+	}, \
+ \
+	{"adminhide", (qboolean(*)(gentity_t *))(G_admin_hide), "hide", \
+		"hide a player", \
+		"[^3name|slot#^7]" \
+	}, \
+ \
+	{"playerhide", (qboolean(*)(gentity_t *))(G_admin_hide), "hide", \
+		"hide a player", \
+		"[^3name|slot#^7]" \
+	}, \
+ \
+	{"hideplayer", (qboolean(*)(gentity_t *))(G_admin_hide), "hideplayer", \
 		"hide a player", \
 		"[^3name|slot#^7]" \
 	}, \
