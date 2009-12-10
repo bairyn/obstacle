@@ -1250,7 +1250,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         }
       }
     }
-    else if( !Q_stricmp( vote, "nextmap" ) )
+    else if( !Q_stricmp( vote, "nextmap" ) && !G_OC_NoNextMap() )
     {
       if( G_MapExists( g_nextMap.string ) )
       {
