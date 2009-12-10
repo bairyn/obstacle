@@ -1206,6 +1206,15 @@ void Cmd_CallVote_f( gentity_t *ent )
         Com_sprintf( level.voteDisplayString[ team ],
             sizeof( level.voteDisplayString[ team ] ), "Restart current map" );
       }
+
+      if( team != TEAM_NONE &&
+          ( ent->client->pers.teamSelection != 
+            level.clients[ clientNum ].pers.teamSelection ) )
+      {
+        trap_SendServerCommand( ent-g_entities,
+          va( "print \"%s: player is not on your team\n\"", cmd ) );
+        return;
+      }
     }
     else if( !Q_stricmp( vote, "map" ) )
     {
