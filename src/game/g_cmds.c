@@ -2857,7 +2857,7 @@ void Cmd_Follow_f( gentity_t *ent )
 
     // can't follow hidden players
     if( level.clients[ i ].pers.hidden && !G_admin_permission( ent, ADMF_SPEC_ALLCHAT ) )
-      continue;
+      return;
 
     // can't follow another spectator if sticky spec is off
     if( !ent->client->pers.stickySpec &&
