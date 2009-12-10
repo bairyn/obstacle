@@ -3943,15 +3943,8 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 			if(G_OC_SameGuy(a, b))
 			{
-				if(i < record - 1)
-				{
-					// Since the list has already been sorted, we know that the latter score is worse, so remove it
-					memmove(b, b + 1, (records + record--) - (b + 1));
-				}
-				else
-				{
-					--record;
-				}
+				// Since the list has already been sorted, we know that the latter score is worse, so remove it
+				memmove(b, b + 1, (records + record--) - (b + 1));
 			}
 		}
 	}
