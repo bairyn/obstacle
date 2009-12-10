@@ -2613,9 +2613,8 @@ void G_StopFromFollowing( gentity_t *ent, int force )
   {
     if( level.clients[ i ].sess.spectatorState == SPECTATOR_FOLLOW &&
         level.clients[ i ].sess.spectatorClient == ent->client->ps.clientNum &&
-        level.clients[ i ].sess.spectatorClient == ent->client->ps.clientNum &&
-        ( ( !G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) &&
-        !g_entities[ i ].client->pers.stickySpec ) || force ) )
+        ( !G_admin_permission( &g_entities[ i ], ADMF_SPEC_ALLCHAT ) || force ) &&
+        ( !g_entities[ i ].client->pers.stickySpec || !force ) )
     {
       if( !G_FollowNewClient( &g_entities[ i ], 1 ) )
         G_StopFollowing( &g_entities[ i ] );
@@ -2748,6 +2747,10 @@ qboolean G_FollowNewClient( gentity_t *ent, int dir )
     if( &g_entities[ clientnum ] == ent )
       continue;
 
+    // can't follow hidden players
+    if( level.clients[ clientnum ].pers.hidden && !G_admin_permission( ent, ADMF_SPEC_ALLCHAT ) )
+      continue;
+
     // avoid selecting existing follow target
     if( clientnum == original && !selectAny )
       continue; //effectively break;
@@ -2842,6 +2845,10 @@ void Cmd_Follow_f( gentity_t *ent )
     // can't follow self
     if( &level.clients[ i ] == ent->client )
       return;
+
+    // can't follow hidden players
+    if( level.clients[ i ].pers.hidden && !G_admin_permission( ent, ADMF_SPEC_ALLCHAT ) )
+      continue;
 
     // can't follow another spectator if sticky spec is off
     if( !ent->client->pers.stickySpec &&
