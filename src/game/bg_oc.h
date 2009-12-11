@@ -595,6 +595,7 @@ extern int oc_gameMode;
 		trap_Cvar_Set("g_alienBuildPoints", va("%d", INFINITE)); \
 		trap_Cvar_Set("g_alienStage", va("%d", S3)); \
 		trap_Cvar_Set("g_humanStage", va("%d", S3)); \
+		trap_Cvar_Set("g_tag", "oc"); \
 		triggers += G_Checktrigger_stages(TEAM_ALIENS, S2); \
 		triggers += G_Checktrigger_stages(TEAM_HUMANS, S2); \
 		triggers += G_Checktrigger_stages(TEAM_ALIENS, S3); \
@@ -629,6 +630,7 @@ extern int oc_gameMode;
 
 	#define G_OC_NoLoadOC() \
 	{ \
+		trap_Cvar_Set("g_tag", "main"); \
 		trap_SetConfigstring(CS_NOWALLWALK, "0"); \
 		trap_SetConfigstring(CS_OCMODE, "0"); \
  \
