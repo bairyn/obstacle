@@ -518,7 +518,9 @@ extern int oc_gameMode;
 	vmCvar_t g_timelimitDrop; \
 	vmCvar_t g_startScrimVotePercent; \
 	vmCvar_t g_endScrimVotePercent; \
-	vmCvar_t g_adminMaxHide;
+	vmCvar_t g_adminMaxHide; \
+	vmCvar_t g_ocHostName; \
+	vmCvar_t g_noOCHostName;
 
 	#define G_OC_EXTERNCVARS \
 	extern vmCvar_t g_alwaysSaveStats; \
@@ -536,7 +538,9 @@ extern int oc_gameMode;
 	extern vmCvar_t g_timelimitDrop; \
 	extern vmCvar_t g_startScrimVotePercent; \
 	extern vmCvar_t g_endScrimVotePercent; \
-	extern vmCvar_t g_adminMaxHide;
+	extern vmCvar_t g_adminMaxHide; \
+	extern vmCvar_t g_ocHostName; \
+	extern vmCvar_t g_noOCHostName;
 
 	#define G_OC_CVARTABLE \
 	{ &g_alwaysSaveStats, "g_alwaysSaveStats", "0", CVAR_ARCHIVE, 0, qtrue  }, \
@@ -554,7 +558,9 @@ extern int oc_gameMode;
 	{ &g_timelimitDrop, "g_timelimitDrop", "17.5", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_startScrimVotePercent, "g_startScrimVotePercent", "85", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_endScrimVotePercent, "g_endScrimVotePercent", "90", CVAR_ARCHIVE, 0, qtrue  }, \
-	{ &g_adminMaxHide, "g_adminMaxHide", "2w", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_adminMaxHide, "g_adminMaxHide", "2w", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_ocHostName, "g_ocHostName", "", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_noOCHostName, "g_noOCHostName", "", CVAR_ARCHIVE, 0, qfalse  },
 
 	#define G_OC_LEVEL_LOCALS \
 	int totalMedistations; \
@@ -596,6 +602,10 @@ extern int oc_gameMode;
 		trap_Cvar_Set("g_alienStage", va("%d", S3)); \
 		trap_Cvar_Set("g_humanStage", va("%d", S3)); \
 		trap_Cvar_Set("g_tag", "oc"); \
+		if(g_ocHostName.string[0]) \
+		{ \
+			trap_Cvar_Set("sv_hostname", g_ocHostName.string); \
+		} \
 		triggers += G_Checktrigger_stages(TEAM_ALIENS, S2); \
 		triggers += G_Checktrigger_stages(TEAM_HUMANS, S2); \
 		triggers += G_Checktrigger_stages(TEAM_ALIENS, S3); \
@@ -638,6 +648,11 @@ extern int oc_gameMode;
 		trap_SetConfigstring(CS_LAYOUT, level.layout); \
  \
 		trap_SetConfigstring(CS_SCRIMTEAMS, "");  /* Reset scrim-team list */ \
+ \
+		if(g_noOCHostName.string[0]) \
+		{ \
+			trap_Cvar_Set("sv_hostname", g_noOCHostName.string); \
+		} \
 	} while(0)
 
 	//<+===============================================+>
