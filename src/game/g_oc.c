@@ -375,7 +375,7 @@ qboolean G_admin_hide(void *ent)
 
   if(trap_Argc() < 2)
   {
-    ADMP("^3hide: ^7usage: !hide [name|slot#] (reason)\n");
+    ADMP("^3hide: ^7usage: hide [name|slot#] (reason)\n");
     return qfalse;
   }
   trap_Argv(0, command, sizeof(command));
@@ -397,7 +397,7 @@ qboolean G_admin_hide(void *ent)
     return qfalse;
   }
   vic = &g_entities[pids[0]];
-  if(Q_stricmp(cmd, "hide"))
+  if(!Q_stricmp(cmd, "unhide"))
   {
     int t;
     char userinfo[MAX_INFO_STRING];
