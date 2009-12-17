@@ -2893,6 +2893,8 @@ int G_OC_CanUseBonus(gentity_t *ent)
 	if(BG_InventoryContainsUpgrade(UP_JETPACK, ent->client->ps.stats))
 	{
 		G_ClientCP(ent, G_OC_NOBONUSJETPACKMESSAGE, NULL, CLIENT_SPECTATORS);
+
+    return 0;
 	}
 	if(!BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_LUCIJUMP))
 	{
@@ -2900,14 +2902,20 @@ int G_OC_CanUseBonus(gentity_t *ent)
 		{
 			G_ClientCP(ent, G_OC_NOBONUSLCANNONMESSAGE, NULL, CLIENT_SPECTATORS);
 		}
+
+    return 0;
 	}
 	if(BG_InventoryContainsWeapon(WP_FLAMER, ent->client->ps.stats))
 	{
 		G_ClientCP(ent, G_OC_NOBONUSFLAMERMESSAGE, NULL, CLIENT_SPECTATORS);
+
+    return 0;
 	}
 	if(ent->client->pers.grenadeUsed)
 	{
 		G_ClientCP(ent, G_OC_NOBONUSGRENADEMESSAGE, NULL, CLIENT_SPECTATORS);
+
+    return 0;
 	}
 
 	return 1;
