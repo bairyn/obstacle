@@ -2040,7 +2040,7 @@ static void PM_GroundClimbTrace( void )
     }
 
     //if we hit something
-	if( BG_OC_PMGROUNDTRACEHITCHECK )
+    if( BG_OC_PMGROUNDTRACEHITCHECK )
     {
       if( i == 2 || i == 3 )
       {

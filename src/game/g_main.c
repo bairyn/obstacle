@@ -149,6 +149,9 @@ vmCvar_t  g_tag;
 
 vmCvar_t  g_disableCPMixes;
 
+vmCvar_t  g_mobileTime;
+vmCvar_t  g_mobileDuration;
+
 // OC cvars
 G_OC_CVARS
 
@@ -176,6 +179,9 @@ static cvarTable_t   gameCvarTable[ ] =
 
   // change anytime vars
   { &g_disableCPMixes, "g_disableCPMixes", "0", CVAR_ARCHIVE, 0, qtrue  },
+
+  { &g_mobileTime, "g_mobileTime", DEFAULT_MOBILE_TIME, CVAR_ARCHIVE, 0, qtrue  },
+  { &g_mobileDuration, "g_mobileDuration", DEFAULT_MOBILE_DURATION, CVAR_ARCHIVE, 0, qtrue  },
 
   { &g_maxGameClients, "g_maxGameClients", "0", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse  },
 
@@ -1136,6 +1142,66 @@ void G_CalculateBuildPoints( void )
     level.humanNextQueueTime += G_NextQueueTime( level.humanBuildPointQueue,
                                                g_humanBuildPoints.integer,
                                                g_humanBuildQueueTime.integer );
+  }
+
+  // walking buildable updates
+  if( G_OC_CanBuildablesMove() && level.numPlayingClients > 0 )
+  {
+    if( level.buildablesNextMoveTime == 0 )
+    {
+      level.buildablesNextMoveTime = level.time + g_mobileTime.integer;
+    }
+
+    if( level.buildablesMoving )
+    {
+      if( level.time >= level.buildablesNextMoveTime + g_mobileDuration.integer )
+      {
+        // finish moving buildables
+        level.buildablesNextMoveTime = level.time + g_mobileTime.integer;
+        level.buildablesMoving = qfalse;
+      }
+      else
+      {
+        // continue moving buildables
+
+        // don't move in this direction when doing so would move a buildable outside
+      }
+    }
+    else if( level.time >= level.buildablesNextMoveTime )
+    {
+      // start moving buildables
+      level.buildablesMoving = qtrue;
+
+      VectorScale(level.buildablesAlienMoveDir, 0.0f, level.buildablesAlienMoveDir);
+      for( i = MAX_CLIENTS; i < level.num_entities; i++ )
+      {
+        gentity_t *ent = &g_entities[ i ];
+
+        (void) ent;
+      }
+    }
+
+    for( i = MAX_CLIENTS; i < level.num_entities; i++ )
+    {
+      gentity_t *ent = &g_entities[ i ];
+      vec3_t    change = {0, 0, 0};
+
+      if( BG_Buildable( ent->s.modelindex )->invertNormal )
+      {
+        // these buildables can be moved onto walls; their bounding boxes are cubes
+      }
+      else
+      {
+        // simple horizontal movement
+      }
+      //VectorAdd(ent->s.origin, change, ent->s.origin);
+      (void) ent;
+      (void) change;
+    }
+  }
+  else
+  {
+    level.buildablesMoving = qfalse;
   }
 
   // Sudden Death checks

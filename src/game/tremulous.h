@@ -691,5 +691,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
                                          
 #define MAXIMUM_BUILD_TIME          20000 // used for pie timer
 
+#define DEFAULT_MOBILE_TIME         "0" //"120000"  // this needs to default to 0 so that this can behave like a vanilla module
+#define DEFAULT_MOBILE_DURATION     "0" //"20000"
+
 
 #endif /* #ifndef _TREMULOUS_H */

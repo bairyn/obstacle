@@ -671,6 +671,10 @@ typedef struct
   int               humanBuildPoints;
   int               humanBuildPointQueue;
   int               humanNextQueueTime;
+  int               buildablesNextMoveTime;
+  int               buildablesMoving;
+  vec3_t            buildablesAlienMoveDir;
+  vec3_t            buildablesHumanMoveDir;
 
   buildPointZone_t  *buildPointZones;
 
