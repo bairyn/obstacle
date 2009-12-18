@@ -1146,7 +1146,7 @@ void G_CalculateBuildPoints( void )
   }
 
   // walking buildable updates
-  if( G_OC_CanBuildablesMove() && level.numPlayingClients > 0 )
+  if( G_OC_CanBuildablesMove() && level.numAlienClients + level.numHumanClients > 0 )
   {
     if( level.buildablesNextMoveTime == 0 )
     {
@@ -1197,7 +1197,7 @@ void G_CalculateBuildPoints( void )
 
             if( type == BA_H_REPEATER || type == BA_H_REACTOR || type == BA_A_SPAWN || type == BA_A_OVERMIND )  // hard-coded way to determine if buildable can be a parent buildable
             {
-              for( j = MAX_CLIENTS; j < level.num_entities; i++ )
+              for( j = MAX_CLIENTS; j < level.num_entities; j++ )
               {
                 gentity_t *ent2 = &g_entities[ j ];
 
