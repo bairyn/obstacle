@@ -685,14 +685,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DEFAULT_HUMAN_STAGE2_THRESH "4000"
 #define DEFAULT_HUMAN_STAGE3_THRESH "8000"
 #define DEFAULT_HUMAN_MAX_STAGE     "2"
+#define DEFAULT_MOBILE_TIME         "0" //"120000"  // this needs to default to 0 so that this can behave like a vanilla module
+#define DEFAULT_MOBILE_DURATION     "0" //"20000"
+
+#define MOVE_CHANGEDIR_CSECOND_RAND 8
+#define MOVE_SPEED_SECOND 360
+#define MOVE_MAX_SLOPE 0.8f
+#define MOVE_MINDISTANCE_SUB 5
 
 #define DAMAGE_FRACTION_FOR_KILL    0.5f //how much damage players (versus structures) need to
                                          //do to increment the stage kill counters
                                          
 #define MAXIMUM_BUILD_TIME          20000 // used for pie timer
-
-#define DEFAULT_MOBILE_TIME         "0" //"120000"  // this needs to default to 0 so that this can behave like a vanilla module
-#define DEFAULT_MOBILE_DURATION     "0" //"20000"
 
 
 #endif /* #ifndef _TREMULOUS_H */

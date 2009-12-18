@@ -278,6 +278,8 @@ struct gentity_s
   int               buildPointZone;                 // index for zone
   int               usesBuildPointZone;             // does it use a zone?
 
+  float             moveDirection;                  // move direction
+
   int               groupID;
 #define GROUP_SPAWN 0
   int               reserved;
@@ -673,8 +675,6 @@ typedef struct
   int               humanNextQueueTime;
   int               buildablesNextMoveTime;
   int               buildablesMoving;
-  vec3_t            buildablesAlienMoveDir;
-  vec3_t            buildablesHumanMoveDir;
 
   buildPointZone_t  *buildPointZones;
 

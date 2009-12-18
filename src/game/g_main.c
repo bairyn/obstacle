@@ -1110,6 +1110,7 @@ int G_TimeTilSuddenDeath( void )
 }
 
 
+#define MOVE_UNMOVED     -1.f  // -1 cannot be the value set when it is set randomly
 #define PLAYER_COUNT_MOD 5.0f
 
 /*
@@ -1121,7 +1122,7 @@ Recalculate the quantity of building points available to the teams
 */
 void G_CalculateBuildPoints( void )
 {
-  int               i;
+  int               i, j;
   buildable_t       buildable;
   buildPointZone_t  *zone;
 
@@ -1164,7 +1165,133 @@ void G_CalculateBuildPoints( void )
       {
         // continue moving buildables
 
-        // don't move in this direction when doing so would move a buildable outside
+        for( i = MAX_CLIENTS; i < level.num_entities; i++ )
+        {
+          gentity_t *ent = &g_entities[ i ];
+
+          if( ent->s.eType != ET_BUILDABLE )
+            continue;
+
+          // don't move buildables that can be built on walls for now
+          if( !BG_Buildable( ent->s.modelindex )->invertNormal )
+          {
+            trace_t trace;
+            vec3_t start, end;
+            int valid = qtrue;
+            int type = ent->s.modelindex, type2;
+
+            VectorCopy( ent->s.origin, end );
+            end[0] += MOVE_SPEED_SECOND * (level.frameMsec / 1000) * cos( DEG2RAD( ent->moveDirection ) );
+            end[0] += MOVE_SPEED_SECOND * (level.frameMsec / 1000) * sin( DEG2RAD( ent->moveDirection ) );
+
+            VectorCopy( end, start );
+            start[ 2 ] += MOVE_MAX_SLOPE * MOVE_SPEED_SECOND * (level.frameMsec / 1000);  // hack
+
+            trap_Trace( &trace, start, ent->r.mins, ent->r.maxs, end, ent - g_entities, MASK_PLAYERSOLID);
+
+            // don't move in this direction when doing so would move a buildable almost outside its range of its parent or any child buildables or if it would hit a player or a wall or another buildable
+
+            if( trace.startsolid )
+              valid = qfalse;
+
+            if( type == BA_H_REPEATER || type == BA_H_REACTOR || type == BA_A_SPAWN || type == BA_A_OVERMIND )  // hard-coded way to determine if buildable can be a parent buildable
+            {
+              for( j = MAX_CLIENTS; j < level.num_entities; i++ )
+              {
+                gentity_t *ent2 = &g_entities[ j ];
+
+                if( ent2->s.eType != ET_BUILDABLE )
+                  continue;
+
+                if( ent2->parentNode == ent )
+                {
+                  float distance;
+                  float minDistance;
+                  vec3_t temp_v;
+
+                  VectorSubtract( trace.endpos, ent2->s.origin, temp_v );
+                  distance = VectorLength( temp_v );
+
+                  // hard-coded method to determine minimum distance
+                  switch( type )
+                  {
+                    case BA_H_REPEATER:
+                      minDistance = REPEATER_BASESIZE;
+
+                    case BA_H_REACTOR:
+                      minDistance = REACTOR_BASESIZE;
+
+                    case BA_A_SPAWN:
+                    case BA_A_OVERMIND:
+                    default:
+                      minDistance = REACTOR_BASESIZE;
+                  }
+
+                  minDistance -= MOVE_MINDISTANCE_SUB;
+
+                  if( distance < minDistance )
+                  {
+                    valid = qfalse;
+
+                    break;
+                  }
+                }
+              }
+            }
+
+            if( ent->parentNode && ent->parentNode != ent )
+            {
+              gentity_t *ent2 = ent->parentNode;
+
+              if( ent2->s.eType == ET_BUILDABLE )
+              {
+                float distance;
+                float minDistance;
+                vec3_t temp_v;
+
+                type2 = ent2->s.modelindex;
+
+                VectorSubtract( trace.endpos, ent2->s.origin, temp_v );
+                distance = VectorLength( temp_v );
+
+                // hard-coded method to determine minimum distance
+                switch( type2 )
+                {
+                  case BA_H_REPEATER:
+                    minDistance = REPEATER_BASESIZE;
+
+                  case BA_H_REACTOR:
+                    minDistance = REACTOR_BASESIZE;
+
+                  case BA_A_SPAWN:
+                  case BA_A_OVERMIND:
+                  default:
+                    minDistance = REACTOR_BASESIZE;
+                }
+
+                minDistance -= MOVE_MINDISTANCE_SUB;
+
+                if( distance < minDistance )
+                {
+                  valid = qfalse;
+
+                  break;
+                }
+              }
+            }
+
+            if( !valid || rand( ) % ( MOVE_CHANGEDIR_CSECOND_RAND * 100 / level.frameMsec ) == 0 || ent->moveDirection == MOVE_UNMOVED )
+            {
+              // change direction
+              ent->moveDirection = (float) (rand() % 360);
+            }
+            else
+            {
+              // move the buildable
+              G_SetOrigin( ent, trace.endpos );
+            }
+          }
+        }
       }
     }
     else if( level.time >= level.buildablesNextMoveTime )
@@ -1172,31 +1299,15 @@ void G_CalculateBuildPoints( void )
       // start moving buildables
       level.buildablesMoving = qtrue;
 
-      VectorScale(level.buildablesAlienMoveDir, 0.0f, level.buildablesAlienMoveDir);
       for( i = MAX_CLIENTS; i < level.num_entities; i++ )
       {
         gentity_t *ent = &g_entities[ i ];
 
-        (void) ent;
-      }
-    }
+        if( ent->s.eType != ET_BUILDABLE )
+          continue;
 
-    for( i = MAX_CLIENTS; i < level.num_entities; i++ )
-    {
-      gentity_t *ent = &g_entities[ i ];
-      vec3_t    change = {0, 0, 0};
-
-      if( BG_Buildable( ent->s.modelindex )->invertNormal )
-      {
-        // these buildables can be moved onto walls; their bounding boxes are cubes
+        ent->moveDirection = MOVE_UNMOVED;
       }
-      else
-      {
-        // simple horizontal movement
-      }
-      //VectorAdd(ent->s.origin, change, ent->s.origin);
-      (void) ent;
-      (void) change;
     }
   }
   else
