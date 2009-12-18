@@ -1146,7 +1146,7 @@ void G_CalculateBuildPoints( void )
   }
 
   // walking buildable updates
-  if( G_OC_CanBuildablesMove() && level.numAlienClients + level.numHumanClients > 0 )
+  if( G_OC_CanBuildablesMove() && level.numAlienClients + level.numHumanClients > 0 && level.changeMsec < 800 )  // don't update when frame is longer than 800
   {
     if( level.buildablesNextMoveTime == 0 )
     {
@@ -1164,7 +1164,6 @@ void G_CalculateBuildPoints( void )
       else
       {
         // continue moving buildables
-
         for( i = MAX_CLIENTS; i < level.num_entities; i++ )
         {
           gentity_t *ent = &g_entities[ i ];
@@ -1182,18 +1181,24 @@ void G_CalculateBuildPoints( void )
             int valid = qtrue;
 
             VectorCopy( ent->s.origin, end );
-            end[0] += MOVE_SPEED_SECOND * (level.frameMsec / 1000) * cos( DEG2RAD( ent->moveDirection ) );
-            end[0] += MOVE_SPEED_SECOND * (level.frameMsec / 1000) * sin( DEG2RAD( ent->moveDirection ) );
+            if( level.changeMsec > 0 )
+            {
+              end[0] += (float) MOVE_SPEED_SECOND * (float) (level.changeMsec / 1000.0f) * (float) cos( DEG2RAD( ent->moveDirection ) );
+              end[1] += (float) MOVE_SPEED_SECOND * (float) (level.changeMsec / 1000.0f) * (float) sin( DEG2RAD( ent->moveDirection ) );
+            }
 
             VectorCopy( end, start );
-            start[ 2 ] += MOVE_MAX_SLOPE * MOVE_SPEED_SECOND * (level.frameMsec / 1000);  // hack
+            start[ 2 ] += MOVE_MAX_SLOPE * (float) MOVE_SPEED_SECOND * (float) (level.changeMsec / 1000.0f);
+            end[ 2 ]   -= MOVE_MAX_SLOPE * (float) MOVE_SPEED_SECOND * (float) (level.changeMsec / 1000.0f);
 
             trap_Trace( &trace, start, ent->r.mins, ent->r.maxs, end, ent - g_entities, MASK_PLAYERSOLID);
 
             // don't move in this direction when doing so would move a buildable almost outside its range of its parent or any child buildables or if it would hit a player or a wall or another buildable
 
             if( trace.startsolid )
+            {
               valid = qfalse;
+            }
 
             if( type == BA_H_REPEATER || type == BA_H_REACTOR || type == BA_A_SPAWN || type == BA_A_OVERMIND )  // hard-coded way to determine if buildable can be a parent buildable
             {
@@ -1207,7 +1212,7 @@ void G_CalculateBuildPoints( void )
                 if( ent2->parentNode == ent )
                 {
                   float distance;
-                  float minDistance;
+                  float maxDistance;
                   vec3_t temp_v;
 
                   VectorSubtract( trace.endpos, ent2->s.origin, temp_v );
@@ -1217,20 +1222,20 @@ void G_CalculateBuildPoints( void )
                   switch( type )
                   {
                     case BA_H_REPEATER:
-                      minDistance = REPEATER_BASESIZE;
+                      maxDistance = REPEATER_BASESIZE;
 
                     case BA_H_REACTOR:
-                      minDistance = REACTOR_BASESIZE;
+                      maxDistance = REACTOR_BASESIZE;
 
                     case BA_A_SPAWN:
                     case BA_A_OVERMIND:
                     default:
-                      minDistance = REACTOR_BASESIZE;
+                      maxDistance = REACTOR_BASESIZE;
                   }
 
-                  minDistance -= MOVE_MINDISTANCE_SUB;
+                  maxDistance -= MOVE_MINDISTANCE_SUB;
 
-                  if( distance < minDistance )
+                  if( distance > maxDistance )
                   {
                     valid = qfalse;
 
@@ -1247,7 +1252,7 @@ void G_CalculateBuildPoints( void )
               if( ent2->s.eType == ET_BUILDABLE )
               {
                 float distance;
-                float minDistance;
+                float maxDistance;
                 vec3_t temp_v;
 
                 type2 = ent2->s.modelindex;
@@ -1259,20 +1264,20 @@ void G_CalculateBuildPoints( void )
                 switch( type2 )
                 {
                   case BA_H_REPEATER:
-                    minDistance = REPEATER_BASESIZE;
+                    maxDistance = REPEATER_BASESIZE;
 
                   case BA_H_REACTOR:
-                    minDistance = REACTOR_BASESIZE;
+                    maxDistance = REACTOR_BASESIZE;
 
                   case BA_A_SPAWN:
                   case BA_A_OVERMIND:
                   default:
-                    minDistance = REACTOR_BASESIZE;
+                    maxDistance = REACTOR_BASESIZE;
                 }
 
-                minDistance -= MOVE_MINDISTANCE_SUB;
+                maxDistance -= MOVE_MINDISTANCE_SUB;
 
-                if( distance < minDistance )
+                if( distance > maxDistance )
                 {
                   valid = qfalse;
 
@@ -1281,7 +1286,10 @@ void G_CalculateBuildPoints( void )
               }
             }
 
-            limit = MOVE_CHANGEDIR_CSECOND_RAND * 100 / level.frameMsec;
+            if( level.changeMsec > 0 )
+              limit = MOVE_CHANGEDIR_CSECOND_RAND * 100 / level.changeMsec;
+            else
+              limit = 0;
 
             if( !valid || limit <= 0 || rand( ) % limit == 0 || ent->moveDirection == MOVE_UNMOVED )
             {
@@ -2527,6 +2535,9 @@ void G_RunFrame( int levelTime )
 
   level.framenum++;
   level.previousTime = level.time;
+  if( level.previousMsec )
+    level.changeMsec = trap_Milliseconds() - level.previousMsec;
+  level.previousMsec = trap_Milliseconds();
   level.time = levelTime;
   msec = level.time - level.previousTime;
 

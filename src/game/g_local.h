@@ -592,6 +592,8 @@ typedef struct
   int               time;                         // in msec
   int               previousTime;                 // so movers can back up when blocked
   int               frameMsec;                    // trap_Milliseconds() at end frame
+  int               changeMsec;                   // how long the frame before the current frame took; will remain unchanged on first frame (usually 0)
+  int               previousMsec;                 // the last recorded msec
 
   int               startTime;                    // level.time the map was started
 

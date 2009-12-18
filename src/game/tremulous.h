@@ -685,11 +685,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DEFAULT_HUMAN_STAGE2_THRESH "4000"
 #define DEFAULT_HUMAN_STAGE3_THRESH "8000"
 #define DEFAULT_HUMAN_MAX_STAGE     "2"
-#define DEFAULT_MOBILE_TIME         "0" //"120000"  // this needs to default to 0 so that this can behave like a vanilla module
-#define DEFAULT_MOBILE_DURATION     "0" //"20000"
+#define DEFAULT_MOBILE_TIME         "0" //"120000"  // every two minutes  // this needs to default to 0 so that this can behave like a vanilla module
+#define DEFAULT_MOBILE_DURATION     "0" //"20000"   // for 20 seconds
 
 #define MOVE_CHANGEDIR_CSECOND_RAND 8
-#define MOVE_SPEED_SECOND 360
+#define MOVE_SPEED_SECOND 360.f
 #define MOVE_MAX_SLOPE 0.8f
 #define MOVE_MINDISTANCE_SUB 5
 
