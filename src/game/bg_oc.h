@@ -1837,7 +1837,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			return; \
 		} \
  \
-		if(g_ocOnly.integer) \
+		if(g_ocOnly.integer > 0) \
 		{ \
 			if(!arg2[0]) \
 				Q_strncpyz(arg2, "oc", sizeof(arg2)); \
@@ -1846,6 +1846,18 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			{ \
 				trap_SendServerCommand(ent - g_entities, va("print \"%s: " \
 					"'%s^7' is not an obstacle course\n\"", cmd, ((arg2[0]) ? (arg2) : ("(empty)")))); \
+				return; \
+			} \
+		} \
+		else if(g_ocOnly.integer < 0) \
+		{ \
+			if(!arg2[0]) \
+				Q_strncpyz(arg2, "oc", sizeof(arg2)); \
+ \
+			if(arg2[0] == 'o' || arg2[1] == 'c') \
+			{ \
+				trap_SendServerCommand(ent - g_entities, va("print \"%s: " \
+					"'%s^7' is an obstacle course\n\"", cmd, ((arg2[0]) ? (arg2) : ("(empty)")))); \
 				return; \
 			} \
 		} \
