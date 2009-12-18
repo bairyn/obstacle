@@ -1200,12 +1200,24 @@ void G_CalculateBuildPoints( void )
               valid = qfalse;
             }
 
-            if( type == BA_H_REPEATER || type == BA_H_REACTOR || type == BA_A_SPAWN || type == BA_A_OVERMIND )  // hard-coded way to determine if buildable can be a parent buildable
+            for( j = MAX_CLIENTS; j < level.num_entities; j++ )
             {
-              for( j = MAX_CLIENTS; j < level.num_entities; j++ )
-              {
-                gentity_t *ent2 = &g_entities[ j ];
+              gentity_t *ent2 = &g_entities[ j ];
 
+              type2 = ent2->s.modelindex;
+
+              if( type2 == BA_A_SPAWN || type2 == BA_H_SPAWN )
+              {
+                if( ent2->spawned && G_CheckSpawnPoint( ent2->s.number, ent2->s.origin, ent2->s.origin2, ent2->s.modelindex, NULL ) )
+                {
+                  valid = qfalse;
+
+                  break;
+                }
+              }
+
+              if( type == BA_H_REPEATER || type == BA_H_REACTOR || type == BA_A_SPAWN || type == BA_A_OVERMIND )  // hard-coded way to determine if buildable can be a parent buildable
+              {
                 if( ent2->s.eType != ET_BUILDABLE )
                   continue;
 

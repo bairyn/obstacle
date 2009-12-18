@@ -877,7 +877,7 @@ void ASpawn_Think( gentity_t *self )
     if( self->s.groundEntityNum )
     {
       if( ( ent = G_CheckSpawnPoint( self->s.number, self->s.origin,
-              self->s.origin2, BA_A_SPAWN, NULL ) ) != NULL )
+              self->s.origin2, BA_A_SPAWN, NULL ) ) != NULL && !level.buildablesMoving )
       {
         // If the thing blocking the spawn is a buildable, kill it. 
         // If it's part of the map, kill self. 
@@ -1928,7 +1928,7 @@ void HSpawn_Think( gentity_t *self )
     if( self->s.groundEntityNum )
     {
       if( ( ent = G_CheckSpawnPoint( self->s.number, self->s.origin,
-              self->s.origin2, BA_H_SPAWN, NULL ) ) != NULL )
+              self->s.origin2, BA_H_SPAWN, NULL ) ) != NULL && !level.buildablesMoving )
       {
         // If the thing blocking the spawn is a buildable, kill it. 
         // If it's part of the map, kill self. 
