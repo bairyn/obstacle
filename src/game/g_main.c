@@ -1177,8 +1177,9 @@ void G_CalculateBuildPoints( void )
           {
             trace_t trace;
             vec3_t start, end;
+            int limit;
+            int type  = ent->s.modelindex, type2;
             int valid = qtrue;
-            int type = ent->s.modelindex, type2;
 
             VectorCopy( ent->s.origin, end );
             end[0] += MOVE_SPEED_SECOND * (level.frameMsec / 1000) * cos( DEG2RAD( ent->moveDirection ) );
@@ -1280,7 +1281,9 @@ void G_CalculateBuildPoints( void )
               }
             }
 
-            if( !valid || rand( ) % ( MOVE_CHANGEDIR_CSECOND_RAND * 100 / level.frameMsec ) == 0 || ent->moveDirection == MOVE_UNMOVED )
+            limit = MOVE_CHANGEDIR_CSECOND_RAND * 100 / level.frameMsec;
+
+            if( !valid || limit <= 0 || rand( ) % limit == 0 || ent->moveDirection == MOVE_UNMOVED )
             {
               // change direction
               ent->moveDirection = (float) (rand() % 360);
