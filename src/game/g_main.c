@@ -1303,8 +1303,6 @@ void G_CalculateBuildPoints( void )
                 if( distance > maxDistance )
                 {
                   valid = qfalse;
-
-                  break;
                 }
               }
             }
