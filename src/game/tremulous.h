@@ -693,6 +693,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MOVE_CHANGEDIR_CSECOND_RAND 8
 #define MOVE_SPEED_SECOND 360.f
 #define MOVE_MAX_SLOPE 0.8f
+#define MOVE_MAX_SLOPE_MOVE 0.2f
 #define MOVE_MINDISTANCE_SUB 5
 
 #define DAMAGE_FRACTION_FOR_KILL    0.5f //how much damage players (versus structures) need to

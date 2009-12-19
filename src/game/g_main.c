@@ -1193,7 +1193,7 @@ void G_CalculateBuildPoints( void )
             continue;
 
           // don't move buildables that can be built on walls for now
-          if( !BG_Buildable( ent->s.modelindex )->invertNormal )
+          if( !BG_Buildable( ent->s.modelindex )->invertNormal || abs(ent->s.origin2[ 2 ]) >= 1.f - MOVE_MAX_SLOPE_MOVE )
           {
             trace_t trace;
             vec3_t start, end;
@@ -1324,6 +1324,10 @@ void G_CalculateBuildPoints( void )
               VectorCopy( trace.plane.normal, ent->s.origin2 );  // point items in the correct direction
               trap_LinkEntity( ent );
             }
+          }
+          else
+          {
+            // TODO FIXME XXX
           }
         }
       }
