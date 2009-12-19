@@ -62,6 +62,7 @@ extern int oc_gameMode;
 
 // these can be post-2.0
 // TODO: add 'u'oc
+// TODO: g_ocConfig and g_noOCConfig
 // TODO: restore OC stuff on ptrc (can be post-2.0, but highest priority)
 // TODO: Initialize value for scrim weapon feeder
 // TODO: help reads !info directly, or have a client-side "info"

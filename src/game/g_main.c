@@ -1162,9 +1162,12 @@ void G_CalculateBuildPoints( void )
         gentity_t *ent = &g_entities[ i ];
         int type = ent->s.modelindex;
 
+        if( ent->s.eType != ET_BUILDABLE )
+          continue;
+
         if( type == BA_A_SPAWN || type == BA_H_SPAWN )
         {
-          if( G_CheckSpawnPoint( ent->s.number, ent->s.origin, ent->s.origin2, ent->s.modelindex, NULL ) )
+          if( G_CheckSpawnPoint( ent->s.number, ent->s.origin, ent->s.origin2, ent->s.modelindex, NULL ) != NULL )
           {
             blocking = qtrue;
 
@@ -1320,6 +1323,7 @@ void G_CalculateBuildPoints( void )
             {
               // move the buildable
               G_SetOrigin( ent, trace.endpos );
+              VectorCopy( trace.plane.normal, ent->s.origin2 );  // point items in the correct direction
               trap_LinkEntity( ent );
             }
           }
