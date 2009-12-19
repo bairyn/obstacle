@@ -1253,7 +1253,7 @@ void G_CalculateBuildPoints( void )
                     case BA_A_SPAWN:
                     case BA_A_OVERMIND:
                     default:
-                      maxDistance = REACTOR_BASESIZE;
+                      maxDistance = CREEP_BASESIZE;
                   }
 
                   maxDistance -= MOVE_MINDISTANCE_SUB;
@@ -1295,7 +1295,7 @@ void G_CalculateBuildPoints( void )
                   case BA_A_SPAWN:
                   case BA_A_OVERMIND:
                   default:
-                    maxDistance = REACTOR_BASESIZE;
+                    maxDistance = CREEP_BASESIZE;
                 }
 
                 maxDistance -= MOVE_MINDISTANCE_SUB;
