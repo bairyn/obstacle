@@ -1223,7 +1223,7 @@ void G_CalculateBuildPoints( void )
 
             if( type == BA_A_SPAWN )
             {
-              if( G_CheckSpawnPoint( spawn->s.number, trace.endpos, spawn->s.origin2, spawn->s.modelindex, NULL ) != NULL )
+              if( G_CheckSpawnPoint( ent->s.number, trace.endpos, ent->s.origin2, ent->s.modelindex, NULL ) != NULL )
               {
                 valid = qfalse;
               }
