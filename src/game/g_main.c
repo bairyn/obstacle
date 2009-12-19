@@ -1155,9 +1155,27 @@ void G_CalculateBuildPoints( void )
 
     if( level.buildablesMoving )
     {
-      if( level.time >= level.buildablesNextMoveTime + g_mobileDuration.integer )
+      qboolean blocking = qfalse;
+
+      for( i = MAX_CLIENTS; i < level.num_entities; i++ )
       {
-        // finish moving buildables
+        gentity_t *ent = &g_entities[ i ];
+        int type = ent->s.modelindex;
+
+        if( type == BA_A_SPAWN || type == BA_H_SPAWN )
+        {
+          if( G_CheckSpawnPoint( ent->s.number, ent->s.origin, ent->s.origin2, ent->s.modelindex, NULL ) )
+          {
+            blocking = qtrue;
+
+            break;
+          }
+        }
+      }
+
+      if( !blocking && level.time >= level.buildablesNextMoveTime + g_mobileDuration.integer )
+      {
+        // finish moving buildables if nothing is blocking any spawn
         level.buildablesNextMoveTime = level.time + g_mobileTime.integer;
         level.buildablesMoving = qfalse;
       }
@@ -1178,7 +1196,7 @@ void G_CalculateBuildPoints( void )
             vec3_t start, end;
             int limit;
             int type  = ent->s.modelindex, type2;
-            int valid = qtrue;
+            qboolean valid = qtrue;
 
             VectorCopy( ent->s.origin, end );
             if( level.changeMsec > 0 )
@@ -1200,24 +1218,14 @@ void G_CalculateBuildPoints( void )
               valid = qfalse;
             }
 
-            for( j = MAX_CLIENTS; j < level.num_entities; j++ )
+            if( type == BA_H_REPEATER || type == BA_H_REACTOR || type == BA_A_SPAWN || type == BA_A_OVERMIND )  // hard-coded way to determine if buildable can be a parent buildable
             {
-              gentity_t *ent2 = &g_entities[ j ];
-
-              type2 = ent2->s.modelindex;
-
-              if( type2 == BA_A_SPAWN || type2 == BA_H_SPAWN )
+              for( j = MAX_CLIENTS; j < level.num_entities; j++ )
               {
-                if( ent2->spawned && G_CheckSpawnPoint( ent2->s.number, ent2->s.origin, ent2->s.origin2, ent2->s.modelindex, NULL ) )
-                {
-                  valid = qfalse;
+                gentity_t *ent2 = &g_entities[ j ];
 
-                  break;
-                }
-              }
+                type2 = ent2->s.modelindex;
 
-              if( type == BA_H_REPEATER || type == BA_H_REACTOR || type == BA_A_SPAWN || type == BA_A_OVERMIND )  // hard-coded way to determine if buildable can be a parent buildable
-              {
                 if( ent2->s.eType != ET_BUILDABLE )
                   continue;
 
@@ -1312,6 +1320,7 @@ void G_CalculateBuildPoints( void )
             {
               // move the buildable
               G_SetOrigin( ent, trace.endpos );
+              trap_LinkEntity( ent );
             }
           }
         }
