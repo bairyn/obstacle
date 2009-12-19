@@ -520,7 +520,9 @@ extern int oc_gameMode;
 	vmCvar_t g_endScrimVotePercent; \
 	vmCvar_t g_adminMaxHide; \
 	vmCvar_t g_ocHostName; \
-	vmCvar_t g_noOCHostName;
+	vmCvar_t g_ocTimelimit; \
+	vmCvar_t g_noOCHostName; \
+	vmCvar_t g_noOCTimelimit;
 
 	#define G_OC_EXTERNCVARS \
 	extern vmCvar_t g_alwaysSaveStats; \
@@ -540,7 +542,9 @@ extern int oc_gameMode;
 	extern vmCvar_t g_endScrimVotePercent; \
 	extern vmCvar_t g_adminMaxHide; \
 	extern vmCvar_t g_ocHostName; \
-	extern vmCvar_t g_noOCHostName;
+	extern vmCvar_t g_ocTimelimit; \
+	extern vmCvar_t g_noOCHostName; \
+	extern vmCvar_t g_noOCTimelimit;
 
 	#define G_OC_CVARTABLE \
 	{ &g_alwaysSaveStats, "g_alwaysSaveStats", "0", CVAR_ARCHIVE, 0, qtrue  }, \
@@ -606,6 +610,10 @@ extern int oc_gameMode;
 		{ \
 			trap_Cvar_Set("sv_hostname", g_ocHostName.string); \
 		} \
+		if(g_ocTimelimit.string[0]) \
+		{ \
+			trap_Cvar_Set("timelimit", g_ocTimelimit.string); \
+		} \
 		triggers += G_Checktrigger_stages(TEAM_ALIENS, S2); \
 		triggers += G_Checktrigger_stages(TEAM_HUMANS, S2); \
 		triggers += G_Checktrigger_stages(TEAM_ALIENS, S3); \
@@ -652,6 +660,10 @@ extern int oc_gameMode;
 		if(g_noOCHostName.string[0]) \
 		{ \
 			trap_Cvar_Set("sv_hostname", g_noOCHostName.string); \
+		} \
+		if(g_noOCTimelimit.string[0]) \
+		{ \
+			trap_Cvar_Set("timelimit", g_noOCTimelimit.string); \
 		} \
 	} while(0)
 
