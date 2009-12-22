@@ -75,6 +75,7 @@ vmCvar_t  g_allowVote;
 vmCvar_t  g_majorityVotes;
 vmCvar_t  g_voteLimit;
 vmCvar_t  g_numNextVotes;
+vmCvar_t  g_unvotableMaps;
 vmCvar_t  g_mapVotePercent;
 vmCvar_t  g_suddenDeathVotePercent;
 vmCvar_t  g_suddenDeathVoteDelay;
@@ -220,6 +221,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_majorityVotes, "g_majorityVotes", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_voteLimit, "g_voteLimit", "5", CVAR_ARCHIVE, 0, qfalse },
   { &g_numNextVotes, "g_numNextVotes", "0", CVAR_ARCHIVE, 0, qfalse },
+  { &g_unvotableMaps, "g_unvotableMaps", "", CVAR_ARCHIVE, 0, qfalse },
   { &g_mapVotePercent, "g_mapVotePercent", "74", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVotePercent, "g_suddenDeathVotePercent", "74", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVoteDelay, "g_suddenDeathVoteDelay", "180", CVAR_ARCHIVE, 0, qfalse },

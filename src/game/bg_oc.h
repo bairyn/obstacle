@@ -1865,7 +1865,15 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	{ \
 		BG_StrToLower( arg2 ); \
  \
-		if( G_MapExists( g_nextMap.string ) && level.numNextVotes == 0 ) \
+		if( strstr( g_unvotableMaps, arg ) && !G_admin_permission( ent, NOVOTELIMIT ) ) \
+		{ \
+		  trap_SendServerCommand ( ent - g_entities va( "print \"%s: " \
+				"server disabled voting for map '%s'\n\"", cmd, arg ) ); \
+ \
+		  return; \
+		} \
+ \
+		if( level.numNextVotes == 0 && G_MapExists( g_nextMap.string ) ) \
 		{ \
 			trap_SendServerCommand( ent - g_entities, va( "print \"%s: " \
 						"the next map is already set to '%s^7'\n\"", cmd, g_nextMap.string ) ); \
@@ -1938,6 +1946,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{ \
 			trap_SendServerCommand(ent-g_entities, va("print \"%s: you cannot call for a map change during a scrim\n\"", cmd)); \
 			return; \
+		} \
+ \
+		if( strstr( g_unvotableMaps, arg ) && !G_admin_permission( ent, NOVOTELIMIT ) ) \
+		{ \
+		  trap_SendServerCommand ( ent - g_entities va( "print \"%s: " \
+				"server disabled voting for map '%s'\n\"", cmd, arg ) ); \
+ \
+		  return; \
 		} \
  \
 		if(!trap_FS_FOpenFile(va("maps/%s.bsp", arg), NULL, FS_READ)) \

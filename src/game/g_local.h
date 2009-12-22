@@ -1176,6 +1176,7 @@ extern  vmCvar_t  g_allowVote;
 extern  vmCvar_t  g_majorityVotes;
 extern  vmCvar_t  g_voteLimit;
 extern  vmCvar_t  g_numNextVotes;
+extern  vmCvar_t  g_unvotableMaps;
 extern  vmCvar_t  g_mapVotePercent;
 extern  vmCvar_t  g_suddenDeathVotePercent;
 extern  vmCvar_t  g_suddenDeathVoteDelay;
