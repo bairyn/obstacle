@@ -523,7 +523,9 @@ extern int oc_gameMode;
 	vmCvar_t g_ocHostName; \
 	vmCvar_t g_ocTimelimit; \
 	vmCvar_t g_noOCHostName; \
-	vmCvar_t g_noOCTimelimit;
+	vmCvar_t g_noOCTimelimit; \
+	vmCvar_t g_ocConfig; \
+	vmCvar_t g_noOCConfig;
 
 	#define G_OC_EXTERNCVARS \
 	extern vmCvar_t g_alwaysSaveStats; \
@@ -545,7 +547,9 @@ extern int oc_gameMode;
 	extern vmCvar_t g_ocHostName; \
 	extern vmCvar_t g_ocTimelimit; \
 	extern vmCvar_t g_noOCHostName; \
-	extern vmCvar_t g_noOCTimelimit;
+	extern vmCvar_t g_noOCTimelimit; \
+	extern vmCvar_t g_ocConfig; \
+	extern vmCvar_t g_noOCConfig;
 
 	#define G_OC_CVARTABLE \
 	{ &g_alwaysSaveStats, "g_alwaysSaveStats", "0", CVAR_ARCHIVE, 0, qtrue  }, \
@@ -565,7 +569,9 @@ extern int oc_gameMode;
 	{ &g_endScrimVotePercent, "g_endScrimVotePercent", "90", CVAR_ARCHIVE, 0, qtrue  }, \
 	{ &g_adminMaxHide, "g_adminMaxHide", "2w", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_ocHostName, "g_ocHostName", "", CVAR_ARCHIVE, 0, qfalse  }, \
-	{ &g_noOCHostName, "g_noOCHostName", "", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_noOCHostName, "g_noOCHostName", "", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_ocConfig, "g_ocConfig", "oc.cfg", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_noOCConfig, "g_noOCConfig", "no-oc.cfg", CVAR_ARCHIVE, 0, qfalse  },
 
 	#define G_OC_LEVEL_LOCALS \
 	int totalMedistations; \
@@ -597,6 +603,7 @@ extern int oc_gameMode;
 	#define G_OC_LoadOC() \
 	do \
 	{ \
+		const char *filename; \
 		unsigned int triggers = 0; \
  \
 		BG_StrToLower(level.layout); \
@@ -645,10 +652,21 @@ extern int oc_gameMode;
 		trap_SetConfigstring(CS_OCMODE, "1"); \
  \
 		trap_SetConfigstring(CS_SCRIMTEAMS, "");  /* Reset scrim-team list */ \
+ \
+		if(g_ocConfig.string[0]) \
+		{ \
+			filename = va("%s", g_ocConfig.string); \
+			if( trap_FS_FOpenFile( filename, NULL, FS_READ ) ) \
+			{ \
+				trap_SendConsoleCommand( EXEC_APPEND, va( "exec \"filename\"\n", filename ) ); \
+			} \
+		} \
 	} while(0)
 
 	#define G_OC_NoLoadOC() \
 	{ \
+		const char *filename; \
+ \
 		trap_Cvar_Set("g_tag", "main"); \
 		trap_SetConfigstring(CS_NOWALLWALK, "0"); \
 		trap_SetConfigstring(CS_OCMODE, "0"); \
@@ -665,6 +683,15 @@ extern int oc_gameMode;
 		if(g_noOCTimelimit.string[0]) \
 		{ \
 			trap_Cvar_Set("timelimit", g_noOCTimelimit.string); \
+		} \
+ \
+		if(g_noOCConfig.string[0]) \
+		{ \
+			filename = va("%s", g_noOCConfig.string); \
+			if( trap_FS_FOpenFile( filename, NULL, FS_READ ) ) \
+			{ \
+				trap_SendConsoleCommand( EXEC_APPEND, va( "exec \"filename\"\n", filename ) ); \
+			} \
 		} \
 	} while(0)
 
