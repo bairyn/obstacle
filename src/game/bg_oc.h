@@ -569,6 +569,8 @@ extern int oc_gameMode;
 	{ &g_adminMaxHide, "g_adminMaxHide", "2w", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_ocHostName, "g_ocHostName", "", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_noOCHostName, "g_noOCHostName", "", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_ocTimelimit, "g_ocTimelimit", "", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_noOCTimelimit, "g_noOCTimelimit", "", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_ocConfig, "g_ocConfig", "oc.cfg", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_noOCConfig, "g_noOCConfig", "no-oc.cfg", CVAR_ARCHIVE, 0, qfalse  },
 
