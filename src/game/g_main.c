@@ -1119,7 +1119,7 @@ G_TimeTilSuddenDeath
 int G_TimeTilSuddenDeath( void )
 {
   if( ( !g_suddenDeathTime.integer && level.suddenDeathBeginTime==0 ) || 
-      ( level.suddenDeathBeginTime < 0 ) || G_OC_NoSuddenDeath() )
+      ( level.suddenDeathBeginTime < 0 ) || G_OC_NoSuddenDeath() || G_DominationPoints() )
     return SUDDENDEATHWARNING + 1; // Always some time away
 
   return ( ( level.suddenDeathBeginTime ) - ( level.time - level.startTime ) );
@@ -1139,8 +1139,21 @@ Recalculate the quantity of building points available to the teams
 void G_CalculateBuildPoints( void )
 {
   int               i, j;
-  buildable_t       buildable;
   buildPointZone_t  *zone;
+  int               dps = G_DominationPoints();
+  float             alienModifier;
+  float             humanModifier;
+
+  if( dps > 0 )
+  {
+    alienModifier = 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps;
+    humanModifier = 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps;
+  }
+  else
+  {
+    alienModifier = 1.f;
+    humanModifier = 1.f;
+  }
 
   // BP queue updates
   while( level.alienBuildPointQueue > 0 &&
@@ -1148,8 +1161,8 @@ void G_CalculateBuildPoints( void )
   {
     level.alienBuildPointQueue--;
     level.alienNextQueueTime += G_NextQueueTime( level.alienBuildPointQueue,
-                                               g_alienBuildPoints.integer,
-                                               g_alienBuildQueueTime.integer );
+                                                 g_alienBuildPoints.integer,
+                                                 g_alienBuildQueueTime.integer / alienModifier );
   }
 
   while( level.humanBuildPointQueue > 0 &&
@@ -1157,8 +1170,8 @@ void G_CalculateBuildPoints( void )
   {
     level.humanBuildPointQueue--;
     level.humanNextQueueTime += G_NextQueueTime( level.humanBuildPointQueue,
-                                               g_humanBuildPoints.integer,
-                                               g_humanBuildQueueTime.integer );
+                                                 g_humanBuildPoints.integer,
+                                                 g_humanBuildQueueTime.integer / humanModifier );
   }
 
   // walking buildable updates
@@ -1442,8 +1455,36 @@ void G_CalculateBuildPoints( void )
       {
         if( power->s.modelindex == BA_H_REACTOR )
           level.humanBuildPoints -= cost;
-        else if( power->s.modelindex == BA_H_REPEATER && power->usesBuildPointZone )
+        else if( ( power->s.modelindex == BA_H_REPEATER || BG_IsDPoint( power->s.modelindex ) ) && power->usesBuildPointZone )
           level.buildPointZones[ power->buildPointZone ].totalBuildPoints -= cost;
+      }
+    }
+  }
+
+  // Calculate build points according to domination point ownership.
+  // There is no sudden death with domination mode.
+  // A team must hold half of all domination points to have normal BP.
+  // Domination points can add or subtract up to half the normal BP to a team's BP, queue rate, and free-fund rate.
+  if( dps > 0 )
+  {
+    level.alienBuildPoints *= alienModifier;
+    level.humanBuildPoints *= humanModifier;
+
+    for( i = 0; i < g_humanRepeaterMaxZones.integer; i++ )
+    {
+      buildPointZone_t *zone = &level.buildPointZones[ i ];
+
+      if( zone->active )
+      {
+        switch( zone->team )
+        {
+          case TEAM_ALIENS:
+            zone->totalBuildPoints *= alienModifier;
+
+          case TEAM_HUMANS:
+          default:
+            zone->totalBuildPoints *= humanModifier;
+        }
       }
     }
   }
@@ -1454,13 +1495,7 @@ void G_CalculateBuildPoints( void )
   {
     gentity_t *ent = &g_entities[ i ];
 
-    if( ent->s.eType != ET_BUILDABLE || ent->s.eFlags & EF_DEAD ||
-        ent->buildableTeam != TEAM_HUMANS )
-      continue;
-
-    buildable = ent->s.modelindex;
-
-    if( buildable != BA_H_REPEATER )
+    if( ent->s.eType != ET_BUILDABLE || ent->s.eFlags & EF_DEAD )
       continue;
 
     if( ent->usesBuildPointZone && level.buildPointZones[ ent->buildPointZone ].active )
@@ -2716,4 +2751,3 @@ void G_RunFrame( int levelTime )
 
   level.frameMsec = trap_Milliseconds();
 }
-

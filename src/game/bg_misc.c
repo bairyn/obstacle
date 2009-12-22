@@ -595,6 +595,146 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
     REPEATER_VALUE,        //int       value;
+  },
+  {
+    BA_DPOINT_A,           //int       buildNum;
+    "dpoint_a",            //char      *buildName;
+    "^3Domination Point A",//char      *humanName;
+    "^3Domination Point A"
+		"",
+    "domination_point_a",  //char      *entityName;
+    TR_GRAVITY,            //trType_t  traj;
+    0.0,                   //float     bounce;
+    0,                     //int       buildPoints;
+    ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ), //int  stages
+    DOMINATION_HEALTH,     //int       health;
+    0,                     //int       regenRate;
+    0,                     //int       splashDamage;
+    0,                     //int       splashRadius;
+    MOD_HSPAWN,            //int       meansOfDeath;
+    TEAM_NONE,             //int       team;
+    ( 1 << WP_HBUILD )|
+    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
+    BANIM_IDLE1,           //int       idleAnim;
+    100,                   //int       nextthink;
+    0,                     //int       buildTime;
+    qfalse,                //qboolean  usable;
+    0,                     //int       turretRange;
+    0,                     //int       turretFireSpeed;
+    WP_NONE,               //weapon_t  turretProjType;
+    0.f,                   //float     minNormal;
+    qtrue,                 //qboolean  invertNormal;
+    qfalse,                //qboolean  creepTest;
+    0,                     //int       creepSize;
+    qfalse,                //qboolean  dccTest;
+    qfalse,                //qboolean  transparentTest;
+    qfalse,                //qboolean  uniqueTest;
+    0,                     //int       value;
+  },
+  {
+    BA_DPOINT_B,           //int       buildNum;
+    "dpoint_b",            //char      *buildName;
+    "^3Domination Point B",//char      *humanName;
+    "^3Domination Point B"
+		"",
+    "domination_point_b",  //char      *entityName;
+    TR_GRAVITY,            //trType_t  traj;
+    0.0,                   //float     bounce;
+    0,                     //int       buildPoints;
+    ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ), //int  stages
+    DOMINATION_HEALTH,     //int       health;
+    0,                     //int       regenRate;
+    0,                     //int       splashDamage;
+    0,                     //int       splashRadius;
+    MOD_HSPAWN,            //int       meansOfDeath;
+    TEAM_NONE,             //int       team;
+    ( 1 << WP_HBUILD )|
+    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
+    BANIM_IDLE1,           //int       idleAnim;
+    100,                   //int       nextthink;
+    0,                     //int       buildTime;
+    qfalse,                //qboolean  usable;
+    0,                     //int       turretRange;
+    0,                     //int       turretFireSpeed;
+    WP_NONE,               //weapon_t  turretProjType;
+    0.f,                   //float     minNormal;
+    qtrue,                 //qboolean  invertNormal;
+    qfalse,                //qboolean  creepTest;
+    0,                     //int       creepSize;
+    qfalse,                //qboolean  dccTest;
+    qfalse,                //qboolean  transparentTest;
+    qfalse,                //qboolean  uniqueTest;
+    0,                     //int       value;
+  },
+  {
+    BA_DPOINT_C,           //int       buildNum;
+    "dpoint_c",            //char      *buildName;
+    "^3Domination Point C",//char      *humanName;
+    "^3Domination Point C"
+		"",
+    "domination_point_c",  //char      *entityName;
+    TR_GRAVITY,            //trType_t  traj;
+    0.0,                   //float     bounce;
+    0,                     //int       buildPoints;
+    ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ), //int  stages
+    DOMINATION_HEALTH,     //int       health;
+    0,                     //int       regenRate;
+    0,                     //int       splashDamage;
+    0,                     //int       splashRadius;
+    MOD_HSPAWN,            //int       meansOfDeath;
+    TEAM_NONE,              //int       team;
+    ( 1 << WP_HBUILD )|
+    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
+    BANIM_IDLE1,           //int       idleAnim;
+    100,                   //int       nextthink;
+    0,                     //int       buildTime;
+    qfalse,                //qboolean  usable;
+    0,                     //int       turretRange;
+    0,                     //int       turretFireSpeed;
+    WP_NONE,               //weapon_t  turretProjType;
+    0.f,                   //float     minNormal;
+    qtrue,                 //qboolean  invertNormal;
+    qfalse,                //qboolean  creepTest;
+    0,                     //int       creepSize;
+    qfalse,                //qboolean  dccTest;
+    qfalse,                //qboolean  transparentTest;
+    qfalse,                //qboolean  uniqueTest;
+    0,                     //int       value;
+  },
+  {
+    BA_DPOINT_D,           //int       buildNum;
+    "dpoint_d",            //char      *buildName;
+    "^3Domination Point D",//char      *humanName;
+    "^3Domination Point D"
+		"",
+    "domination_point_d",  //char      *entityName;
+    TR_GRAVITY,            //trType_t  traj;
+    0.0,                   //float     bounce;
+    0,                     //int       buildPoints;
+    ( 1 << S1 )|( 1 << S2 )|( 1 << S3 ), //int  stages
+    DOMINATION_HEALTH,     //int       health;
+    0,                     //int       regenRate;
+    0,                     //int       splashDamage;
+    0,                     //int       splashRadius;
+    MOD_HSPAWN,            //int       meansOfDeath;
+    TEAM_NONE,             //int       team;
+    ( 1 << WP_HBUILD )|
+    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
+    BANIM_IDLE1,           //int       idleAnim;
+    100,                   //int       nextthink;
+    0,                     //int       buildTime;
+    qfalse,                //qboolean  usable;
+    0,                     //int       turretRange;
+    0,                     //int       turretFireSpeed;
+    WP_NONE,               //weapon_t  turretProjType;
+    0.f,                   //float     minNormal;
+    qtrue,                 //qboolean  invertNormal;
+    qfalse,                //qboolean  creepTest;
+    0,                     //int       creepSize;
+    qfalse,                //qboolean  dccTest;
+    qfalse,                //qboolean  transparentTest;
+    qfalse,                //qboolean  uniqueTest;
+    0,                     //int       value;
   }
 };
 

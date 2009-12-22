@@ -259,6 +259,12 @@ struct gentity_s
 
   qboolean          nonSegModel;        // this entity uses a nonsegmented player model
 
+  team_t            dominationTeam;       // defending team
+  team_t            dominationAttacking;  // attacking team
+  int               dominationTime;       // msec to capture
+  char              dominationName[ 64 ]; // domination point name
+  int               dominationClient;     // client that initiated the attack
+
   buildable_t       bTriggers[ BA_NUM_BUILDABLES ]; // which buildables are triggers
   class_t           cTriggers[ PCL_NUM_CLASSES ];   // which classes are triggers
   weapon_t          wTriggers[ WP_NUM_WEAPONS ];    // which weapons are triggers
@@ -379,6 +385,7 @@ typedef struct
   g_admin_admin_t     *admin;
 
   int                 aliveSeconds;       // time player has been alive in seconds
+  int                 lastFreeFundTime;   // last time the player got free credits
 
   int                 nameChangeTime;
   int                 nameChanges;
@@ -543,11 +550,12 @@ void      G_PrintSpawnQueue( spawnQueue_t *sq );
 // build point zone
 typedef struct
 {
-  int active;
+  int    active;
 
-  int totalBuildPoints;
-  int queuedBuildPoints;
-  int nextQueueTime;
+  int    totalBuildPoints;
+  int    queuedBuildPoints;
+  int    nextQueueTime;
+  team_t team;
 } buildPointZone_t;
 
 // store locational damage regions
@@ -680,6 +688,8 @@ typedef struct
 
   buildPointZone_t  *buildPointZones;
 
+  int               dominationPoints[ NUM_TEAMS ];
+
   gentity_t         *markedBuildables[ MAX_GENTITIES ];
   int               numBuildablesForRemoval;
 
@@ -747,6 +757,11 @@ typedef struct
   int  cmdFlags;
   void ( *cmdHandler )( gentity_t *ent );
 } commands_t;
+
+// Convenience macro to get the total number of DPs
+#define G_DominationPoints() (level.dominationPoints[ TEAM_NONE ] +\
+                              level.dominationPoints[ TEAM_ALIENS ] +\
+                              level.dominationPoints[ TEAM_HUMANS ])
 
 //
 // g_spawn.c
@@ -825,6 +840,8 @@ typedef enum
   IBE_NOROOM,
   IBE_PERMISSION,
   IBE_LASTSPAWN,
+
+  IBE_NEARDP,
 
   IBE_MAXERRORS
 } itemBuildError_t;

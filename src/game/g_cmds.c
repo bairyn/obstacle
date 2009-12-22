@@ -1835,6 +1835,16 @@ void Cmd_Destroy_f( gentity_t *ent )
       return;
     }
 
+    // Always destroy no-team buildables; update domination point counts
+    if( traceEnt->buildableTeam == TEAM_NONE )
+    {
+      if ( BG_IsDPoint( traceEnt->s.modelindex) )
+        level.dominationPoints[ traceEnt->dominationTeam ]--;
+      G_FreeEntity( traceEnt );
+
+      return;
+    }
+
     // Cancel deconstruction (unmark)
     if( deconstruct && g_markDeconstruct.integer && traceEnt->deconstruct && !G_OC_NoMarkDeconstruct() )
     {
@@ -2565,6 +2575,10 @@ void Cmd_Build_f( gentity_t *ent )
         break;
 
       // more serious errors just pop a menu
+      case IBE_NEARDP:
+        G_TriggerMenu( ent->client->ps.clientNum, MN_NEARDP );
+        break;
+
       case IBE_NOALIENBP:
         err = MN_A_NOBP;
         break;
@@ -3696,4 +3710,3 @@ void Cmd_AdminMessage_f( gentity_t *ent )
 
   G_AdminMessage( ent, ConcatArgs( 1 ) );
 }
-

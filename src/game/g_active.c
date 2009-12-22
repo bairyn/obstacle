@@ -618,9 +618,21 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( weapon == WP_ABUILD || weapon == WP_ABUILD2 ||
         BG_InventoryContainsWeapon( WP_HBUILD, client->ps.stats ) )
     {
-        // Update build timer
-        if( client->ps.stats[ STAT_MISC ] > 0 )
+        //update build timer
+        if( client->ps.stats[ STAT_MISC ] > 0 ) {
+          int dps, team_dps;
+
           client->ps.stats[ STAT_MISC ] -= 100;
+
+          // Domination scales the build timer polynomially
+          dps = G_DominationPoints();
+          if (dps) {
+                team_dps = level.dominationPoints[ client->pers.teamSelection ];
+                client->ps.stats[ STAT_MISC ] += DOMINATION_BC_PENALTY +
+                  ( DOMINATION_BC_BONUS - DOMINATION_BC_PENALTY ) *
+                  team_dps * team_dps / (dps * dps);
+          }
+        }
 
         if( client->ps.stats[ STAT_MISC ] < 0 )
           client->ps.stats[ STAT_MISC ] = 0;
@@ -744,19 +756,33 @@ void ClientTimerActions( gentity_t *ent, int msec )
       client->voiceEnthusiasm -= VOICE_ENTHUSIASM_DECAY;
     else
       client->voiceEnthusiasm = 0.0f;
+  }
 
-    client->pers.aliveSeconds++;
-    if( g_freeFundPeriod.integer > 0 &&
-        client->pers.aliveSeconds % g_freeFundPeriod.integer == 0 )
+  client->pers.aliveSeconds++;
+
+  // Give clients some credit periodically
+  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 )
+  {
+    int dps = G_DominationPoints(), uncapped_dps, period;
+    team_t team = ent->client->pers.teamSelection;
+
+    // Domination scales the freekill rate polynomially
+    period = g_freeFundPeriod.integer * 1000;
+    if( dps )
     {
-      // Give clients some credit periodically
-      if( G_TimeTilSuddenDeath( ) > 0 )
-      {
-        if( client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
-          G_AddCreditToClient( client, FREEKILL_ALIEN, qtrue );
-        else if( client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
-          G_AddCreditToClient( client, FREEKILL_HUMAN, qtrue );
-      }
+      uncapped_dps = dps - level.dominationPoints[ team ];
+      period += DOMINATION_FK_BONUS +
+        ( DOMINATION_FK_PENALTY - DOMINATION_FK_BONUS ) *
+        uncapped_dps * uncapped_dps / ( dps * dps );
+    }
+
+    if( ent->client->pers.lastFreeFundTime + period < level.time )
+    {
+      G_AddCreditToClient( ent->client,
+          team == TEAM_ALIENS ? FREEKILL_ALIEN : FREEKILL_HUMAN,
+          qtrue );
+
+      ent->client->pers.lastFreeFundTime = level.time;
     }
   }
 

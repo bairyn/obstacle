@@ -701,5 +701,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
                                          
 #define MAXIMUM_BUILD_TIME          20000 // used for pie timer
 
+/*
+ * Domination
+ */
+
+#define DOMINATION_RANGE            400.0f // how close a player needs to be to attack a domination point
+#define DOMINATION_RANGE_SQRT       20.0f  // square root of the range (used in falloff calculation)
+#define DOMINATION_TIME             10000  // how long (in msec) a team must dominate a point to claim it
+#define DOMINATION_COOLDOWN         5000   // msec between announcements
+#define DOMINATION_HEALTH           100    // health scale of a domination point
+#define DOMINATION_THINK            500    // msec between player presence checks
+
+/* These parameters modified by Domination are scaled via a polynomial formula */
+#define DOMINATION_BC_PENALTY       12     // build cooldown rate (msec)
+#define DOMINATION_BC_BONUS         -50
+#define DOMINATION_FK_PENALTY       180000 // freekill period (msec)
+#define DOMINATION_FK_BONUS         -60000
+
+/* Domination speed is determined by the 'domination weight' of the players
+   present */
+#define DOMINATION_WS_NORMAL        50     // normalizes domination weights
+#define DOMINATION_WS_HUMAN         10     // divide value of a  human (in credits)
+#define DOMINATION_WS_ALIEN         15     // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
+#define DOMINATION_WS_BUILDABLE     500    // divide build time of a buildable (in msec)
 
 #endif /* #ifndef _TREMULOUS_H */
