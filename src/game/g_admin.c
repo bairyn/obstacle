@@ -1228,7 +1228,14 @@ qboolean G_admin_readconfig( gentity_t *ent )
 qboolean G_admin_register( gentity_t *ent )
 {
   int level = 0;
-  
+
+  if( !ent || !ent->client)
+  {
+    G_Printf( "^3register^7: cannot register console\n" );
+
+	return qfalse;
+  }
+
   if( ent->client->pers.admin )
   {
     level = ent->client->pers.admin->level;
