@@ -1226,9 +1226,9 @@ void Cmd_CallVote_f( gentity_t *ent )
       {
         BG_StrToLower( arg2 );
 
-        if( strstr( g_unvotableMaps, arg ) && !G_admin_permission( ent, NOVOTELIMIT ) )
+        if( strstr( g_unvotableMaps.string, arg ) && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
         {
-          trap_SendServerCommand ( ent - g_entities va( "print \"%s: "
+          trap_SendServerCommand ( ent - g_entities, va( "print \"%s: "
                 "server disabled voting for map '%s'\n\"", cmd, arg ) );
 
           return;
@@ -1277,9 +1277,9 @@ void Cmd_CallVote_f( gentity_t *ent )
       {
         BG_StrToLower( arg2 );
 
-        if( strstr( g_unvotableMaps, arg ) && !G_admin_permission( ent, NOVOTELIMIT ) )
+        if( strstr( g_unvotableMaps.string, arg ) && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
         {
-          trap_SendServerCommand ( ent - g_entities va( "print \"%s: "
+          trap_SendServerCommand ( ent - g_entities, va( "print \"%s: "
                 "server disabled voting for map '%s'\n\"", cmd, arg ) );
 
           return;

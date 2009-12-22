@@ -3553,7 +3553,10 @@ static void G_SetBuildableLinkState( qboolean link )
 static void G_SetBuildableMarkedLinkState( qboolean link )
 {
   int       i;
+  char      map[ MAX_STRING_CHARS ];
   gentity_t *ent;
+
+  trap_Cvar_VariableStringBuffer( "mapname", map, sizeof( map ) );
 
   for( i = 0; i < level.numBuildablesForRemoval; i++ )
   {
@@ -3571,8 +3574,6 @@ static void G_SetBuildableMarkedLinkState( qboolean link )
 
     trap_Cvar_Set( "g_LayoutConfigsLoaded", "1" );
   }
-
-
 }
 
 /*

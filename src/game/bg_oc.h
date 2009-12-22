@@ -659,7 +659,7 @@ extern int oc_gameMode;
 			filename = va("%s", g_ocConfig.string); \
 			if( trap_FS_FOpenFile( filename, NULL, FS_READ ) ) \
 			{ \
-				trap_SendConsoleCommand( EXEC_APPEND, va( "exec \"filename\"\n", filename ) ); \
+				trap_SendConsoleCommand( EXEC_APPEND, va( "exec \"%s\"\n", filename ) ); \
 			} \
 		} \
 	} while(0)
@@ -691,7 +691,7 @@ extern int oc_gameMode;
 			filename = va("%s", g_noOCConfig.string); \
 			if( trap_FS_FOpenFile( filename, NULL, FS_READ ) ) \
 			{ \
-				trap_SendConsoleCommand( EXEC_APPEND, va( "exec \"filename\"\n", filename ) ); \
+				trap_SendConsoleCommand( EXEC_APPEND, va( "exec \"%s\"\n", filename ) ); \
 			} \
 		} \
 	} while(0)
@@ -1865,9 +1865,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	{ \
 		BG_StrToLower( arg2 ); \
  \
-		if( strstr( g_unvotableMaps, arg ) && !G_admin_permission( ent, NOVOTELIMIT ) ) \
+		if( strstr( g_unvotableMaps.string, arg ) && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) ) \
 		{ \
-		  trap_SendServerCommand ( ent - g_entities va( "print \"%s: " \
+		  trap_SendServerCommand ( ent - g_entities, va( "print \"%s: " \
 				"server disabled voting for map '%s'\n\"", cmd, arg ) ); \
  \
 		  return; \
@@ -1944,14 +1944,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(BG_OC_OCMode() && level.ocScrimState > G_OC_STATE_NONE && !G_admin_permission(ent, ADMF_NO_VOTE_LIMIT)) \
 		{ \
-			trap_SendServerCommand(ent-g_entities, va("print \"%s: you cannot call for a map change during a scrim\n\"", cmd)); \
+			trap_SendServerCommand(ent - g_entities, va("print \"%s: you cannot call for a map change during a scrim\n\"", cmd)); \
 			return; \
 		} \
  \
-		if( strstr( g_unvotableMaps, arg ) && !G_admin_permission( ent, NOVOTELIMIT ) ) \
+		if(strstr(g_unvotableMaps.string, arg) && !G_admin_permission(ent, ADMF_NO_VOTE_LIMIT)) \
 		{ \
-		  trap_SendServerCommand ( ent - g_entities va( "print \"%s: " \
-				"server disabled voting for map '%s'\n\"", cmd, arg ) ); \
+		  trap_SendServerCommand(ent - g_entities, va("print \"%s: " \
+				"server disabled voting for map '%s'\n\"", cmd, arg)); \
  \
 		  return; \
 		} \
@@ -2029,7 +2029,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(BG_OC_OCMode() && level.ocScrimState > G_OC_STATE_NONE && !G_admin_permission(ent, ADMF_NO_VOTE_LIMIT)) \
 		{ \
-			trap_SendServerCommand(ent-g_entities, va("print \"%s: you cannot call for a mapchange during a scrim\n\"", cmd)); \
+			trap_SendServerCommand(ent - g_entities, va("print \"%s: you cannot call for a mapchange during a scrim\n\"", cmd)); \
 			return; \
 		} \
  \
@@ -2059,7 +2059,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(BG_OC_OCMode() && level.ocScrimState > G_OC_STATE_NONE && !G_admin_permission(ent, ADMF_NO_VOTE_LIMIT)) \
 		{ \
-			trap_SendServerCommand(ent-g_entities, va("print \"%s: you cannot call for a mapchange during a scrim\n\"", cmd)); \
+			trap_SendServerCommand(ent - g_entities, va("print \"%s: you cannot call for a mapchange during a scrim\n\"", cmd)); \
 			return; \
 		} \
  \
@@ -2087,14 +2087,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(level.clients[clientNum].pers.hiddenTime) \
 		{ \
-			trap_SendServerCommand(ent-g_entities, \
+			trap_SendServerCommand(ent - g_entities, \
 				va("print \"%s: player is force hidden\n\"", cmd)); \
 			return; \
 		} \
  \
 		if(G_admin_permission(&g_entities[clientNum], ADMF_IMMUNITY)) \
 		{ \
-			trap_SendServerCommand(ent-g_entities, \
+			trap_SendServerCommand(ent - g_entities, \
 				va("print \"%s: admin is immune from vote hide\n\"", cmd)); \
 			return; \
 		} \
@@ -2471,7 +2471,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 				ent->client->pers.hidden = !ent->client->pers.hidden; \
 				G_StopFromFollowing(ent, 0); \
 				ent->r.svFlags |= SVF_SINGLECLIENT; \
-				ent->r.singleClient = ent-g_entities; \
+				ent->r.singleClient = ent - g_entities; \
 				G_ClientPrint(ent, "You have been hidden (g_forceHide set on server)\n", CLIENT_SPECTATORS); \
 			} \
 		} \

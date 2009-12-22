@@ -535,7 +535,7 @@ void G_MapConfigs( const char *mapname )
   if( trap_FS_FOpenFile( filename, NULL, FS_READ ) )
   {
     trap_SendConsoleCommand( EXEC_APPEND,
-      va( "exec \"filename\"\n", filename ) );
+      va( "exec \"%s\"\n", filename ) );
   }
 
   trap_Cvar_Set( "g_mapConfigsLoaded", "1" );
