@@ -1193,7 +1193,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         sizeof( level.voteDisplayString[ team ] ),
         "Unmute player '%s'", name );
     }
-    else if( !Q_stricmp( vote, "map_restart" ) )
+    else if( !Q_stricmp( vote, "map_restart" ) && !G_OC_NoRestartVote() )
     {
       if(G_OC_NeedAlternateMapRestartVote())
       {
@@ -1246,41 +1246,74 @@ void Cmd_CallVote_f( gentity_t *ent )
         if( arg2[ 0 ] )
         {
           level.voteThreshold[team] = g_mapVotePercent.value + percentAddition;
-          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "!map %s %s", arg, arg2 );
+          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "changemap %s %s", arg, arg2 );
           Com_sprintf( level.voteDisplayString[ team ],
               sizeof( level.voteDisplayString[ team ] ), "Change to map '%s^7' with layout '%s^7'", arg, arg2 );
         }
         else
         {
           level.voteThreshold[team] = g_mapVotePercent.value + percentAddition;
-          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "!map %s", arg );
+          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "changemap %s", arg );
           Com_sprintf( level.voteDisplayString[ team ],
               sizeof( level.voteDisplayString[ team ] ), "Change to map '%s^7'", arg );
         }
       }
     }
-    else if( !Q_stricmp( vote, "nextmap" ) && !G_OC_NoNextMap() )
+    else if( !Q_stricmp( vote, "nextmap" ) )
     {
-      if( G_MapExists( g_nextMap.string ) )
+      if(G_OC_NeedAlternateNextMapVote())
       {
-        trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
-          "the next map is already set to '%s^7'\n\"", cmd, g_nextMap.string ) );
-        return;
+        G_OC_AlternateNextMapVote();
       }
-
-      if( !G_MapExists( arg ) )
+      else
       {
-        trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
-          "'maps/%s^7.bsp' could not be found on the server\n\"", arg, cmd ) );
-        return;
+        BG_StrToLower( arg2 );
+
+        if( G_MapExists( g_nextMap.string ) && level.numNextVotes == 0 )
+        {
+          trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
+            "the next map is already set to '%s^7'\n\"", cmd, g_nextMap.string ) );
+          return;
+        }
+
+        if( !G_MapExists( arg ) )
+        {
+          trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
+            "'maps/%s^7.bsp' could not be found on the server\n\"", arg, cmd ) );
+          return;
+        }
+
+        if( arg2[ 0 ] )
+        {
+          if( !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg, arg2 ), NULL, FS_READ ) )
+          {
+            trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
+                  "'layouts/%s/%s.dat' could not be found on the server\n\"", cmd, arg, arg2 ) );
+            return;
+          }
+        }
+
+        if( arg2[ 0 ] )
+        {
+          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
+            "set g_nextMap \"%s\"; set g_layouts \"%s\"", arg, arg2 );
+
+          Com_sprintf( level.voteDisplayString[ team ],
+            sizeof( level.voteDisplayString[ team ] ),
+            "Set the next map to '%s' with layout '%s'", arg, arg2 );
+        }
+        else
+        {
+          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
+            "set g_nextMap \"%s\"", arg );
+
+          Com_sprintf( level.voteDisplayString[ team ],
+            sizeof( level.voteDisplayString[ team ] ),
+            "Set the next map to '%s'", arg );
+        }
+
+        --level.numNextVotes;
       }
-
-      Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
-        "set g_nextMap %s", arg );
-
-      Com_sprintf( level.voteDisplayString[ team ],
-        sizeof( level.voteDisplayString[ team ] ),
-        "Set the next map to '%s'", arg );
     }
     else if( !Q_stricmp( vote, "draw" ) )
     {

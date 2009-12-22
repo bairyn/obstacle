@@ -711,6 +711,8 @@ typedef struct
   qboolean          paused;
   int               pausedTime;
 
+  int               numNextVotes;
+
   int unlaggedIndex;
   int unlaggedTimes[ MAX_UNLAGGED_MARKERS ];
 
@@ -1173,6 +1175,7 @@ extern  vmCvar_t  g_doWarmup;
 extern  vmCvar_t  g_allowVote;
 extern  vmCvar_t  g_majorityVotes;
 extern  vmCvar_t  g_voteLimit;
+extern  vmCvar_t  g_numNextVotes;
 extern  vmCvar_t  g_mapVotePercent;
 extern  vmCvar_t  g_suddenDeathVotePercent;
 extern  vmCvar_t  g_suddenDeathVoteDelay;

@@ -702,8 +702,6 @@ extern int oc_gameMode;
 
 	#define G_OC_OCHovelNeverOccupied() ((BG_OC_OCMode()) ? (1) : (0))
 
-	#define G_OC_NoNextMap() ((BG_OC_OCMode()) ? (1) : (0))
-
 	//char *G_OC_MediStats(gclient_t *client, int count, int time);
 	//char *G_OC_WinStats(gclient_t *client, int count, int time);
 	char *G_OC_MediStats(void *client, int count, int time);
@@ -1857,8 +1855,79 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	#define G_OC_NamedVoteNegativeMatches()
 
 	#define G_OC_NeedAlternateMapVote() (1)
+	#define G_OC_NeedAlternateNextMapVote() (1)
 	#define G_OC_NeedAlternateMapRestartVote() ((BG_OC_OCMode()) ? (1) : (0))
 	#define G_OC_NeedAlternateDrawVote() ((BG_OC_OCMode()) ? (1) : (0))
+	#define G_OC_NoRestartVote() ((BG_OC_OCMode()) ? (1) : (0))
+
+	#define G_OC_AlternateNextMapVote() \
+	do \
+	{ \
+		BG_StrToLower( arg2 ); \
+ \
+		if( G_MapExists( g_nextMap.string ) && level.numNextVotes == 0 ) \
+		{ \
+			trap_SendServerCommand( ent - g_entities, va( "print \"%s: " \
+						"the next map is already set to '%s^7'\n\"", cmd, g_nextMap.string ) ); \
+			return; \
+		} \
+ \
+		if( !G_MapExists( arg ) ) \
+		{ \
+			trap_SendServerCommand( ent - g_entities, va( "print \"%s: " \
+						"'maps/%s^7.bsp' could not be found on the server\n\"", arg, cmd ) ); \
+			return; \
+		} \
+ \
+		if( arg2[ 0 ] ) \
+		{ \
+			if( !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg, arg2 ), NULL, FS_READ ) ) \
+			{ \
+				trap_SendServerCommand( ent - g_entities, va( "print \"%s: " \
+							"'layouts/%s/%s.dat' could not be found on the server\n\"", cmd, arg, arg2 ) ); \
+				return; \
+			} \
+		} \
+ \
+		if(g_ocOnly.integer > 0) \
+		{ \
+			if(!arg2[0]) \
+				Q_strncpyz(arg2, "oc", sizeof(arg2)); \
+ \
+			if(arg2[0] != 'o' || arg2[1] != 'c') \
+			{ \
+				trap_SendServerCommand(ent - g_entities, va("print \"%s: " \
+					"'%s^7' is not an obstacle course\n\"", cmd, ((arg2[0]) ? (arg2) : ("(empty)")))); \
+				return; \
+			} \
+		} \
+		else if(g_ocOnly.integer < 0) \
+		{ \
+			if(arg2[0] == 'o' || arg2[1] == 'c') \
+			{ \
+				trap_SendServerCommand(ent - g_entities, va("print \"%s: " \
+					"'%s^7' is an obstacle course\n\"", cmd, ((arg2[0]) ? (arg2) : ("(empty)")))); \
+				return; \
+			} \
+		} \
+ \
+        if( arg2[ 0 ] ) \
+        { \
+          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), \
+            "set g_nextMap \"%s\"; set g_layouts \"%s\"", arg, arg2 ); \
+ \
+          Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ), "Set the next map to '%s' with layout '%s'", arg, arg2 ); \
+        } \
+        else \
+        { \
+          Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), \
+            "set g_nextMap \"%s\"", arg ); \
+ \
+          Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ), "Set the next map to '%s'", arg ); \
+        } \
+ \
+        --level.numNextVotes; \
+	} while(0)
 
 	#define G_OC_AlternateMapVote() \
 	do \
@@ -1892,9 +1961,6 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
 		else if(g_ocOnly.integer < 0) \
 		{ \
-			if(!arg2[0]) \
-				Q_strncpyz(arg2, "oc", sizeof(arg2)); \
- \
 			if(arg2[0] == 'o' || arg2[1] == 'c') \
 			{ \
 				trap_SendServerCommand(ent - g_entities, va("print \"%s: " \

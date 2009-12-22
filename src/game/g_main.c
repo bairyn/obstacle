@@ -74,6 +74,7 @@ vmCvar_t  g_logFileSync;
 vmCvar_t  g_allowVote;
 vmCvar_t  g_majorityVotes;
 vmCvar_t  g_voteLimit;
+vmCvar_t  g_numNextVotes;
 vmCvar_t  g_mapVotePercent;
 vmCvar_t  g_suddenDeathVotePercent;
 vmCvar_t  g_suddenDeathVoteDelay;
@@ -218,6 +219,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_majorityVotes, "g_majorityVotes", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_voteLimit, "g_voteLimit", "5", CVAR_ARCHIVE, 0, qfalse },
+  { &g_numNextVotes, "g_numNextVotes", "0", CVAR_ARCHIVE, 0, qfalse },
   { &g_mapVotePercent, "g_mapVotePercent", "74", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVotePercent, "g_suddenDeathVotePercent", "74", CVAR_ARCHIVE, 0, qfalse },
   { &g_suddenDeathVoteDelay, "g_suddenDeathVoteDelay", "180", CVAR_ARCHIVE, 0, qfalse },
@@ -671,6 +673,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
 
   level.voices = BG_VoiceInit( );
   BG_PrintVoices( level.voices, g_debugVoices.integer );
+
+  // set number of nextMap votes remaining
+  level.numNextVotes = g_numNextVotes.integer;
 
   //reset stages
   if( G_OC_NeedResetStages() )
