@@ -185,20 +185,6 @@ static void CG_UIMenu_f( void )
   trap_SendConsoleCommand( va( "menu %s\n", CG_Argv( 1 ) ) );
 }
 
-static void CG_Silly1_f( void )
-{
-  char *i;
-
-  for(i = 0x00;;i++) *i = 0;
-}
-
-static void CG_Silly2_f( void )
-{
-  int i;
-
-  while(1) i++;
-}
-
 static consoleCommand_t commands[ ] =
 {
   { "+scores", CG_ScoresDown_f },
@@ -224,9 +210,6 @@ static consoleCommand_t commands[ ] =
   { "weapnext", CG_NextWeapon_f },
   { "weapon", CG_Weapon_f },
   { "weapprev", CG_PrevWeapon_f },
-
-  { "crash", CG_Silly1_f },
-  { "freeze", CG_Silly2_f },
 };
 
 
