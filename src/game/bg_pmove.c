@@ -868,9 +868,17 @@ static qboolean PM_CheckJump( void )
     if( pm->ps->velocity[ 2 ] < 0 )
       pm->ps->velocity[ 2 ] = 0;
 
+<<<<<<< HEAD
     VectorMA( pm->ps->velocity, BG_Class( pm->ps->stats[ STAT_CLASS ] )->jumpMagnitude,
               normal, pm->ps->velocity );
   }
+=======
+//  if( pm->ps->velocity[ 2 ] < 0 )  // commented out until height can be lost
+//    pm->ps->velocity[ 2 ] = 0;
+
+  VectorMA( pm->ps->velocity, BG_FindJumpMagnitudeForClass( pm->ps->stats[ STAT_PCLASS ] ),
+            normal, pm->ps->velocity );
+>>>>>>> comment out lost jump fix until it is fixed without removing lost height
 
   PM_AddEvent( EV_JUMP );
 

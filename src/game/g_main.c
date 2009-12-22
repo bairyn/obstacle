@@ -274,6 +274,7 @@ static cvarTable_t   gameCvarTable[ ] =
 
   { &g_mapConfigs, "g_mapConfigs", "", CVAR_ARCHIVE, 0, qfalse  },
   { NULL, "g_mapConfigsLoaded", "0", CVAR_ROM, 0, qfalse  },
+  { NULL, "g_LayoutConfigsLoaded", "0", CVAR_ROM, 0, qfalse  },
 
   { &g_layouts, "g_layouts", "", CVAR_LATCH, 0, qfalse  },
   { &g_layoutAuto, "g_layoutAuto", "1", CVAR_ARCHIVE, 0, qfalse  },
@@ -511,6 +512,7 @@ G_MapConfigs
 */
 void G_MapConfigs( const char *mapname )
 {
+  const char *filename;
 
   if( !g_mapConfigs.string[0] )
     return;
@@ -518,11 +520,19 @@ void G_MapConfigs( const char *mapname )
   if( trap_Cvar_VariableIntegerValue( "g_mapConfigsLoaded" ) )
     return;
 
-  trap_SendConsoleCommand( EXEC_APPEND,
-    va( "exec \"%s/default.cfg\"\n", g_mapConfigs.string ) );
+  filename = va( "%s/default.cfg\n", g_mapConfigs.string );
+  if( trap_FS_FOpenFile( filename, NULL, FS_READ ) )
+  {
+    trap_SendConsoleCommand( EXEC_APPEND,
+      va( "exec \"%s\"\n", filename ) );
+  }
 
-  trap_SendConsoleCommand( EXEC_APPEND,
-    va( "exec \"%s/%s.cfg\"\n", g_mapConfigs.string, mapname ) );
+  filename = va( "%s/%s.cfg", g_mapConfigs.string, mapname );
+  if( trap_FS_FOpenFile( filename, NULL, FS_READ ) )
+  {
+    trap_SendConsoleCommand( EXEC_APPEND,
+      va( "exec \"filename\"\n", filename ) );
+  }
 
   trap_Cvar_Set( "g_mapConfigsLoaded", "1" );
 }
@@ -536,6 +546,9 @@ G_InitGame
 void G_InitGame( int levelTime, int randomSeed, int restart )
 {
   int i;
+  char map[ MAX_CVAR_VALUE_STRING ] = {""};
+
+  trap_Cvar_VariableStringBuffer( "mapname", map, sizeof( map ) );
 
   srand( randomSeed );
 
@@ -587,15 +600,11 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   else
     G_Printf( "Not logging to disk\n" );
 
-  {
-    char map[ MAX_CVAR_VALUE_STRING ] = {""};
-
-    trap_Cvar_VariableStringBuffer( "mapname", map, sizeof( map ) );
-    G_MapConfigs( map );
-  }
+  G_MapConfigs( map );
 
   // we're done with g_mapConfigs, so reset this for the next map
   trap_Cvar_Set( "g_mapConfigsLoaded", "0" );
+  trap_Cvar_Set( "g_LayoutConfigsLoaded", "0" );
 
   G_RegisterCommands( );
   G_admin_readconfig( NULL );

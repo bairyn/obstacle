@@ -3563,6 +3563,16 @@ static void G_SetBuildableMarkedLinkState( qboolean link )
     else
       trap_UnlinkEntity( ent );
   }
+
+  if( trap_FS_FOpenFile( va( "layouts/%s/%s.cfg", map, level.layout ), NULL, FS_READ ) )
+  {
+    trap_SendConsoleCommand( EXEC_APPEND,
+        va( "exec layouts/%s/%s.cfg", map, level.layout ) );
+
+    trap_Cvar_Set( "g_LayoutConfigsLoaded", "1" );
+  }
+
+
 }
 
 /*
