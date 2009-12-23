@@ -1162,7 +1162,7 @@ void G_CalculateBuildPoints( void )
   }
 
   // walking buildable updates
-  if( G_OC_CanBuildablesMove() && level.numAlienClients + level.numHumanClients > 0 && level.changeMsec < 800 )  // don't update when frame is longer than 800
+  if( g_mobileDuration.integer > 0 && G_OC_CanBuildablesMove() && level.numAlienClients + level.numHumanClients > 0 && level.changeMsec < 800 )  // don't update when frame is longer than 800
   {
     if( level.buildablesNextMoveTime == 0 )
     {
