@@ -778,7 +778,7 @@ void AGeneric_CreepCheck( gentity_t *self )
 
   G_CreepSlow( self );
 
-  if(!G_OC_NeedRepeaterBlast() )
+  if( G_OC_NeedRepeaterBlast() )
     return;
 
   spawn = self->parentNode;
