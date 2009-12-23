@@ -625,7 +625,7 @@ qboolean G_FindCreep( gentity_t *self )
 
       if( ( ent->s.modelindex == BA_A_SPAWN || 
             ent->s.modelindex == BA_A_OVERMIND ||
-            ( BG_IsDPoint( ent->s.modelindex ) && ent->dominationTeam == TEAM_ALIENS ) ) &&
+            ( BG_IsDPoint( ent->s.modelindex ) && ent->dominationTeam == TEAM_ALIENS && self->s.eType == ET_BUILDABLE ) ) &&  // only give creep to buildables
           ent->spawned && ent->health > 0 )
       {
         VectorSubtract( self->s.origin, ent->s.origin, temp_v );
