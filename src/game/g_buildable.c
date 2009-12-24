@@ -377,33 +377,44 @@ Get the number of build points from a position
 */
 int G_GetBuildPoints( const vec3_t pos, team_t team, int extraDistance )
 {
+  gentity_t *powerPoint = G_ProvidingEntityForPoint( pos, team );
+
   if( G_TimeTilSuddenDeath( ) <= 0 )
   {
     return 0;
   }
-  else if( team == TEAM_ALIENS )
-  {
-    return level.alienBuildPoints;
-  }
-  else if( team == TEAM_HUMANS )
-  {
-    gentity_t *powerPoint = G_ProvidingEntityForPoint( pos, TEAM_HUMANS );
 
-    if( powerPoint && powerPoint->s.modelindex == BA_H_REACTOR )
-      return level.humanBuildPoints;
-
-    if( powerPoint && ( powerPoint->s.modelindex == BA_H_REPEATER || BG_IsDPoint( powerPoint->s.modelindex ) ) &&
-        powerPoint->usesBuildPointZone && level.buildPointZones[ powerPoint->buildPointZone ].active )
+  if( powerPoint && G_IsCore( powerPoint->s.modelindex ) )
+  {
+    if     ( team == TEAM_ALIENS )
     {
-      return level.buildPointZones[ powerPoint->buildPointZone ].totalBuildPoints -
-             level.buildPointZones[ powerPoint->buildPointZone ].queuedBuildPoints;
+      return level.alienBuildPoints;
     }
-
-    // Return the BP of the main zone by default
-    return level.humanBuildPoints;
+    else if( team == TEAM_HUMANS )
+    {
+      return level.humanBuildPoints;
+    }
   }
 
-  return 0;
+  if( powerPoint &&
+      powerPoint->usesBuildPointZone && level.buildPointZones[ powerPoint->buildPointZone ].active )
+  {
+    return level.buildPointZones[ powerPoint->buildPointZone ].totalBuildPoints -
+           level.buildPointZones[ powerPoint->buildPointZone ].queuedBuildPoints;
+  }
+  else
+  {
+    // Return the BP of the main zone by default
+
+    if     ( team == TEAM_ALIENS )
+    {
+      return level.alienBuildPoints;
+    }
+    else if( team == TEAM_HUMANS )
+    {
+      return level.humanBuildPoints;
+    }
+  }
 }
 
 /*
