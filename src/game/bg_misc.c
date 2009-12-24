@@ -68,6 +68,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     ASPAWN_VALUE,          //int       value;
   },
   {
@@ -103,6 +104,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qtrue,                 //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     OVERMIND_VALUE,        //int       value;
   },
   {
@@ -138,6 +140,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     BARRICADE_VALUE,       //int       value;
   },
   {
@@ -173,6 +176,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     ACIDTUBE_VALUE,        //int       value;
   },
   {
@@ -208,6 +212,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qtrue,                 //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     TRAPPER_VALUE,         //int       value;
   },
   {
@@ -244,6 +249,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qtrue,                 //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     BOOSTER_VALUE,         //int       value;
   },
   {
@@ -278,6 +284,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     HIVE_VALUE,            //int       value;
   },
   {
@@ -313,6 +320,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qtrue,                 //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     HOVEL_VALUE,           //int       value;
   },
   {
@@ -348,6 +356,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qtrue,                 //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     HSPAWN_VALUE,          //int       value;
   },
   {
@@ -383,6 +392,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qtrue,                 //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     MGTURRET_VALUE,        //int       value;
   },
   {
@@ -418,6 +428,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qtrue,                 //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     TESLAGEN_VALUE,        //int       value;
   },
   {
@@ -453,6 +464,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     ARMOURY_VALUE,         //int       value;
   },
   {
@@ -488,6 +500,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     DC_VALUE,              //int       value;
   },
   {
@@ -524,6 +537,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qtrue,                 //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     MEDISTAT_VALUE,        //int       value;
   },
   {
@@ -559,6 +573,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qtrue,                 //qboolean  uniqueTest;
+    qfalse,                //qboolean  zone;
     REACTOR_VALUE,         //int       value;
   },
   {
@@ -594,6 +609,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qtrue,                 //qboolean  zone;
     REPEATER_VALUE,        //int       value;
   },
   {
@@ -629,6 +645,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qtrue,                 //qboolean  zone;
     0,                     //int       value;
   },
   {
@@ -664,6 +681,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qtrue,                 //qboolean  zone;
     0,                     //int       value;
   },
   {
@@ -699,6 +717,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qtrue,                 //qboolean  zone;
     0,                     //int       value;
   },
   {
@@ -734,6 +753,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     qfalse,                //qboolean  dccTest;
     qfalse,                //qboolean  transparentTest;
     qfalse,                //qboolean  uniqueTest;
+    qtrue,                 //qboolean  zone;
     0,                     //int       value;
   }
 };

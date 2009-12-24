@@ -1886,7 +1886,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
     if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) ||
         ( ent->client->pers.teamSelection == TEAM_HUMANS &&
-          !G_FindPower( traceEnt ) ) )
+          !G_FindProvider( traceEnt ) ) )
     {
       if( ent->client->ps.stats[ STAT_MISC ] > 0 )
       {
@@ -1904,7 +1904,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       }
       else if( g_markDeconstruct.integer &&
                ( ent->client->pers.teamSelection != TEAM_HUMANS ||
-                 G_FindPower( traceEnt ) || lastSpawn ) )
+                 G_FindProvider( traceEnt ) || lastSpawn ) )
       {
         traceEnt->deconstruct     = qtrue; // Mark buildable for deconstruction
         traceEnt->deconstructTime = level.time;

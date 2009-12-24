@@ -854,9 +854,10 @@ qboolean          G_IsDCCBuilt( void );
 int               G_FindDCC( gentity_t *self );
 gentity_t         *G_Reactor( void );
 gentity_t         *G_Overmind( void );
-qboolean          G_FindCreep( gentity_t *self );
+buildable_t       G_IsCreepHere( vec3_t origin );
 
 void              G_BuildableThink( gentity_t *ent, int msec );
+void              G_BuildableDie( gentity_t *ent );
 gentity_t         *G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
 void              G_ClearDeconMarks( void );
 itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin );
@@ -874,11 +875,12 @@ void              G_BaseSelfDestruct( team_t team );
 int               G_NextQueueTime( int queuedBP, int totalBP, int queueBaseRate );
 void              G_QueueBuildPoints( gentity_t *self );
 int               G_GetBuildPoints( const vec3_t pos, team_t team, int dist );
-qboolean          G_FindPower( gentity_t *self );
-gentity_t         *G_PowerEntityForPoint( const vec3_t origin );
-gentity_t         *G_PowerEntityForEntity( gentity_t *ent );
+qboolean          G_FindProvider( gentity_t *self );
+gentity_t         *G_ProvidingEntityForPoint( const vec3_t origin, team_t team );
+gentity_t         *G_ProvidingEntityForEntity( gentity_t *ent );
 gentity_t         *G_RepeaterEntityForPoint( vec3_t origin );
 qboolean          G_InPowerZone( gentity_t *self );
+qboolean          G_IsCore( buildable_t buildable );
 
 //
 // g_utils.c
@@ -1206,9 +1208,9 @@ extern  vmCvar_t  g_alienBuildPoints;
 extern  vmCvar_t  g_alienBuildQueueTime;
 extern  vmCvar_t  g_humanBuildPoints;
 extern  vmCvar_t  g_humanBuildQueueTime;
-extern  vmCvar_t  g_humanRepeaterBuildPoints;
-extern  vmCvar_t  g_humanRepeaterBuildQueueTime;
-extern  vmCvar_t  g_humanRepeaterMaxZones;
+extern  vmCvar_t  g_zoneBuildPoints;
+extern  vmCvar_t  g_zoneBuildQueueTime;
+extern  vmCvar_t  g_zoneMax;
 extern  vmCvar_t  g_humanStage;
 extern  vmCvar_t  g_humanCredits;
 extern  vmCvar_t  g_humanMaxStage;

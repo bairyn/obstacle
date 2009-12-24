@@ -1048,8 +1048,10 @@ typedef struct
   qboolean      dccTest;
   qboolean      transparentTest;
   qboolean      uniqueTest;
+
+  qboolean      zone;
   
-  int       value;
+  int           value;
 } buildableAttributes_t;
 
 typedef struct
