@@ -2349,8 +2349,8 @@ void Domination_Think( gentity_t *self )
     {
       self->dominationAttacking = TEAM_ALIENS;
       self->timestamp = level.time + DOMINATION_COOLDOWN;
-      trap_SendServerCommand( -1, va( "print \"^1Aliens^7 attacking %s^7!\n\"",
-                              self->dominationName ) );
+      //trap_SendServerCommand( -1, va( "print \"^1Aliens^7 attacking %s^7!\n\"",
+                              //self->dominationName ) );
       if( self->dominationTeam == TEAM_NONE )
         self->deconstruct = qfalse;
       self->dominationClient = client[ TEAM_ALIENS ];
@@ -2361,8 +2361,8 @@ void Domination_Think( gentity_t *self )
     {
       self->dominationAttacking = TEAM_HUMANS;
       self->timestamp = level.time + DOMINATION_COOLDOWN;
-      trap_SendServerCommand( -1, va( "print \"^5Humans^7 attacking %s^7!\n\"",
-                              self->dominationName ) );
+      //trap_SendServerCommand( -1, va( "print \"^5Humans^7 attacking %s^7!\n\"",
+                              //self->dominationName ) );
       if( self->dominationTeam == TEAM_NONE )
         self->deconstruct = qtrue;
       self->dominationClient = client[ TEAM_HUMANS ];
