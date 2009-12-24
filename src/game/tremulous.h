@@ -673,7 +673,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define FREEKILL_HUMAN              LEVEL0_VALUE
 
 #define DEFAULT_ALIEN_BUILDPOINTS   "150"
-#define DEFAULT_ALIEN_QUEUE_TIME    "12000"
+#define DEFAULT_ALIEN_QUEUE_TIME    "16000"
 #define DEFAULT_ALIEN_STAGE2_THRESH "8000"
 #define DEFAULT_ALIEN_STAGE3_THRESH "16000"
 #define DEFAULT_ALIEN_MAX_STAGE     "2"
@@ -721,8 +721,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /* Domination speed is determined by the 'domination weight' of the players
    present */
 #define DOMINATION_WS_NORMAL        50     // normalizes domination weights
-#define DOMINATION_WS_HUMAN         10     // divide value of a  human (in credits)
+#define DOMINATION_WS_HUMAN         20     // divide value of a  human (in credits)
 #define DOMINATION_WS_ALIEN         50     // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
-#define DOMINATION_WS_BUILDABLE     600    // divide build time of a buildable (in msec)
+#define DOMINATION_WS_BUILDABLE     800    // divide build time of a buildable (in msec)
 
 #endif /* #ifndef _TREMULOUS_H */
