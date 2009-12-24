@@ -776,6 +776,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
         uncapped_dps * uncapped_dps / ( dps * dps );
     }
 
+    if( !ent->client->pers.lastFreeFundTime )
+      ent->client->pers.lastFreeFundTime = level.time;
+
     if( ent->client->pers.lastFreeFundTime + period < level.time )
     {
       G_AddCreditToClient( ent->client,
