@@ -128,6 +128,23 @@ qboolean G_FindProvider( gentity_t *self )
   int       distance = 0;
   int       minDistance = INFINITE, requiredDistance = REACTOR_BASESIZE;
   vec3_t    temp_v;
+  float     modifier;
+  int       dps = G_DominationPoints();
+  float     alienModifier;
+  float     humanModifier;
+
+  if( dps > 0 )
+  {
+    alienModifier = 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps;
+    humanModifier = 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps;
+  }
+  else
+  {
+    alienModifier = 1.f;
+    humanModifier = 1.f;
+  }
+
+  modifier = self->buildableTeam == TEAM_ALIENS ? alienModifier : humanModifier;
 
   // Core buildables are always powered
   if( G_IsCore( self->s.modelindex ) )
@@ -193,6 +210,8 @@ qboolean G_FindProvider( gentity_t *self )
           // Only power as much BP as the reactor can supply
           int buildPoints = ent->buildableTeam == TEAM_ALIENS ? g_alienBuildPoints.integer : g_humanBuildPoints.integer;
 
+		  buildPoints *= modifier;
+
           // Scan the buildables in the same zone and look at the BP remaining
           for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
           {
@@ -239,6 +258,8 @@ qboolean G_FindProvider( gentity_t *self )
           // the buildable but only if self is a real buildable
 
           int buildPoints = g_zoneBuildPoints.integer;
+
+		  buildPoints *= modifier;
 
           // Scan the buildables in the same zone
           for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
