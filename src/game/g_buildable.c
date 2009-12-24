@@ -172,7 +172,10 @@ qboolean G_FindProvider( gentity_t *self )
     if( ent->s.eType != ET_BUILDABLE )
       continue;
 
-    if( ent->buildableTeam != self->buildableTeam && !BG_IsDPoint( ent->s.modelindex ) )
+    if( self->buildableTeam != ent->buildableTeam  && !BG_IsDPoint( ent->s.modelindex ) )
+      continue;
+
+    if( self->buildableTeam != ent->dominationTeam &&  BG_IsDPoint( ent->s.modelindex ) )
       continue;
 
     switch( ent->s.modelindex )
