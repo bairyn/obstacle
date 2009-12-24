@@ -172,7 +172,7 @@ qboolean G_FindProvider( gentity_t *self )
     if( ent->s.eType != ET_BUILDABLE )
       continue;
 
-    if( ent->buildableTeam != self->buildableTeam )
+    if( ent->buildableTeam != self->buildableTeam && !BG_IsDPoint( ent->s.modelindex ) )
       continue;
 
     switch( ent->s.modelindex )
@@ -416,6 +416,8 @@ int G_GetBuildPoints( const vec3_t pos, team_t team, int extraDistance )
       return level.humanBuildPoints;
     }
   }
+
+  return 0;
 }
 
 /*
