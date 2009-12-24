@@ -855,6 +855,7 @@ int               G_FindDCC( gentity_t *self );
 gentity_t         *G_Reactor( void );
 gentity_t         *G_Overmind( void );
 buildable_t       G_IsCreepHere( vec3_t origin );
+buildable_t       G_IsCreepHereForPlayer( vec3_t origin );
 
 void              G_BuildableThink( gentity_t *ent, int msec );
 void              G_BuildableDie( gentity_t *ent );

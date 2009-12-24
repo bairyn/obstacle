@@ -210,7 +210,7 @@ qboolean G_FindProvider( gentity_t *self )
           // Only power as much BP as the reactor can supply
           int buildPoints = ent->buildableTeam == TEAM_ALIENS ? g_alienBuildPoints.integer : g_humanBuildPoints.integer;
 
-		  buildPoints *= modifier;
+          buildPoints *= modifier;
 
           // Scan the buildables in the same zone and look at the BP remaining
           for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
@@ -259,7 +259,7 @@ qboolean G_FindProvider( gentity_t *self )
 
           int buildPoints = g_zoneBuildPoints.integer;
 
-		  buildPoints *= modifier;
+          buildPoints *= modifier;
 
           // Scan the buildables in the same zone
           for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
@@ -329,6 +329,7 @@ gentity_t *G_ProvidingEntityForPoint( const vec3_t origin, team_t team )
   dummy.parentNode = NULL;
   dummy.buildableTeam = team;
   dummy.s.modelindex = BA_NONE;
+  dummy.s.eType      = ET_BUILDABLE;
   VectorCopy( origin, dummy.s.origin );
 
   return G_ProvidingEntityForEntity( &dummy );
@@ -594,6 +595,23 @@ buildable_t G_IsCreepHere( vec3_t origin )
   gentity_t *ent = G_ProvidingEntityForPoint( origin, TEAM_ALIENS );
 
   if( ent )
+    return ent->s.modelindex;
+  else
+    return BA_NONE;
+}
+
+/*
+================
+G_IsCreepHereForPlayer
+
+Special case for domination points
+================
+*/
+buildable_t G_IsCreepHereForPlayer( vec3_t origin )
+{
+  gentity_t *ent = G_ProvidingEntityForPoint( origin, TEAM_ALIENS );
+
+  if( ent && !BG_IsDPoint( ent->s.modelindex ) )
     return ent->s.modelindex;
   else
     return BA_NONE;

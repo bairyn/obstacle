@@ -1461,7 +1461,7 @@ void ClientThink_real( gentity_t *ent )
       // Transmit heal rate to the client so it can be displayed on the HUD
       client->ps.stats[ STAT_STATE ] |= SS_HEALING_ACTIVE;
       client->ps.stats[ STAT_STATE ] &= ~( SS_HEALING_2X | SS_HEALING_3X );
-      if( modifier == 1.0f && G_IsCreepHere( ent->s.origin ) == BA_NONE )
+      if( modifier == 1.0f && G_IsCreepHereForPlayer( ent->s.origin ) == BA_NONE )
       {
         client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_ACTIVE;
         modifier *= ALIEN_REGEN_NOCREEP_MOD;
