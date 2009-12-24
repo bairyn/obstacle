@@ -763,18 +763,26 @@ void ClientTimerActions( gentity_t *ent, int msec )
   // Give clients some credit periodically
   if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 )
   {
-    int dps = G_DominationPoints(), uncapped_dps, period;
+    int    dps  = G_DominationPoints();
     team_t team = ent->client->pers.teamSelection;
+    float  alienModifier;
+    float  humanModifier;
+    float  modifier;
 
-    // Domination scales the freekill rate polynomially
-    period = g_freeFundPeriod.integer * 1000;
-    if( dps )
+    if( dps > 0 )
     {
-      uncapped_dps = dps - level.dominationPoints[ team ];
-      period += DOMINATION_FK_BONUS +
-        ( DOMINATION_FK_PENALTY - DOMINATION_FK_BONUS ) *
-        uncapped_dps * uncapped_dps / ( dps * dps );
+      alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+      humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
     }
+    else
+    {
+      alienModifier = 1.f;
+      humanModifier = 1.f;
+    }
+
+    modifier = team == TEAM_ALIENS ? alienModifier : humanModifier;
+
+    period = (float) g_freeFundPeriod.integer * 1000.f / modifier;
 
     if( !ent->client->pers.lastFreeFundTime )
       ent->client->pers.lastFreeFundTime = level.time;

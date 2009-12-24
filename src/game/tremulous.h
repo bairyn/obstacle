@@ -711,12 +711,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DOMINATION_COOLDOWN         5000   // msec between announcements
 #define DOMINATION_HEALTH           100    // health scale of a domination point
 #define DOMINATION_THINK            500    // msec between player presence checks
-
-/* These parameters modified by Domination are scaled via a polynomial formula */
-#define DOMINATION_BC_PENALTY       12     // build cooldown rate (msec)
-#define DOMINATION_BC_BONUS         -50
-#define DOMINATION_FK_PENALTY       180000 // freekill period (msec)
-#define DOMINATION_FK_BONUS         -60000
+#define DOMINATION_SCALE            1.f    // better or worse by 50% * this
 
 /* Domination speed is determined by the 'domination weight' of the players
    present */

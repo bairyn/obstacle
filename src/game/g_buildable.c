@@ -135,8 +135,8 @@ qboolean G_FindProvider( gentity_t *self )
 
   if( dps > 0 )
   {
-    alienModifier = 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps;
-    humanModifier = 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps;
+    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
   }
   else
   {
