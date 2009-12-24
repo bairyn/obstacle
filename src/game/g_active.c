@@ -570,6 +570,24 @@ void ClientTimerActions( gentity_t *ent, int msec )
             crouched = qfalse, jumping = qfalse,
             strafing = qfalse;
   int       i;
+  int       dps  = G_DominationPoints();
+  team_t    team = ent->client->pers.teamSelection;
+  float     alienModifier;
+  float     humanModifier;
+  float     modifier;
+
+  if( dps > 0 )
+  {
+    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+  }
+  else
+  {
+    alienModifier = 1.f;
+    humanModifier = 1.f;
+  }
+
+  modifier = team == TEAM_ALIENS ? alienModifier : humanModifier;
 
   ucmd = &ent->client->pers.cmd;
 
@@ -619,20 +637,8 @@ void ClientTimerActions( gentity_t *ent, int msec )
         BG_InventoryContainsWeapon( WP_HBUILD, client->ps.stats ) )
     {
         //update build timer
-        if( client->ps.stats[ STAT_MISC ] > 0 ) {
-          int dps, team_dps;
-
-          client->ps.stats[ STAT_MISC ] -= 100;
-
-          // Domination scales the build timer polynomially
-          dps = G_DominationPoints();
-          if (dps) {
-                team_dps = level.dominationPoints[ client->pers.teamSelection ];
-                client->ps.stats[ STAT_MISC ] += DOMINATION_BC_PENALTY +
-                  ( DOMINATION_BC_BONUS - DOMINATION_BC_PENALTY ) *
-                  team_dps * team_dps / (dps * dps);
-          }
-        }
+        if( client->ps.stats[ STAT_MISC ] > 0 )
+          client->ps.stats[ STAT_MISC ] -= 100 * modifier;
 
         if( client->ps.stats[ STAT_MISC ] < 0 )
           client->ps.stats[ STAT_MISC ] = 0;
@@ -763,26 +769,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
   // Give clients some credit periodically
   if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 )
   {
-    int    dps  = G_DominationPoints();
-    team_t team = ent->client->pers.teamSelection;
-    float  alienModifier;
-    float  humanModifier;
-    float  modifier;
-
-    if( dps > 0 )
-    {
-      alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-    }
-    else
-    {
-      alienModifier = 1.f;
-      humanModifier = 1.f;
-    }
-
-    modifier = team == TEAM_ALIENS ? alienModifier : humanModifier;
-
-    period = (float) g_freeFundPeriod.integer * 1000.f / modifier;
+    int period = (float) g_freeFundPeriod.integer * 1000.f / modifier;
 
     if( !ent->client->pers.lastFreeFundTime )
       ent->client->pers.lastFreeFundTime = level.time;
