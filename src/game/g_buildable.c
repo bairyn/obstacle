@@ -2409,7 +2409,7 @@ void Domination_Think( gentity_t *self )
     // Count eligible entities and record the first player for each team
     if( ent->s.eType == ET_BUILDABLE )
     {
-      if( ent->health > 0 )
+      if( ent->spawned && ent->powered && ent->health > 0 )
       {
         team = ent->buildableTeam;
         weight = BG_Buildable( ent->s.modelindex )->buildTime /
