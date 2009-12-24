@@ -2063,6 +2063,9 @@ void HSpawn_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
   gentity_t *dest;
   vec3_t spawn_origin, spawn_angles;
 
+  if( !G_OC_NoTeleport() )
+    return;
+
   if( self->health <= 0 )
     return;
 
