@@ -2411,6 +2411,15 @@ void Domination_Think( gentity_t *self )
     else
       self->deconstruct = self->dominationAttacking == TEAM_HUMANS;
     self->dominationTime = 0;
+
+    // free build point zone
+    if( ent->usesBuildPointZone )
+    {
+      buildPointZone_t *zone = &level.buildPointZones[ent->buildPointZone];
+
+      zone->active = qfalse;
+      ent->usesBuildPointZone = qfalse;
+    }
   }
 
   // Complete domination
@@ -3230,12 +3239,15 @@ void G_BuildableThink( gentity_t *ent, int msec )
     {
       zone = &level.buildPointZones[ i ];
 
-      if( !zone->active )
+      if( !zone->active && ( !BG_IsDPoint( ent->s.modelindex ) || ent->dominationTeam != TEAM_NONE ) )
       {
         // Initialise the BP queue with all BP queued
         zone->queuedBuildPoints = zone->totalBuildPoints = g_zoneBuildPoints.integer;
         zone->nextQueueTime = level.time;
         zone->team = ent->buildableTeam;
+        // special case for domination points
+        if( BG_IsDPoint( ent->s.modelindex ) )
+          zone->team = ent->dominationTeam;
         zone->active = qtrue;
 
         ent->buildPointZone = zone - level.buildPointZones;
