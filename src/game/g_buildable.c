@@ -3587,6 +3587,9 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
     spawn           = BA_H_SPAWN;
     core            = BA_H_REACTOR;
   }
+  else if( team == TEAM_NONE )
+  {
+  }
   else
   {
     Com_Error( ERR_FATAL, "team is %d\n", team );
