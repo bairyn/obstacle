@@ -716,8 +716,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /* Domination speed is determined by the 'domination weight' of the players
    present */
 #define DOMINATION_WS_NORMAL        50     // normalizes domination weights
-#define DOMINATION_WS_HUMAN         8      // divide value of a  human (in credits)
-#define DOMINATION_WS_ALIEN         32     // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
-#define DOMINATION_WS_BUILDABLE     800    // divide build time of a buildable (in msec)
+//#define DOMINATION_WS_HUMAN         1.0    // divide value of a  human (in credits)
+//#define DOMINATION_WS_ALIEN         2.0    // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
+//#define DOMINATION_WS_BUILDABLE     50     // divide build time of a buildable (in msec)
+#define DOMINATION_WS_HUMAN         8    // divide value of a  human (in credits)
+#define DOMINATION_WS_ALIEN         32    // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
+#define DOMINATION_WS_BUILDABLE     800     // divide build time of a buildable (in msec)
+//#define DOMINATION_FREEKILL_ALIEN   FREEKILL_ALIEN
+//#define DOMINATION_FREEKILL_HUMAN   FREEKILL_HUMAN
+#define DOMINATION_FREEKILL_ALIEN   0
+#define DOMINATION_FREEKILL_HUMAN   0
+//#define ALWAYS_POWER qtrue
+#define ALWAYS_POWER qtrue
 
 #endif /* #ifndef _TREMULOUS_H */

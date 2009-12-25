@@ -241,7 +241,7 @@ qboolean G_FindProvider( gentity_t *self )
 
           buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
 
-          if( buildPoints >= 0 )
+          if( buildPoints >= 0 || ALWAYS_POWER )
           {
             // Return immediately
             self->parentNode = ent;
@@ -2426,7 +2426,7 @@ void Domination_Think( gentity_t *self )
                                 //self->dominationName ) );
         if( self->dominationClient >= 0 )
           G_AddCreditToClient( g_entities[ self->dominationClient ].client,
-                               FREEKILL_ALIEN, qtrue );
+                               DOMINATION_FREEKILL_ALIEN, qtrue );
       }
       else if( self->dominationAttacking == TEAM_HUMANS )
       {
@@ -2435,7 +2435,7 @@ void Domination_Think( gentity_t *self )
                               //self->dominationName ) );
         if( self->dominationClient >= 0 )
           G_AddCreditToClient( g_entities[ self->dominationClient ].client,
-                               FREEKILL_HUMAN, qtrue );
+                               DOMINATION_FREEKILL_HUMAN, qtrue );
       }
       level.dominationPoints[ self->dominationTeam ]--;
       level.dominationPoints[ self->dominationAttacking ]++;
@@ -3395,6 +3395,11 @@ static int G_CompareBuildablesForRemoval( const void *a, const void *b )
 
   buildableA = *(gentity_t **)a;
   buildableB = *(gentity_t **)b;
+
+  if( buildableA->s.eType != ET_BUILDABLE )
+    return 1;
+  if( buildableB->s.eType != ET_BUILDABLE )
+    return -1;
 
   // Prefer the one that collides with the thing we're building
   aMatches = G_BuildablesIntersect( cmpBuildable, cmpOrigin,
@@ -4453,6 +4458,8 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
   G_SetOrigin( built, tr.endpos );
 
   trap_LinkEntity( built );
+
+  // qsort entities so that the less important buildables will be unpowered first
 
   G_OC_BUILDABLEBUILT( built );
 }
