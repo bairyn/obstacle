@@ -1446,10 +1446,9 @@ void G_CalculateBuildPoints( void )
 
     power = G_ProvidingEntityForEntity( ent );
 
-    if( power && !G_IsCore( power->s.modelindex ) )
+    if( power && !G_IsCore( power->s.modelindex ) && power->usesBuildPointZone )
     {
-      if( power->usesBuildPointZone )
-        level.buildPointZones[ power->buildPointZone ].totalBuildPoints -= cost;
+      level.buildPointZones[ power->buildPointZone ].totalBuildPoints -= cost;
     }
     else if( ent->buildableTeam == TEAM_ALIENS )
     {
