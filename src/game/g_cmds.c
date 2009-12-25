@@ -1822,7 +1822,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
   if( tr.fraction < 1.0f &&
       ( traceEnt->s.eType == ET_BUILDABLE ) &&
-      ( traceEnt->buildableTeam == ent->client->pers.teamSelection || G_OC_CanBuildableBeDestoryedOnOtherTeam() ) &&
+      ( traceEnt->buildableTeam == ent->client->pers.teamSelection || traceEnt->buildableTeam == TEAM_NONE || G_OC_CanBuildableBeDestoryedOnOtherTeam() ) &&
       ( ( ent->client->ps.weapon >= WP_ABUILD ) &&
         ( ent->client->ps.weapon <= WP_HBUILD ) ) )
   {
