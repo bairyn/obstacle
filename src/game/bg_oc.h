@@ -112,7 +112,7 @@ extern int oc_gameMode;
 	qboolean G_admin_editoc(void *ent);
 	qboolean G_admin_hide(void *ent);
 	qboolean G_admin_showhides(void *ent);
-	qboolean G_admin_devmap(void *ent);
+	qboolean G_admin_devchangemap(void *ent);
 	qboolean G_admin_layoutsave(void *ent);
 	qboolean G_admin_adjusthide(void *ent);
 	qboolean G_admin_startscrim(void *ent);
@@ -136,7 +136,7 @@ extern int oc_gameMode;
       "[^3hide#^7] (^5/mask^7) (^5duration^7) (^5(\\\\)reason^7) (^5\\hidden^7)" \
     }, \
  \
-    {"devmap", (qboolean(*)(gentity_t *))(G_admin_devmap), "devmap", \
+    {"devchangemap", (qboolean(*)(gentity_t *))(G_admin_devchangemap), "devchangemap", \
       "load a map with cheats (and optionally force layout)", \
       "[^3mapname^7] (^5layout^7)" \
     }, \

@@ -174,7 +174,7 @@ qboolean G_admin_layoutsave(void *ent)
   return qtrue;
 }
 
-qboolean G_admin_devmap(void *ent)
+qboolean G_admin_devchangemap(void *ent)
 {
   char map[MAX_QPATH];
   char layout[MAX_QPATH] = { "" };
