@@ -3870,6 +3870,8 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
     // have no restrictions
     if( !g_cheats.integer )
       return IBE_PERMISSION;
+
+    return IBE_NONE;
   }
   else if( ent->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
   {
