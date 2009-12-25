@@ -2431,11 +2431,11 @@ void Domination_Think( gentity_t *self )
       else if( self->dominationAttacking == TEAM_HUMANS )
       {
         self->deconstruct = qtrue;
-        trap_SendServerCommand( -1, va( "print \"^5Humans^7 dominate %s^7!\n\"",
-                              self->dominationName ) );
+        //trap_SendServerCommand( -1, va( "print \"^5Humans^7 dominate %s^7!\n\"",
+                              //self->dominationName ) );
         if( self->dominationClient >= 0 )
-          //G_AddCreditToClient( g_entities[ self->dominationClient ].client,
-                               //FREEKILL_HUMAN, qtrue );
+          G_AddCreditToClient( g_entities[ self->dominationClient ].client,
+                               FREEKILL_HUMAN, qtrue );
       }
       level.dominationPoints[ self->dominationTeam ]--;
       level.dominationPoints[ self->dominationAttacking ]++;
