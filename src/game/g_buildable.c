@@ -2413,12 +2413,12 @@ void Domination_Think( gentity_t *self )
     self->dominationTime = 0;
 
     // free build point zone
-    if( ent->usesBuildPointZone )
+    if( self->usesBuildPointZone )
     {
-      buildPointZone_t *zone = &level.buildPointZones[ent->buildPointZone];
+      buildPointZone_t *zone = &level.buildPointZones[self->buildPointZone];
 
       zone->active = qfalse;
-      ent->usesBuildPointZone = qfalse;
+      self->usesBuildPointZone = qfalse;
     }
   }
 
