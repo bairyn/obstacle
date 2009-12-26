@@ -726,7 +726,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //#define DOMINATION_FREEKILL_HUMAN   FREEKILL_HUMAN
 #define DOMINATION_FREEKILL_ALIEN   0
 #define DOMINATION_FREEKILL_HUMAN   0
-//#define ALWAYS_POWER qtrue
-#define ALWAYS_POWER qtrue
+//#define ALWAYS_POWER qfalse  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
+#define ALWAYS_POWER qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
 
 #endif /* #ifndef _TREMULOUS_H */
