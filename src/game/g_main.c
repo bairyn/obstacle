@@ -274,7 +274,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_voiceChats, "g_voiceChats", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_shove, "g_shove", "0.0", CVAR_ARCHIVE, 0, qfalse  },
 
-  { &g_connectMessage1, "g_connectMessage1", "", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_connectMessage1, "g_connectMessage1", "", CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_mapConfigs, "g_mapConfigs", "", CVAR_ARCHIVE, 0, qfalse  },
   { NULL, "g_mapConfigsLoaded", "0", CVAR_ROM, 0, qfalse  },
