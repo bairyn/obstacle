@@ -1346,6 +1346,8 @@ void ClientBegin( int clientNum )
   gentity_t *ent;
   gclient_t *client;
   int       flags;
+  int       i;
+  char      buf[ MAX_STRING_CHARS ] = {""}, *buf_p = buf;
 
   ent = g_entities + clientNum;
 
@@ -1377,15 +1379,22 @@ void ClientBegin( int clientNum )
 
   G_OC_ClientBegin();
 
-  if( g_connectMessage.string[ 0 ] )
+  for( i = 0; buf_p - buf < sizeof( buf ); )
   {
-    char buf[ MAX_STRING_CHARS ], *buf_p;
-    Q_strncpyz( buf, g_connectMessage.string, sizeof( buf ) );
-    buf_p = &buf[ 0 ];
+    trap_Cvar_VariableStringBuffer( va( "g_connectMessage%d", ++i ), buf_p, sizeof( buf ) + buf - buf_p );
+
+    if( !*buf_p )
+      break;
+    else
+      buf_p = buf + strlen( buf );
+  }
+  if( *( buf_p = buf ) )
+  {
     while(*buf_p )
       if( *buf_p++ == '|' )
-        *--buf_p = '\n';
-    G_ClientPrint(ent, buf, CLIENT_SPECTATORS);
+        *--buf_p   =  '\n';
+
+    G_ClientPrint( ent, buf, CLIENT_SPECTATORS );
   }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname ) );

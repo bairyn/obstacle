@@ -1248,7 +1248,7 @@ extern  vmCvar_t  g_floodMinTime;
 
 extern  vmCvar_t  g_shove;
 
-extern  vmCvar_t  g_connectMessage;
+extern  vmCvar_t  g_connectMessage1;
 
 extern  vmCvar_t  g_mapConfigs;
 
