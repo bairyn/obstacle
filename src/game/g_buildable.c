@@ -288,7 +288,7 @@ qboolean G_FindProvider( gentity_t *self )
 
           buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
 
-          if( buildPoints >= 0 )
+          if( buildPoints >= 0 || ALWAYS_POWER )
           {
             closestProvider = ent;
             minDistance = distance;
