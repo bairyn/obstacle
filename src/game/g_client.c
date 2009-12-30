@@ -336,7 +336,7 @@ gentity_t *G_SelectAlienSpawnPoint( vec3_t preference, gentity_t *ent, int group
     if( spot->clientSpawnTime > 0 )
       continue;
 
-    if( spot->groupID != groupID )
+    if( spot->groupID != groupID && G_OC_GroupID() )
       continue;
 
     if( spot == not )
@@ -393,7 +393,7 @@ gentity_t *G_SelectHumanSpawnPoint( vec3_t preference, gentity_t *ent, int group
     if( spot->clientSpawnTime > 0 )
       continue;
 
-    if( spot->groupID != groupID )
+    if( spot->groupID != groupID && G_OC_GroupID() )
       continue;
 
     if( spot == not )

@@ -4081,7 +4081,7 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
     // in-game building by a player
     BG_GetClientNormal( &builder->client->ps, normal );
 
-    if( built->s.modelindex == BA_H_SPAWN || built->s.modelindex == BA_H_SPAWN )
+    if( built->s.modelindex == BA_H_SPAWN )//|| built->s.modelindex == BA_H_SPAWN )
       builder->groupID = 0;
     else
       builder->groupID = 2;  // FIXME: magic numbers
