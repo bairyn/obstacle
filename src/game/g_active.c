@@ -570,6 +570,24 @@ void ClientTimerActions( gentity_t *ent, int msec )
             crouched = qfalse, jumping = qfalse,
             strafing = qfalse;
   int       i;
+  int       dps  = G_DominationPoints();
+  team_t    team = ent->client->pers.teamSelection;
+  float     alienModifier;
+  float     humanModifier;
+  float     modifier;
+
+  if( dps > 0 )
+  {
+    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+  }
+  else
+  {
+    alienModifier = 1.f;
+    humanModifier = 1.f;
+  }
+
+  modifier = team == TEAM_ALIENS ? alienModifier : humanModifier;
 
   ucmd = &ent->client->pers.cmd;
 
@@ -618,9 +636,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( weapon == WP_ABUILD || weapon == WP_ABUILD2 ||
         BG_InventoryContainsWeapon( WP_HBUILD, client->ps.stats ) )
     {
-        // Update build timer
+        //update build timer
         if( client->ps.stats[ STAT_MISC ] > 0 )
-          client->ps.stats[ STAT_MISC ] -= 100;
+          client->ps.stats[ STAT_MISC ] -= 100 * modifier;
 
         if( client->ps.stats[ STAT_MISC ] < 0 )
           client->ps.stats[ STAT_MISC ] = 0;
@@ -744,19 +762,25 @@ void ClientTimerActions( gentity_t *ent, int msec )
       client->voiceEnthusiasm -= VOICE_ENTHUSIASM_DECAY;
     else
       client->voiceEnthusiasm = 0.0f;
+  }
 
-    client->pers.aliveSeconds++;
-    if( g_freeFundPeriod.integer > 0 &&
-        client->pers.aliveSeconds % g_freeFundPeriod.integer == 0 )
+  client->pers.aliveSeconds++;
+
+  // Give clients some credit periodically
+  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 )
+  {
+    int period = (float) g_freeFundPeriod.integer * 1000.f / modifier;
+
+    if( !ent->client->pers.lastFreeFundTime )
+      ent->client->pers.lastFreeFundTime = level.time;
+
+    if( ent->client->pers.lastFreeFundTime + period < level.time )
     {
-      // Give clients some credit periodically
-      if( G_TimeTilSuddenDeath( ) > 0 )
-      {
-        if( client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
-          G_AddCreditToClient( client, FREEKILL_ALIEN, qtrue );
-        else if( client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
-          G_AddCreditToClient( client, FREEKILL_HUMAN, qtrue );
-      }
+      G_AddCreditToClient( ent->client,
+          team == TEAM_ALIENS ? FREEKILL_ALIEN : FREEKILL_HUMAN,
+          qtrue );
+
+      ent->client->pers.lastFreeFundTime = level.time;
     }
   }
 
@@ -1435,7 +1459,7 @@ void ClientThink_real( gentity_t *ent )
       // Transmit heal rate to the client so it can be displayed on the HUD
       client->ps.stats[ STAT_STATE ] |= SS_HEALING_ACTIVE;
       client->ps.stats[ STAT_STATE ] &= ~( SS_HEALING_2X | SS_HEALING_3X );
-      if( modifier == 1.0f && !G_FindCreep( ent ) )
+      if( modifier == 1.0f && G_IsCreepHereForPlayer( ent->s.origin ) == BA_NONE )
       {
         client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_ACTIVE;
         modifier *= ALIEN_REGEN_NOCREEP_MOD;

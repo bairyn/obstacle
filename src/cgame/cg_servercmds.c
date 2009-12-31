@@ -532,6 +532,15 @@ void CG_Menu( int menu, int arg )
       type      = DT_COMMAND;
       break;
 
+    // Domination
+    case MN_NEARDP:
+      longMsg   = "You cannot build the Reactor or the Overmind near a domination "
+                  "point. Domination points represent halfway points between "
+                  "bases, not base locations.";
+      shortMsg  = "Cannot build Reactor or Overmind near a domination point";
+      type      = DT_BUILD;
+      break;
+
     //===============================
 
     // Since cheating commands have no default binds, they will often be done
