@@ -1195,9 +1195,9 @@ void Cmd_CallVote_f( gentity_t *ent )
         "unmute %d", clientNum );
       Com_sprintf( level.voteDisplayString[ team ],
         sizeof( level.voteDisplayString[ team ] ),
+        "Unmute player '%s'", name );
 
       level.voteNextMap = qfalse;
-        "Unmute player '%s'", name );
     }
     else if( !Q_stricmp( vote, "map_restart" ) && !G_OC_NoRestartVote() )
     {
