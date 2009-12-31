@@ -722,6 +722,7 @@ typedef struct
   int               pausedTime;
 
   int               numNextVotes;
+  int               voteNextMap;
 
   int unlaggedIndex;
   int unlaggedTimes[ MAX_UNLAGGED_MARKERS ];

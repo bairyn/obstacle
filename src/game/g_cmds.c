@@ -1154,6 +1154,8 @@ void Cmd_CallVote_f( gentity_t *ent )
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
       "Kick player '%s'", name );
+
+    level.voteNextMap = qfalse;
   }
   G_OC_OTHERVOTECOMMANDS
   else if( team == TEAM_NONE )
@@ -1178,6 +1180,8 @@ void Cmd_CallVote_f( gentity_t *ent )
       Com_sprintf( level.voteDisplayString[ team ],
         sizeof( level.voteDisplayString[ team ] ),
         "Mute player '%s'", name );
+
+      level.voteNextMap = qfalse;
     }
     else if( !Q_stricmp( vote, "unmute" ) )
     {
@@ -1191,6 +1195,8 @@ void Cmd_CallVote_f( gentity_t *ent )
         "unmute %d", clientNum );
       Com_sprintf( level.voteDisplayString[ team ],
         sizeof( level.voteDisplayString[ team ] ),
+
+      level.voteNextMap = qfalse;
         "Unmute player '%s'", name );
     }
     else if( !Q_stricmp( vote, "map_restart" ) && !G_OC_NoRestartVote() )
@@ -1205,6 +1211,8 @@ void Cmd_CallVote_f( gentity_t *ent )
         Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "%s", vote );
         Com_sprintf( level.voteDisplayString[ team ],
             sizeof( level.voteDisplayString[ team ] ), "Restart current map" );
+
+        level.voteNextMap = qfalse;
       }
 
       if( team != TEAM_NONE &&
@@ -1265,6 +1273,8 @@ void Cmd_CallVote_f( gentity_t *ent )
           Com_sprintf( level.voteDisplayString[ team ],
               sizeof( level.voteDisplayString[ team ] ), "Change to map '%s^7'", arg );
         }
+
+        level.voteNextMap = qfalse;
       }
     }
     else if( !Q_stricmp( vote, "nextmap" ) )
@@ -1329,6 +1339,7 @@ void Cmd_CallVote_f( gentity_t *ent )
         }
 
         --level.numNextVotes;
+        level.voteNextMap = qtrue;
       }
     }
     else if( !Q_stricmp( vote, "draw" ) )
@@ -1343,6 +1354,8 @@ void Cmd_CallVote_f( gentity_t *ent )
         Com_sprintf( level.voteString[ team ], sizeof( level.voteString ), "evacuation" );
         Com_sprintf( level.voteDisplayString[ team ], sizeof( level.voteDisplayString[ team ] ),
             "End match in a draw" );
+
+        level.voteNextMap = qfalse;
       }
     }
   }
@@ -1372,6 +1385,8 @@ void Cmd_CallVote_f( gentity_t *ent )
       "suddendeath %d", g_suddenDeathVoteDelay.integer );
     strcpy( level.voteDisplayString[ team ],
       va( "Begin sudden death in %d seconds", g_suddenDeathVoteDelay.integer ) );
+
+    level.voteNextMap = qfalse;
   }
   else if( !Q_stricmp( vote, "denybuild" ) )
   {
@@ -1387,6 +1402,8 @@ void Cmd_CallVote_f( gentity_t *ent )
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
       "Take away building rights from '%s'", name );
+
+    level.voteNextMap = qfalse;
   }
   else if( !Q_stricmp( vote, "allowbuild" ) )
   {
@@ -1402,12 +1419,16 @@ void Cmd_CallVote_f( gentity_t *ent )
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
       "Allow '%s' to build", name );
+
+    level.voteNextMap = qfalse;
   }
   else if( !Q_stricmp( vote, "admitdefeat" ) )
   {
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
       "admitdefeat %d", team );
     strcpy( level.voteDisplayString[ team ], "Admit Defeat" );
+
+    level.voteNextMap = qfalse;
   }
   else
   {

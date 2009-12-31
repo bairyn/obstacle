@@ -2421,7 +2421,18 @@ void G_CheckVote( team_t team )
   }
 
   if( pass )
+  {
     level.voteExecuteTime[ team ] = level.time + 3000;
+
+    if( level.voteNextMap )
+    {
+      level.voteNextMap = qfalse;
+    }
+    else
+    {
+      level.numNextVotes++;
+    }
+  }
 
   G_LogPrintf( "EndVote: %s %s %d %d %d\n",
     team == TEAM_NONE ? "global" : BG_TeamName( team ),

@@ -1938,6 +1938,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
         } \
  \
         --level.numNextVotes; \
+		level.voteNextMap = qtrue; \
 	} while(0)
 
 	#define G_OC_AlternateMapVote() \
@@ -2020,6 +2021,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			Com_sprintf(level.voteDisplayString[team], \
 				sizeof(level.voteDisplayString[team]), "Change to map '%s^7'", arg); \
 		} \
+ \
+		level.voteNextMap = qfalse; \
 	} while(0)
 
 	#define G_OC_AlternateMapRestartVote() \
@@ -2050,6 +2053,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			Com_sprintf(level.voteDisplayString[team], \
 				sizeof(level.voteDisplayString[team]), "Restart current map"); \
 		} \
+ \
+		level.voteNextMap = qfalse; \
 	} while(0)
 
 	#define G_OC_AlternateDrawVote() \
@@ -2070,6 +2075,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "evacuation"); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"End match in a draw"); \
+ \
+		level.voteNextMap = qfalse; \
 	} while(0)
 
 	#define G_OC_OTHERVOTECOMMANDS \
@@ -2106,6 +2113,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			"hide %d", clientNum); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Hide player '%s'", name); \
+ \
+		level.voteNextMap = qfalse; \
 	} \
 	else if(!Q_stricmp(vote, "unhide") && BG_OC_OCMode()) \
 	{ \
@@ -2140,6 +2149,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 			"unhide %i", clientNum); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Un-Hide player \'%s\'", name); \
+ \
+		level.voteNextMap = qfalse; \
 	} \
 	else if(!Q_stricmp(vote, "startscrim") && BG_OC_OCMode()) \
 	{ \
@@ -2177,6 +2188,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "startscrim %c", arg[0]); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Start a '%s^7' scrim^7", arg[0] == 'm' ? "^1medi^7" : "^2armoury^7"); \
+ \
+		level.voteNextMap = qfalse; \
 	} \
 	else if(!Q_stricmp(vote, "endscrim") && BG_OC_OCMode()) \
 	{ \
@@ -2189,6 +2202,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		level.voteThreshold[team] = g_endScrimVotePercent.value; \
 		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), "endscrim"); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), "End the scrim"); \
+ \
+		level.voteNextMap = qfalse; \
 	}
 
 	#define G_OC_OtherCommandDescription() ((BG_OC_OCMode()) ? (", hide, unhide, startscrim, endscrim") : (""))
