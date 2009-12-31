@@ -777,16 +777,6 @@ static void CG_RegisterGraphics( void )
   cgs.media.redBuildShader            = trap_R_RegisterShader("gfx/misc/redbuild" );
   cgs.media.humanSpawningShader       = trap_R_RegisterShader("models/buildables/telenode/rep_cyl" );
 
-  // Domination shaders
-  cgs.media.noneDominationShader      = trap_R_RegisterShader("gfx/misc/dp_none" );
-  cgs.media.alienDominationShader     = trap_R_RegisterShader("gfx/misc/dp_alien" );
-  cgs.media.humanDominationShader     = trap_R_RegisterShader("gfx/misc/dp_human" );
-  cgs.media.dominationBarShader       = trap_R_RegisterShader("gfx/misc/dp_bar" );
-  cgs.media.dominationBarAShader      = trap_R_RegisterShader("gfx/misc/dp_bar_a" );
-  cgs.media.dominationBarHShader      = trap_R_RegisterShader("gfx/misc/dp_bar_h" );
-  for( i = 0; i < BA_DPOINT_LAST - BA_DPOINT_FIRST + 1; i++ )
-    cgs.media.dominationIcon[ i ] = trap_R_RegisterShader( va( "gfx/misc/dp_icon_%c", 'a' + i ) );
-
   for( i = 0; i < 8; i++ )
     cgs.media.buildWeaponTimerPie[ i ] = trap_R_RegisterShader( buildWeaponTimerPieShaders[ i ] );
 
@@ -833,7 +823,6 @@ static void CG_RegisterGraphics( void )
 
   CG_BuildableStatusParse( "ui/assets/human/buildstat.cfg", &cgs.humanBuildStat );
   CG_BuildableStatusParse( "ui/assets/alien/buildstat.cfg", &cgs.alienBuildStat );
-  CG_BuildableStatusParse( "ui/assets/domination/buildstat.cfg", &cgs.domBuildStat );
  
   // register the inline models
   cgs.numInlineModels = trap_CM_NumInlineModels( );

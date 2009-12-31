@@ -115,52 +115,37 @@ gentity_t *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal,
 
 /*
 ================
-G_FindProvider
+G_FindPower
 
-Attempt to find power or creep for self; return qtrue and set self->parentNode if successful
+attempt to find power for self, return qtrue if successful
 ================
 */
-qboolean G_FindProvider( gentity_t *self )
+qboolean G_FindPower( gentity_t *self )
 {
   int       i, j;
   gentity_t *ent, *ent2;
-  gentity_t *closestProvider = NULL;
+  gentity_t *closestPower = NULL;
   int       distance = 0;
-  int       minDistance = INFINITE, requiredDistance = REACTOR_BASESIZE;
+  int       minDistance = REPEATER_BASESIZE + 1;
   vec3_t    temp_v;
-  float     modifier;
-  int       dps = G_DominationPoints();
-  float     alienModifier;
-  float     humanModifier;
 
-  if( dps > 0 )
-  {
-    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-  }
-  else
-  {
-    alienModifier = 1.f;
-    humanModifier = 1.f;
-  }
+  if( self->buildableTeam != TEAM_HUMANS )
+    return qfalse;
 
-  modifier = self->buildableTeam == TEAM_ALIENS ? alienModifier : humanModifier;
-
-  // Core buildables are always powered
-  if( G_IsCore( self->s.modelindex ) )
+  // Reactor is always powered
+  if( self->s.modelindex == BA_H_REACTOR )
   {
     self->parentNode = self;
 
     return qtrue;
   }
 
-  // Handle power buildables
-  if( self->s.modelindex == BA_A_SPAWN || self->s.modelindex == BA_H_REPEATER || BG_IsDPoint( self->s.modelindex ) )
+  // Handle repeaters
+  if( self->s.modelindex == BA_H_REPEATER )
   {
-    if( self->buildableTeam == TEAM_ALIENS )
-      return ( self->parentNode = G_Overmind( ) ) != NULL;
-    else
-      return ( self->parentNode = G_Reactor( )  ) != NULL;
+    self->parentNode = G_Reactor( );
+
+    return self->parentNode != NULL;
   }
 
   // Reset parent
@@ -172,50 +157,22 @@ qboolean G_FindProvider( gentity_t *self )
     if( ent->s.eType != ET_BUILDABLE )
       continue;
 
-    if( self->buildableTeam != ent->buildableTeam  && !BG_IsDPoint( ent->s.modelindex ) )
-      continue;
-
-    if( self->buildableTeam != ent->dominationTeam &&  BG_IsDPoint( ent->s.modelindex ) )
-      continue;
-
-    switch( ent->s.modelindex )
-    {
-      case BA_H_REACTOR:
-        requiredDistance = REACTOR_BASESIZE;
-        break;
-
-      case BA_H_REPEATER:
-        requiredDistance = REPEATER_BASESIZE;
-        break;
-
-      case BA_A_OVERMIND:
-      case BA_A_SPAWN:
-        requiredDistance = CREEP_BASESIZE;
-        break;
-
-      default:
-        requiredDistance = DOMINATION_RANGE;
-        break;
-    }
-
-    // If entity is a providing item calculate the distance to it
-    if( ( G_IsCore( ent->s.modelindex ) || ent->s.modelindex == BA_H_REPEATER || ent->s.modelindex == BA_A_SPAWN || BG_IsDPoint( ent->s.modelindex ) ) &&
+    // If entity is a power item calculate the distance to it
+    if( ( ent->s.modelindex == BA_H_REACTOR || ent->s.modelindex == BA_H_REPEATER ) &&
         ent->spawned && ent->powered && ent->health > 0 )
     {
       VectorSubtract( self->s.origin, ent->s.origin, temp_v );
       distance = VectorLength( temp_v );
 
-      if( distance <= requiredDistance )
+      // Always prefer a reactor if there is one in range
+      if( ent->s.modelindex == BA_H_REACTOR && distance <= REACTOR_BASESIZE )
       {
-        // Always prefer a non-buildable-zone power buildable if there is one in range
-        if( !ent->usesBuildPointZone )
+        // Only power as much BP as the reactor can hold
+        if( self->s.modelindex != BA_NONE )
         {
-          // Only power as much BP as the reactor can supply
-          int buildPoints = ent->buildableTeam == TEAM_ALIENS ? g_alienBuildPoints.integer : g_humanBuildPoints.integer;
+          int buildPoints = g_humanBuildPoints.integer;
 
-          buildPoints *= modifier;
-
-          // Scan the buildables in the same zone and look at the BP remaining
+          // Scan the buildables in the reactor zone
           for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
           {
             gentity_t *powerEntity;
@@ -223,48 +180,51 @@ qboolean G_FindProvider( gentity_t *self )
             if( ent2->s.eType != ET_BUILDABLE )
               continue;
 
-            if( ent2->buildableTeam != self->buildableTeam )
-              continue;
-
             if( ent2 == self )
               continue;
 
             powerEntity = ent2->parentNode;
 
-            if( powerEntity && powerEntity == ent )
+            if( powerEntity && powerEntity->s.modelindex == BA_H_REACTOR && ( powerEntity == ent ) )
             {
               buildPoints -= BG_Buildable( ent2->s.modelindex )->buildPoints;
             }
           }
 
-          buildPoints -= ent->buildableTeam == TEAM_ALIENS ? level.alienBuildPointQueue : level.humanBuildPointQueue;
+          buildPoints -= level.humanBuildPointQueue;
 
           buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
 
           if( buildPoints >= 0 || ALWAYS_POWER )
           {
-            // Return immediately
             self->parentNode = ent;
-
             return qtrue;
           }
           else
           {
-            // A buildable can still be built if it shares BP from two zones
+            // a buildable can still be built if it shares BP from two zones
 
             // TODO: handle combined power zones here
           }
         }
-        else if( ent->usesBuildPointZone && distance < minDistance )
+
+        // Dummy buildables don't need to look for zones
+        else
         {
-          // It's a build-point-zone buildable, so check that enough BP will be available to power
-          // the buildable but only if self is a real buildable
+          self->parentNode = ent;
+          return qtrue;
+        }
+      }
+      else if( distance < minDistance )
+      {
+        // It's a repeater, so check that enough BP will be available to power
+        // the buildable but only if self is a real buildable
 
-          int buildPoints = g_zoneBuildPoints.integer;
+        if( self->s.modelindex != BA_NONE )
+        {
+          int buildPoints = g_humanRepeaterBuildPoints.integer;
 
-          buildPoints *= modifier;
-
-          // Scan the buildables in the same zone
+          // Scan the buildables in the repeater zone
           for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
           {
             gentity_t *powerEntity;
@@ -277,7 +237,7 @@ qboolean G_FindProvider( gentity_t *self )
 
             powerEntity = ent2->parentNode;
 
-            if( powerEntity && powerEntity == ent )
+            if( powerEntity && powerEntity->s.modelindex == BA_H_REPEATER && ( powerEntity == ent ) )
             {
               buildPoints -= BG_Buildable( ent2->s.modelindex )->buildPoints;
             }
@@ -288,9 +248,9 @@ qboolean G_FindProvider( gentity_t *self )
 
           buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
 
-          if( buildPoints >= 0 || ALWAYS_POWER )
+          if( buildPoints >= 0 )
           {
-            closestProvider = ent;
+            closestPower = ent;
             minDistance = distance;
           }
           else
@@ -299,56 +259,61 @@ qboolean G_FindProvider( gentity_t *self )
 
             // TODO: handle combined power zones here
           }
+        }      
+        else
+        {
+          // Dummy buildables don't need to look for zones
+          closestPower = ent;
+          minDistance = distance;
         }
       }
     }
   }
 
   // If there were no power items nearby give up
-  if( closestProvider )
+  if( closestPower )
   {
-    self->parentNode = closestProvider;
-
+    self->parentNode = closestPower;
     return qtrue;
   }
   else
-  {
     return qfalse;
-  }
 }
 
 /*
 ================
-G_ProvidingEntityForPoint
+G_PowerEntityForPoint
 
-Simple wrapper to G_ProvidingEntityForEntity to find the entity providing
+Simple wrapper to G_FindPower to find the entity providing
 power for the specified point
 ================
 */
-gentity_t *G_ProvidingEntityForPoint( const vec3_t origin, team_t team )
+gentity_t *G_PowerEntityForPoint( const vec3_t origin )
 {
   gentity_t dummy;
 
   dummy.parentNode = NULL;
-  dummy.buildableTeam = team;
+  dummy.buildableTeam = TEAM_HUMANS;
   dummy.s.modelindex = BA_NONE;
-  dummy.s.eType      = ET_BUILDABLE;
   VectorCopy( origin, dummy.s.origin );
 
-  return G_ProvidingEntityForEntity( &dummy );
+  if( G_FindPower( &dummy ) )
+    return dummy.parentNode;
+  else
+    return NULL;
 }
 
 /*
 ================
-G_ProvidingEntityForEntity
+G_PowerEntityForEntity
 
-Simple wrapper to G_FindProvider to find the entity providing
-power or creep for the specified entity
+Simple wrapper to G_FindPower to find the entity providing
+power for the specified entity
 ================
 */
-gentity_t *G_ProvidingEntityForEntity( gentity_t *ent )
+gentity_t *G_PowerEntityForEntity( gentity_t *ent )
 {
-  if( G_FindProvider( ent ) )
+  if( G_FindPower( ent ) )
     return ent->parentNode;
   return NULL;
 }
@@ -357,13 +322,13 @@ gentity_t *G_ProvidingEntityForEntity( gentity_t *ent )
 ================
 G_IsPowered
 
-Check if a location has human power, returning the entity type
+Check if a location has power, returning the entity type
 that is providing it
 ================
 */
 buildable_t G_IsPowered( vec3_t origin )
 {
-  gentity_t *ent = G_ProvidingEntityForPoint( origin, TEAM_HUMANS );
+  gentity_t *ent = G_PowerEntityForPoint( origin );
 
   if( ent )
     return ent->s.modelindex;
@@ -381,43 +346,30 @@ Get the number of build points from a position
 */
 int G_GetBuildPoints( const vec3_t pos, team_t team, int extraDistance )
 {
-  gentity_t *powerPoint = G_ProvidingEntityForPoint( pos, team );
-
   if( G_TimeTilSuddenDeath( ) <= 0 )
   {
     return 0;
   }
-
-  if( powerPoint && G_IsCore( powerPoint->s.modelindex ) )
+  else if( team == TEAM_ALIENS )
   {
-    if     ( team == TEAM_ALIENS )
-    {
-      return level.alienBuildPoints;
-    }
-    else if( team == TEAM_HUMANS )
-    {
+    return level.alienBuildPoints;
+  }
+  else if( team == TEAM_HUMANS )
+  {
+    gentity_t *powerPoint = G_PowerEntityForPoint( pos );
+
+    if( powerPoint && powerPoint->s.modelindex == BA_H_REACTOR )
       return level.humanBuildPoints;
-    }
-  }
 
-  if( powerPoint &&
-      powerPoint->usesBuildPointZone && level.buildPointZones[ powerPoint->buildPointZone ].active )
-  {
-    return level.buildPointZones[ powerPoint->buildPointZone ].totalBuildPoints -
-           level.buildPointZones[ powerPoint->buildPointZone ].queuedBuildPoints;
-  }
-  else
-  {
+    if( powerPoint && powerPoint->s.modelindex == BA_H_REPEATER &&
+        powerPoint->usesBuildPointZone && level.buildPointZones[ powerPoint->buildPointZone ].active )
+    {
+      return level.buildPointZones[ powerPoint->buildPointZone ].totalBuildPoints -
+             level.buildPointZones[ powerPoint->buildPointZone ].queuedBuildPoints;
+    }
+
     // Return the BP of the main zone by default
-
-    if     ( team == TEAM_ALIENS )
-    {
-      return level.alienBuildPoints;
-    }
-    else if( team == TEAM_HUMANS )
-    {
-      return level.humanBuildPoints;
-    }
+    return level.humanBuildPoints;
   }
 
   return 0;
@@ -453,7 +405,7 @@ qboolean G_InPowerZone( gentity_t *self )
       continue;
 
     // if entity is a power item calculate the distance to it
-    if( ( ent->s.modelindex == BA_H_REACTOR || ent->s.modelindex == BA_H_REPEATER || BG_IsDPoint( ent->s.modelindex ) ) &&
+    if( ( ent->s.modelindex == BA_H_REACTOR || ent->s.modelindex == BA_H_REPEATER ) &&
         ent->spawned && ent->powered )
     {
       VectorSubtract( self->s.origin, ent->s.origin, temp_v );
@@ -463,9 +415,6 @@ qboolean G_InPowerZone( gentity_t *self )
         return qtrue;
       else if( ent->s.modelindex == BA_H_REPEATER && distance <= REPEATER_BASESIZE )
         return qtrue;
-      // allow repeaters to be built within range of domination points
-      //else if( BG_IsDPoint( ent->s.modelindex ) && distance <= DOMINATION_RANGE )
-        //return qtrue;
     }
   }
 
@@ -589,37 +538,82 @@ gentity_t *G_Overmind( void )
 
 /*
 ================
-G_IsCreepHere
+G_FindCreep
 
-Check if a location has alien creep, returning the entity type
-that is providing it
+attempt to find creep for self, return qtrue if successful
 ================
 */
-buildable_t G_IsCreepHere( vec3_t origin )
+qboolean G_FindCreep( gentity_t *self )
 {
-  gentity_t *ent = G_ProvidingEntityForPoint( origin, TEAM_ALIENS );
+  int       i;
+  gentity_t *ent;
+  gentity_t *closestSpawn = NULL;
+  int       distance = 0;
+  int       minDistance = 10000;
+  vec3_t    temp_v;
 
-  if( ent )
-    return ent->s.modelindex;
-  else
-    return BA_NONE;
+  //don't check for creep if flying through the air
+  if( self->s.groundEntityNum == -1 )
+    return qtrue;
+
+  //if self does not have a parentNode or it's parentNode is invalid find a new one
+  if( self->client || self->parentNode == NULL || !self->parentNode->inuse ||
+      self->parentNode->health <= 0 )
+  {
+    for( i = MAX_CLIENTS, ent = g_entities + i; i < level.num_entities; i++, ent++ )
+    {
+      if( ent->s.eType != ET_BUILDABLE )
+        continue;
+
+      if( ( ent->s.modelindex == BA_A_SPAWN || 
+            ent->s.modelindex == BA_A_OVERMIND ) &&
+          ent->spawned && ent->health > 0 )
+      {
+        VectorSubtract( self->s.origin, ent->s.origin, temp_v );
+        distance = VectorLength( temp_v );
+        if( distance < minDistance )
+        {
+          closestSpawn = ent;
+          minDistance = distance;
+        }
+      }
+    }
+
+    if( minDistance <= CREEP_BASESIZE )
+    {
+      if( !self->client )
+        self->parentNode = closestSpawn;
+      return qtrue;
+    }
+    else
+      return qfalse;
+  }
+
+  if( self->client )
+    return qfalse;
+
+  //if we haven't returned by now then we must already have a valid parent
+  return qtrue;
 }
 
 /*
 ================
-G_IsCreepHereForPlayer
+G_IsCreepHere
 
-Special case for domination points
+simple wrapper to G_FindCreep to check if a location has creep
 ================
 */
-buildable_t G_IsCreepHereForPlayer( vec3_t origin )
+static qboolean G_IsCreepHere( vec3_t origin )
 {
-  gentity_t *ent = G_ProvidingEntityForPoint( origin, TEAM_ALIENS );
+  gentity_t dummy;
 
-  if( ent && !BG_IsDPoint( ent->s.modelindex ) )
-    return ent->s.modelindex;
-  else
-    return BA_NONE;
+  memset( &dummy, 0, sizeof( gentity_t ) );
+
+  dummy.parentNode = NULL;
+  dummy.s.modelindex = BA_NONE;
+  VectorCopy( origin, dummy.s.origin );
+
+  return G_FindCreep( &dummy );
 }
 
 /*
@@ -785,7 +779,7 @@ void AGeneric_CreepCheck( gentity_t *self )
     return;
 
   spawn = self->parentNode;
-  if( !G_FindProvider( self ) )
+  if( !G_FindCreep( self ) )
   {
     if( spawn && self->killedBy != ENTITYNUM_NONE )
       G_Damage( self, NULL, g_entities + self->killedBy, NULL, NULL,
@@ -805,7 +799,7 @@ A generic think function for Alien buildables
 */
 void AGeneric_Think( gentity_t *self )
 {
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindCreep( self );
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
   AGeneric_CreepCheck( self );
   G_OC_DefaultAlienPowered();
@@ -1923,7 +1917,7 @@ void HSpawn_Think( gentity_t *self )
   G_SuicideIfNoPower( self );
 
   // set parentNode
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindPower( self );
 
   if( self->spawned )
   {
@@ -1992,6 +1986,14 @@ static void HRepeater_Die( gentity_t *self, gentity_t *inflictor, gentity_t *att
   }
 
   G_LogDestruction( self, attacker, mod );
+
+  if( self->usesBuildPointZone )
+  {
+    buildPointZone_t *zone = &level.buildPointZones[self->buildPointZone];
+
+    zone->active = qfalse;
+    self->usesBuildPointZone = qfalse;
+  }
 }
 
 /*
@@ -2006,6 +2008,7 @@ void HRepeater_Think( gentity_t *self )
   int               i;
   qboolean          reactor = qfalse;
   gentity_t         *ent;
+  buildPointZone_t  *zone;
 
   if( self->spawned )
   {
@@ -2027,6 +2030,29 @@ void HRepeater_Think( gentity_t *self )
   }
 
   G_IdlePowerState( self );
+
+  // Initialise the zone once the repeater has spawned
+  if( self->spawned && ( !self->usesBuildPointZone || !level.buildPointZones[ self->buildPointZone ].active ) )
+  {
+    // See if a free zone exists
+    for( i = 0; i < g_humanRepeaterMaxZones.integer; i++ )
+    {
+      zone = &level.buildPointZones[ i ];
+
+      if( !zone->active )
+      {
+        // Initialise the BP queue with all BP queued
+        zone->queuedBuildPoints = zone->totalBuildPoints = g_humanRepeaterBuildPoints.integer;
+        zone->nextQueueTime = level.time;
+        zone->active = qtrue;
+
+        self->buildPointZone = zone - level.buildPointZones;
+        self->usesBuildPointZone = qtrue;
+
+        break;
+      }
+    }
+  }
 
   self->powered = reactor;
 
@@ -2215,7 +2241,7 @@ void HArmoury_Think( gentity_t *self )
   //make sure we have power
   self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
 
   G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
@@ -2244,223 +2270,13 @@ void HDCC_Think( gentity_t *self )
   //make sure we have power
   self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
 
   G_SuicideIfNoPower( self );
 }
 
 
-//==================================================================================
-
-
-/*
-================
-Domination_Think
-
-Domination points broadcast all changes.
-The powered and mark bits are hijacked to represent captured state and capture
-team respectively.
-================
-*/
-void Domination_Think( gentity_t *self )
-{
-  vec3_t range = { DOMINATION_RANGE, DOMINATION_RANGE, DOMINATION_RANGE },
-         mins, maxs, dir;
-  int i, num, balance, think_interval, players[ NUM_TEAMS ],
-      client[ NUM_TEAMS ], entityList[ MAX_GENTITIES ];
-  gentity_t *ent;
-  double distance;
-
-  players[ TEAM_ALIENS ] = 0;
-  players[ TEAM_HUMANS ] = 0;
-  client[ TEAM_ALIENS ] = -1;
-  client[ TEAM_HUMANS ] = -1;
-
-  think_interval = BG_Buildable( self->s.modelindex )->nextthink;
-  self->nextthink = level.time + think_interval;
-
-  VectorAdd( self->s.origin, range, maxs );
-  VectorSubtract( self->s.origin, range, mins );
-
-  // Count all players and buildables in domination range
-  balance = 0;
-  num = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
-  for( i = 0; i < num; i++ )
-  {
-    float  weight = 0.f;
-    team_t team;
-
-    ent = &g_entities[ entityList[ i ] ];
-
-    // Must be alive and visible to the point
-    if( ent->health <= 0 || !G_Visible( self, ent, CONTENTS_SOLID ) )
-      continue;
-
-    // Count eligible entities and record the first player for each team
-    if( ent->s.eType == ET_BUILDABLE )
-    {
-      if( ent->spawned && ent->powered && ent->health > 0 )
-      {
-        team = ent->buildableTeam;
-        weight = BG_Buildable( ent->s.modelindex )->buildTime /
-                 DOMINATION_WS_BUILDABLE;
-        if( team == TEAM_ALIENS )
-          weight = -weight;
-        else if( team != TEAM_HUMANS )
-          weight = 0;
-      }
-    }
-    else if( ent->s.eType == ET_PLAYER )
-    {
-      team = ent->client->pers.teamSelection;
-      if( team == TEAM_HUMANS )
-        weight = BG_GetValueOfPlayer( &ent->client->ps ) /
-                 DOMINATION_WS_HUMAN;
-      else if( team == TEAM_ALIENS )
-        weight = -BG_Buildable( ent->client->ps.stats[ STAT_CLASS ] )->value /
-                 DOMINATION_WS_ALIEN;
-      if( client[ team ] < 0 )
-        client[ team ] = entityList[ i ];
-    }
-    else
-    {
-      continue;
-    }
-
-    // Square fall-off with distance
-    VectorSubtract( self->s.origin, ent->s.origin, dir );
-    distance = VectorLength( dir );
-    if( distance >= DOMINATION_RANGE )
-      continue;
-    weight *= sqrt( DOMINATION_RANGE - distance ) / DOMINATION_RANGE_SQRT;
-    if( weight > -1.f && weight < 1.f )
-      continue;
-    balance += weight;
-
-    players[ team ]++;
-  }
-
-  // Launch an attack
-  if( self->dominationAttacking == TEAM_NONE && level.time > self->timestamp )
-  {
-    // More aliens than humans = alien attack
-    if( self->dominationTeam != TEAM_ALIENS && balance < 0 )
-    {
-      self->dominationAttacking = TEAM_ALIENS;
-      self->timestamp = level.time + DOMINATION_COOLDOWN;
-      //trap_SendServerCommand( -1, va( "print \"^1Aliens^7 attacking %s^7!\n\"",
-                              //self->dominationName ) );
-      if( self->dominationTeam == TEAM_NONE )
-        self->deconstruct = qfalse;
-      self->dominationClient = client[ TEAM_ALIENS ];
-    }
-
-    // More humans than aliens = human attack
-    else if( self->dominationTeam != TEAM_HUMANS && balance > 0 )
-    {
-      self->dominationAttacking = TEAM_HUMANS;
-      self->timestamp = level.time + DOMINATION_COOLDOWN;
-      //trap_SendServerCommand( -1, va( "print \"^5Humans^7 attacking %s^7!\n\"",
-                              //self->dominationName ) );
-      if( self->dominationTeam == TEAM_NONE )
-        self->deconstruct = qtrue;
-      self->dominationClient = client[ TEAM_HUMANS ];
-    }
-  }
-
-  // Neutral and not under attack; decrement the domination time
-  if( self->dominationTeam == TEAM_NONE && !players[ TEAM_HUMANS ] &&
-      !players[ TEAM_ALIENS ] )
-    self->dominationTime -= think_interval;
-
-  // Claimed and not under attack; increment the domination time
-  else if( ( self->dominationTeam == TEAM_HUMANS && !players[ TEAM_ALIENS ] ) ||
-           ( self->dominationTeam == TEAM_ALIENS && !players[ TEAM_HUMANS ] ) )
-    self->dominationTime += think_interval;
-
-  // Increment the domination timer according to the balance shift
-  else if( self->dominationTeam == TEAM_HUMANS ||
-           ( self->dominationTeam == TEAM_NONE &&
-             self->dominationAttacking == TEAM_HUMANS ) )
-      self->dominationTime += think_interval * balance / DOMINATION_WS_NORMAL;
-  else if( self->dominationTeam == TEAM_ALIENS ||
-           ( self->dominationTeam == TEAM_NONE &&
-             self->dominationAttacking == TEAM_ALIENS ) )
-      self->dominationTime += think_interval * -balance / DOMINATION_WS_NORMAL;
-
-  // Domination cleared
-  if( self->dominationTime <= 0 )
-  {
-    gentity_t *ent;
-
-    if( self->dominationTeam != TEAM_NONE )
-    {
-      level.dominationPoints[ self->dominationTeam ]--;
-      level.dominationPoints[ TEAM_NONE ]++;
-      self->dominationTeam = TEAM_NONE;
-      self->powered = qfalse;
-
-      // We need to update all buildings depending on us for power/creep
-      for( i = 0, ent = g_entities + i; i < level.num_entities; i++, ent++ )
-        if( ent->parentNode == self )
-          ent->parentNode = NULL;
-    }
-    if( !players[ self->dominationAttacking ] )
-      self->dominationAttacking = TEAM_NONE;
-    else
-      self->deconstruct = self->dominationAttacking == TEAM_HUMANS;
-    self->dominationTime = 0;
-
-    // free build point zone
-    if( self->usesBuildPointZone )
-    {
-      buildPointZone_t *zone = &level.buildPointZones[self->buildPointZone];
-
-      zone->active = qfalse;
-      self->usesBuildPointZone = qfalse;
-    }
-  }
-
-  // Complete domination
-  else if( self->dominationTime >= DOMINATION_TIME )
-  {
-    self->dominationTime = DOMINATION_TIME;
-    if( self->dominationTeam == TEAM_NONE ) {
-      self->powered = qtrue;
-      if( self->dominationAttacking == TEAM_ALIENS )
-      {
-        self->deconstruct = qfalse;
-        //trap_SendServerCommand( -1, va( "print \"^1Aliens^7 dominate %s^7!\n\"",
-                                //self->dominationName ) );
-        if( self->dominationClient >= 0 )
-          G_AddCreditToClient( g_entities[ self->dominationClient ].client,
-                               DOMINATION_FREEKILL_ALIEN, qtrue );
-      }
-      else if( self->dominationAttacking == TEAM_HUMANS )
-      {
-        self->deconstruct = qtrue;
-        //trap_SendServerCommand( -1, va( "print \"^5Humans^7 dominate %s^7!\n\"",
-                              //self->dominationName ) );
-        if( self->dominationClient >= 0 )
-          G_AddCreditToClient( g_entities[ self->dominationClient ].client,
-                               DOMINATION_FREEKILL_HUMAN, qtrue );
-      }
-      level.dominationPoints[ self->dominationTeam ]--;
-      level.dominationPoints[ self->dominationAttacking ]++;
-      self->dominationTeam = self->dominationAttacking;
-    }
-    self->dominationAttacking = TEAM_NONE;
-  }
-
-  // Use health to transmit domination progress
-  self->health = DOMINATION_HEALTH * self->dominationTime / DOMINATION_TIME;
-}
-
-void Domination_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod )
-{
-  level.dominationPoints[ self->dominationTeam ]--;
-}
 
 
 //==================================================================================
@@ -2502,7 +2318,7 @@ void HMedistat_Think( gentity_t *self )
 
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
   G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
 
@@ -2846,7 +2662,7 @@ void HMGTurret_Think( gentity_t *self )
   // Turn off client side muzzle flashes
   self->s.eFlags &= ~EF_FIRING;
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
 
   G_SuicideIfNoPower( self );
@@ -2933,7 +2749,7 @@ void HTeslaGen_Think( gentity_t *self )
   G_IdlePowerState( self );
 
   //if not powered don't do anything and check again for power next think
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindPower( self );
   G_OC_DefaultHumanPowered();
   if( !self->powered )
   {
@@ -3025,17 +2841,12 @@ void G_QueueBuildPoints( gentity_t *self )
       break;
 
     case TEAM_HUMANS:
-      powerEntity = G_ProvidingEntityForEntity( self );
+      powerEntity = G_PowerEntityForEntity( self );
 
       if( powerEntity )
       {
         int nqt;
-        int testBuildable = powerEntity->s.modelindex;
-
-        if( BG_IsDPoint( testBuildable ) )
-          testBuildable = BA_H_REPEATER;
-
-        switch( testBuildable )
+        switch( powerEntity->s.modelindex )
         {
           case BA_H_REACTOR:
             nqt = G_NextQueueTime( level.humanBuildPointQueue,
@@ -3057,7 +2868,7 @@ void G_QueueBuildPoints( gentity_t *self )
 
               nqt = G_NextQueueTime( zone->queuedBuildPoints,
                                      zone->totalBuildPoints,
-                                     g_zoneBuildQueueTime.integer );
+                                     g_humanRepeaterBuildQueueTime.integer );
 
               if( !zone->queuedBuildPoints ||
                   level.time + nqt < zone->nextQueueTime )
@@ -3159,11 +2970,9 @@ General think function for buildables
 */
 void G_BuildableThink( gentity_t *ent, int msec )
 {
-  int i;
   int maxHealth = BG_Buildable( ent->s.modelindex )->health;
   int regenRate = BG_Buildable( ent->s.modelindex )->regenRate;
   int buildTime = BG_Buildable( ent->s.modelindex )->buildTime;
-  buildPointZone_t *zone;
 
   //toggle spawned flag for buildables
   if( !ent->spawned && ent->health > 0 )
@@ -3230,53 +3039,6 @@ void G_BuildableThink( gentity_t *ent, int msec )
 
   // Fall back on normal physics routines
   G_Physics( ent, msec );
-
-  // Initialise zone once spawned
-  if( BG_Buildable( ent->s.modelindex )->zone && ent->spawned && ( !ent->usesBuildPointZone || !level.buildPointZones[ ent->buildPointZone ].active ) )
-  {
-    // See if a free zone exists
-    for( i = 0; i < g_zoneMax.integer; i++ )
-    {
-      zone = &level.buildPointZones[ i ];
-
-      if( !zone->active && ( !BG_IsDPoint( ent->s.modelindex ) || ent->dominationTeam != TEAM_NONE ) )
-      {
-        // Initialise the BP queue with all BP queued
-        zone->queuedBuildPoints = zone->totalBuildPoints = g_zoneBuildPoints.integer;
-        zone->nextQueueTime = level.time;
-        zone->team = ent->buildableTeam;
-        // special case for domination points
-        if( BG_IsDPoint( ent->s.modelindex ) )
-          zone->team = ent->dominationTeam;
-        zone->active = qtrue;
-
-        ent->buildPointZone = zone - level.buildPointZones;
-        ent->usesBuildPointZone = qtrue;
-
-        break;
-      }
-    }
-  }
-}
-
-
-/*
-===============
-G_BuildableDie
-
-Generic die function for buildables.  This is called for buildables before their die function.
-===============
-*/
-void G_BuildableDie( gentity_t *ent )
-{
-  // free build point zone
-  if( ent->usesBuildPointZone )
-  {
-    buildPointZone_t *zone = &level.buildPointZones[ent->buildPointZone];
-
-    zone->active = qfalse;
-    ent->usesBuildPointZone = qfalse;
-  }
 }
 
 
@@ -3434,7 +3196,7 @@ static int G_CompareBuildablesForRemoval( const void *a, const void *b )
   // They're the same type
   if( buildableA->s.modelindex == buildableB->s.modelindex )
   {
-    gentity_t *powerEntity = G_ProvidingEntityForPoint( cmpOrigin, buildableA->buildableTeam );
+    gentity_t *powerEntity = G_PowerEntityForPoint( cmpOrigin );
 
     // Prefer the entity that is providing power for this point
     aMatches = ( powerEntity == buildableA );
@@ -3479,10 +3241,6 @@ void G_ClearDeconMarks( void )
       continue;
 
     if( ent->s.eType != ET_BUILDABLE )
-      continue;
-
-    // Domination points use deconstruct flag to pass team; don't mess with it
-    if( BG_IsDPoint( ent->s.modelindex ) )
       continue;
 
     ent->deconstruct = qfalse;
@@ -3604,9 +3362,6 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
     spawn           = BA_H_SPAWN;
     core            = BA_H_REACTOR;
   }
-  else if( team == TEAM_NONE )
-  {
-  }
   else
   {
     Com_Error( ERR_FATAL, "team is %d\n", team );
@@ -3674,7 +3429,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
     if( team == TEAM_HUMANS &&
         buildable != BA_H_REACTOR &&
         buildable != BA_H_REPEATER &&
-        G_ProvidingEntityForPoint( ent->s.origin, TEAM_HUMANS ) != G_ProvidingEntityForPoint( origin, TEAM_HUMANS ) )
+        G_PowerEntityForPoint( ent->s.origin ) != G_PowerEntityForPoint( origin ) )
       continue;
 
     if( !ent->inuse )
@@ -3697,7 +3452,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
 
     // Don't allow a power source to be replaced by a dependant
     if( team == TEAM_HUMANS &&
-        G_ProvidingEntityForPoint( origin, TEAM_HUMANS ) == ent &&
+        G_PowerEntityForPoint( origin ) == ent &&
         buildable != BA_H_REPEATER &&
         buildable != core )
       continue;
@@ -3846,7 +3601,6 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
   int               contents;
   playerState_t     *ps = &ent->client->ps;
   int               buildPoints;
-  int               i;
 
   if( G_OC_NeedAlternateCanBuild() )
   {
@@ -3881,16 +3635,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
   if( ( tempReason = G_SufficientBPAvailable( buildable, origin ) ) != IBE_NONE )
     reason = tempReason;
 
-  if ( BG_Buildable( buildable )->team        == TEAM_NONE )
-  {
-    // team-less buildables can only be built with cheats on, but otherwise
-    // have no restrictions
-    if( !g_cheats.integer )
-      return IBE_PERMISSION;
-
-    return IBE_NONE;
-  }
-  else if( ent->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+  if( ent->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
   {
     //alien criteria
 
@@ -4007,28 +3752,6 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
   if( reason != IBE_NONE )
     level.numBuildablesForRemoval = 0;
 
-  // Cannot build a reactor or an overmind within range of a domination point.
-  // Moving completely to a domination point is prevented by this.
-  if( buildable == BA_H_REACTOR || buildable == BA_A_OVERMIND )
-  {
-      for ( i = 1, tempent = g_entities + i; i < level.num_entities; i++, tempent++ )
-      {
-        if( tempent->s.eType != ET_BUILDABLE )
-          continue;
-
-        if( BG_IsDPoint( tempent->s.modelindex ) )
-        {
-          vec3_t dir;
-          float distance;
-
-          VectorSubtract( origin, tempent->s.origin, dir );
-          distance = VectorLength( dir );
-          if( distance < DOMINATION_RANGE )
-            return IBE_NEARDP;
-        }
-      }
-  }
-
   return reason;
 }
 
@@ -4081,10 +3804,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
     // in-game building by a player
     BG_GetClientNormal( &builder->client->ps, normal );
 
-    if( built->s.modelindex == BA_H_SPAWN )//|| built->s.modelindex == BA_H_SPAWN )
-      builder->groupID = 0;
+    if( built->s.modelindex == BA_H_SPAWN || built->s.modelindex == BA_H_SPAWN )
+	  builder->groupID = 0;
     else
-      builder->groupID = 2;  // FIXME: magic numbers
+	  builder->groupID = 2;  // TODO: use alternative and not ugly hardcoded magic stuff
   }
 
   // when building the initial layout, spawn the entity slightly off its
@@ -4116,34 +3839,6 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
   built->groupID = builder->groupID;
   built->reserved = builder->reserved;
   built->reserved2 = builder->reserved2;
-
-  // Setup domination point
-  if( buildable >= BA_DPOINT_FIRST && buildable <= BA_DPOINT_LAST )
-  {
-    char name[ MAX_STRING_CHARS ];
-    gentity_t *ent;
-
-    built->takedamage = qfalse;
-    built->dominationTeam = TEAM_NONE;
-    built->dominationAttacking = TEAM_NONE;
-    built->timestamp = level.time;
-    built->think = Domination_Think;
-    built->die = Domination_Die;
-    built->r.svFlags |= SVF_BROADCAST; // broadcast changes to everyone
-    built->flags |= FL_GODMODE;
-    level.dominationPoints[ TEAM_NONE ]++;
-    if( ( ent = Team_GetLocation( built ) ) )
-    {
-      trap_GetConfigstring( CS_LOCATIONS + ent->s.generic1, name, sizeof( name ) );
-      Com_sprintf( built->dominationName, sizeof( built->dominationName ),
-          "%s^7 (%c)", name, 'A' + buildable - BA_DPOINT_FIRST );
-    }
-    else
-    {
-      Com_sprintf( built->dominationName, sizeof( built->dominationName ),
-          "point %c", 'A' + buildable - BA_DPOINT_FIRST );
-    }
-  }
 
   //things that vary for each buildable that aren't in the dbase
   switch( buildable )
@@ -4287,17 +3982,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
     built->powered = qtrue;
     built->s.eFlags |= EF_B_POWERED;
   }
-  else if( BG_Buildable( buildable )->team == TEAM_HUMANS && ( built->powered = G_FindProvider( built ) ) )
+  else if( ( built->powered = G_FindPower( built ) ) )
     built->s.eFlags |= EF_B_POWERED;
 
   built->s.eFlags &= ~EF_B_SPAWNED;
-
-  if( buildable >= BA_DPOINT_FIRST && buildable <= BA_DPOINT_LAST )
-  {
-    // reset hijacked bits
-    built->powered = built->deconstruct = qfalse;  
-    built->s.eFlags &= ~EF_B_POWERED & ~EF_B_MARKED;
-  }
 
   VectorCopy( normal, built->s.origin2 );
 
@@ -4411,10 +4099,6 @@ qboolean G_BuildIfValid( gentity_t *ent, buildable_t buildable )
 
     case IBE_LASTSPAWN:
       G_TriggerMenu( ent->client->ps.clientNum, MN_B_LASTSPAWN );
-      return qfalse;
-
-    case IBE_NEARDP:
-      G_TriggerMenu( ent->client->ps.clientNum, MN_NEARDP );
       return qfalse;
 
     default:
@@ -4806,12 +4490,3 @@ void G_BaseSelfDestruct( team_t team )
   }
 }
 
-/*
-============
-G_IsCore
-============
-*/
-qboolean G_IsCore( buildable_t buildable )
-{
-  return buildable == BA_A_OVERMIND || buildable == BA_H_REACTOR;
-}
