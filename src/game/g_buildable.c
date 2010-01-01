@@ -795,7 +795,7 @@ void AGeneric_CreepCheck( gentity_t *self )
     return;
   }
 
-  self->powered = G_Overmind( );
+  self->powered = G_Overmind( ) ? qtrue : qfalse;
 }
 
 /*
