@@ -75,6 +75,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "[^3name|slot#|IP(/mask)^7] (^5duration^7) (^5reason^7)"
     },
 
+    {"buildlog", G_admin_buildlog, "buildlog",
+      "show recent building activity.",
+      "[^5(^3a|h^7^5)NumBuilds^7 | ^3#^5BuildID^7 | ^3-^5skip^7] (^5name^7)"
+    },
+
     {"cancelvote", G_admin_endvote, "cancelvote",
       "cancel a vote taking place",
       "(^5a|h^7)"
@@ -168,6 +173,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
     {"restart", G_admin_restart, "restart",
       "restart the current map (optionally using named layout or keeping/switching teams)",
       "(^5layout^7) (^5keepteams|switchteams|keepteamslock|switchteamslock^7)"
+    },
+
+    {"revert", G_admin_buildlog, "revert",
+      "undo a recent building activity.",
+      "[^5(^3a|h^7^5)NumBuilds^7 | ^3#^5BuildID^7 | ^3-^5skip^7] (^5name^7)"
     },
 
     {"setlevel", G_admin_setlevel, "setlevel",
@@ -998,6 +1008,56 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
     p->next = n;
   else
     g_admin_namelogs = n;
+}
+
+static const char *G_admin_namelog_find_name( const char *guid )
+{
+  g_admin_namelog_t *n;
+
+  if( !guid )
+    return "<world>";
+  for( n = g_admin_namelogs; n; n = n->next )
+  {
+    if( !Q_stricmp( guid, n->guid ) )
+    {
+      if( n->slot >= 0 &&
+          level.clients[ n->slot ].pers.connected != CON_DISCONNECTED )
+        return level.clients[ n->slot ].pers.netname;
+      else
+        return n->name[ 0 ];
+    }
+  }
+  return "<world>";
+}
+
+static const char *G_admin_namelog_find_guid( char *name )
+{
+  char              cleanName[ MAX_NAME_LENGTH ];
+  char              testName[ MAX_NAME_LENGTH ];
+  g_admin_namelog_t *n;
+  int               i;
+  char              *guid = NULL;
+
+  G_SanitiseString( name, cleanName, sizeof( cleanName ) );
+  if( !cleanName[ 0 ] )
+    return NULL;
+  for( n = g_admin_namelogs; n; n = n->next )
+  {
+    for( i = 0; i < MAX_ADMIN_NAMELOG_NAMES && n->name[ i ][ 0 ]; i++ )
+    {
+      G_SanitiseString( n->name[ i ], testName, sizeof( testName ) );
+      if( strstr( testName, cleanName ) )
+      {
+        // check if unique name match
+        if( guid && guid != n->guid )
+          return NULL;
+
+        guid = n->guid;
+        break;
+      }
+    }
+  }
+  return guid;
 }
 
 qboolean G_admin_readconfig( gentity_t *ent )
@@ -2188,6 +2248,266 @@ qboolean G_admin_denybuild( gentity_t *ent )
       ( ent ) ? ent->client->pers.netname : "console" ) );
     }
     return qtrue;
+}
+
+struct buildFateDescription
+{
+  char *now;
+  char *past;
+} buildFates[ BF_FATE_COUNT ] = {
+  { "^2built", "^2build" },
+  { "^2moved", "^2move" },
+  { "^3DECONSTRUCTED", "^3DECONSTRUCTION" },
+  { "^7destroyed", "^7destruction" },
+  { "^1TEAMKILLED", "^1TEAMKILL" },
+  { "^5expired", "^5expire" }
+};
+
+qboolean G_admin_buildlog( gentity_t *ent )
+{
+  buildLog_t *ptr, *mark;
+  char       message[ 2048 ];
+  char       replace[ MAX_STRING_CHARS ];
+  char       command[ 16 ];
+  char       arg[ 16 ];
+  const char *guid = NULL;
+  int        count = 0;
+  int        firstID = 0;
+  int        lastID = 0;
+  int        id = 0;
+  int        skip = 0;
+  int        num = 10;
+  int        shown = 0;
+  int        showmore = 0;
+  team_t     team = TEAM_NONE;
+  qboolean   revert;
+  qboolean   showuse = qfalse;
+
+  trap_Argv( 0, command, sizeof( command ) );
+  revert = ( !Q_stricmp( command, "revert" ) );
+
+  if( trap_Argc() >= 2 )
+  {
+    trap_Argv( 1, arg, sizeof( arg ) );
+    switch( arg[ 0 ] )
+    {
+      case '#':
+        id = atoi( arg + 1 );
+        num = 1;
+        break;
+      case 'a': case 'A':
+        team = TEAM_ALIENS;
+        num = MAX( 1, atoi( arg + 1 ) );
+        break;
+      case 'h': case 'H':
+        team = TEAM_HUMANS;
+        num = MAX( 1, atoi( arg + 1 ) );
+        break;
+      case '-':
+        if( revert )
+        {
+          ADMP( va ( "^3%s: can only skip with '-' when using buildlog\n",
+                     command ) );
+          return qfalse;
+        }
+        skip = atoi( arg + 1 );
+        break;
+      default:
+        showuse = qtrue;
+        break;
+    }
+    if( trap_Argc() > 2 )
+    {
+      char name[ MAX_NAME_LENGTH ];
+
+      trap_Argv( 2, name, sizeof( name ) );
+      guid = G_admin_namelog_find_guid( name );
+      if( !guid )
+      {
+        ADMP( va ( "^3%s: ^7unique name '%s^7' not found in the log\n",
+                   command, name ) );
+        return qfalse;
+      }
+    }
+    if( num > 20 )
+    {
+      num = 20;
+      ADMP( va ("^3%s: ^7limiting max log entries to %d\n",
+                command, num ) );
+    }
+  }
+  else if( revert )
+  {
+    showuse = qtrue;
+  }
+
+  if( showuse )
+  {
+    ADMP( va ( "^3%s: ^7usage: %s [^5(^3a|h^7^5)NumBuilds^7 | ^3#^5BuildID^7 | ^3-^5skip^7] (^5name^7)\n",
+               command, command ) );
+    return qfalse;
+  }
+
+  if( !revert )
+  {
+    AP( va( "print \"^3%s: ^7%s^7 requested a log of recent building activity\n\"",
+            command,
+            ( ent ) ? ent->client->pers.netname : "console" ) );
+  }
+
+  message[ 0 ] = '\0';
+  for( ptr = level.buildLog; ptr; ptr = ptr->next, count++ )
+  {
+    const char *pteam, *pname, *action;
+
+    if( skip )
+    {
+      skip--;
+      continue;
+    }
+    if( id && ptr->id != id )
+      continue;
+    if( team != TEAM_NONE &&
+        team != BG_Buildable( ptr->buildable )->team )
+      continue;
+    if( guid && Q_stricmp( guid, ptr->guid ) )
+      continue;
+
+    firstID = ptr->id;
+    if( !lastID )
+      lastID = ptr->id;
+
+    replace[ 0 ] = '\0';
+    for( mark = ptr->marked; mark; mark = mark->marked )
+    {
+      Q_strcat( replace, sizeof( replace ),
+        va( "%s %s",
+            ( replace[ 0 ] ) ? "," : " ^3replacing^7",
+            BG_Buildable( mark->buildable )->humanName ) );
+    }
+    switch( BG_Buildable( ptr->buildable )->team )
+    {
+      case TEAM_ALIENS:
+        pteam = "^1A";
+        break;
+      case TEAM_HUMANS:
+        pteam = "^5H";
+        break;
+      default:
+        pteam = " ";
+        break;
+    }
+
+    if( ptr->fate >= 0 && ptr->fate < BF_FATE_COUNT )
+    {
+      buildFate_t fate = ptr->fate;
+
+      if( fate == BF_BUILT &&
+          ptr->marked && !ptr->marked->marked &&
+          ptr->marked->buildable == ptr->buildable )
+      {
+        fate = BF_MOVED;
+        replace[ 0 ] = '\0';
+      }
+
+      if( revert )
+        action = buildFates[ fate ].past;
+      else
+        action = buildFates[ fate ].now;
+    }
+    else
+      action = ( revert ) ? "^6barf" : "^6barfed on";
+
+    pname = G_admin_namelog_find_name( ptr->guid );
+
+    if( revert )
+    {
+      const char *err;
+
+      if( ( err = G_RevertBuild( ptr ) ) )
+      {
+        ADMP( va( "^3%s: ^7aborted at build entry #%d, %s\n",
+                  command, ptr->id, err ) );
+        break;
+      }
+      AP( va( "print \"^3revert: ^7%s^7 reverted %s^7's %s^7 of a %s\n\"",
+              ( ent ) ? ent->client->pers.netname : "console",
+              pname,
+              action, 
+              BG_Buildable( ptr->buildable )->humanName ) );
+
+      // schedule it to be freed
+      ptr->fate = BF_INVALID;
+    }
+    else
+    {
+      Com_sprintf( message, sizeof( message ),
+                   "%3d %s^7 %s^7 %s^7 a %s%s\n%s",
+                   ptr->id,
+                   pteam,
+                   pname,
+                   action,
+                   BG_Buildable( ptr->buildable )->humanName,
+                   replace,
+                   message );
+    }
+    shown++;
+    num--;
+    if( !num )
+      break;
+  }
+  if( ptr && team == TEAM_NONE && id == 0 )
+    showmore = count + 1;
+  for( ; ptr; ptr = ptr->next, count++ );
+  if( showmore >= count )
+    showmore = 0;
+
+  if( revert )
+  {
+    buildLog_t *prev = NULL;
+
+    // free reverted log entries
+    ptr = level.buildLog;
+    while( ptr )
+    {
+      if( ptr->fate == BF_INVALID )
+      {
+        buildLog_t *tmp = ptr;
+
+        if( prev )
+        {
+          prev->next = ptr->next;
+          ptr = prev;
+        }
+        else
+        {
+          level.buildLog = level.buildLog->next;
+          ptr = level.buildLog;
+        }
+        G_BuildLogFree( tmp );
+      }
+      else
+      {
+        prev = ptr;
+        ptr = ptr->next;
+      }
+    }
+
+    ADMP( va( "^3%s: ^7reverted %d log entries\n",
+              command, shown ) );
+  }
+  else
+  {
+    ADMBP_begin();
+    ADMBP( message );
+    ADMBP( va( "^3%s: ^7showing log entries %d - %d of %d",
+               command, firstID, lastID, count ) );
+    if( showmore )
+      ADMBP( va( ", use '%s -%d' to see more", command, showmore ) );
+    ADMBP( ".\n" );
+    ADMBP_end();
+  }
+  return qtrue;
 }
 
 qboolean G_admin_listadmins( gentity_t *ent )

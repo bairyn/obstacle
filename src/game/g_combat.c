@@ -1369,7 +1369,33 @@ Log deconstruct/destroy events
 */
 void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
 {
+  buildLog_t  *log;
+  buildFate_t fate;
+
+  switch( mod )
+  {
+    case MOD_DECONSTRUCT:
+      fate = BF_DECONNED;
+      break;
+    case MOD_NOCREEP:
+      fate = BF_NOPOWER;
+      break;
+    default:
+      if( actor && actor->client &&
+          actor->client->ps.stats[ STAT_TEAM ] == self->buildableTeam )
+        fate = BF_TEAMKILLED;
+      else
+        fate = BF_DESTROYED;
+      break;
+  }
+  log = G_BuildLogNew( actor, fate,
+                       ( mod == MOD_DECONSTRUCT && self->deconstruct ) );
+  G_BuildLogSet( log, self );
+
   if( !actor || !actor->client )
+    return;
+
+  if( mod == MOD_NOCREEP )
     return;
 
   if( actor->client->pers.teamSelection ==

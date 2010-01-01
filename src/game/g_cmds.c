@@ -1937,6 +1937,8 @@ void Cmd_Destroy_f( gentity_t *ent )
             ent->client->ps.stats[ STAT_MISC ] +=
               BG_Buildable( traceEnt->s.modelindex )->buildTime / 4;
         }
+        // unmark so that build log doesn't get confused
+        traceEnt->deconstruct = qfalse;
 
         G_LogDestruction( traceEnt, ent, MOD_DECONSTRUCT );
 //        G_OC_BuildableDestroyed( traceEnt );
