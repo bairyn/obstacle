@@ -1,0 +1,861 @@
+From 2c5b0712a871f279d1d31c8ec3fdf11a26d02f90 Mon Sep 17 00:00:00 2001
+From: bob <KrabbyKrap@gmail.com>
+Date: Fri, 1 Jan 2010 00:02:14 +0000
+Subject: [PATCH] Merge Rezyn's buildlog and revert from http://rezyn.mercenariesguild.net/aardvark/aardvark_0303_buildlog.patch for testing
+
+The Domination patch generalises the build point queue code; it no longer assumes that repeaters are the only buildable that give BP zones and that humans are the only team that can have BP zones.  The code was patched by Rezyn's buildlog-and-revert patch and was modified to be compatible with the BP zone generalisation.
+---
+ src/game/g_admin.c     |  320 ++++++++++++++++++++++++++++++++++++++++++++++++
+ src/game/g_admin.h     |    2 +
+ src/game/g_buildable.c |  306 +++++++++++++++++++++++++++++++++++++++++++++-
+ src/game/g_cmds.c      |    2 +
+ src/game/g_combat.c    |   26 ++++
+ src/game/g_local.h     |   39 ++++++
+ src/game/g_main.c      |    2 +
+ 7 files changed, 695 insertions(+), 2 deletions(-)
+
+diff --git a/src/game/g_admin.c b/src/game/g_admin.c
+index f254af8..afabda1 100644
+--- a/src/game/g_admin.c
++++ b/src/game/g_admin.c
+@@ -75,6 +75,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
+       "[^3name|slot#|IP(/mask)^7] (^5duration^7) (^5reason^7)"
+     },
+ 
++    {"buildlog", G_admin_buildlog, "buildlog",
++      "show recent building activity.",
++      "[^5(^3a|h^7^5)NumBuilds^7 | ^3#^5BuildID^7 | ^3-^5skip^7] (^5name^7)"
++    },
++
+     {"cancelvote", G_admin_endvote, "cancelvote",
+       "cancel a vote taking place",
+       "(^5a|h^7)"
+@@ -170,6 +175,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
+       "(^5layout^7) (^5keepteams|switchteams|keepteamslock|switchteamslock^7)"
+     },
+ 
++    {"revert", G_admin_buildlog, "revert",
++      "undo a recent building activity.",
++      "[^5(^3a|h^7^5)NumBuilds^7 | ^3#^5BuildID^7 | ^3-^5skip^7] (^5name^7)"
++    },
++
+     {"setlevel", G_admin_setlevel, "setlevel",
+       "sets the admin level of a player",
+       "[^3name|slot#|admin#^7] [^3level^7]"
+@@ -1000,6 +1010,56 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
+     g_admin_namelogs = n;
+ }
+ 
++static const char *G_admin_namelog_find_name( const char *guid )
++{
++  g_admin_namelog_t *n;
++
++  if( !guid )
++    return "<world>";
++  for( n = g_admin_namelogs; n; n = n->next )
++  {
++    if( !Q_stricmp( guid, n->guid ) )
++    {
++      if( n->slot >= 0 &&
++          level.clients[ n->slot ].pers.connected != CON_DISCONNECTED )
++        return level.clients[ n->slot ].pers.netname;
++      else
++        return n->name[ 0 ];
++    }
++  }
++  return "<world>";
++}
++
++static const char *G_admin_namelog_find_guid( char *name )
++{
++  char              cleanName[ MAX_NAME_LENGTH ];
++  char              testName[ MAX_NAME_LENGTH ];
++  g_admin_namelog_t *n;
++  int               i;
++  char              *guid = NULL;
++
++  G_SanitiseString( name, cleanName, sizeof( cleanName ) );
++  if( !cleanName[ 0 ] )
++    return NULL;
++  for( n = g_admin_namelogs; n; n = n->next )
++  {
++    for( i = 0; i < MAX_ADMIN_NAMELOG_NAMES && n->name[ i ][ 0 ]; i++ )
++    {
++      G_SanitiseString( n->name[ i ], testName, sizeof( testName ) );
++      if( strstr( testName, cleanName ) )
++      {
++        // check if unique name match
++        if( guid && guid != n->guid )
++          return NULL;
++
++        guid = n->guid;
++        break;
++      }
++    }
++  }
++  return guid;
++}
++
+ qboolean G_admin_readconfig( gentity_t *ent )
+ {
+   g_admin_level_t *l = NULL;
+@@ -2190,6 +2250,266 @@ qboolean G_admin_denybuild( gentity_t *ent )
+     return qtrue;
+ }
+ 
++struct buildFateDescription
++{
++  char *now;
++  char *past;
++} buildFates[ BF_FATE_COUNT ] = {
++  { "^2built", "^2build" },
++  { "^2moved", "^2move" },
++  { "^3DECONSTRUCTED", "^3DECONSTRUCTION" },
++  { "^7destroyed", "^7destruction" },
++  { "^1TEAMKILLED", "^1TEAMKILL" },
++  { "^5expired", "^5expire" }
++};
++
++qboolean G_admin_buildlog( gentity_t *ent )
++{
++  buildLog_t *ptr, *mark;
++  char       message[ 2048 ];
++  char       replace[ MAX_STRING_CHARS ];
++  char       command[ 16 ];
++  char       arg[ 16 ];
++  const char *guid = NULL;
++  int        count = 0;
++  int        firstID = 0;
++  int        lastID = 0;
++  int        id = 0;
++  int        skip = 0;
++  int        num = 10;
++  int        shown = 0;
++  int        showmore = 0;
++  team_t     team = TEAM_NONE;
++  qboolean   revert;
++  qboolean   showuse = qfalse;
++
++  trap_Argv( 0, command, sizeof( command ) );
++  revert = ( !Q_stricmp( command, "revert" ) );
++
++  if( trap_Argc() >= 2 )
++  {
++    trap_Argv( 1, arg, sizeof( arg ) );
++    switch( arg[ 0 ] )
++    {
++      case '#':
++        id = atoi( arg + 1 );
++        num = 1;
++        break;
++      case 'a': case 'A':
++        team = TEAM_ALIENS;
++        num = MAX( 1, atoi( arg + 1 ) );
++        break;
++      case 'h': case 'H':
++        team = TEAM_HUMANS;
++        num = MAX( 1, atoi( arg + 1 ) );
++        break;
++      case '-':
++        if( revert )
++        {
++          ADMP( va ( "^3%s: can only skip with '-' when using buildlog\n",
++                     command ) );
++          return qfalse;
++        }
++        skip = atoi( arg + 1 );
++        break;
++      default:
++        showuse = qtrue;
++        break;
++    }
++    if( trap_Argc() > 2 )
++    {
++      char name[ MAX_NAME_LENGTH ];
++
++      trap_Argv( 2, name, sizeof( name ) );
++      guid = G_admin_namelog_find_guid( name );
++      if( !guid )
++      {
++        ADMP( va ( "^3%s: ^7unique name '%s^7' not found in the log\n",
++                   command, name ) );
++        return qfalse;
++      }
++    }
++    if( num > 20 )
++    {
++      num = 20;
++      ADMP( va ("^3%s: ^7limiting max log entries to %d\n",
++                command, num ) );
++    }
++  }
++  else if( revert )
++  {
++    showuse = qtrue;
++  }
++
++  if( showuse )
++  {
++    ADMP( va ( "^3%s: ^7usage: %s [^5(^3a|h^7^5)NumBuilds^7 | ^3#^5BuildID^7 | ^3-^5skip^7] (^5name^7)\n",
++               command, command ) );
++    return qfalse;
++  }
++
++  if( !revert )
++  {
++    AP( va( "print \"^3%s: ^7%s^7 requested a log of recent building activity\n\"",
++            command,
++            ( ent ) ? ent->client->pers.netname : "console" ) );
++  }
++
++  message[ 0 ] = '\0';
++  for( ptr = level.buildLog; ptr; ptr = ptr->next, count++ )
++  {
++    const char *pteam, *pname, *action;
++
++    if( skip )
++    {
++      skip--;
++      continue;
++    }
++    if( id && ptr->id != id )
++      continue;
++    if( team != TEAM_NONE &&
++        team != BG_Buildable( ptr->buildable )->team )
++      continue;
++    if( guid && Q_stricmp( guid, ptr->guid ) )
++      continue;
++
++    firstID = ptr->id;
++    if( !lastID )
++      lastID = ptr->id;
++
++    replace[ 0 ] = '\0';
++    for( mark = ptr->marked; mark; mark = mark->marked )
++    {
++      Q_strcat( replace, sizeof( replace ),
++        va( "%s %s",
++            ( replace[ 0 ] ) ? "," : " ^3replacing^7",
++            BG_Buildable( mark->buildable )->humanName ) );
++    }
++    switch( BG_Buildable( ptr->buildable )->team )
++    {
++      case TEAM_ALIENS:
++        pteam = "^1A";
++        break;
++      case TEAM_HUMANS:
++        pteam = "^5H";
++        break;
++      default:
++        pteam = " ";
++        break;
++    }
++
++    if( ptr->fate >= 0 && ptr->fate < BF_FATE_COUNT )
++    {
++      buildFate_t fate = ptr->fate;
++
++      if( fate == BF_BUILT &&
++          ptr->marked && !ptr->marked->marked &&
++          ptr->marked->buildable == ptr->buildable )
++      {
++        fate = BF_MOVED;
++        replace[ 0 ] = '\0';
++      }
++
++      if( revert )
++        action = buildFates[ fate ].past;
++      else
++        action = buildFates[ fate ].now;
++    }
++    else
++      action = ( revert ) ? "^6barf" : "^6barfed on";
++
++    pname = G_admin_namelog_find_name( ptr->guid );
++
++    if( revert )
++    {
++      const char *err;
++
++      if( ( err = G_RevertBuild( ptr ) ) )
++      {
++        ADMP( va( "^3%s: ^7aborted at build entry #%d, %s\n",
++                  command, ptr->id, err ) );
++        break;
++      }
++      AP( va( "print \"^3revert: ^7%s^7 reverted %s^7's %s^7 of a %s\n\"",
++              ( ent ) ? ent->client->pers.netname : "console",
++              pname,
++              action, 
++              BG_Buildable( ptr->buildable )->humanName ) );
++
++      // schedule it to be freed
++      ptr->fate = BF_INVALID;
++    }
++    else
++    {
++      Com_sprintf( message, sizeof( message ),
++                   "%3d %s^7 %s^7 %s^7 a %s%s\n%s",
++                   ptr->id,
++                   pteam,
++                   pname,
++                   action,
++                   BG_Buildable( ptr->buildable )->humanName,
++                   replace,
++                   message );
++    }
++    shown++;
++    num--;
++    if( !num )
++      break;
++  }
++  if( ptr && team == TEAM_NONE && id == 0 )
++    showmore = count + 1;
++  for( ; ptr; ptr = ptr->next, count++ );
++  if( showmore >= count )
++    showmore = 0;
++
++  if( revert )
++  {
++    buildLog_t *prev = NULL;
++
++    // free reverted log entries
++    ptr = level.buildLog;
++    while( ptr )
++    {
++      if( ptr->fate == BF_INVALID )
++      {
++        buildLog_t *tmp = ptr;
++
++        if( prev )
++        {
++          prev->next = ptr->next;
++          ptr = prev;
++        }
++        else
++        {
++          level.buildLog = level.buildLog->next;
++          ptr = level.buildLog;
++        }
++        G_BuildLogFree( tmp );
++      }
++      else
++      {
++        prev = ptr;
++        ptr = ptr->next;
++      }
++    }
++
++    ADMP( va( "^3%s: ^7reverted %d log entries\n",
++              command, shown ) );
++  }
++  else
++  {
++    ADMBP_begin();
++    ADMBP( message );
++    ADMBP( va( "^3%s: ^7showing log entries %d - %d of %d",
++               command, firstID, lastID, count ) );
++    if( showmore )
++      ADMBP( va( ", use '%s -%d' to see more", command, showmore ) );
++    ADMBP( ".\n" );
++    ADMBP_end();
++  }
++  return qtrue;
++}
++
+ qboolean G_admin_listadmins( gentity_t *ent )
+ {
+   int i, found = 0;
+diff --git a/src/game/g_admin.h b/src/game/g_admin.h
+index 6eeb634..b612fbd 100644
+--- a/src/game/g_admin.h
++++ b/src/game/g_admin.h
+@@ -167,6 +167,8 @@ qboolean G_admin_changemap( gentity_t *ent );
+ qboolean G_admin_mute( gentity_t *ent );
+ qboolean G_admin_override( gentity_t *ent );
+ qboolean G_admin_denybuild( gentity_t *ent );
++qboolean G_admin_buildlog( gentity_t *ent );
++qboolean G_admin_revert( gentity_t *ent );
+ qboolean G_admin_showbans( gentity_t *ent );
+ qboolean G_admin_adminhelp( gentity_t *ent );
+ qboolean G_admin_admintest( gentity_t *ent );
+diff --git a/src/game/g_buildable.c b/src/game/g_buildable.c
+index ea57abd..0dfdf75 100644
+--- a/src/game/g_buildable.c
++++ b/src/game/g_buildable.c
+@@ -1792,7 +1792,7 @@ static void G_SuicideIfNoPower( gentity_t *self )
+     if( self->count < 0 )
+       self->count = level.time;
+     else if( self->count > 0 && ( ( level.time - self->count ) > HUMAN_BUILDABLE_INACTIVE_TIME ) )
+-      G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_SUICIDE );
++      G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_NOCREEP );
+   }
+   else
+   {
+@@ -4032,7 +4032,6 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+   return reason;
+ }
+ 
+-
+ /*
+ ================
+ G_Build
+@@ -4046,6 +4045,11 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+   vec3_t    normal;
+   char      readable[ MAX_STRING_CHARS ];
+   char      buildnums[ MAX_STRING_CHARS ];
++  buildLog_t *log = NULL;
++
++  // add build log so that next function can find it
++  if( builder && builder->client )
++    log = G_BuildLogNew( builder, BF_BUILT, qfalse );
+ 
+   // Free existing buildables
+   G_FreeMarkedBuildables( builder, readable, sizeof( readable ),
+@@ -4332,6 +4336,9 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+       readable );
+   }
+ 
++  if( log )
++    G_BuildLogSet( log, built );
++
+   return built;
+ }
+ 
+@@ -4440,6 +4447,7 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
+   buildable_t buildable = ent->s.modelindex;
+ 
+   built = G_Build( ent, buildable, ent->s.pos.trBase, ent->s.angles );
++  built->deconstruct = ent->deconstruct;
+   G_FreeEntity( ent );
+ 
+   built->takedamage = qtrue;
+@@ -4478,6 +4486,300 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
+ 
+ /*
+ ============
++Build Log
++============
++*/
++void G_BuildLogFree( buildLog_t *log )
++{
++  buildLog_t *tmp;
++
++  while( ( tmp = log ) )
++  {
++    log = log->marked;
++    BG_Free( tmp );
++  }
++}
++
++void G_BuildLogCleanup( void )
++{
++  buildLog_t *tmp;
++
++  while( ( tmp = level.buildLog ) )
++  {
++    level.buildLog = level.buildLog->next;
++    G_BuildLogFree( tmp );
++  }
++}
++
++static int G_BuildLogId( void )
++{
++  static int id = 0;
++  buildLog_t *ptr, *tmp;
++  int        i;
++
++  // keep the log trimmed
++  for( tmp = level.buildLog, i = 0; tmp && i < 64 - 2; tmp = tmp->next, i++ );
++  if( tmp )
++  {
++    ptr = tmp->next;
++    tmp->next = NULL;
++
++    while( ( tmp = ptr ) )
++    {
++      ptr = ptr->next;
++      G_BuildLogFree( tmp );
++    }
++  }
++
++  id++;
++  return id;
++}
++
++buildLog_t *G_BuildLogNew( gentity_t *attacker, buildFate_t fate, qboolean marked )
++{
++  buildLog_t *log;
++
++  log = BG_Alloc( sizeof( buildLog_t ) );
++  log->time = level.time;
++  if( attacker && attacker->client )
++    Q_strncpyz( log->guid, attacker->client->pers.guid, sizeof( log->guid ) );
++  log->fate = fate;
++
++  if( marked && level.buildLog )
++  {
++    log->id = level.buildLog->id;
++    log->marked = level.buildLog->marked;
++    level.buildLog->marked = log;
++  }
++  else
++  {
++    log->id = G_BuildLogId( );
++    log->next = level.buildLog;
++    level.buildLog = log;
++  }
++
++  return log;
++}
++
++void G_BuildLogSet( buildLog_t *log, gentity_t *buildable )
++{
++  log->buildable = buildable->s.modelindex;
++  VectorCopy( buildable->s.pos.trBase, log->origin );
++  VectorCopy( buildable->s.angles, log->angles );
++  VectorCopy( buildable->s.origin2, log->origin2 );
++  VectorCopy( buildable->s.angles2, log->angles2 );
++
++  if( buildable->parentNode )
++    log->parent = buildable->parentNode->s.modelindex;
++  else
++    log->parent = BA_NONE;
++}
++
++static qboolean G_RevertCanFit( buildLog_t * log )
++{
++  trace_t   tr;
++  vec3_t    mins, maxs;
++  vec3_t    start, end;
++  int       blockers[ MAX_GENTITIES ];
++  int       num;
++  gentity_t *ghosts[ MAX_GENTITIES ];
++  int       ghostNum = 0;
++  gentity_t *targ;
++  int       i;
++
++  BG_BuildableBoundingBox( log->buildable, mins, maxs );
++  VectorAdd( log->origin, mins, mins );
++  VectorAdd( log->origin, maxs, maxs );
++
++  num = trap_EntitiesInBox( mins, maxs, blockers, MAX_GENTITIES );
++  for( i = 0; i < num; i++ )
++  {
++    targ = g_entities + blockers[ i ];
++    if( targ->s.eType == ET_PLAYER ||
++        ( targ->s.eType == ET_BUILDABLE && targ->health <= 0 ) )
++    {
++      // ignore players and dead buildables
++      trap_UnlinkEntity( targ );
++      ghosts[ ghostNum++ ] = targ;
++    }
++  }
++
++  BG_BuildableBoundingBox( log->buildable, mins, maxs );
++  // trace the same as when placing
++  VectorScale( log->origin2, 1.0f, start );
++  VectorAdd( log->origin, start, start );
++
++  VectorScale( log->origin2, -1.0f, end );
++  VectorAdd( log->origin, end, end );
++
++  trap_Trace( &tr, start, mins, maxs, end, ENTITYNUM_NONE, MASK_PLAYERSOLID );
++
++  // restore ignored entities
++  for( i = 0; i < ghostNum; i++ )
++    trap_LinkEntity( ghosts[ i ] );
++
++  return ( !tr.startsolid );
++}
++
++static void G_RevertThink( gentity_t *self )
++{
++  vec3_t mins, maxs;
++  int    blockers[ MAX_GENTITIES ];
++  int    num;
++  int    victims = 0;
++  int    i;
++
++  BG_BuildableBoundingBox( self->s.modelindex, mins, maxs );
++  VectorAdd( self->s.pos.trBase, mins, mins );
++  VectorAdd( self->s.pos.trBase, maxs, maxs );
++  num = trap_EntitiesInBox( mins, maxs, blockers, MAX_GENTITIES );
++  for( i = 0; i < num; i++ )
++  {
++    gentity_t *targ;
++    vec3_t    shove;
++
++    targ = g_entities + blockers[ i ];
++    if( targ->client )
++    {
++      VectorSet( shove, crandom() * 150, crandom() * 150, random() * 150 );
++      VectorAdd( targ->client->ps.velocity, shove, targ->client->ps.velocity );
++      victims++;
++    }
++  }
++
++  if( victims )
++  {
++    self->nextthink = level.time + ( FRAMETIME * 2 );
++    return;
++  }
++
++  level.numBuildablesForRemoval = 0;
++  G_FinishSpawningBuildable( self );
++}
++
++static void G_RevertSpawn( buildLog_t *log, qboolean marked )
++{
++  gentity_t *built;
++  gentity_t *targ;
++  vec3_t    mins, maxs;
++  int       blockers[ MAX_GENTITIES ];
++  int       num;
++  int       i;
++
++  BG_BuildableBoundingBox( log->buildable, mins, maxs );
++  VectorAdd( log->origin, mins, mins );
++  VectorAdd( log->origin, maxs, maxs );
++  num = trap_EntitiesInBox( mins, maxs, blockers, MAX_GENTITIES );
++  for( i = 0; i < num; i++ )
++  {
++    targ = g_entities + blockers[ i ];
++    if( targ->s.eType == ET_BUILDABLE && targ->health <= 0 )
++    {
++      // old dead entity
++      G_FreeEntity( targ );
++    }
++  }
++
++  built = G_Spawn( );
++  built->r.contents = 0;
++  built->s.modelindex = log->buildable;
++  built->deconstruct = marked;
++
++  VectorCopy( log->origin, built->s.pos.trBase );
++  VectorCopy( log->angles, built->s.angles );
++  VectorCopy( log->origin2, built->s.origin2 );
++  VectorCopy( log->angles2, built->s.angles2 );
++
++  built->think = G_RevertThink;
++  built->nextthink = level.time + 50;
++}
++
++const char *G_RevertBuild( buildLog_t *log )
++{
++  gentity_t *targ;
++  vec3_t    dist;
++  int       i;
++
++  // revert a build
++  if( log->fate == BF_BUILT )
++  {
++    buildLog_t *mark;
++
++    for( i = MAX_CLIENTS; i < level.num_entities; i++ )
++    {
++      targ = g_entities + i;
++
++      if( targ->s.eType != ET_BUILDABLE ||
++          targ->s.modelindex != log->buildable )
++        continue;
++
++      VectorSubtract( targ->s.pos.trBase, log->origin, dist );
++      if( VectorLength( dist ) > 5 )
++        continue;
++
++      trap_UnlinkEntity( targ );
++      for( mark = log->marked; mark; mark = mark->marked )
++      {
++        if( !G_RevertCanFit( mark ) )
++        {
++          trap_LinkEntity( targ );
++          return "conflict with an existing buildable or map feature";
++        }
++      }
++
++      G_FreeEntity( targ );
++      for( mark = log->marked; mark; mark = mark->marked )
++        G_RevertSpawn( mark, qtrue );
++      return NULL;
++    }
++
++    return "unable to find buildable";
++  }
++
++  // revert a removal
++  if( G_RevertCanFit( log ) )
++  {
++    G_RevertSpawn( log, qfalse );
++
++    // give back queued build points
++    if( ( log->fate == BF_DESTROYED || log->fate == BF_TEAMKILLED ) &&
++        log->parent != BA_NONE )
++    {
++      int              value = BG_Buildable( log->buildable )->buildPoints;
++      team_t           team  = BG_Buildable( log->buildable )->team;
++      gentity_t        *power;
++      buildPointZone_t *zone;
++
++      power = G_ProvidingEntityForPoint( log->origin, team );
++      if( power && power->usesBuildPointZone )
++      {
++        zone = &level.buildPointZones[ power->buildPointZone ];
++        zone->queuedBuildPoints = MAX( 0, zone->queuedBuildPoints - value );
++      }
++      else
++      {
++        if     ( team == TEAM_ALIENS )
++        {
++          level.alienBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
++        }
++        else if( team == TEAM_HUMANS )
++        {
++          level.humanBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
++        }
++        else
++        {
++        }
++      }
++    }
++
++    return NULL;
++  }
++  return "conflict with an existing buildable or map feature";
++}
++
++
++/*
++============
+ G_SpawnBuildable
+ 
+ Sets the clipping size and plants the object on the floor.
+diff --git a/src/game/g_cmds.c b/src/game/g_cmds.c
+index d8b5600..a4935a2 100644
+--- a/src/game/g_cmds.c
++++ b/src/game/g_cmds.c
+@@ -1937,5 +1937,7 @@ void Cmd_Destroy_f( gentity_t *ent )
+             ent->client->ps.stats[ STAT_MISC ] +=
+               BG_Buildable( traceEnt->s.modelindex )->buildTime / 4;
+         }
++        // unmark so that build log doesn't get confused
++        traceEnt->deconstruct = qfalse;
+ 
+         G_LogDestruction( traceEnt, ent, MOD_DECONSTRUCT );
+diff --git a/src/game/g_combat.c b/src/game/g_combat.c
+index efc8e46..faa86fc 100644
+--- a/src/game/g_combat.c
++++ b/src/game/g_combat.c
+@@ -1369,9 +1369,35 @@ Log deconstruct/destroy events
+ */
+ void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
+ {
++  buildLog_t  *log;
++  buildFate_t fate;
++
++  switch( mod )
++  {
++    case MOD_DECONSTRUCT:
++      fate = BF_DECONNED;
++      break;
++    case MOD_NOCREEP:
++      fate = BF_NOPOWER;
++      break;
++    default:
++      if( actor && actor->client &&
++          actor->client->ps.stats[ STAT_TEAM ] == self->buildableTeam )
++        fate = BF_TEAMKILLED;
++      else
++        fate = BF_DESTROYED;
++      break;
++  }
++  log = G_BuildLogNew( actor, fate,
++                       ( mod == MOD_DECONSTRUCT && self->deconstruct ) );
++  G_BuildLogSet( log, self );
++
+   if( !actor || !actor->client )
+     return;
+ 
++  if( mod == MOD_NOCREEP )
++    return;
++
+   if( actor->client->pers.teamSelection ==
+     BG_Buildable( self->s.modelindex )->team )
+   {
+diff --git a/src/game/g_local.h b/src/game/g_local.h
+index 2187653..ab26656 100644
+--- a/src/game/g_local.h
++++ b/src/game/g_local.h
+@@ -575,6 +575,37 @@ typedef enum
+   TW_PASSED
+ } timeWarning_t;
+ 
++// fate of a buildable
++typedef enum
++{
++  BF_BUILT,
++  BF_MOVED,
++  BF_DECONNED,
++  BF_DESTROYED,
++  BF_TEAMKILLED,
++  BF_NOPOWER,
++  BF_FATE_COUNT,
++  BF_INVALID
++} buildFate_t;
++
++// data needed to revert a change in layout
++typedef struct buildLog_s buildLog_t;
++struct buildLog_s
++{
++  buildLog_t *next;   // linked list
++  buildLog_t *marked; // linked list of removed buildings
++  int         id;
++  int         time;
++  buildFate_t fate;
++  char        guid[ 33 ];
++  buildable_t buildable;
++  buildable_t parent; // power/creep provider
++  vec3_t      origin;
++  vec3_t      angles;
++  vec3_t      origin2;
++  vec3_t      angles2;
++};
++
+ //
+ // this structure is cleared as each map is entered
+ //
+@@ -736,3 +767,4 @@ typedef struct
+   char              emoticons[ MAX_EMOTICONS ][ MAX_EMOTICON_NAME_LEN ];
+   int               emoticonCount;
+ 
++  buildLog_t        *buildLog;
+@@ -811,6 +844,12 @@ qboolean G_RoomForClassChange( gentity_t *ent, class_t class, vec3_t newOrigin )
+ //
+ void G_Physics( gentity_t *ent, int msec );
+ 
++void              G_BuildLogFree( buildLog_t *log );
++void              G_BuildLogCleanup( void );
++buildLog_t        *G_BuildLogNew( gentity_t *attacker, buildFate_t fate, qboolean marked );
++void              G_BuildLogSet( buildLog_t *log, gentity_t *buildable );
++const char        *G_RevertBuild( buildLog_t *log );
++
+ //
+ // g_buildable.c
+ //
+diff --git a/src/game/g_main.c b/src/game/g_main.c
+index 6018a0d..013cf9b 100644
+--- a/src/game/g_main.c
++++ b/src/game/g_main.c
+@@ -1876,6 +1876,8 @@ void ExitLevel( void )
+   int       i;
+   gclient_t *cl;
+ 
++  G_BuildLogCleanup( );
++
+   if ( G_MapExists( g_nextMap.string ) )
+     trap_SendConsoleCommand( EXEC_APPEND, va("map \"%s\"\n", g_nextMap.string ) );
+   else if( G_MapRotationActive( ) )
+-- 
+1.6.1.2
+
