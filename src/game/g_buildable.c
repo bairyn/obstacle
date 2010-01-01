@@ -794,6 +794,8 @@ void AGeneric_CreepCheck( gentity_t *self )
       G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_NOCREEP );
     return;
   }
+
+  self->powered = G_Overmind( );
 }
 
 /*
@@ -805,7 +807,6 @@ A generic think function for Alien buildables
 */
 void AGeneric_Think( gentity_t *self )
 {
-  self->powered = G_FindProvider( self );
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
   AGeneric_CreepCheck( self );
   G_OC_DefaultAlienPowered();
