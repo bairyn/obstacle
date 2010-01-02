@@ -2342,6 +2342,7 @@ void Domination_Think( gentity_t *self )
     if( distance >= DOMINATION_RANGE )
       continue;
     weight *= sqrt( DOMINATION_RANGE - distance ) / DOMINATION_RANGE_SQRT;
+    balance += weight / think_interval;
 
     players[ team ]++;
   }
@@ -2377,22 +2378,22 @@ void Domination_Think( gentity_t *self )
   // Neutral and not under attack; decrement the domination time
   if( self->dominationTeam == TEAM_NONE && !players[ TEAM_HUMANS ] &&
       !players[ TEAM_ALIENS ] )
-    self->dominationTime -= DOMINATION_TIME_CLEAR / think_interval;
+    self->dominationTime -= 100.0 * DOMINATION_TIME_CLEAR / think_interval;
 
   // Claimed and not under attack; increment the domination time
   else if( ( self->dominationTeam == TEAM_HUMANS && !players[ TEAM_ALIENS ] ) ||
            ( self->dominationTeam == TEAM_ALIENS && !players[ TEAM_HUMANS ] ) )
-    self->dominationTime += DOMINATION_TIME_CLEAR / think_interval;
+    self->dominationTime += 100.0 * DOMINATION_TIME_CLEAR / think_interval;
 
   // Increment the domination timer according to the balance shift
   else if( self->dominationTeam == TEAM_HUMANS ||
            ( self->dominationTeam == TEAM_NONE &&
              self->dominationAttacking == TEAM_HUMANS ) )
-      self->dominationTime += 100.0 * ((float) balance / think_interval);
+      self->dominationTime += 100.0 * ((float) balance);
   else if( self->dominationTeam == TEAM_ALIENS ||
            ( self->dominationTeam == TEAM_NONE &&
              self->dominationAttacking == TEAM_ALIENS ) )
-      self->dominationTime += 100.0 * ((float) -balance / think_interval);
+      self->dominationTime += 100.0 * ((float) -balance);
 
   // Domination cleared
   if( self->dominationTime <= 0 )
