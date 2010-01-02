@@ -261,7 +261,7 @@ struct gentity_s
 
   team_t            dominationTeam;       // defending team
   team_t            dominationAttacking;  // attacking team
-  int               dominationTime;       // msec to capture
+  float             dominationTime;       // how much captured
   char              dominationName[ 64 ]; // domination point name
   int               dominationClient;     // client that initiated the attack
 

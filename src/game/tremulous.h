@@ -707,7 +707,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define DOMINATION_RANGE            400.0f // how close a player needs to be to attack a domination point
 #define DOMINATION_RANGE_SQRT       20.0f  // square root of the range (used in falloff calculation)
-#define DOMINATION_TIME             10000  // how long (in msec) a team must dominate a point to claim it
+//#define DOMINATION_TIME             10000  // how long (in msec) a team must dominate a point to claim it
 #define DOMINATION_COOLDOWN         5000   // msec between announcements
 #define DOMINATION_HEALTH           100    // health scale of a domination point
 #define DOMINATION_THINK            500    // msec between player presence checks

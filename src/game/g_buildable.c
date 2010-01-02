@@ -2387,11 +2387,11 @@ void Domination_Think( gentity_t *self )
   else if( self->dominationTeam == TEAM_HUMANS ||
            ( self->dominationTeam == TEAM_NONE &&
              self->dominationAttacking == TEAM_HUMANS ) )
-      self->dominationTime += balance / think_interval;
+      self->dominationTime += 100.0 * ((float) balance / think_interval);
   else if( self->dominationTeam == TEAM_ALIENS ||
            ( self->dominationTeam == TEAM_NONE &&
              self->dominationAttacking == TEAM_ALIENS ) )
-      self->dominationTime += -balance / think_interval;
+      self->dominationTime += 100.0 * ((float) -balance / think_interval);
 
   // Domination cleared
   if( self->dominationTime <= 0 )
@@ -2427,7 +2427,7 @@ void Domination_Think( gentity_t *self )
   }
 
   // Complete domination
-  else if( self->dominationTime >= DOMINATION_TIME )
+  else if( self->dominationTime >= 100.0 )
   {
     self->dominationTime = DOMINATION_TIME;
     if( self->dominationTeam == TEAM_NONE ) {
@@ -2458,7 +2458,7 @@ void Domination_Think( gentity_t *self )
   }
 
   // Use health to transmit domination progress
-  self->health = DOMINATION_HEALTH * self->dominationTime / DOMINATION_TIME;
+  self->health = DOMINATION_HEALTH * self->dominationTime / 100.0;
 }
 
 void Domination_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod )
