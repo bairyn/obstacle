@@ -2429,7 +2429,7 @@ void Domination_Think( gentity_t *self )
   // Complete domination
   else if( self->dominationTime >= 100.0 )
   {
-    self->dominationTime = DOMINATION_TIME;
+    self->dominationTime = 100.0;
     if( self->dominationTeam == TEAM_NONE ) {
       self->powered = qtrue;
       if( self->dominationAttacking == TEAM_ALIENS )
