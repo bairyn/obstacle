@@ -2304,8 +2304,9 @@ void Domination_Think( gentity_t *self )
       if( ent->spawned && ent->powered && ent->health > 0 )
       {
         team = ent->buildableTeam;
-        weight = BG_Buildable( ent->s.modelindex )->buildTime /
-                 DOMINATION_WS_BUILDABLE;
+        weight = DOMINATION_TIME_BUILDABLE;
+        //weight = BG_Buildable( ent->s.modelindex )->buildTime /
+                 //DOMINATION_WS_BUILDABLE;
         if( team == TEAM_ALIENS )
           weight = -weight;
         else if( team != TEAM_HUMANS )
@@ -2316,11 +2317,13 @@ void Domination_Think( gentity_t *self )
     {
       team = ent->client->pers.teamSelection;
       if( team == TEAM_HUMANS )
-        weight = BG_GetValueOfPlayer( &ent->client->ps ) /
-                 DOMINATION_WS_HUMAN;
+        weight = DOMINATION_TIME_HUMAN;
+        //weight = BG_GetValueOfPlayer( &ent->client->ps ) /
+                 //DOMINATION_WS_HUMAN;
       else if( team == TEAM_ALIENS )
-        weight = -BG_Buildable( ent->client->ps.stats[ STAT_CLASS ] )->value /
-                 DOMINATION_WS_ALIEN;
+        weight = -DOMINATION_TIME_ALIEN;
+        //weight = -BG_Buildable( ent->client->ps.stats[ STAT_CLASS ] )->value /
+                 //DOMINATION_WS_ALIEN;
       if( client[ team ] < 0 )
         client[ team ] = entityList[ i ];
     }
@@ -2373,22 +2376,22 @@ void Domination_Think( gentity_t *self )
   // Neutral and not under attack; decrement the domination time
   if( self->dominationTeam == TEAM_NONE && !players[ TEAM_HUMANS ] &&
       !players[ TEAM_ALIENS ] )
-    self->dominationTime -= think_interval;
+    self->dominationTime -= DOMINATION_TIME_CLEAR / think_interval;
 
   // Claimed and not under attack; increment the domination time
   else if( ( self->dominationTeam == TEAM_HUMANS && !players[ TEAM_ALIENS ] ) ||
            ( self->dominationTeam == TEAM_ALIENS && !players[ TEAM_HUMANS ] ) )
-    self->dominationTime += think_interval;
+    self->dominationTime += DOMINATION_TIME_CLEAR / think_interval;
 
   // Increment the domination timer according to the balance shift
   else if( self->dominationTeam == TEAM_HUMANS ||
            ( self->dominationTeam == TEAM_NONE &&
              self->dominationAttacking == TEAM_HUMANS ) )
-      self->dominationTime += think_interval * balance / DOMINATION_WS_NORMAL;
+      self->dominationTime += balance / think_interval;
   else if( self->dominationTeam == TEAM_ALIENS ||
            ( self->dominationTeam == TEAM_NONE &&
              self->dominationAttacking == TEAM_ALIENS ) )
-      self->dominationTime += think_interval * -balance / DOMINATION_WS_NORMAL;
+      self->dominationTime += -balance / think_interval;
 
   // Domination cleared
   if( self->dominationTime <= 0 )
