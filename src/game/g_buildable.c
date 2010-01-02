@@ -2271,7 +2271,7 @@ void Domination_Think( gentity_t *self )
   int i, num, think_interval, players[ NUM_TEAMS ],
       client[ NUM_TEAMS ], entityList[ MAX_GENTITIES ];
   gentity_t *ent;
-  float balance, weight, distance;
+  float balance, distance;
 
   players[ TEAM_ALIENS ] = 0;
   players[ TEAM_HUMANS ] = 0;
