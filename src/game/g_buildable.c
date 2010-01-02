@@ -2268,10 +2268,10 @@ void Domination_Think( gentity_t *self )
 {
   vec3_t range = { DOMINATION_RANGE, DOMINATION_RANGE, DOMINATION_RANGE },
          mins, maxs, dir;
-  int i, num, balance, think_interval, players[ NUM_TEAMS ],
+  int i, num, think_interval, players[ NUM_TEAMS ],
       client[ NUM_TEAMS ], entityList[ MAX_GENTITIES ];
   gentity_t *ent;
-  double distance;
+  float balance, weight, distance;
 
   players[ TEAM_ALIENS ] = 0;
   players[ TEAM_HUMANS ] = 0;
@@ -2340,7 +2340,6 @@ void Domination_Think( gentity_t *self )
     weight *= sqrt( DOMINATION_RANGE - distance ) / DOMINATION_RANGE_SQRT;
     if( weight > -1.f && weight < 1.f )
       continue;
-    balance += weight;
 
     players[ team ]++;
   }
