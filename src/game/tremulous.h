@@ -729,10 +729,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //#define DOMINATION_WS_HUMAN         8    // divide value of a  human (in credits)
 //#define DOMINATION_WS_ALIEN         24    // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
 //#define DOMINATION_WS_BUILDABLE 800
-#define DOMINATION_TIME_ALIEN     12
-#define DOMINATION_TIME_HUMAN     10
-#define DOMINATION_TIME_BUILDABLE 45
-#define DOMINATION_TIME_CLEAR     8
+#define DOMINATION_TIME_ALIEN     12000
+#define DOMINATION_TIME_HUMAN     10000
+#define DOMINATION_TIME_BUILDABLE 45000
+#define DOMINATION_TIME_CLEAR     8000
 #define DOMINATION_FREEKILL_ALIEN   FREEKILL_ALIEN
 #define DOMINATION_FREEKILL_HUMAN   FREEKILL_HUMAN
 #define ALWAYS_POWER qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
