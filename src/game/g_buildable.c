@@ -2342,6 +2342,9 @@ void Domination_Think( gentity_t *self )
     if( distance >= DOMINATION_RANGE )
       continue;
     weight *= sqrt( DOMINATION_RANGE - distance ) / DOMINATION_RANGE_SQRT;
+    if( weight < 0.1f && weight > -0.9f )
+      continue;
+
     balance += think_interval / weight;
 
     players[ team ]++;
