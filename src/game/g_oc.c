@@ -3735,7 +3735,7 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 	fileHandle_t f;
 	char line[ MAX_STRING_CHARS ];
 	int maxRecords;
-	stat_t records[G_OC_STAT_MAXRECORDS + 1];  // there needs to be room for one more slot so that the new record can be compared
+	stat_t records[G_OC_STAT_MAXRECORDS + 2];  // there needs to be room for one more slot so that the new record can be compared, and another one so that memory isn't taken from non-existent memory when testing for G_OC_SameGuy
 	char *stat, *statHead;
 	int i, len;
 	stat_t *r;
