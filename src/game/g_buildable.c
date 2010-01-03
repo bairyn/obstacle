@@ -2393,7 +2393,7 @@ void Domination_Think( gentity_t *self )
   else if( self->dominationTeam == TEAM_ALIENS ||
            ( self->dominationTeam == TEAM_NONE &&
              self->dominationAttacking == TEAM_ALIENS ) )
-      self->dominationTime += 100.0 * ((float) -balance);
+      self->dominationTime += 100.0 * ((float) balance);
 
   // Domination cleared
   if( self->dominationTime <= 0 )
