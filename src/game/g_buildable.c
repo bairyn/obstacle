@@ -1924,7 +1924,7 @@ void HSpawn_Think( gentity_t *self )
   G_SuicideIfNoPower( self );
 
   // set parentNode
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindProvider( self ) && G_Reactor( );
 
   if( self->spawned )
   {
@@ -2216,7 +2216,7 @@ void HArmoury_Think( gentity_t *self )
   //make sure we have power
   self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindProvider( self ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
 
   G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
@@ -2245,7 +2245,7 @@ void HDCC_Think( gentity_t *self )
   //make sure we have power
   self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindProvider( self ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
 
   G_SuicideIfNoPower( self );
@@ -2511,7 +2511,7 @@ void HMedistat_Think( gentity_t *self )
 
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindProvider( self ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
   G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
 
@@ -2855,7 +2855,7 @@ void HMGTurret_Think( gentity_t *self )
   // Turn off client side muzzle flashes
   self->s.eFlags &= ~EF_FIRING;
 
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindProvider( self ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
 
   G_SuicideIfNoPower( self );
@@ -2942,7 +2942,7 @@ void HTeslaGen_Think( gentity_t *self )
   G_IdlePowerState( self );
 
   //if not powered don't do anything and check again for power next think
-  self->powered = G_FindProvider( self );
+  self->powered = G_FindProvider( self ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
   if( !self->powered )
   {
@@ -3937,7 +3937,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
     //human criteria
 
     // Check for power
-    if( G_IsPowered( entity_origin ) == BA_NONE )
+    if( G_IsPowered( entity_origin ) == BA_NONE || !G_Reactor( ) )
     {
       //tell player to build a repeater to provide power
       if( buildable != BA_H_REACTOR && buildable != BA_H_REPEATER )
