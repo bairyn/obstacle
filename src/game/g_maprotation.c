@@ -35,7 +35,8 @@ typedef enum
   CV_ERR,
   CV_RANDOM,
   CV_NUMCLIENTS,
-  CV_LASTWIN
+  CV_LASTWIN,
+  CV_OC
 } conditionVariable_t;
 
 typedef enum
@@ -61,6 +62,7 @@ typedef struct condition_s
 
   int                 numClients;
   team_t              lastWin;
+  qboolean            oc;
 } condition_t;
 
 typedef struct destination_s
@@ -293,6 +295,7 @@ static qboolean G_ParseNode( node_t **node, char *token, char **text_p )
     }
     else if( !Q_stricmp( token, "random" ) )
       condition->lhs = CV_RANDOM;
+	G_OC_MAPROTATIONTOKENS
     else
     {
       G_Printf( S_COLOR_RED "ERROR: invalid left hand side in expression: %s\n", token );
@@ -872,6 +875,8 @@ static qboolean G_EvaluateMapCondition( condition_t **condition )
     case CV_LASTWIN:
       result = level.lastWin == localCondition->lastWin;
       break;
+
+	G_OC_EVALUATEMAPCONDITION
 
     default:
     case CV_ERR:

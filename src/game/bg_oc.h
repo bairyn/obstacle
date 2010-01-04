@@ -793,6 +793,34 @@ extern int oc_gameMode;
 	#define G_OC_NeedSuddenDtMsg() (!(BG_OC_OCMode()))
 	#define G_OC_NeedTimelimigMg() (!(BG_OC_OCMode()))
 
+	#define G_OC_MAPROTATIONTOKENS \
+	else if( !Q_stricmp( token, "oc" ) ) \
+	{ \
+		condition->lhs = CV_OC; \
+ \
+		token = COM_Parse( text_p ); \
+ \
+		if( !*token ) \
+			return qfalse; \
+ \
+		if( !Q_stricmp( token, "yes" ) ) \
+			condition->oc = qtrue; \
+		else if( !Q_stricmp( token, "no" ) ) \
+			condition->oc = qfalse; \
+		else \
+		{ \
+			/* default to yes*/ \
+			condition->oc = qtrue; \
+			/*G_Printf( S_COLOR_RED "ERROR: invalid right hand side in expression: %s\n", token );*/ \
+			/*return qfalse;*/ \
+		} \
+	}
+
+	#define G_OC_EVALUATEMAPCONDITION \
+    case CV_OC: \
+      result = !!BG_OC_OCMode() == !!localCondition->oc; \
+      break;
+
 	#define G_OC_PTRCUpdate() \
 	do \
 	{ \
