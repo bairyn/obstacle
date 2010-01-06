@@ -1164,6 +1164,14 @@ void ClientUserinfoChanged( int clientNum )
   else
     client->pers.flySpeed = BG_Class( PCL_NONE )->speed;
 
+  // handicap
+  s = Info_ValueForKey( userinfo, "cg_handicap" );
+
+  if( *s )
+    client->pers.handicap = atof( s );
+  else
+    client->pers.handicap = 0;
+
   // disable blueprint errors
   s = Info_ValueForKey( userinfo, "cg_disableBlueprintErrors" );
 

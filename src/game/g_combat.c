@@ -907,6 +907,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
   if( !attacker )
     attacker = &g_entities[ ENTITYNUM_WORLD ];
 
+  // handicap
+  if( attacker->client && attacker->s.eType == ET_PLAYER && attacker->client->pers.handicap > 1.f )
+    damage = (float) damage / (float) attacker->client->pers.handicap;
+
   // shootable doors / buttons don't actually have any health
   if( targ->s.eType == ET_MOVER )
   {

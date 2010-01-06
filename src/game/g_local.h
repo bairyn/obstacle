@@ -372,6 +372,7 @@ typedef struct
   int                 voteCount;          // to prevent people from constantly calling votes
   qboolean            teamInfo;           // send team overlay updates?
   float               flySpeed;           // for spectator/noclip moves
+  float               handicap;           // dmg / handicap
   qboolean            disableBlueprintErrors; // should the buildable blueprint never be hidden from the players?
 
   class_t             classSelection;     // player class (copied to ent->client->ps.stats[ STAT_CLASS ] once spawned)
