@@ -1513,7 +1513,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{ \
 			default: \
 			case 0: \
-				self->powered = G_FindCreep(self); \
+				self->powered = G_FindProvider(self); \
 				break; \
  \
 			case 1: \
@@ -1571,7 +1571,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		{ \
 			default: \
 			case 0: \
-				self->powered = G_FindPower(self); \
+				self->powered = G_FindProvider(self); \
 				break; \
  \
 			case 1: \
