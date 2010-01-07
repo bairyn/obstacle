@@ -2341,7 +2341,7 @@ void Domination_Think( gentity_t *self )
     distance = VectorLength( dir );
     if( distance >= DOMINATION_RANGE )
       continue;
-    weight *= sqrt( DOMINATION_RANGE - distance ) / DOMINATION_RANGE_SQRT;
+    weight *= DOMINATION_RANGE_SQRT / sqrt( DOMINATION_RANGE - distance );
     if( weight < 0.1f && weight > -0.9f )
       continue;
 
