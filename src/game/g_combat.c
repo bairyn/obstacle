@@ -1150,8 +1150,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
         targ->health = -999;
 
       targ->enemy = attacker;
-	  if( targ->s.eType == ET_BUILDABLE )
-        G_BuildableDie( targ );
       targ->die( targ, inflictor, attacker, take, mod );
       return;
     }
