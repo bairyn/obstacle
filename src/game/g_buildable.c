@@ -805,7 +805,7 @@ A generic think function for Alien buildables
 */
 void AGeneric_Think( gentity_t *self )
 {
-  self->powered = G_Overmind( ) != NULL;
+  self->powered = G_FindProvider( self ) && G_Overmind( );
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
   AGeneric_CreepCheck( self );
   G_OC_DefaultAlienPowered();
