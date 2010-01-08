@@ -948,7 +948,7 @@ typedef struct
 
 //#define MAX_CP_CHARS MAX_STRING_CHARS  // buffer size for each individual CP
 #define MAX_CP_CHARS 256  // buffer size for each individual CP
-#define MAX_CP 16  // 16 individual CP messages at most
+#define MAX_CP 32  // 16 individual CP messages at most
 
 typedef struct mix_cp_s mix_cp_t;
 struct mix_cp_s
