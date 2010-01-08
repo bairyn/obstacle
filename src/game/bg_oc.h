@@ -1920,6 +1920,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if( arg2[ 0 ] ) \
 		{ \
+			if( strstr( g_unvotableLayouts.string, arg2 ) && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) ) \
+			{ \
+				trap_SendServerCommand ( ent - g_entities, va( "print \"%s: " \
+							"server disabled voting for layout '%s'\n\"", cmd, arg2 ) ); \
+ \
+				return; \
+			} \
+ \
 			if( !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg, arg2 ), NULL, FS_READ ) ) \
 			{ \
 				trap_SendServerCommand( ent - g_entities, va( "print \"%s: " \
@@ -2026,6 +2034,14 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		if(arg2[0]) \
 		{ \
+			if( strstr( g_unvotableLayouts.string, arg2 ) && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) ) \
+			{ \
+				trap_SendServerCommand ( ent - g_entities, va( "print \"%s: " \
+							"server disabled voting for layout '%s'\n\"", cmd, arg2 ) ); \
+ \
+				return; \
+			} \
+ \
 			if(!trap_FS_FOpenFile(va("layouts/%s/%s.dat", arg, arg2), NULL, FS_READ)) \
 			{ \
 				trap_SendServerCommand(ent - g_entities, va("print \"%s: " \

@@ -111,6 +111,8 @@ vmCvar_t  g_disabledEquipment;
 vmCvar_t  g_disabledClasses;
 vmCvar_t  g_disabledBuildables;
 
+vmCvar_t  g_unvotableLayouts;
+
 vmCvar_t  g_markDeconstruct;
 
 vmCvar_t  g_debugMapRotation;
@@ -256,6 +258,8 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_disabledEquipment, "g_disabledEquipment", "", CVAR_ROM, 0, qfalse  },
   { &g_disabledClasses, "g_disabledClasses", "", CVAR_ROM, 0, qfalse  },
   { &g_disabledBuildables, "g_disabledBuildables", "", CVAR_ROM, 0, qfalse  },
+
+  { &g_unvotableLayouts, "g_unvotableLayouts", "", CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_sayAreaRange, "g_sayAreaRange", "1000", CVAR_ARCHIVE, 0, qtrue  },
 
