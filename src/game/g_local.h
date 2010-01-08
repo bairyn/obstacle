@@ -413,7 +413,6 @@ typedef struct
   char                cinfo[ MAX_CLIENTS ][ 16 ];
 
   // misc
-  int                 crashTime;
   int                 CPMode;
   int                 autoAngleDisabled;  // are angles reset when teleporters are used?  Default 0: angles by default do get reset
 
