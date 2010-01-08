@@ -733,8 +733,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DOMINATION_TIME_HUMAN     10000
 #define DOMINATION_TIME_BUILDABLE 24000
 #define DOMINATION_TIME_CLEAR     8000
-#define DOMINATION_FREEKILL_ALIEN   50
-#define DOMINATION_FREEKILL_HUMAN   25
+#define DOMINATION_FREEKILL_ALIEN   100
+#define DOMINATION_FREEKILL_HUMAN   50
 #define ALWAYS_POWER qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
 
 #endif /* #ifndef _TREMULOUS_H */
