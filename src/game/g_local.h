@@ -355,7 +355,7 @@ typedef struct connectionRecord_s
                                   // send to anybody not on a team
 #define CLIENT_NEVERREPLACE 0x40  // never replace the CP
 
-#define CONNECTMESSAGERATE 1000
+#define CONNECTMESSAGERATE 2000
 
 // client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
