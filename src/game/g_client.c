@@ -1345,16 +1345,16 @@ char *ClientConnect( int clientNum, qboolean firstTime )
 G_ConnectMessage
 ===========
 */
-qboolean G_ConnectMessage( gentity_t *ent, char *buf, size_t buflen )
+qboolean G_ConnectMessage( gentity_t *ent, char *buf, size_t bufsize )
 {
   int  i;
   char *buf_p = buf;
 
   *buf_p = 0;
 
-  for( i = 0; buf_p - buf < sizeof( buf ); )
+  for( i = 0; buf_p - buf < bufsize; )
   {
-    trap_Cvar_VariableStringBuffer( va( "g_connectMessage%d", ++i ), buf_p, sizeof( buf ) + buf - buf_p );
+    trap_Cvar_VariableStringBuffer( va( "g_connectMessage%d", ++i ), buf_p, bufsize + buf - buf_p );
 
     if( !*buf_p )
       break;

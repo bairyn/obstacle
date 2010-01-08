@@ -421,6 +421,20 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
   else
     queued = qfalse;
 
+  if( client->pers.displayConnectMessageNextTime >= level.time || !client->pers.displayConnectMessageNextTime )
+  {
+    client->pers.displayConnectMessageNextTime = level.time + CONNECTMESSAGERATE;
+
+    // send client connect message
+    if( client->pers.displayConnectMessage )
+    {
+      char buf[ MAX_STRING_CHARS ] = {""};
+
+      if( G_ConnectMessage( ent, buf, sizeof( buf ) ) )
+        G_ClientCP( ent, buf, NULL, CLIENT_SPECTATORS );
+    }
+  }
+
   // Wants to get out of spawn queue
   if( attack1 && queued )
   {

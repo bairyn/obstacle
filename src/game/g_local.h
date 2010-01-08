@@ -355,6 +355,8 @@ typedef struct connectionRecord_s
                                   // send to anybody not on a team
 #define CLIENT_NEVERREPLACE 0x40  // never replace the CP
 
+#define CONNECTMESSAGERATE 1000
+
 // client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
 typedef struct
@@ -398,6 +400,7 @@ typedef struct
   qboolean            vote[ NUM_TEAMS ];
 
   qboolean            displayConnectMessage;
+  qboolean            displayConnectMessageNextTime;
 
   // flood protection
   int                 floodDemerits;
