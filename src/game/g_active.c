@@ -743,6 +743,15 @@ void ClientTimerActions( gentity_t *ent, int msec )
         0, damage, 0, MOD_POISON );
     }
 
+    // send client connect message
+    if( client->pers.displayConnectMessage )
+    {
+      char buf[ MAX_STRING_CHARS ] = {""};
+
+      if( G_ConnectMessage( ent, buf, sizeof( buf ) ) )
+        G_ClientCP( ent, buf, NULL, CLIENT_SPECTATORS );
+    }
+
     // turn off life support when a team admits defeat
     if( client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS &&
         level.surrenderTeam == TEAM_ALIENS )

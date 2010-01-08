@@ -687,8 +687,30 @@ void Cmd_Team_f( gentity_t *ent )
 
   // Apply the change
   G_ChangeTeam( ent, team );
+
+  // Clear connect message
+  ent->client->pers.displayConnectMessage = qfalse;
 }
 
+/*
+=================
+Cmd_ClearCM_f
+=================
+*/
+void Cmd_ClearCM_f( gentity_t *ent )
+{
+  ent->client->pers.displayConnectMessage = qfalse;
+}
+
+/*
+=================
+Cmd_DisplayCM_f
+=================
+*/
+void Cmd_DisplayCM_f( gentity_t *ent )
+{
+  ent->client->pers.displayConnectMessage = qtrue;
+}
 
 /*
 ==================
@@ -3429,9 +3451,11 @@ commands_t cmds[ ] = {
   { "callteamvote", CMD_MESSAGE|CMD_TEAM, Cmd_CallVote_f },
   { "callvote", CMD_MESSAGE, Cmd_CallVote_f },
   { "class", CMD_TEAM, Cmd_Class_f },
+  { "clearCM", CMD_INTERMISSION, Cmd_ClearCM_f },
   { "damage", CMD_CHEAT|CMD_LIVING, Cmd_Damage_f },
   { "deconstruct", CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
   { "destroy", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Destroy_f },
+  { "displayCM", CMD_INTERMISSION, Cmd_DisplayCM_f },
   { "follow", CMD_SPEC, Cmd_Follow_f },
   { "follownext", CMD_SPEC, Cmd_FollowCycle_f },
   { "followprev", CMD_SPEC, Cmd_FollowCycle_f },

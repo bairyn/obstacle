@@ -1342,50 +1342,15 @@ char *ClientConnect( int clientNum, qboolean firstTime )
 
 /*
 ===========
-ClientBegin
-
-called when a client has finished connecting, and is ready
-to be placed into the level.  This will happen every level load,
-and on transition between teams, but doesn't happen on respawns
-============
+G_ConnectMessage
+===========
 */
-void ClientBegin( int clientNum )
+qboolean G_ConnectMessage( gentity_t *ent, char *buf, size_t buflen )
 {
-  gentity_t *ent;
-  gclient_t *client;
-  int       flags;
-  int       i;
-  char      buf[ MAX_STRING_CHARS ] = {""}, *buf_p = buf;
+  int  i;
+  char *buf_p = buf;
 
-  ent = g_entities + clientNum;
-
-  client = level.clients + clientNum;
-
-  if( ent->r.linked )
-    trap_UnlinkEntity( ent );
-
-  G_InitGentity( ent );
-  ent->touch = 0;
-  ent->pain = 0;
-  ent->client = client;
-
-  client->pers.connected = CON_CONNECTED;
-  client->pers.enterTime = level.time;
-
-  // save eflags around this, because changing teams will
-  // cause this to happen with a valid entity, and we
-  // want to make sure the teleport bit is set right
-  // so the viewpoint doesn't interpolate through the
-  // world to the new position
-  flags = client->ps.eFlags;
-  memset( &client->ps, 0, sizeof( client->ps ) );
-  memset( &client->pmext, 0, sizeof( client->pmext ) );
-  client->ps.eFlags = flags;
-
-  // locate ent at a spawn point
-  ClientSpawn( ent, NULL, NULL, NULL );
-
-  G_OC_ClientBegin();
+  *buf_p = 0;
 
   for( i = 0; buf_p - buf < sizeof( buf ); )
   {
@@ -1402,8 +1367,63 @@ void ClientBegin( int clientNum )
       if( *buf_p++ == '|' )
         *--buf_p   =  '\n';
 
-    G_ClientPrint( ent, buf, CLIENT_SPECTATORS );
+    return qtrue;
   }
+  else
+  {
+    return qfalse;
+  }
+}
+
+/*
+===========
+ClientBegin
+
+called when a client has finished connecting, and is ready
+to be placed into the level.  This will happen every level load,
+and on transition between teams, but doesn't happen on respawns
+============
+*/
+void ClientBegin( int clientNum )
+{
+  gentity_t *ent;
+  gclient_t *client;
+  int       flags;
+  char      buf[ MAX_STRING_CHARS ] = {""};
+
+  ent = g_entities + clientNum;
+
+  client = level.clients + clientNum;
+
+  if( ent->r.linked )
+    trap_UnlinkEntity( ent );
+
+  G_InitGentity( ent );
+  ent->touch = 0;
+  ent->pain = 0;
+  ent->client = client;
+
+  client->pers.connected = CON_CONNECTED;
+  client->pers.enterTime = level.time;
+  client->pers.displayConnectMessage = qtrue;
+
+  // save eflags around this, because changing teams will
+  // cause this to happen with a valid entity, and we
+  // want to make sure the teleport bit is set right
+  // so the viewpoint doesn't interpolate through the
+  // world to the new position
+  flags = client->ps.eFlags;
+  memset( &client->ps, 0, sizeof( client->ps ) );
+  memset( &client->pmext, 0, sizeof( client->pmext ) );
+  client->ps.eFlags = flags;
+
+  // locate ent at a spawn point
+  ClientSpawn( ent, NULL, NULL, NULL );
+
+  G_OC_ClientBegin();
+
+  if( G_ConnectMessage( ent, buf, sizeof( buf ) ) )
+    G_ClientPrint( ent, buf, CLIENT_SPECTATORS );
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname ) );
 

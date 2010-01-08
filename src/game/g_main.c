@@ -2585,7 +2585,7 @@ void G_RunFrame( int levelTime )
   // if we are waiting for the level to restart, do nothing
   if( level.restarted )
   {
-    G_ClientCP( NULL, "A restart is taking place, please wait", NULL, 0);
+    G_ClientCP( NULL, "A restart is taking place; please wait", NULL, 0);
     return;
   }
 

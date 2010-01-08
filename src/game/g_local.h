@@ -397,6 +397,8 @@ typedef struct
   qboolean            voted[ NUM_TEAMS ];
   qboolean            vote[ NUM_TEAMS ];
 
+  qboolean            displayConnectMessage;
+
   // flood protection
   int                 floodDemerits;
   int                 floodTime;
@@ -1137,6 +1139,7 @@ int  G_TimeTilSuddenDeath( void );
 //
 // g_client.c
 //
+qboolean G_ConnectMessage( gentity_t *ent, char *buf, size_t buflen );
 char *ClientConnect( int clientNum, qboolean firstTime );
 void ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );
