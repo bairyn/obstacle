@@ -96,7 +96,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL2_WALLJUMP_MAXSPEED    1000.0f
 
 #define LEVEL3_CLAW_DMG             ADM(80)
-#define LEVEL3_CLAW_RANGE           TREMULOUS_VALUE(72.0f, 96.0f)
+#define LEVEL3_CLAW_RANGE           TREMULOUS_VALUE(80.0f, 96.0f)
 #define LEVEL3_CLAW_U_RANGE         TREMULOUS_VALUE(LEVEL3_CLAW_RANGE + 3.0f, LEVEL3_CLAW_RANGE + 8.0f)
 #define LEVEL3_CLAW_WIDTH           TREMULOUS_VALUE(12.0f, 16.0f)
 #define LEVEL3_CLAW_REPEAT          900
@@ -104,7 +104,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL3_CLAW_U_REPEAT        800
 #define LEVEL3_CLAW_U_K_SCALE       1.0f
 #define LEVEL3_POUNCE_DMG           ADM(100)
-#define LEVEL3_POUNCE_RANGE         TREMULOUS_VALUE(54.0f, 72.0f)
+#define LEVEL3_POUNCE_RANGE         TREMULOUS_VALUE(40.0f, 72.0f)
 #define LEVEL3_POUNCE_UPG_RANGE     TREMULOUS_VALUE(LEVEL3_POUNCE_RANGE + 3.0f, LEVEL3_POUNCE_RANGE + 0.0f)
 #define LEVEL3_POUNCE_WIDTH         TREMULOUS_VALUE(14.0f, 16.0f)
 #define LEVEL3_POUNCE_TIME          TREMULOUS_VALUE(800, 700)      // msec for full Dragoon pounce
@@ -447,6 +447,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define FLAMER_REPEAT               200
 #define FLAMER_K_SCALE              1.0f
 #define FLAMER_DMG                  HDM(25)
+#define FLAMER_SPLASHDAMAGE         HDM(12)
 #define FLAMER_RADIUS               50       // splash radius
 #define FLAMER_SIZE                 15        // missile bounding box
 #define FLAMER_LIFETIME             700.0f
@@ -623,7 +624,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define REPEATER_HEALTH             HBHM(250)
 #define REPEATER_SPLASHDAMAGE       50
 #define REPEATER_SPLASHRADIUS       100
-#define REPEATER_VALUE              HBVM(2)
+#define REPEATER_VALUE              HBVM(REPEATER_BP)
 
 /*
  * HUMAN misc
@@ -639,12 +640,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define HUMAN_DODGE_TIMEOUT         500
 #define HUMAN_LAND_FRICTION         3.0f
 
-#define STAMINA_STOP_RESTORE        25
+#define STAMINA_STOP_RESTORE        TREMULOUS_VALUE(30, 25)
 #define STAMINA_WALK_RESTORE        15
 #define STAMINA_MEDISTAT_RESTORE    30 // stacked on STOP or WALK
-#define STAMINA_SPRINT_TAKE         TREMULOUS_VALUE(8, 0)
+//#define STAMINA_SPRINT_TAKE         TREMULOUS_VALUE(6, 8)
+#define STAMINA_SPRINT_TAKE         TREMULOUS_VALUE(6, 0)
 #define STAMINA_JUMP_TAKE           TREMULOUS_VALUE(250, 0)
 #define STAMINA_DODGE_TAKE          TREMULOUS_VALUE(250, 0)
+#define STAMINA_MAX                 1000
 #define STAMINA_BREATHING_LEVEL     0
 #define STAMINA_SLOW_LEVEL          -500
 #define STAMINA_BLACKOUT_LEVEL      -800
