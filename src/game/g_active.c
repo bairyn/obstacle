@@ -431,7 +431,28 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
       char buf[ MAX_STRING_CHARS ] = {""};
 
       if( G_ConnectMessage( ent, buf, sizeof( buf ) ) )
-        G_ClientCP( ent, buf, NULL, CLIENT_SPECTATORS );
+      {
+        // send in segments of 256 bytes
+        char buf2[ 256 ] = {""};
+        int i = 0, j = 0;
+
+        while( i < sizeof( buf ) && ( buf2[ j ] = buf[ i ] ) )
+        {
+          if( ++j >= sizeof( buf2 ) - 1 )
+          {
+            buf2[ ++j ] = 0;
+            G_ClientCP( ent, buf2, NULL, CLIENT_SPECTATORS );
+            buf2[ 0 ] = j = 0;
+          }
+
+          ++i;
+        }
+
+        if( buf2[ 0 ] )
+        {
+          G_ClientCP( ent, buf, NULL, CLIENT_SPECTATORS );
+        }
+      }
     }
   }
 
