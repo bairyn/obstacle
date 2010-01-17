@@ -1396,6 +1396,13 @@ void Cmd_CallVote_f( gentity_t *ent )
         level.voteNextMap = qfalse;
       }
     }
+    else
+    {
+      trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
+      trap_SendServerCommand( ent-g_entities, va( "print \"Valid vote commands are: "
+        "map, nextmap, map_restart, sudden_death, draw, kick%s, mute and unmute\n", G_OC_OtherCommandDescription() ) );
+      return;
+    }
   }
   else if( !Q_stricmp( vote, "sudden_death" ) )
   {
