@@ -3109,6 +3109,7 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
       {
         // set the correct team
         G_ChangeTeam( ent, connection->clientTeam );
+        ent->client->pers.displayConnectMessage = qfalse;
 
         // set the correct credit
         ent->client->pers.credit = 0;
