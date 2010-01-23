@@ -1539,6 +1539,7 @@ extern  vmCvar_t    cg_teamChatsOnly;
 extern  vmCvar_t    cg_noVoiceChats;
 extern  vmCvar_t    cg_noVoiceText;
 extern  vmCvar_t    cg_hudFiles;
+extern  vmCvar_t    cg_hudFilesEnable;
 extern  vmCvar_t    cg_smoothClients;
 extern  vmCvar_t    pmove_fixed;
 extern  vmCvar_t    pmove_msec;
