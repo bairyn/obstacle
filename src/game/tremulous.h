@@ -104,7 +104,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LEVEL3_CLAW_U_REPEAT        800
 #define LEVEL3_CLAW_U_K_SCALE       1.0f
 #define LEVEL3_POUNCE_DMG           ADM(100)
-#define LEVEL3_POUNCE_RANGE         TREMULOUS_VALUE(40.0f, 72.0f)
+#define LEVEL3_POUNCE_RANGE         TREMULOUS_VALUE(48.0f, 72.0f)
 #define LEVEL3_POUNCE_UPG_RANGE     TREMULOUS_VALUE(LEVEL3_POUNCE_RANGE + 3.0f, LEVEL3_POUNCE_RANGE + 0.0f)
 #define LEVEL3_POUNCE_WIDTH         TREMULOUS_VALUE(14.0f, 16.0f)
 #define LEVEL3_POUNCE_TIME          TREMULOUS_VALUE(800, 700)      // msec for full Dragoon pounce
@@ -443,11 +443,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CHAINGUN_DMG                HDM(6)
 
 #define FLAMER_PRICE                400
-#define FLAMER_GAS                  150
+#define FLAMER_GAS                  200
 #define FLAMER_REPEAT               200
 #define FLAMER_K_SCALE              1.0f
-#define FLAMER_DMG                  HDM(25)
-#define FLAMER_SPLASHDAMAGE         HDM(12)
+#define FLAMER_DMG                  HDM(20)
+#define FLAMER_SPLASHDAMAGE         HDM(10)
 #define FLAMER_RADIUS               50       // splash radius
 #define FLAMER_SIZE                 15        // missile bounding box
 #define FLAMER_LIFETIME             700.0f
