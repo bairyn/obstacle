@@ -523,6 +523,8 @@ extern int oc_gameMode;
 	vmCvar_t g_ocTimelimit; \
 	vmCvar_t g_noOCHostName; \
 	vmCvar_t g_noOCTimelimit; \
+	vmCvar_t g_voteHideDuration; \
+	vmCvar_t g_voteUnhideDuration; \
 	vmCvar_t g_ocConfig; \
 	vmCvar_t g_noOCConfig;
 
@@ -547,6 +549,8 @@ extern int oc_gameMode;
 	extern vmCvar_t g_ocTimelimit; \
 	extern vmCvar_t g_noOCHostName; \
 	extern vmCvar_t g_noOCTimelimit; \
+	extern vmCvar_t g_voteHideDuration; \
+	extern vmCvar_t g_voteUnhideDuration; \
 	extern vmCvar_t g_ocConfig; \
 	extern vmCvar_t g_noOCConfig;
 
@@ -571,6 +575,8 @@ extern int oc_gameMode;
 	{ &g_noOCHostName, "g_noOCHostName", "", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_ocTimelimit, "g_ocTimelimit", "", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_noOCTimelimit, "g_noOCTimelimit", "", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_voteHideDuration, "g_voteHideDuration", "5m", CVAR_ARCHIVE, 0, qfalse  }, \
+	{ &g_voteUnhideDuration, "g_voteUnhideDuration", "5m", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_ocConfig, "g_ocConfig", "oc.cfg", CVAR_ARCHIVE, 0, qfalse  }, \
 	{ &g_noOCConfig, "g_noOCConfig", "no-oc.cfg", CVAR_ARCHIVE, 0, qfalse  },
 
@@ -2154,7 +2160,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), \
-			"hide %d", clientNum); \
+			"adminhide %d %s", clientNum, g_voteHideDuration.string); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Hide player '%s'", name); \
  \
@@ -2190,7 +2196,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
  \
 		Com_sprintf(level.voteString[team], sizeof(level.voteString[team]), \
-			"unhide %i", clientNum); \
+			"unhide %d %s", clientNum, g_voteUnhideDuration.string); \
 		Com_sprintf(level.voteDisplayString[team], sizeof(level.voteDisplayString[team]), \
 			"Un-Hide player \'%s\'", name); \
  \
