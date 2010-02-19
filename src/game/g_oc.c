@@ -1261,7 +1261,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		ent->client->ps.stats[ STAT_CLASS ] = PCL_HUMAN;
 		ent->client->pers.classSelection = PCL_HUMAN;
 
-		G_OC_PlayerDie();
+		G_OC_PlayerDie(ent);
 
 		if(ent->client->pers.teamSelection == TEAM_HUMANS)
 		{
@@ -1677,7 +1677,7 @@ void G_OC_SyncMedis(gentity_t **medis, int len)
 	int i, j, k, tmp, tmp2;
 
 	// OC only
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !medis)
 		return;
 
 	// first eliminate anything that isn't powered or isn't a medi
@@ -1744,7 +1744,7 @@ void G_OC_MergeMedis(gentity_t **dst, gentity_t **src)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !dst || !src)
 		return;
 
 	for(i = 0; src[i]; i++)
@@ -1759,7 +1759,7 @@ void G_OC_AppendMedi(gentity_t **medis, gentity_t *medi)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !medis || !medi)
 		return;
 
 	for(i = 0; medis[i]; i++)
@@ -1779,7 +1779,7 @@ void G_OC_RemoveMedi(gentity_t **medis, gentity_t *medi)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !medis || !medi)
 		return;
 
 	for(i = 0; medis[i]; i++)
@@ -1796,7 +1796,7 @@ void G_OC_RemoveMedi(gentity_t **medis, gentity_t *medi)
 
 int G_OC_AllMedis(gentity_t **medis)
 {
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !medis)
 		return 0;
 
 	return !(level.totalMedistations - G_OC_NumberOfMedis(medis));
@@ -1806,7 +1806,7 @@ int G_OC_NumberOfMedis(gentity_t **medis)
 {
 	int i, count = 0;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !medis)
 		return 0;
 
 	for(i = 0; i < level.totalMedistations; i++) if(medis[i]) count++; else break;
@@ -1819,7 +1819,7 @@ int G_OC_HasMediBeenUsed(gentity_t *medi, gentity_t **medis)
 	int i;
 	gentity_t *ent;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !medis || !medi)
 		return 0;
 
 	for(i = 0; medis[i]; i++)
@@ -1839,10 +1839,7 @@ void G_OC_ClearMedis(gentity_t **medis)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
-		return;
-
-	if(!medis)
+	if(!BG_OC_OCMode() || !medis)
 		return;
 
 	for(i = 0; i < level.totalMedistations; i++)
@@ -2124,6 +2121,9 @@ void G_OC_SyncArms(gentity_t **arms, int len)
 	// arms should contain a null terminator at arms[len]
 	int i, j, k, tmp, tmp2;
 
+	if(!BG_OC_OCMode() || !arms)
+		return;
+
 	// first eliminate anything that isn't powered or isn't an arm
 	for(i = 0; i < len; i++)
 	{
@@ -2188,7 +2188,7 @@ void G_OC_MergeArms(gentity_t **dst, gentity_t **src)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !dst || !src)
 		return;
 
 	for(i = 0; src[i]; i++)
@@ -2203,7 +2203,7 @@ void G_OC_AppendArm(gentity_t **arms, gentity_t *arm)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !arms || !arm)
 		return;
 
 	for(i = 0; arms[i]; i++)
@@ -2223,7 +2223,7 @@ void G_OC_RemoveArm(gentity_t **arms, gentity_t *arm)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !arms || !arm)
 		return;
 
 	for(i = 0; arms[i]; i++)
@@ -2240,7 +2240,7 @@ void G_OC_RemoveArm(gentity_t **arms, gentity_t *arm)
 
 int G_OC_AllArms(gentity_t **arms)
 {
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !arms)
 		return 0;
 
 	return !(level.totalArmouries - G_OC_NumberOfArms(arms));
@@ -2250,7 +2250,7 @@ int G_OC_NumberOfArms(gentity_t **arms)
 {
 	int i, count = 0;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !arms)
 		return 0;
 
 	for(i = 0; i < level.totalArmouries; i++) if(arms[i]) count++; else break;
@@ -2263,7 +2263,7 @@ int G_OC_HasArmBeenUsed(gentity_t *arm, gentity_t **arms)
 	int i;
 	gentity_t *ent;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !arms || !arm)
 		return 0;
 
 	for(i = 0; arms[i]; i++)
@@ -2283,10 +2283,7 @@ void G_OC_ClearArms(gentity_t **arms)
 {
 	int i;
 
-	if(!BG_OC_OCMode())
-		return;
-
-	if(!arms)
+	if(!BG_OC_OCMode() || !arms)
 		return;
 
 	for(i = 0; i < level.totalArmouries; i++)
@@ -2304,7 +2301,7 @@ void G_OC_BuildableBuilt(gentity_t *ent)  // called when ent is built
 	gentity_t **tmp;
 	g_oc_scrimTeam_t *si;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !ent)
 		return;
 
 	if(ent->s.modelindex == BA_H_MEDISTAT)
@@ -2433,7 +2430,7 @@ void G_OC_BuildableDestroyed(gentity_t *ent)  // called when a buildable no long
 	gentity_t **tmp;
 	g_oc_scrimTeam_t *si;
 
-	if(!BG_OC_OCMode())
+	if(!BG_OC_OCMode() || !ent)
 		return;
 
 	if(!ent->powered && ent->verifyUnpowered)
@@ -2928,7 +2925,7 @@ int G_OC_PlayerCreditsSingle(gentity_t *ent)
 		max = (float)ALIEN_MAX_CREDITS;
 	}
 
-	return max * (1.0f / (float)level.totalMedistations);
+	return max * (1.0f / (float)level.totalMedistations) + 1;
 }
 
 int G_OC_CanUseBonus(gentity_t *ent)
@@ -3853,10 +3850,10 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 
 	/// set userdata stuff ///
 
-	G_SanitiseString(client->pers.netname, cleanName, sizeof(cleanName));
 	realName[0] = '\0';
 	pureName[0] = '\0';
 	cleanName[0] = '\0';
+	G_SanitiseString(client->pers.netname, cleanName, sizeof(cleanName));
 	admin = G_admin_admin(client->pers.guid);
 	if(admin)
 	{
@@ -4026,7 +4023,8 @@ static char *G_OC_Stats(char *filename, gclient_t *client, int count, int time)
 			if(G_OC_SameGuy(a, b))
 			{
 				// Since the list has already been sorted, we know that the latter score is worse, so remove it
-				memmove(b, b + 1, (records + record--) - (b + 1));
+				memmove(b, b + 1, sizeof(stat_t) * ((records + record--) - (b + 1)));
+				--j;
 			}
 		}
 	}

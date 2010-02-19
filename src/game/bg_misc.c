@@ -1245,7 +1245,7 @@ static const classAttributes_t bg_classList[ ] =
     LEVEL2_HEALTH,                                  //int     health;
     0.0f,                                           //float   fallDamage;
     LEVEL2_REGEN,                                   //float   regenRate;
-    SCA_WALLJUMPER|SCA_FOVWARPS|SCA_ALIENSENSE,     //int     abilities;
+    SCA_WALLJUMPER|SCA_OLDWALLJUMPER|SCA_FOVWARPS|SCA_ALIENSENSE,     //int     abilities;
     WP_ALEVEL2,                                     //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
     90,                                             //int     fov;
@@ -1272,7 +1272,7 @@ static const classAttributes_t bg_classList[ ] =
     LEVEL2_UPG_HEALTH,                              //int     health;
     0.0f,                                           //float   fallDamage;
     LEVEL2_UPG_REGEN,                               //float   regenRate;
-    SCA_WALLJUMPER|SCA_FOVWARPS|SCA_ALIENSENSE,     //int     abilities;
+    SCA_WALLJUMPER|SCA_OLDWALLJUMPER|SCA_FOVWARPS|SCA_ALIENSENSE,     //int     abilities;
     WP_ALEVEL2_UPG,                                 //weapon_t  startWeapon
     0.0f,                                           //float   buildDist;
     90,                                             //int     fov;

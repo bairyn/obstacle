@@ -3248,8 +3248,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 
 	#define BG_OC_PMNeedCrashLand() ((BG_OC_OCMode()) ? (1) : (0))
 	#define BG_OC_PMOCDodge() ((BG_OC_OCMode()) ? (1) : (0))
-	#define BG_OC_PMOCWallJump() ((BG_OC_OCMode()) ? (1) : (0))
-	#define BG_OC_PMOCGroundTraceWallJump() ((BG_OC_OCMode()) ? (1) : (0))
+	#define BG_OC_PMOCWallJump() (((BG_OC_OCMode()) && (BG_Class(pm->ps->stats[STAT_CLASS])->abilities & SCA_OLDWALLJUMPER)) ? (1) : (0))
+	#define BG_OC_PMOCGroundTraceWallJump() (((BG_OC_OCMode()) && (BG_Class(pm->ps->stats[STAT_CLASS])->abilities & SCA_OLDWALLJUMPER)) ? (1) : (0))
 	#define BG_OC_PMOCPounce() (0)
 
 	#define BG_OC_PMNoDodge() BG_OC_OCMode()
@@ -3377,7 +3377,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 			/* trace into direction we are moving */ \
 			VectorMA(pm->ps->origin, 0.25f, movedir, point); \
-			pm->trace(&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask); \
+			/*pm->trace(&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);*/ \
+			pm->trace(&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask & ~CONTENTS_BODY & ~CONTENTS_CORPSE); \
  \
 			/* if(trace.fraction < 1.0f && !(trace.surfaceFlags & (SURF_SKY | SURF_SLICK)) && */ \
 			/*     (trace.entityNum == ENTITYNUM_WORLD)) */ \

@@ -2202,10 +2202,13 @@ void Cmd_Buy_f( gentity_t *ent )
     }
 
     //can afford this?
-    if( BG_Weapon( weapon )->price > (short)ent->client->pers.credit && !ent->client->pers.override )
+    if( G_OC_SUBTRACTFUNDS )
     {
-      G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOFUNDS );
-      return;
+      if( BG_Weapon( weapon )->price > (short)ent->client->pers.credit && !ent->client->pers.override )
+      {
+        G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOFUNDS );
+        return;
+      }
     }
 
     //have space to carry this?
