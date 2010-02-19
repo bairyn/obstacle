@@ -706,6 +706,8 @@ extern int oc_gameMode;
 	// game and balance stuff
 	//<+===============================================+>
 
+	#define G_OC_NoCreepThroughWalls() (!(BG_OC_OCMode()))
+
 	#define G_OC_OCHovelNeverOccupied() ((BG_OC_OCMode()) ? (1) : (0))
 
 	#define G_OC_GroupID() ((BG_OC_OCMode()) ? (1) : (0))

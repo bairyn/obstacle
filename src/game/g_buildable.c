@@ -657,7 +657,8 @@ static void G_CreepSlow( gentity_t *self )
       continue;
 
     if( enemy->client && enemy->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS &&
-        enemy->client->ps.groundEntityNum != ENTITYNUM_NONE )
+        enemy->client->ps.groundEntityNum != ENTITYNUM_NONE &&
+	    ( G_Visible( self, enemy, MASK_SHOT ) || G_OC_NoCreepThroughWalls() ) )
     {
       enemy->client->ps.stats[ STAT_STATE ] |= SS_CREEPSLOWED;
       enemy->client->lastCreepSlowTime = level.time;
