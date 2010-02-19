@@ -22,11 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
  * cg_oc.c
- *
- * OC code for cgame
- *
- * Differences in tremulous source:
- * Vote count moved before vote string
  */
 
 #include "cg_local.h"

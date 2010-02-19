@@ -27,21 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
  * bg_oc.h
- *
- * The main header for the OC mod.  Putting everything in bg_oc makes the mod
- * easier to update and isolated.  There are,
- * though, several non-OC things that this mod nedes: floating point votes,
- * CP mix and print system, teleporters, trigger count return on at least
- * G_Checktrigger_stages(), extended !info, G_MinorFormatNumber(), override,
- * BG_StrToLower(), bg_misc overrides (in the current mod, bg_misc overrides are
- * tied into OC's to know which overrides to use), a small fix to allow a
- * dynamic vec3_t initializer for PCLOUD in g_weapon.c, G_BuildableRange returns
- * buildable in range, extended votes, pause, buildlog, revert, several small
- * variable changes, extended layout format and version build and version; and
- * several which are recommended: client-side speedometer, notarget buildables, cmd
- * stealth and weak aimbot detection, crash, connectMessage, CPMode, restart CP,
- * no auto-vote, LayoutLoad memory leak fix, speed, disableWeaponSounds, 
- * g_connectMessage, !register, and 'x is building' message.
  */
 
 #ifdef _TREMULOUS_H
