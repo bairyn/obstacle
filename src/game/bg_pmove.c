@@ -437,7 +437,9 @@ static float PM_CmdScale( usercmd_t *cmd )
     if( pm->ps->stats[ STAT_STATE ] & SS_CREEPSLOWED )
     {
       if( BG_InventoryContainsUpgrade( UP_LIGHTARMOUR, pm->ps->stats ) ||
-          BG_InventoryContainsUpgrade( UP_BATTLESUIT, pm->ps->stats ) )
+          BG_InventoryContainsUpgrade( UP_BATTLESUIT, pm->ps->stats ) ||
+          BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, pm->ps->stats ) ||
+          BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, pm->ps->stats ) )
         modifier *= CREEP_ARMOUR_MODIFIER;
       else
         modifier *= CREEP_MODIFIER;
@@ -445,7 +447,9 @@ static float PM_CmdScale( usercmd_t *cmd )
     if( pm->ps->eFlags & EF_POISONCLOUDED )
     {
       if( BG_InventoryContainsUpgrade( UP_LIGHTARMOUR, pm->ps->stats ) ||
-          BG_InventoryContainsUpgrade( UP_BATTLESUIT, pm->ps->stats ) )
+          BG_InventoryContainsUpgrade( UP_BATTLESUIT, pm->ps->stats ) ||
+          BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, pm->ps->stats ) ||
+          BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, pm->ps->stats ) )
         modifier *= PCLOUD_ARMOUR_MODIFIER;
       else
         modifier *= PCLOUD_MODIFIER;
@@ -3437,7 +3441,9 @@ static void PM_Weapon( void )
   if( pm->ps->weapon == WP_CHAINGUN )
   {
     if( pm->ps->pm_flags & PMF_DUCKED ||
-        BG_InventoryContainsUpgrade( UP_BATTLESUIT, pm->ps->stats ) )
+        BG_InventoryContainsUpgrade( UP_BATTLESUIT, pm->ps->stats ) ||
+        BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, pm->ps->stats ) ||
+        BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, pm->ps->stats ) )
     {
       pm->ps->delta_angles[ PITCH ] -= ANGLE2SHORT( ( ( random() * 0.5 ) - 0.125 ) * ( 30 / (float)addTime ) );
       pm->ps->delta_angles[ YAW ] -= ANGLE2SHORT( ( ( random() * 0.5 ) - 0.25 ) * ( 30.0 / (float)addTime ) );
@@ -3624,7 +3630,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd )
     ps->viewangles[ i ] = tempang[ i ];
 
   //pull the view into the lock point
-  if( ps->pm_type == PM_GRABBED && !BG_InventoryContainsUpgrade( UP_BATTLESUIT, ps->stats ) )
+  if( ps->pm_type == PM_GRABBED && !BG_InventoryContainsUpgrade( UP_BATTLESUIT, ps->stats ) && !BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, ps->stats ) && !BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, ps->stats ) )
   {
     vec3_t  dir, angles;
 

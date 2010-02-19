@@ -323,6 +323,10 @@ void TeamplayInfoMessage( gentity_t *ent )
 
       if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, cl->ps.stats ) )
         upgrade = UP_BATTLESUIT;
+	  else if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, cl->ps.stats ) )
+        upgrade = UP_BATTLESUIT_CHROME;
+	  else if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, cl->ps.stats ) )
+        upgrade = UP_BATTLESUIT_GOLD;
       else if( BG_InventoryContainsUpgrade( UP_JETPACK, cl->ps.stats ) )
         upgrade = UP_JETPACK;
       else if( BG_InventoryContainsUpgrade( UP_BATTPACK, cl->ps.stats ) )

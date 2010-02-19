@@ -618,8 +618,10 @@ extern int oc_gameMode;
  \
 		trap_Cvar_Set("g_humanBuildPoints", va("%d", INFINITE)); \
 		trap_Cvar_Set("g_alienBuildPoints", va("%d", INFINITE)); \
-		trap_Cvar_Set("g_alienStage", va("%d", S3)); \
-		trap_Cvar_Set("g_humanStage", va("%d", S3)); \
+		/*trap_Cvar_Set("g_alienStage", va("%d", S3));*/ \
+		/*trap_Cvar_Set("g_humanStage", va("%d", S3));*/ \
+		trap_Cvar_Set("g_alienStage", va("%d", S4)); \
+		trap_Cvar_Set("g_humanStage", va("%d", S4)); \
 		trap_Cvar_Set("g_tag", "oc"); \
 		if(g_ocHostName.string[0]) \
 		{ \
@@ -705,6 +707,35 @@ extern int oc_gameMode;
 	//<+===============================================+>
 	// game and balance stuff
 	//<+===============================================+>
+
+  #define G_OC_SUBTRACTFUNDS ((BG_OC_OCMode()) ? ((BG_InventoryContainsUpgrade(UP_BATTLESUIT_GOLD, ent->client->ps.stats)) || (upgrade == UP_BATTLESUIT_GOLD)) : (1))  // hardcoded hack  // when upgrade isn't set (buying or selling a weapon), upgrade won't be UP_BATTLESUIT_GOLD
+
+  #define G_OC_WEAPON \
+	do \
+  { \
+		if( BG_OC_OCMode() ) \
+			break; \
+ \
+		if( upgrade == UP_BATTLESUIT_CHROME ) \
+		{ \
+      trap_SendServerCommand( ent-g_entities, "print \"You can't buy obstacle course items\n\"" ); \
+			return; \
+		} \
+ \
+		if( upgrade == UP_BATTLESUIT_GOLD ) \
+		{ \
+      trap_SendServerCommand( ent-g_entities, "print \"You can't buy obstacle course items\n\"" ); \
+			return; \
+		} \
+  } while(0);
+
+  #define G_OC_UPGRADE \
+	do \
+  { \
+		if( BG_OC_OCMode() ) \
+			break; \
+ \
+  } while(0);
 
 	#define G_OC_NoCreepThroughWalls() (!(BG_OC_OCMode()))
 
@@ -1772,10 +1803,11 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	qboolean verifyUnpowered;
 
 	#define G_OC_RESTARTOC_TIME 9000  // time after a restartoc before a checkpoint can be used
-	#define G_OC_NOBONUSMESSAGE "Cannot use bonuses while using\na jetpack, lucifer cannon,\nflamer, or\ngrenade\n(did you use a grenade on yourself?)"
+	#define G_OC_NOBONUSMESSAGE "Cannot use bonuses while using\na jetpack, lucifer cannon,\nflamer, battlesuit, or\ngrenade\n(did you use a grenade on yourself?)"
 	#define G_OC_NOBONUSJETPACKMESSAGE "Cannot use bonuses while using\na jetpack"
 	#define G_OC_NOBONUSLCANNONMESSAGE "Cannot use bonuses while holding\na lucifer cannon"
 	#define G_OC_NOBONUSFLAMERMESSAGE  "Cannot use bonuses while holding\na flamer"
+	#define G_OC_NOBATTLESUITMESSAGE  "Cannot use bonuses while wearing\na battlesuit"
 	#define G_OC_NOBONUSGRENADEMESSAGE "Cannot use bonuses after using\na grenade on yourself\n(restart the course to regain the ability\nto use bonuses)"
 	#define G_OC_EVOLVEBLOCK_TIME 2000
 

@@ -1427,6 +1427,59 @@ static const classAttributes_t bg_classList[ ] =
     { PCL_NONE, PCL_NONE, PCL_NONE },               //int     children[ 3 ];
     0,                                              //int     cost;
     ALIEN_CREDITS_PER_KILL                          //int     value;
+  },
+  {
+    PCL_HUMAN_BSUIT_CHROME,                         //int     classnum;
+    "human_bsuit_chrome",                           //char    *classname;
+    "",
+    ( 1 << S4 ),                                    //int  stages
+    100,                                            //int     health;
+    1.0f,                                           //float   fallDamage;
+    0.0f,                                           //float   regenRate;
+    SCA_TAKESFALLDAMAGE|
+      SCA_CANUSELADDERS,                            //int     abilities;
+    WP_NONE, //special-cased in g_client.c          //weapon_t  startWeapon
+    440.0f,                                         //float   buildDist;  // this is long for convenience for course making
+    90,                                             //int     fov;
+    0.004f,                                         //float   bob;
+    1.0f,                                           //float   bobCycle;
+    100,                                            //int     steptime;
+    1.0f,                                           //float   speed;
+    10.0f,                                          //float   acceleration;
+    1.0f,                                           //float   airAcceleration;
+    6.0f,                                           //float   friction;
+    100.0f,                                         //float   stopSpeed;
+    220.0f,                                         //float   jumpMagnitude;
+    1.0f,                                           //float   knockbackScale;
+    { PCL_NONE, PCL_NONE, PCL_NONE },               //int     children[ 3 ];
+    0,                                              //int     cost;
+    ALIEN_CREDITS_PER_KILL                          //int     value;
+  },
+  {
+    PCL_HUMAN_BSUIT_GOLD,                           //int     classnum;
+    "human_bsuit_gold",                             //char    *classname;
+    "",
+    ( 1 << S4 ),                                    //int  stages
+    999,                                            //int     health;
+    0.0f,                                           //float   fallDamage;
+    0.0f,                                           //float   regenRate;
+      SCA_CANUSELADDERS|SCA_WALLJUMPER ,            //int     abilities;
+    WP_NONE, //special-cased in g_client.c          //weapon_t  startWeapon
+    0.0f,                                         //float   buildDist;  // ...
+    90,                                             //int     fov;
+    0.002f,                                         //float   bob;
+    1.0f,                                           //float   bobCycle;
+    100,                                            //int     steptime;
+    1.0f,                                           //float   speed;
+    10.0f,                                          //float   acceleration;
+    1.0f,                                           //float   airAcceleration;
+    6.0f,                                           //float   friction;
+    100.0f,                                         //float   stopSpeed;
+    220.0f,                                         //float   jumpMagnitude;
+    1.0f,                                           //float   knockbackScale;
+    { PCL_NONE, PCL_NONE, PCL_NONE },               //int     children[ 3 ];
+    0,                                              //int     cost;
+    ALIEN_CREDITS_PER_KILL                          //int     value;
   }
 };
 
@@ -2869,6 +2922,36 @@ static const upgradeAttributes_t bg_upgrades[ ] =
     TEAM_HUMANS             //team_t  team;
   },
   {
+    UP_BATTLESUIT_CHROME,          //int   upgradeNum;
+    BSUIT_CHROME_PRICE,            //int   price;
+    ( 1 << S3 ),            //int  stages
+    SLOT_HEAD|SLOT_TORSO|SLOT_ARMS|SLOT_LEGS|SLOT_BACKPACK, //int   slots;
+    "bsuit_chrome",                //char  *upgradeName;
+    "Chrome Battlesuit",           //char  *humanName;
+    "A full body armour that is highly effective at repelling alien attacks. "
+      "It allows the user to enter hostile situations with a greater degree "
+      "of confidence.",
+    "icons/iconu_bsuit",
+    qtrue,                  //qboolean purchasable
+    qfalse,                 //qboolean usable
+    TEAM_HUMANS             //team_t  team;
+  },
+  {
+    UP_BATTLESUIT_GOLD,          //int   upgradeNum;
+    BSUIT_GOLD_PRICE,            //int   price;
+    ( 1 << S3 ),            //int  stages
+    SLOT_HEAD|SLOT_TORSO|SLOT_ARMS|SLOT_LEGS|SLOT_BACKPACK, //int   slots;
+    "bsuit_gold",                //char  *upgradeName;
+    "Gold Battlesuit",           //char  *humanName;
+    "A full body armour that is highly effective at repelling alien attacks. "
+      "It allows the user to enter hostile situations with a greater degree "
+      "of confidence.",
+    "icons/iconu_bsuit",
+    qtrue,                  //qboolean purchasable
+    qfalse,                 //qboolean usable
+    TEAM_HUMANS             //team_t  team;
+  },
+  {
     UP_GRENADE,             //int   upgradeNum;
     GRENADE_PRICE,          //int   price;
     ( 1 << S2 )|( 1 << S3 ),//int  stages
@@ -3739,6 +3822,10 @@ int BG_PlayerPoisonCloudTime( playerState_t *ps )
 
   if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, ps->stats ) )
     time -= BSUIT_PCLOUD_PROTECTION;
+  if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, ps->stats ) )
+    time -= BSUIT_CHROME_PCLOUD_PROTECTION;
+  if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, ps->stats ) )
+    time -= BSUIT_GOLD_PCLOUD_PROTECTION;
   if( BG_InventoryContainsUpgrade( UP_HELMET, ps->stats ) )
     time -= HELMET_PCLOUD_PROTECTION;
   if( BG_InventoryContainsUpgrade( UP_LIGHTARMOUR, ps->stats ) )

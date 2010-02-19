@@ -206,6 +206,10 @@ static int GetClientMass( gentity_t *ent )
   {
     if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, ent->client->ps.stats ) )
       entMass *= 2;
+    if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, ent->client->ps.stats ) )
+      entMass *= 4;
+    if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, ent->client->ps.stats ) )
+      entMass *= 8;
   }
   else
     return 0;
@@ -767,6 +771,12 @@ void ClientTimerActions( gentity_t *ent, int msec )
 
       if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, client->ps.stats ) )
         damage -= BSUIT_POISON_PROTECTION;
+
+      if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, client->ps.stats ) )
+        damage -= BSUIT_CHROME_POISON_PROTECTION;
+
+      if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, client->ps.stats ) )
+        damage -= BSUIT_GOLD_POISON_PROTECTION;
 
       if( BG_InventoryContainsUpgrade( UP_HELMET, client->ps.stats ) )
         damage -= HELMET_POISON_PROTECTION;
@@ -1380,8 +1390,9 @@ void ClientThink_real( gentity_t *ent )
     client->ps.pm_type = PM_DEAD;
   else if( client->ps.stats[ STAT_STATE ] & SS_HOVELING )
     client->ps.pm_type = PM_FREEZE;
-  else if( client->ps.stats[ STAT_STATE ] & SS_BLOBLOCKED ||
-           client->ps.stats[ STAT_STATE ] & SS_GRABBED )
+  else if( ( client->ps.stats[ STAT_STATE ] & SS_BLOBLOCKED ||
+            client->ps.stats[ STAT_STATE ] & SS_GRABBED ) &&
+		  !BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, client->ps.stats ) )
     client->ps.pm_type = PM_GRABBED;
   else if( BG_InventoryContainsUpgrade( UP_JETPACK, client->ps.stats ) && BG_UpgradeIsActive( UP_JETPACK, client->ps.stats ) )
     client->ps.pm_type = PM_JETPACK;

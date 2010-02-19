@@ -242,7 +242,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CREEP_SCALEDOWN_TIME        3000
 
 #define PCLOUD_MODIFIER             0.5f
-#define PCLOUD_ARMOUR_MODIFIER      0.75f
+#define PCLOUD_ARMOUR_MODIFIER      TREMULOUS_VALUE(0.75f, 0.5f)
 
 #define ASPAWN_BP                   10
 #define ASPAWN_BT                   15000
@@ -514,6 +514,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BSUIT_PRICE                 400
 #define BSUIT_POISON_PROTECTION     3
 #define BSUIT_PCLOUD_PROTECTION     3000
+
+#define BSUIT_CHROME_PRICE             1400
+#define BSUIT_CHROME_POISON_PROTECTION 3
+#define BSUIT_CHROME_PCLOUD_PROTECTION 3000
+
+#define BSUIT_GOLD_PRICE             2000
+#define BSUIT_GOLD_POISON_PROTECTION 3
+#define BSUIT_GOLD_PCLOUD_PROTECTION 3000
 
 #define MGCLIP_PRICE                0
 

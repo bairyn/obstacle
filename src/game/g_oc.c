@@ -1273,6 +1273,9 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		gentity_t *dest;
 		vec3_t spawn_origin, spawn_angles, infestOrigin;
 
+		ent->client->ps.stats[ STAT_CLASS ] = PCL_HUMAN;
+		ent->client->pers.classSelection = PCL_HUMAN;
+
 		if(ent->client->pers.teamSelection == TEAM_HUMANS)
 		{
 		  for(i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++)
@@ -1301,6 +1304,10 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			BG_RemoveUpgradeFromInventory(UP_JETPACK, ent->client->ps.stats);
 		  if(BG_InventoryContainsUpgrade(UP_BATTLESUIT, ent->client->ps.stats))
 			BG_RemoveUpgradeFromInventory(UP_BATTLESUIT, ent->client->ps.stats);
+		  if(BG_InventoryContainsUpgrade(UP_BATTLESUIT_CHROME, ent->client->ps.stats))
+			BG_RemoveUpgradeFromInventory(UP_BATTLESUIT_CHROME, ent->client->ps.stats);
+		  if(BG_InventoryContainsUpgrade(UP_BATTLESUIT_GOLD, ent->client->ps.stats))
+			BG_RemoveUpgradeFromInventory(UP_BATTLESUIT_GOLD, ent->client->ps.stats);
 		  if(BG_InventoryContainsUpgrade(UP_GRENADE, ent->client->ps.stats))
 			BG_RemoveUpgradeFromInventory(UP_GRENADE, ent->client->ps.stats);
 		  if(!BG_InventoryContainsUpgrade(UP_MEDKIT, ent->client->ps.stats))
@@ -2914,6 +2921,24 @@ int G_OC_CanUseBonus(gentity_t *ent)
 	if(ent->client->pers.grenadeUsed)
 	{
 		G_ClientCP(ent, G_OC_NOBONUSGRENADEMESSAGE, NULL, CLIENT_SPECTATORS);
+
+		return 0;
+	}
+	if(BG_InventoryContainsUpgrade(UP_BATTLESUIT, ent->client->ps.stats))
+	{
+		G_ClientCP(ent, G_OC_NOBATTLESUITMESSAGE, NULL, CLIENT_SPECTATORS);
+
+		return 0;
+	}
+	if(BG_InventoryContainsUpgrade(UP_BATTLESUIT_CHROME, ent->client->ps.stats))
+	{
+		G_ClientCP(ent, G_OC_NOBATTLESUITMESSAGE, NULL, CLIENT_SPECTATORS);
+
+		return 0;
+	}
+	if(BG_InventoryContainsUpgrade(UP_BATTLESUIT_GOLD, ent->client->ps.stats))
+	{
+		G_ClientCP(ent, G_OC_NOBATTLESUITMESSAGE, NULL, CLIENT_SPECTATORS);
 
 		return 0;
 	}

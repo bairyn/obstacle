@@ -261,6 +261,10 @@ void ScoreboardMessage( gentity_t *ent )
 
       if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, cl->ps.stats ) )
         upgrade = UP_BATTLESUIT;
+      if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_CHROME, cl->ps.stats ) )
+        upgrade = UP_BATTLESUIT_CHROME;
+      if( BG_InventoryContainsUpgrade( UP_BATTLESUIT_GOLD, cl->ps.stats ) )
+        upgrade = UP_BATTLESUIT_GOLD;
       else if( BG_InventoryContainsUpgrade( UP_JETPACK, cl->ps.stats ) )
         upgrade = UP_JETPACK;
       else if( BG_InventoryContainsUpgrade( UP_BATTPACK, cl->ps.stats ) )
@@ -2167,6 +2171,8 @@ void Cmd_Buy_f( gentity_t *ent )
   
   if( weapon != WP_NONE )
   {
+    G_OC_WEAPON
+
     //already got this?
     if( BG_InventoryContainsWeapon( weapon, ent->client->ps.stats ) )
     {
@@ -2241,6 +2247,8 @@ void Cmd_Buy_f( gentity_t *ent )
   }
   else if( upgrade != UP_NONE )
   {
+    G_OC_UPGRADE
+
     //already got this?
     if( BG_InventoryContainsUpgrade( upgrade, ent->client->ps.stats ) )
     {
@@ -2249,10 +2257,13 @@ void Cmd_Buy_f( gentity_t *ent )
     }
 
     //can afford this?
-    if( BG_Upgrade( upgrade )->price > (short)ent->client->pers.credit && !ent->client->pers.override )
+    if( G_OC_SUBTRACTFUNDS )
     {
-      G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOFUNDS );
-      return;
+      if( BG_Upgrade( upgrade )->price > (short)ent->client->pers.credit && !ent->client->pers.override )
+      {
+        G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOFUNDS );
+        return;
+      }
     }
 
     //have space to carry this?
@@ -2311,6 +2322,34 @@ void Cmd_Buy_f( gentity_t *ent )
         ent->client->pers.classSelection = PCL_HUMAN_BSUIT;
         ent->client->ps.eFlags ^= EF_TELEPORT_BIT;
       }
+      else if( upgrade == UP_BATTLESUIT_CHROME )
+      {
+        vec3_t newOrigin;
+
+        if( !G_RoomForClassChange( ent, PCL_HUMAN_BSUIT_CHROME, newOrigin ) && !ent->client->pers.override )
+        {
+          G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOROOMBSUITON );
+          return;
+        }
+        VectorCopy( newOrigin, ent->client->ps.origin );
+        ent->client->ps.stats[ STAT_CLASS ] = PCL_HUMAN_BSUIT_CHROME;
+        ent->client->pers.classSelection = PCL_HUMAN_BSUIT_CHROME;
+        ent->client->ps.eFlags ^= EF_TELEPORT_BIT;
+      }
+      else if( upgrade == UP_BATTLESUIT_GOLD )
+      {
+        vec3_t newOrigin;
+
+        if( !G_RoomForClassChange( ent, PCL_HUMAN_BSUIT_GOLD, newOrigin ) && !ent->client->pers.override )
+        {
+          G_TriggerMenu( ent->client->ps.clientNum, MN_H_NOROOMBSUITON );
+          return;
+        }
+        VectorCopy( newOrigin, ent->client->ps.origin );
+        ent->client->ps.stats[ STAT_CLASS ] = PCL_HUMAN_BSUIT_GOLD;
+        ent->client->pers.classSelection = PCL_HUMAN_BSUIT_GOLD;
+        ent->client->ps.eFlags ^= EF_TELEPORT_BIT;
+      }
 
       //add to inventory
       BG_AddUpgradeToInventory( upgrade, ent->client->ps.stats );
@@ -2320,7 +2359,8 @@ void Cmd_Buy_f( gentity_t *ent )
       G_GiveClientMaxAmmo( ent, qtrue );
 
     //subtract from funds
-    G_AddCreditToClient( ent->client, -(short)BG_Upgrade( upgrade )->price, qfalse );
+    if( G_OC_SUBTRACTFUNDS )
+      G_AddCreditToClient( ent->client, -(short)BG_Upgrade( upgrade )->price, qfalse );
   }
   else
     G_TriggerMenu( ent->client->ps.clientNum, MN_H_UNKNOWNITEM );
@@ -2414,7 +2454,8 @@ void Cmd_Sell_f( gentity_t *ent )
       ent->client->ps.stats[ STAT_WEAPON ] = WP_NONE;
 
       //add to funds
-      G_AddCreditToClient( ent->client, (short)BG_Weapon( weapon )->price, qfalse );
+      if( G_OC_SUBTRACTFUNDS )
+        G_AddCreditToClient( ent->client, (short)BG_Weapon( weapon )->price, qfalse );
     }
 
     //if we have this weapon selected, force a new selection
@@ -2443,7 +2484,7 @@ void Cmd_Sell_f( gentity_t *ent )
     if( BG_InventoryContainsUpgrade( upgrade, ent->client->ps.stats ) )
     {
       // shouldn't really need to test for this, but just to be safe
-      if( upgrade == UP_BATTLESUIT )
+      if( upgrade == UP_BATTLESUIT || upgrade == UP_BATTLESUIT_CHROME || upgrade == UP_BATTLESUIT_GOLD )
       {
         vec3_t newOrigin;
 
@@ -2465,7 +2506,8 @@ void Cmd_Sell_f( gentity_t *ent )
         G_GiveClientMaxAmmo( ent, qtrue );
 
       //add to funds
-      G_AddCreditToClient( ent->client, (short)BG_Upgrade( upgrade )->price, qfalse );
+      if( G_OC_SUBTRACTFUNDS )
+        G_AddCreditToClient( ent->client, (short)BG_Upgrade( upgrade )->price, qfalse );
     }
   }
   else if( !Q_stricmp( s, "weapons" ) )
@@ -2501,7 +2543,8 @@ void Cmd_Sell_f( gentity_t *ent )
         ent->client->ps.stats[ STAT_WEAPON ] = WP_NONE;
 
         //add to funds
-        G_AddCreditToClient( ent->client, (short)BG_Weapon( i )->price, qfalse );
+        if( G_OC_SUBTRACTFUNDS )
+          G_AddCreditToClient( ent->client, (short)BG_Weapon( i )->price, qfalse );
       }
 
       //if we have this weapon selected, force a new selection
@@ -2529,7 +2572,7 @@ void Cmd_Sell_f( gentity_t *ent )
         G_OC_CheckUpgradePurchase();
 
         // shouldn't really need to test for this, but just to be safe
-        if( upgrade == UP_BATTLESUIT )
+        if( upgrade == UP_BATTLESUIT || upgrade == UP_BATTLESUIT_CHROME || upgrade == UP_BATTLESUIT_GOLD )
         {
           vec3_t newOrigin;
 
@@ -2550,7 +2593,8 @@ void Cmd_Sell_f( gentity_t *ent )
           G_GiveClientMaxAmmo( ent, qtrue );
 
         //add to funds
-        G_AddCreditToClient( ent->client, (short)BG_Upgrade( upgrade )->price, qfalse );
+        if( G_OC_SUBTRACTFUNDS )
+          G_AddCreditToClient( ent->client, (short)BG_Upgrade( upgrade )->price, qfalse );
       }
     }
   }
@@ -2611,7 +2655,7 @@ void Cmd_Build_f( gentity_t *ent )
       BG_BuildableIsAllowed( buildable ) &&
       ( ( team == TEAM_ALIENS && BG_BuildableAllowedInStage( buildable, g_alienStage.integer ) ) ||
         ( team == TEAM_HUMANS && BG_BuildableAllowedInStage( buildable, g_humanStage.integer ) ) ||
-		G_OC_BuildableStageAlwaysValid() ) )
+        G_OC_BuildableStageAlwaysValid() ) )
   {
     dynMenu_t err;
     dist = BG_Class( ent->client->ps.stats[ STAT_CLASS ] )->buildDist;
@@ -3411,7 +3455,7 @@ static void Cmd_GetLayouts_f( gentity_t *ent )
   count = G_LayoutList( mapname, list, sizeof( list ) - 1 );
 
   if( strlen( list ) > 0 && list[ strlen( list ) - 1 ] != ' ' )
-	  Q_strcat( list, sizeof( list ), " ");
+      Q_strcat( list, sizeof( list ), " ");
 
   trap_SendServerCommand( ent - g_entities, va( "setLayouts \"%s\"", list ) );
 }
