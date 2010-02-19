@@ -278,7 +278,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
   {
     attacker->client->lastkilled_client = self->s.number;
 
-    if( attacker == self || OnSameTeam( self, attacker ) )
+    if( ( attacker == self || OnSameTeam( self, attacker ) ) && !G_OC_NoPunishment() )
     {
       //punish team kills and suicides
       if( attacker->client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )

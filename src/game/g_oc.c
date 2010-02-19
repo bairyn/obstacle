@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * g_oc.c
  *
  * The main header for the OC mod.  Putting everything in bg_oc makes the mod
- * easier to update and makes it more compatible with Tremulous.  There are,
+ * easier to update and isolated.  There are,
  * though, several non-OC things that this mod nedes: floating point votes,
  * CP mix and print system, teleporters, trigger count return on at least
  * G_Checktrigger_stages(), extended !info, G_MinorFormatNumber(), override,
@@ -1331,7 +1331,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 			G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
 		  VectorCopy(infestOrigin, ent->s.pos.trBase);
 		  ClientSpawn(ent, ent, ent->s.pos.trBase, ent->s.apos.trBase);
-		  G_AddCreditToClient(ent->client, ALIEN_MAX_FRAGS, qtrue);
+		  //G_AddCreditToClient(ent->client, ALIEN_MAX_FRAGS, qtrue);
 		  if(!G_admin_canEditOC(ent))
 		  {
 			ent->client->pers.needEvolve = 1;
@@ -1478,7 +1478,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		ent->client->pers.aliveTime = 0;
 		ent->client->pers.lastAliveTime = 0;
 		ent->client->pers.checkpoint = NULL;
-		G_AddCreditToClient(ent->client, HUMAN_MAX_CREDITS, qtrue);
+		//G_AddCreditToClient(ent->client, HUMAN_MAX_CREDITS, qtrue);  // credits are now earned when all arms are used and the amount given is relative to how many medis he used.
 		G_OC_ClearMedis(ent->client->pers.medis);
 		G_OC_ClearMedis(ent->client->pers.medisLastCheckpoint);
 		G_OC_ClearArms(ent->client->pers.arms);
@@ -1656,6 +1656,7 @@ void G_OC_UseMedi(gentity_t *ent, gentity_t *medi)
 			char *record;
 			// new medi
 			G_OC_AppendMedi(ent->client->pers.medis, medi);
+			G_AddCreditToClient(ent->client, G_OC_PlayerCreditsSingle(ent), qtrue);
 			if(G_OC_AllMedis(ent->client->pers.medis))
 			{
 				// player has won
@@ -2094,6 +2095,7 @@ void G_OC_UseArm(gentity_t *ent, gentity_t *arm)
 			{
 				// player has won
 				char *record;
+	            ent->client->ps.persistant[ PERS_CREDIT ] = ent->client->pers.credit = G_OC_PlayerCredits(ent);
 				G_OC_AppendArm(ent->client->pers.arms, arm);
 				ent->client->pers.winTime = ent->client->pers.aliveTime;
 				record = G_OC_WinStats(ent->client, level.totalArmouries, ent->client->pers.winTime);
@@ -2714,8 +2716,8 @@ void G_OC_PlayerSpawn(gentity_t *ent)  // called when a player spawns
 	{
 		ent->client->pers.lastAliveTime = trap_Milliseconds();  // reset to spawn time so that time during death doesn't count
 		G_OC_PlayerMaxAmmo(ent);
-		if(!ent->client->pers.checkpoint)
-			G_OC_PlayerMaxCash(ent);
+		//if(!ent->client->pers.checkpoint)
+			//G_OC_PlayerMaxCash(ent);
 		G_OC_PlayerMaxHealth(ent);
 		VectorScale(ent->client->ps.velocity, 0.0, ent->client->ps.velocity);
 //		if(ent->client->pers.teamSelection == TEAM_ALIENS)
@@ -2733,6 +2735,10 @@ void G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 	gentity_t *client;
 
 	if(!BG_OC_OCMode())
+		return;
+	if(!ent)
+		return;
+	if(!ent->client)
 		return;
 
 	if(ent->client->pers.scrimTeam)
@@ -2879,7 +2885,63 @@ void G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 		}
 	}
 
+	ent->client->ps.persistant[ PERS_CREDIT ] = ent->client->pers.credit = G_OC_PlayerCredits(ent);
+
 	return;
+}
+
+int G_OC_PlayerCredits(gentity_t *ent)
+{
+	float max = 0;
+
+	if(!BG_OC_OCMode())
+		return 0;
+
+	if(!ent)
+		return 0;
+	if(!ent->client)
+		return 0;
+
+	if((!G_OC_AllArms(ent->client->pers.arms) || (BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(ent->client->pers.arms))) && !ent->client->pers.override)
+		return 0;
+
+	if(ent->client->pers.teamSelection == TEAM_HUMANS)
+	{
+		max = (float)HUMAN_MAX_CREDITS;
+	}
+	else if(ent->client->pers.teamSelection == TEAM_ALIENS)
+	{
+		max = (float)ALIEN_MAX_CREDITS;
+	}
+
+	return max * ((float)G_OC_NumberOfMedis(ent->client->pers.medis) / (float)level.totalMedistations);
+}
+
+int G_OC_PlayerCreditsSingle(gentity_t *ent)
+{
+	float max = 0;
+
+	if(!BG_OC_OCMode())
+		return 0;
+
+	if(!ent)
+		return 0;
+	if(!ent->client)
+		return 0;
+
+	if((!G_OC_AllArms(ent->client->pers.arms) || (BG_OC_TestLayoutFlag(level.layout, BG_OC_OCFLAG_ONEARM) && G_OC_NumberOfArms(ent->client->pers.arms))) && !ent->client->pers.override)
+		return 0;
+
+	if(ent->client->pers.teamSelection == TEAM_HUMANS)
+	{
+		max = (float)HUMAN_MAX_CREDITS;
+	}
+	else if(ent->client->pers.teamSelection == TEAM_ALIENS)
+	{
+		max = (float)ALIEN_MAX_CREDITS;
+	}
+
+	return max * (1.0f / (float)level.totalMedistations);
 }
 
 int G_OC_CanUseBonus(gentity_t *ent)
@@ -5206,7 +5268,7 @@ void Cmd_TeleportToCheckpoint_f(gentity_t *ent)
 	{
 		if((dest = G_SelectHumanSpawnPoint(ent->s.origin, ent, 0, NULL)))
 		{
-			ent->client->pers.health = ent->client->ps.stats[ STAT_HEALTH ] = ent->client->ps.stats[ STAT_MAX_HEALTH ]; BG_AddUpgradeToInventory( UP_MEDKIT, self->enemy->client->ps.stats );  // heal player
+			ent->health = ent->client->ps.stats[ STAT_HEALTH ] = ent->client->ps.stats[ STAT_MAX_HEALTH ]; BG_AddUpgradeToInventory( UP_MEDKIT, ent->client->ps.stats );  // heal player
 			VectorCopy(dest->s.origin, spawn_origin);
 			if(!ent->client->pers.autoAngleDisabled)
 			{

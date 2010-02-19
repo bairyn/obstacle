@@ -821,7 +821,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
   client->pers.aliveSeconds++;
 
   // Give clients some credit periodically
-  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 )
+  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 && !G_OC_NoFreeFunds() )
   {
     int period = (float) g_freeFundPeriod.integer * 1000.f / modifier;
 

@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * bg_oc.h
  *
  * The main header for the OC mod.  Putting everything in bg_oc makes the mod
- * easier to update and makes it more compatible with Tremulous.  There are,
+ * easier to update and isolated.  There are,
  * though, several non-OC things that this mod nedes: floating point votes,
  * CP mix and print system, teleporters, trigger count return on at least
  * G_Checktrigger_stages(), extended !info, G_MinorFormatNumber(), override,
@@ -737,6 +737,10 @@ extern int oc_gameMode;
  \
   } while(0);
 
+	#define G_OC_NoPunishment() ((BG_OC_OCMode() ? (1) : (0)))
+
+	#define G_OC_NoFreeFunds() ((BG_OC_OCMode() ? (1) : (0)))
+
 	#define G_OC_NoCreepThroughWalls() (!(BG_OC_OCMode()))
 
 	#define G_OC_OCHovelNeverOccupied() ((BG_OC_OCMode()) ? (1) : (0))
@@ -780,6 +784,9 @@ extern int oc_gameMode;
 			break; \
  \
 		if(!ent) \
+			break; \
+ \
+		if(!ent->client) \
 			break; \
  \
 		if(ent->client->pers.scrimTeam) \
@@ -1190,6 +1197,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		gclient_t *client; \
  \
 		if(!BG_OC_OCMode()) \
+			break; \
+ \
+		if(!ent || !ent->client) \
 			break; \
  \
 		client = ent->client; \
@@ -1839,6 +1849,8 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 	void G_OC_Checkpoint(gentity_t *checkpoint, gentity_t *ent);
 	void G_OC_PlayerSpawn(gentity_t *ent);
 	void G_OC_PlayerDie(gentity_t *ent);
+	int  G_OC_PlayerCredits(gentity_t *ent);
+	int  G_OC_PlayerCreditsSingle(gentity_t *ent);
 	int  G_OC_CanUseBonus(gentity_t *ent);
 //	int  G_OC_WeaponIsReserved(weapon_t weapon);
 	int  G_OC_WeaponIsReserved(int weapon);
