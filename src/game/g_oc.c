@@ -5206,6 +5206,7 @@ void Cmd_TeleportToCheckpoint_f(gentity_t *ent)
 	{
 		if((dest = G_SelectHumanSpawnPoint(ent->s.origin, ent, 0, NULL)))
 		{
+			ent->client->pers.health = ent->client->ps.stats[ STAT_HEALTH ] = ent->client->ps.stats[ STAT_MAX_HEALTH ]; BG_AddUpgradeToInventory( UP_MEDKIT, self->enemy->client->ps.stats );  // heal player
 			VectorCopy(dest->s.origin, spawn_origin);
 			if(!ent->client->pers.autoAngleDisabled)
 			{
