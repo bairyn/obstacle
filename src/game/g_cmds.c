@@ -2243,7 +2243,8 @@ void Cmd_Buy_f( gentity_t *ent )
     ent->client->ps.stats[ STAT_MISC ] = 0;
 
     //subtract from funds
-    G_AddCreditToClient( ent->client, -(short)BG_Weapon( weapon )->price, qfalse );
+    if( G_OC_SUBTRACTFUNDS )
+      G_AddCreditToClient( ent->client, -(short)BG_Weapon( weapon )->price, qfalse );
   }
   else if( upgrade != UP_NONE )
   {

@@ -1261,6 +1261,8 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		ent->client->ps.stats[ STAT_CLASS ] = PCL_HUMAN;
 		ent->client->pers.classSelection = PCL_HUMAN;
 
+		G_OC_PlayerDie();
+
 		if(ent->client->pers.teamSelection == TEAM_HUMANS)
 		{
 		  for(i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++)
@@ -2711,6 +2713,8 @@ void G_OC_PlayerSpawn(gentity_t *ent)  // called when a player spawns
 //		}
 	}
 
+	ent->client->ps.persistant[ PERS_CREDIT ] = ent->client->pers.credit = G_OC_PlayerCredits(ent);
+
 	return;
 }
 
@@ -2869,8 +2873,6 @@ void G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 			}
 		}
 	}
-
-	ent->client->ps.persistant[ PERS_CREDIT ] = ent->client->pers.credit = G_OC_PlayerCredits(ent);
 
 	return;
 }

@@ -693,7 +693,7 @@ extern int oc_gameMode;
 	// game and balance stuff
 	//<+===============================================+>
 
-  #define G_OC_SUBTRACTFUNDS ((BG_OC_OCMode()) ? ((BG_InventoryContainsUpgrade(UP_BATTLESUIT_GOLD, ent->client->ps.stats)) || (upgrade == UP_BATTLESUIT_GOLD)) : (1))  // hardcoded hack  // when upgrade isn't set (buying or selling a weapon), upgrade won't be UP_BATTLESUIT_GOLD
+  #define G_OC_SUBTRACTFUNDS ((BG_OC_OCMode()) ? ((!BG_InventoryContainsUpgrade(UP_BATTLESUIT_GOLD, ent->client->ps.stats)) || (upgrade == UP_BATTLESUIT_GOLD)) : (1))  // hardcoded hack  // when upgrade isn't set (buying or selling a weapon), upgrade won't be UP_BATTLESUIT_GOLD
 
   #define G_OC_WEAPON \
 	do \
