@@ -1189,6 +1189,9 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		client = ent->client; \
  \
+		/* cleanly handle scrim teams */ \
+		G_OC_RemovePlayerFromScrimTeam(ent); \
+ \
 		if(level.totalMedistations && client->pers.medis && client->pers.medisLastCheckpoint) \
 		{ \
 			BG_Free(client->pers.medis); \
@@ -1199,13 +1202,10 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		if(level.totalArmouries && client->pers.arms && client->pers.armsLastCheckpoint) \
 		{ \
 			BG_Free(client->pers.arms); \
-			client->pers.medis = NULL; \
+			client->pers.arms = NULL; \
 			BG_Free(client->pers.armsLastCheckpoint); \
-			client->pers.medisLastCheckpoint = NULL; \
+			client->pers.armsLastCheckpoint = NULL; \
 		} \
- \
-		/* cleanly handle scrim teams */ \
-		G_OC_RemovePlayerFromScrimTeam(ent); \
 	} while(0)
 
 	#define G_OC_ClientBegin() \

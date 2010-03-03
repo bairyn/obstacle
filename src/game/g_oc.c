@@ -2851,7 +2851,7 @@ void G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 	}
 	else
 	{
-		if(level.totalMedistations)
+		if(level.totalMedistations && ent->client->pers.medis && ent->client->pers.medisLastCheckpoint)
 		{
 			int lost = G_OC_NumberOfMedis(ent->client->pers.medis) - G_OC_NumberOfMedis(ent->client->pers.medisLastCheckpoint);
 			memcpy(ent->client->pers.medis, ent->client->pers.medisLastCheckpoint, (level.totalMedistations + 1) * sizeof(gentity_t *));
@@ -2860,7 +2860,7 @@ void G_OC_PlayerDie(gentity_t *ent)  // called when a player dies
 				G_ClientPrint(ent, va("You lost %d medis!", lost), CLIENT_SPECTATORS);
 			}
 		}
-		if(level.totalArmouries)
+		if(level.totalArmouries && ent->client->pers.arms && ent->client->pers.armsLastCheckpoint)
 		{
 			int lost = G_OC_NumberOfArms(ent->client->pers.arms) - G_OC_NumberOfArms(ent->client->pers.armsLastCheckpoint);
 			memcpy(ent->client->pers.arms, ent->client->pers.armsLastCheckpoint, (level.totalArmouries + 1) * sizeof(gentity_t *));
