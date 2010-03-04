@@ -910,7 +910,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     attacker = &g_entities[ ENTITYNUM_WORLD ];
 
   // handicap
-  if( attacker->client && attacker->s.eType == ET_PLAYER && attacker->client->pers.handicap > 1.f )
+  if( attacker->client && attacker->s.eType == ET_PLAYER && targ != inflictor && targ != attacker && attacker->client->pers.handicap > 1.f )
     damage = (float) damage / (float) attacker->client->pers.handicap;
 
   // shootable doors / buttons don't actually have any health
@@ -948,11 +948,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
   // Too much knockback from falling really far makes you "bounce" and 
   //  looks silly. However, none at all also looks bad. Cap it.
-  if( mod == MOD_FALLING && knockback > 50 ) 
-    knockback = 50;
+  if( !G_OC_NoKnockbackCap() )
+  {
+    if( mod == MOD_FALLING && knockback > 50 ) 
+      knockback = 50;
 
-  if( knockback > 200 )
-    knockback = 200;
+    if( knockback > 200 )
+      knockback = 200;
+  }
 
   if( targ->flags & FL_NO_KNOCKBACK )
     knockback = 0;

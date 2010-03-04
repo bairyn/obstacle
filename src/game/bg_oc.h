@@ -737,6 +737,8 @@ extern int oc_gameMode;
 	char *G_OC_MediStats(void *client, int count, int time);
 	char *G_OC_WinStats(void *client, int count, int time);
 
+	#define G_OC_NoKnockbackCap() ((BG_OC_OCMode()) ? (1) : (0))
+
 	#define G_OC_NoDamageAlert() ((BG_OC_OCMode()) ? (1) : (0))
 	#define G_OC_CanBuildableBeDestoryedOnOtherTeam() ((BG_OC_OCMode()) ? (1) : (0))
 	#define G_OC_CanBuildablesMove() (!(BG_OC_OCMode()))
