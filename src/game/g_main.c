@@ -627,8 +627,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   G_CountSpawns( );
 
   G_UpdateTeamConfigStrings( );
-
-  G_ResetPTRConnections( );
   
   if( g_lockTeamsAtStart.integer )
   {
@@ -679,7 +677,7 @@ void G_ShutdownGame( int restart )
   G_WriteSessionData( );
 
   G_admin_cleanup( );
-  G_admin_namelog_cleanup( );
+  G_namelog_cleanup( );
   G_UnregisterCommands( );
 
   G_ShutdownMapRotations( );
@@ -2030,15 +2028,15 @@ void G_Vote( gentity_t *ent, team_t team, qboolean voting )
   if( !level.voteTime[ team ] )
     return;
 
-  if( voting && ent->client->pers.voted[ team ] )
+  if( voting && ent->client->pers.voted & ( 1 << team ) )
     return;
 
-  if( !voting && !ent->client->pers.voted[ team ] )
+  if( !voting && !( ent->client->pers.voted & ( 1 << team ) ) )
     return;
 
-  ent->client->pers.voted[ team ] = voting;
+  ent->client->pers.voted |= 1 << team;
 
-  if( ent->client->pers.vote[ team ] )
+  if( ent->client->pers.vote & ( 1 << team ) )
   {
     if( voting )
       level.voteYes[ team ]++;
@@ -2144,7 +2142,7 @@ void G_CheckVote( team_t team )
   level.voteNo[ team ] = 0;
 
   for( i = 0; i < level.maxclients; i++ )
-    level.clients[ i ].pers.voted[ team ] = qfalse;
+    level.clients[ i ].pers.voted &= ~( 1 << team );
 
   trap_SetConfigstring( CS_VOTE_TIME + team, "" );
   trap_SetConfigstring( CS_VOTE_STRING + team, "" );

@@ -986,7 +986,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   level.voteThreshold[ team ] = 50;
 
   if( g_voteLimit.integer > 0 &&
-    ent->client->pers.voteCount >= g_voteLimit.integer &&
+    ent->client->pers.namelog->voteCount >= g_voteLimit.integer &&
     !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
   {
     trap_SendServerCommand( ent-g_entities, va(
@@ -1020,7 +1020,7 @@ void Cmd_CallVote_f( gentity_t *ent )
 
     if( clientNum != -1 )
     {
-      G_SanitiseString( level.clients[ clientNum ].pers.netname, name, sizeof( name ) );
+      G_DecolorString( level.clients[ clientNum ].pers.netname, name, sizeof( name ) );
     }
     else if( matches > 1 )
     {
@@ -1066,7 +1066,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
 
     Com_sprintf( level.voteString[ team ], sizeof( level.voteString[ team ] ),
-      "ban %s \"1s%s\" vote kick", level.clients[ clientNum ].pers.ip,
+      "ban %s \"1s%s\" vote kick", level.clients[ clientNum ].pers.ip.str,
       g_adminTempBan.string );
     Com_sprintf( level.voteDisplayString[ team ],
       sizeof( level.voteDisplayString[ team ] ),
@@ -1076,7 +1076,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   {
     if( !Q_stricmp( vote, "mute" ) )
     {
-      if( level.clients[ clientNum ].pers.muted )
+      if( level.clients[ clientNum ].pers.namelog->muted )
       {
         trap_SendServerCommand( ent-g_entities,
           va( "print \"%s: player is already muted\n\"", cmd ) );
@@ -1091,7 +1091,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     }
     else if( !Q_stricmp( vote, "unmute" ) )
     {
-      if( !level.clients[ clientNum ].pers.muted )
+      if( !level.clients[ clientNum ].pers.namelog->muted )
       {
         trap_SendServerCommand( ent-g_entities,
           va( "print \"%s: player is not currently muted\n\"", cmd ) );
@@ -1191,7 +1191,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   }
   else if( !Q_stricmp( vote, "denybuild" ) )
   {
-    if( level.clients[ clientNum ].pers.denyBuild )
+    if( level.clients[ clientNum ].pers.namelog->denyBuild )
     {
       trap_SendServerCommand( ent-g_entities,
         va( "print \"%s: player already lost building rights\n\"", cmd ) );
@@ -1206,7 +1206,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   }
   else if( !Q_stricmp( vote, "allowbuild" ) )
   {
-    if( !level.clients[ clientNum ].pers.denyBuild )
+    if( !level.clients[ clientNum ].pers.namelog->denyBuild )
     {
       trap_SendServerCommand( ent-g_entities,
         va( "print \"%s: player already has building rights\n\"", cmd ) );
@@ -1257,8 +1257,8 @@ void Cmd_CallVote_f( gentity_t *ent )
   trap_SetConfigstring( CS_VOTE_STRING + team,
     level.voteDisplayString[ team ] );
 
-  ent->client->pers.voteCount++;
-  ent->client->pers.vote[ team ] = qtrue;
+  ent->client->pers.namelog->voteCount++;
+  ent->client->pers.vote |= 1 << team;
   G_Vote( ent, team, qtrue );
 }
 
@@ -1283,7 +1283,7 @@ void Cmd_Vote_f( gentity_t *ent )
     return;
   }
 
-  if( ent->client->pers.voted[ team ] )
+  if( ent->client->pers.voted & ( 1 << team ) )
   {
     trap_SendServerCommand( ent-g_entities,
       va( "print \"%s: vote already cast\n\"", cmd ) );
@@ -1294,8 +1294,8 @@ void Cmd_Vote_f( gentity_t *ent )
     va( "print \"%s: vote cast\n\"", cmd ) );
 
   trap_Argv( 1, vote, sizeof( vote ) );
-  ent->client->pers.vote[ team ] =
-    ( tolower( vote[ 0 ] ) == 'y' || vote[ 0 ] == '1' );
+  ent->client->pers.vote |=
+    ( tolower( vote[ 0 ] ) == 'y' || vote[ 0 ] == '1' ) << team;
   G_Vote( ent, team, qtrue );
 }
 
@@ -1597,7 +1597,7 @@ void Cmd_Destroy_f( gentity_t *ent )
   qboolean    deconstruct = qtrue;
   qboolean    lastSpawn = qfalse;
 
-  if( ent->client->pers.denyBuild )
+  if( ent->client->pers.namelog->denyBuild )
   {
     G_TriggerMenu( ent->client->ps.clientNum, MN_B_REVOKED );
     return;
@@ -2168,7 +2168,7 @@ void Cmd_Build_f( gentity_t *ent )
   vec3_t        origin;
   team_t        team;
 
-  if( ent->client->pers.denyBuild )
+  if( ent->client->pers.namelog->denyBuild )
   {
     G_TriggerMenu( ent->client->ps.clientNum, MN_B_REVOKED );
     return;
@@ -2579,100 +2579,6 @@ void Cmd_FollowCycle_f( gentity_t *ent )
   G_FollowNewClient( ent, dir );
 }
 
-/*
-=================
-Cmd_PTRCVerify_f
-
-Check a PTR code is valid
-=================
-*/
-void Cmd_PTRCVerify_f( gentity_t *ent )
-{
-  connectionRecord_t  *connection;
-  char                s[ MAX_TOKEN_CHARS ] = { 0 };
-  int                 code;
-
-  trap_Argv( 1, s, sizeof( s ) );
-
-  if( !s[ 0 ] )
-    return;
-
-  code = atoi( s );
-
-  if( G_VerifyPTRC( code ) )
-  {
-    connection = G_FindConnectionForCode( code );
-
-    // valid code
-    if( connection->clientTeam != TEAM_NONE )
-      trap_SendServerCommand( ent->client->ps.clientNum, "ptrcconfirm" );
-
-    // restore mapping
-    ent->client->pers.connection = connection;
-  }
-  else
-  {
-    // invalid code -- generate a new one
-    connection = G_GenerateNewConnection( ent->client );
-
-    if( connection )
-    {
-      trap_SendServerCommand( ent->client->ps.clientNum,
-        va( "ptrcissue %d", connection->ptrCode ) );
-    }
-  }
-}
-
-/*
-=================
-Cmd_PTRCRestore_f
-
-Restore against a PTR code
-=================
-*/
-void Cmd_PTRCRestore_f( gentity_t *ent )
-{
-  char                s[ MAX_TOKEN_CHARS ] = { 0 };
-  int                 code;
-  connectionRecord_t  *connection;
-
-  trap_Argv( 1, s, sizeof( s ) );
-
-  if( !s[ 0 ] )
-    return;
-
-  code = atoi( s );
-
-  if( G_VerifyPTRC( code ) )
-  {
-    if( ent->client->pers.joinedATeam )
-    {
-      trap_SendServerCommand( ent - g_entities,
-        "print \"You cannot use a PTR code after joining a team\n\"" );
-    }
-    else
-    {
-      // valid code
-      connection = G_FindConnectionForCode( code );
-
-      if( connection )
-      {
-        // set the correct team
-        G_ChangeTeam( ent, connection->clientTeam );
-
-        // set the correct credit
-        ent->client->pers.credit = 0;
-        G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
-      }
-    }
-  }
-  else
-  {
-    trap_SendServerCommand( ent - g_entities,
-      va( "print \"'%d' is not a valid PTR code\n\"", code ) );
-  }
-}
-
 static void Cmd_Ignore_f( gentity_t *ent )
 {
   int pids[ MAX_CLIENTS ];
@@ -2957,8 +2863,6 @@ commands_t cmds[ ] = {
   { "mt", CMD_MESSAGE|CMD_INTERMISSION, Cmd_PrivateMessage_f },
   { "noclip", CMD_CHEAT_TEAM, Cmd_Noclip_f },
   { "notarget", CMD_CHEAT|CMD_TEAM|CMD_LIVING, Cmd_Notarget_f },
-  { "ptrcrestore", CMD_SPEC, Cmd_PTRCRestore_f },
-  { "ptrcverify", CMD_SPEC, Cmd_PTRCVerify_f },
   { "reload", CMD_HUMAN|CMD_LIVING, Cmd_Reload_f },
   { "say", CMD_MESSAGE|CMD_INTERMISSION, Cmd_Say_f },
   { "say_area", CMD_MESSAGE|CMD_TEAM|CMD_LIVING, Cmd_SayArea_f },
@@ -2966,7 +2870,7 @@ commands_t cmds[ ] = {
   { "score", CMD_INTERMISSION, ScoreboardMessage },
   { "sell", CMD_HUMAN|CMD_LIVING, Cmd_Sell_f },
   { "setviewpos", CMD_CHEAT_TEAM, Cmd_SetViewpos_f },
-  { "team", 0, Cmd_Team_f },
+  { "team", CMD_MESSAGE, Cmd_Team_f },
   { "teamvote", CMD_TEAM, Cmd_Vote_f },
   { "test", CMD_CHEAT, Cmd_Test_f },
   { "unignore", 0, Cmd_Ignore_f },
@@ -3016,7 +2920,7 @@ void ClientCommand( int clientNum )
     return;
   }
 
-  if( command->cmdFlags & CMD_MESSAGE && ( ent->client->pers.muted ||
+  if( command->cmdFlags & CMD_MESSAGE && ( ent->client->pers.namelog->muted ||
       G_FloodLimited( ent ) ) )
     return;
 
