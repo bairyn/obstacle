@@ -319,17 +319,31 @@ typedef struct
   clientList_t      ignoreList;
 } clientSession_t;
 
-// data to store details of clients that have abnormally disconnected
-typedef struct connectionRecord_s
+// namelog
+#define MAX_NAMELOG_NAMES 5
+#define MAX_NAMELOG_ADDRS 5
+typedef struct namelog_s
 {
-  int       clientNum;
-  team_t    clientTeam;
-  int       clientCredit;
+  struct namelog_s  *next;
+  char              name[ MAX_NAMELOG_NAMES ][ MAX_NAME_LENGTH ];
+  addr_t            ip[ MAX_NAMELOG_ADDRS ];
+  char              guid[ 33 ];
+  int               slot;
+  qboolean          banned;
+
+  int               nameChangeTime;
+  int               nameChanges;
+  int               voteCount;
+
+  qboolean          muted;
+  qboolean          denyBuild;
+
+  int               score;
+  int               credits;
+  team_t            team;
 
   G_OC_CONNECTIONRECORD
-
-  int       ptrCode;
-} connectionRecord_t;
+} namelog_t;
 
 #define MAX_CP 20
 #define CP_FRAME_TIME     50
@@ -364,14 +378,11 @@ typedef struct
   clientConnected_t   connected;
   usercmd_t           cmd;                // we would lose angles if not persistant
   qboolean            localClient;        // true if "ip" info key is "localhost"
-  qboolean            initialSpawn;       // the first spawn should be at a cool location
   qboolean            stickySpec;         // don't stop spectating a player after they get killed
   qboolean            pmoveFixed;         //
   char                netname[ MAX_NAME_LENGTH ];
-  int                 maxHealth;          // for handicapping
   int                 enterTime;          // level.time the client entered the game
   int                 location;           // player locations
-  int                 voteCount;          // to prevent people from constantly calling votes
   qboolean            teamInfo;           // send team overlay updates?
   float               flySpeed;           // for spectator/noclip moves
   float               handicap;           // dmg / handicap
@@ -382,22 +393,17 @@ typedef struct
   weapon_t            humanItemSelection; // humans have a starting item
   team_t              teamSelection;      // player team (copied to ps.stats[ STAT_TEAM ])
 
-  int                 teamChangeTime;     // level.time of last team change
-  qboolean            joinedATeam;        // used to tell when a PTR code is valid
-  connectionRecord_t  *connection;
+  namelog_t           *namelog;
   g_admin_admin_t     *admin;
 
   int                 aliveSeconds;       // time player has been alive in seconds
   int                 lastFreeFundTime;   // last time the player got free credits
 
-  int                 nameChangeTime;
-  int                 nameChanges;
-
   // used to save persistant[] values while in SPECTATOR_FOLLOW mode
   int                 credit;
 
-  qboolean            voted[ NUM_TEAMS ];
-  qboolean            vote[ NUM_TEAMS ];
+  int                 voted;
+  int                 vote;
 
   qboolean            displayConnectMessage;
   qboolean            displayConnectMessageNextTime;
@@ -408,9 +414,7 @@ typedef struct
 
   vec3_t              lastDeathLocation;
   char                guid[ 33 ];
-  char                ip[ 40 ];
-  qboolean            muted;
-  qboolean            denyBuild;
+  addr_t              ip;
   qboolean            override;
   char                voice[ MAX_VOICE_NAME_LEN ];
   qboolean            useUnlagged;  
@@ -776,6 +780,8 @@ typedef struct
 
   int               nextCPTime;
 
+  namelog_t         *namelogs;
+
   G_OC_LEVEL_LOCALS
 } level_locals_t;
 
@@ -931,19 +937,9 @@ qboolean          G_IsCore( buildable_t buildable );
 //
 // g_utils.c
 //
-#define ADDRLEN 16
-typedef struct
-{
-  enum
-  {
-    IPv4,
-    IPv6
-  } type;
-  byte addr[ ADDRLEN ];
-} addr_t;
-qboolean    G_AddressParse( const char *str, addr_t *addr, int *netmask );
-qboolean    G_AddressCompare( const addr_t *a, const addr_t *b, int netmask );
-qboolean    G_AdrCmpStr( const char *a, const char *b );
+//addr_t in g_admin.h for g_admin_ban_t
+qboolean    G_AddressParse( const char *str, addr_t *addr );
+qboolean    G_AddressCompare( const addr_t *a, const addr_t *b );
 
 int         G_ParticleSystemIndex( char *name );
 int         G_ShaderIndex( char *name );
@@ -1194,15 +1190,15 @@ qboolean  G_MapExists( char *name );
 void      G_ClearRotationStack( void );
 
 //
-// g_ptr.c
+// g_namelog.c
 //
-void                G_UpdatePTRConnection( gclient_t *client );
-connectionRecord_t  *G_GenerateNewConnection( gclient_t *client );
-qboolean            G_VerifyPTRC( int code );
-void                G_ResetPTRConnections( void );
-connectionRecord_t  *G_FindConnectionForCode( int code );
-void                G_DeletePTRConnection( connectionRecord_t *connection );
 
+void G_namelog_connect( gclient_t *client );
+void G_namelog_disconnect( gclient_t *client );
+void G_namelog_restore( gclient_t *client );
+void G_namelog_update_score( gclient_t *client );
+void G_namelog_update_name( gclient_t *client );
+void G_namelog_cleanup( void );
 
 //some maxs
 #define MAX_FILEPATH      144

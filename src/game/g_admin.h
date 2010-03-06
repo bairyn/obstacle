@@ -31,8 +31,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ADMBP_begin() G_admin_buffer_begin()
 #define ADMBP_end() G_admin_buffer_end(ent)
 
-#define MAX_ADMIN_NAMELOG_NAMES 5
-#define MAX_ADMIN_NAMELOG_ADDRS 5
 #define MAX_ADMIN_FLAG_LEN 20
 #define MAX_ADMIN_FLAGS 1024
 #define MAX_ADMIN_CMD_LEN 20
@@ -101,12 +99,24 @@ typedef struct g_admin_admin
 }
 g_admin_admin_t;
 
+#define ADDRLEN 16
+typedef struct
+{
+  enum
+  {
+    IPv4,
+    IPv6
+  } type;
+  byte addr[ ADDRLEN ];
+  int mask;
+  char str[ 44 ];
+} addr_t;
 typedef struct g_admin_ban
 {
   struct g_admin_ban *next;
   char name[ MAX_NAME_LENGTH ];
   char guid[ 33 ];
-  char ip[ 44 ]; // big enough for IPv6 CIDR notation (without brackets)
+  addr_t ip;
   char reason[ MAX_ADMIN_BAN_REASON ];
   char made[ 18 ]; // big enough for strftime() %c
   int expires;
@@ -123,17 +133,6 @@ typedef struct g_admin_command
   char flag[ MAX_ADMIN_FLAG_LEN ];
 }
 g_admin_command_t;
-
-typedef struct g_admin_namelog
-{
-  struct g_admin_namelog *next;
-  char      name[ MAX_ADMIN_NAMELOG_NAMES ][ MAX_NAME_LENGTH ];
-  char      ip[ MAX_ADMIN_NAMELOG_ADDRS ][ 40 ];
-  char      guid[ 33 ];
-  int       slot;
-  qboolean  banned;
-}
-g_admin_namelog_t;
 
 void G_admin_register_cmds( void );
 void G_admin_unregister_cmds( void );
@@ -152,7 +151,7 @@ qboolean admin_higher( gentity_t *admin, gentity_t *victim );
 
 void admin_writeconfig( void );
 
-// ! command functions
+// admin command functions
 qboolean G_admin_time( gentity_t *ent );
 qboolean G_admin_setlevel( gentity_t *ent );
 qboolean G_admin_kick( gentity_t *ent );
@@ -190,6 +189,5 @@ void G_admin_buffer_end( gentity_t *ent );
 
 void G_admin_duration( int secs, char *duration, int dursize );
 void G_admin_cleanup( void );
-void G_admin_namelog_cleanup( void );
 
 #endif /* ifndef _G_ADMIN_H */
