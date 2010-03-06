@@ -72,20 +72,6 @@ extern int oc_gameMode;
 
 	#define MAX_ADMIN_SHOWHIDES 10
 
-	typedef struct g_admin_hide
-	{
-		struct g_admin_hide *next;
-		char name[MAX_NAME_LENGTH];
-		char guid[33];
-		char ip[40];
-		char reason[MAX_ADMIN_HIDE_REASON];
-		char made[18]; // big enough for strftime() %c
-		int expires;
-		char hider[MAX_NAME_LENGTH];
-		int hidden;
-	}
-	g_admin_hide_t;
-
 	typedef struct g_admin_hideTest
 	{
 		char name[MAX_NAME_LENGTH];
@@ -105,9 +91,7 @@ extern int oc_gameMode;
 
 	qboolean G_admin_canEditOC(void *ent);
 
-	qboolean G_admin_hide_check(const char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, g_admin_hide_t **hideP);
-
-	g_admin_hide_t *G_admin_findHide(const g_admin_hideTest_t *hide);
+	qboolean G_admin_hide_check(void *ent, const char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, void *hideP);
 
 	#define G_OC_ADMINDEFS \
 	, \
@@ -181,10 +165,23 @@ extern int oc_gameMode;
 		"[^3name|slot#^7]" \
 	}
 
-	extern g_admin_hide_t *g_admin_hides;
-
 	#define ADMF_CAN_PERM_HIDE "CANPERMHIDE"
 	#define MAX_ADMIN_SHOWHIDES 10
+
+    #define G_OC_ADMINBEG \
+		typedef struct g_admin_hide \
+		{ \
+			struct g_admin_hide *next; \
+			char name[MAX_NAME_LENGTH]; \
+			char guid[33]; \
+			addr_t ip; \
+			char reason[MAX_ADMIN_HIDE_REASON]; \
+			char made[18];  /* big enough for strftime() %c */ \
+			int expires; \
+			char hider[MAX_NAME_LENGTH]; \
+			int hidden; \
+		} g_admin_hide_t; \
+	    extern g_admin_hide_t *g_admin_hides;
 
 	#define G_OC_ADMINWRITE \
 	{ \
@@ -203,7 +200,7 @@ extern int oc_gameMode;
 			trap_FS_Write("guid    = ", 10, f); \
 			admin_writeconfig_string(h->guid, f); \
 			trap_FS_Write("ip      = ", 10, f); \
-			admin_writeconfig_string(h->ip, f); \
+			admin_writeconfig_string(h->ip.str, f); \
 			trap_FS_Write("reason  = ", 10, f); \
 			admin_writeconfig_string(h->reason, f); \
 			trap_FS_Write("made    = ", 10, f); \
@@ -252,7 +249,8 @@ extern int oc_gameMode;
 		} \
 		else if(!Q_stricmp(t, "ip")) \
 		{ \
-			admin_readconfig_string(&cnf, h->ip, sizeof(h->ip)); \
+			admin_readconfig_string( &cnf, ip, sizeof( ip ) ); \
+			G_AddressParse( ip, &h->ip ); \
 		} \
 		else if(!Q_stricmp(t, "reason")) \
 		{ \
@@ -1222,7 +1220,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
  \
 		trap_GetUserinfo(clientNum, userinfo, sizeof(userinfo)); \
  \
-		if(G_admin_hide_check(userinfo, reason, sizeof(reason), &hidden, &hiddenTime, NULL)) \
+		if(G_admin_hide_check(ent, userinfo, reason, sizeof(reason), &hidden, &hiddenTime, NULL)) \
 		{ \
 			client->pers.hiddenTime = hiddenTime; \
 			Q_strncpyz(client->pers.hiddenReason, reason, sizeof(client->pers.hiddenReason)); \

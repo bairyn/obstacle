@@ -35,6 +35,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // big ugly global buffer for use with buffered printing of long outputs
 static char g_bfb[ 32000 ];
 
+G_OC_ADMINBEG
+
 // note: list ordered alphabetically
 g_admin_cmd_t g_admin_cmds[ ] =
   {

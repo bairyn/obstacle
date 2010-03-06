@@ -32,13 +32,26 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // admin
 //======================================================
 
+typedef struct g_admin_hide
+{
+	struct g_admin_hide *next;
+	char name[MAX_NAME_LENGTH];
+	char guid[33];
+	addr_t ip;
+	char reason[MAX_ADMIN_HIDE_REASON];
+	char made[18]; // big enough for strftime() %c
+	int expires;
+	char hider[MAX_NAME_LENGTH];
+	int hidden;
+}
+g_admin_hide_t;
+
 g_admin_hide_t *g_admin_hides = NULL;
 
 extern g_admin_level_t *g_admin_levels;
 extern g_admin_admin_t *g_admin_admins;
 extern g_admin_ban_t *g_admin_bans;
 extern g_admin_command_t *g_admin_commands;
-extern g_admin_namelog_t *g_admin_namelogs;
 
 qboolean G_admin_canEditOC(void *ent)
 {
@@ -202,7 +215,7 @@ qboolean G_admin_devchangemap(void *ent)
   return qtrue;
 }
 
-static qboolean admin_create_hide(gentity_t *ent, char *netname, char *guid, char *ip, int seconds, char *reason, int hidden)
+static qboolean admin_create_hide(gentity_t *ent, char *netname, char *guid, addr_t ip, int seconds, char *reason, int hidden)
 {
 	g_admin_hide_t *h = NULL;
 	qtime_t        qt;
@@ -230,7 +243,7 @@ static qboolean admin_create_hide(gentity_t *ent, char *netname, char *guid, cha
 
 	Q_strncpyz(h->name, netname, sizeof(h->name));
 	Q_strncpyz(h->guid, guid, sizeof(h->guid));
-	Q_strncpyz(h->ip, ip, sizeof(h->ip));
+    memcpy( &h->ip, &ip, sizeof( h->ip ) );
 	h->hidden = hidden;
 
 	Com_sprintf(h->made, sizeof(h->made), "%02i/%02i/%02i %02i:%02i:%02i",
@@ -257,9 +270,11 @@ static qboolean admin_create_hide(gentity_t *ent, char *netname, char *guid, cha
 	return qtrue;
 }
 
-qboolean G_admin_hide_check(const char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, g_admin_hide_t **hideP)
+qboolean G_admin_hide_check(void *ent_, const char *userinfo, char *reason, int rlen, int *hidden, int *hiddenTime, void *hideP_)
 {
+  g_admin_hide_t **hideP = (g_admin_hide_t **)hideP_;
   g_admin_hide_t *hide;
+  gentity_t *ent = (gentity_t *)ent_;
   char *guid, *ip;
   int t;
 
@@ -305,8 +320,8 @@ qboolean G_admin_hide_check(const char *userinfo, char *reason, int rlen, int *h
     }
     if(hideP)
         *hideP = hide;
-    
-    if(strstr(ip, hide->ip))
+
+    if( G_AddressCompare( &hide->ip, &ent->client->pers.ip ) )
     {
       return qtrue;
     }
@@ -318,18 +333,18 @@ qboolean G_admin_hide_check(const char *userinfo, char *reason, int rlen, int *h
   return qfalse;
 }
 
-g_admin_hide_t *G_admin_findHide(const g_admin_hideTest_t *hide)
+void *G_admin_findHide(const g_admin_hideTest_t *hide)
 {
 	g_admin_hide_t *h;
 
 	for(h = g_admin_hides; h; h = h->next)
 	{
 		if(!Q_stricmp(h->name, hide->name))
-			return h;
+			return (void *)h;
 		if(!Q_stricmp(h->guid, hide->guid))
-			return h;
-		if(!Q_stricmp(h->ip, hide->ip))
-			return h;
+			return (void *)h;
+		if(!Q_stricmp(h->ip.str, hide->ip))
+			return (void *)h;
 	}
 
 	return NULL;
@@ -389,7 +404,7 @@ qboolean G_admin_hide(void *ent)
 	g_admin_hide_t *hide;
     // unhide
     trap_GetUserinfo(vic - g_entities, userinfo, sizeof(userinfo));
-    if(G_admin_hide_check(userinfo, NULL, 0, NULL, NULL, &hide) && hide)
+    if(G_admin_hide_check(vic, userinfo, NULL, 0, NULL, NULL, (void *)&hide) && hide)
     {
         t = trap_RealTime(NULL);
         hide->expires = t;
@@ -425,7 +440,7 @@ qboolean G_admin_hide(void *ent)
 	g_admin_hide_t *hide;
     // hide
     trap_GetUserinfo(vic - g_entities, userinfo, sizeof(userinfo));
-	if(G_admin_hide_check(userinfo, NULL, 0, NULL, NULL, &hide) && hide)
+	if(G_admin_hide_check(vic, userinfo, NULL, 0, NULL, NULL, (void *)&hide) && hide)
     {
         t = trap_RealTime(NULL);
         hide->expires = t;
@@ -479,8 +494,7 @@ qboolean G_admin_showhides(void *ent)
   char *made;
   char n1[ MAX_NAME_LENGTH ] = {""};
   qboolean ipmatch = qfalse;
-  addr_t ipa, ipb;
-  int neta, netb;
+  addr_t ip;
   char name_match[ MAX_NAME_LENGTH ] = {""};
   g_admin_hide_t *hide, *p = NULL;
 
@@ -523,7 +537,7 @@ qboolean G_admin_showhides(void *ent)
     else if( start < 0 )
       start = found + start;
     else
-      ipmatch = G_AddressParse( filter, &ipa, &neta );
+      ipmatch = G_AddressParse( filter, &ip );
   }
 
   if( start > found )
@@ -540,10 +554,8 @@ qboolean G_admin_showhides(void *ent)
 
     if( ipmatch )
     {
-      if( !G_AddressParse( hide->ip, &ipb, &netb ) )
-        continue;
-      if( !G_AddressCompare( &ipa, &ipb, neta ) &&
-          !G_AddressCompare( &ipa, &ipb, netb ) )
+      if( !G_AddressCompare( &ip, &hide->ip ) &&
+          !G_AddressCompare( &hide->ip, &ip ) )
         continue;
     }
     else if( name_match[ 0 ] )
@@ -573,10 +585,8 @@ qboolean G_admin_showhides(void *ent)
 
     if( ipmatch )
     {
-      if( !G_AddressParse( hide->ip, &ipb, &netb ) )
-        continue;
-      if( !G_AddressCompare( &ipa, &ipb, neta ) &&
-          !G_AddressCompare( &ipa, &ipb, netb ) )
+      if( !G_AddressCompare( &ip, &hide->ip ) &&
+          !G_AddressCompare( &hide->ip, &ip ) )
         continue;
     }
     else if( name_match[ 0 ] )
@@ -616,7 +626,7 @@ qboolean G_admin_showhides(void *ent)
              ( count + start ),
              max_name + colorlen1,
              hide->name,
-             hide->ip,
+             hide->ip.str,
              date,
              max_hider + colorlen2,
              hide->hider,
@@ -691,7 +701,7 @@ qboolean G_admin_adjusthide(void *ent_)
   trap_Argv( 2, secs, sizeof( secs ) );
   if( secs[ 0 ] == '/' )
   {
-    int max = strchr( hide->ip, ':' ) ? 128 : 32;
+    int max = strchr( hide->ip.str, ':' ) ? 128 : 32;
     int min = ent ? max / 2 : 1;
     mask = atoi( secs + 1 );
     if( mask < min || mask > max )
@@ -769,10 +779,10 @@ qboolean G_admin_adjusthide(void *ent_)
 
   if( mask )
   {
-    char *p = strchr( hide->ip, '/' );
+    char *p = strchr( hide->ip.str, '/' );
     if( !p )
-      p = hide->ip + strlen( hide->ip );
-    Com_sprintf( p, sizeof( hide->ip ) - ( p - hide->ip ), "/%d", mask );
+      p = hide->ip.str + strlen( hide->ip.str );
+    Com_sprintf( p, sizeof( hide->ip.str ) - ( p - hide->ip.str ), "/%d", mask );
   }
   reason = ConcatArgs( 3 + skiparg );
   if( *reason )
