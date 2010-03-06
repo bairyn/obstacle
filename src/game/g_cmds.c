@@ -1470,7 +1470,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   G_LogPrintf("Vote: %s^7 called a vote: %s^7\n", 
       ent->client->pers.netname, level.voteDisplayString[ team ] );
 
-  ent->client->pers.voteCount++;
+  ent->client->pers.namelog->voteCount++;
 
   // start the voting
   level.voteTime[ team ] = level.time;

@@ -968,7 +968,7 @@ void G_OC_LayoutLoad(char *layout)
 		{
 		  i = 0;
 		  sscanf( line, "%s %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
-			&buildName,
+			buildName,
 			&origin[ 0 ], &origin[ 1 ], &origin[ 2 ],
 			&angles[ 0 ], &angles[ 1 ], &angles[ 2 ],
 			&origin2[ 0 ], &origin2[ 1 ], &origin2[ 2 ],
@@ -1004,7 +1004,7 @@ void G_OC_LayoutLoad(char *layout)
 		  }
 		  else
 		  {
-			buildable = BG_BuildableByName( buildName )->number
+			buildable = BG_BuildableByName( buildName )->number;
 
 			if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
 			{
