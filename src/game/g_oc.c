@@ -915,7 +915,8 @@ void G_OC_LayoutLoad(char *layout)
 	int len;
 	char *layoutPtr;
 	char map[MAX_QPATH];
-	int buildable = BA_NONE;
+	char buildName[ MAX_TOKEN_CHARS ];
+	int buildable;
 	vec3_t origin = { 0.0f, 0.0f, 0.0f };
 	vec3_t angles = { 0.0f, 0.0f, 0.0f };
 	vec3_t origin2 = { 0.0f, 0.0f, 0.0f };
@@ -966,37 +967,69 @@ void G_OC_LayoutLoad(char *layout)
 		if(*layout == '\n')
 		{
 		  i = 0;
-		  sscanf(line, "%d %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
-			&buildable,
-			&origin[0], &origin[1], &origin[2],
-			&angles[0], &angles[1], &angles[2],
-			&origin2[0], &origin2[1], &origin2[2],
-			&angles2[0], &angles2[1], &angles2[2],
-			&groupID, &reserved, &reserved2);
-
-		  if(buildable > BA_NONE && buildable < BA_NUM_BUILDABLES)
+		  sscanf( line, "%s %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
+			&buildName,
+			&origin[ 0 ], &origin[ 1 ], &origin[ 2 ],
+			&angles[ 0 ], &angles[ 1 ], &angles[ 2 ],
+			&origin2[ 0 ], &origin2[ 1 ], &origin2[ 2 ],
+			&angles2[ 0 ], &angles2[ 1 ], &angles2[ 2 ],
+			&groupID, &reserved, &reserved2 );
+		  buildable = atoi( buildName );
+		  if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
 		  {
-			l->buildable = buildable;
-			VectorCopy(origin, l->origin);
-			VectorCopy(angles, l->angles);
-			VectorCopy(origin2, l->origin2);
-			VectorCopy(angles2, l->angles2);
-			l->groupID = groupID;
-			l->reserved = reserved;
-			l->reserved2 = reserved2;
-			l++;
-			if(++j >= sizeof(layoutTable) / sizeof(layoutTable[0]))
+			if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
 			{
-				G_ClientPrint(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), CLIENT_NULL);
-				G_ClientCP(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), NULL, CLIENT_NULL);
-				G_LogPrintf("^1Error: ^7Too many buildables (%d)!\n", sizeof(layoutTable) / sizeof(layoutTable[0]));
-				return;
+				l->buildable = buildable;
+				VectorCopy(origin, l->origin);
+				VectorCopy(angles, l->angles);
+				VectorCopy(origin2, l->origin2);
+				VectorCopy(angles2, l->angles2);
+				l->groupID = groupID;
+				l->reserved = reserved;
+				l->reserved2 = reserved2;
+				l++;
+				if(++j >= sizeof(layoutTable) / sizeof(layoutTable[0]))
+				{
+					G_ClientPrint(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), CLIENT_NULL);
+					G_ClientCP(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), NULL, CLIENT_NULL);
+					G_LogPrintf("^1Error: ^7Too many buildables (%d)!\n", sizeof(layoutTable) / sizeof(layoutTable[0]));
+					return;
+				}
+			}
+			else
+			{
+			  G_Printf( S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
+				" layout.  skipping\n", buildable );
 			}
 		  }
-		  else if(!(buildable > BA_NONE && buildable < BA_NUM_BUILDABLES))
+		  else
 		  {
-			G_Printf(S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
-			  " layout.  skipping\n", buildable);
+			buildable = BG_BuildableByName( buildName )->number
+
+			if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
+			{
+				l->buildable = buildable;
+				VectorCopy(origin, l->origin);
+				VectorCopy(angles, l->angles);
+				VectorCopy(origin2, l->origin2);
+				VectorCopy(angles2, l->angles2);
+				l->groupID = groupID;
+				l->reserved = reserved;
+				l->reserved2 = reserved2;
+				l++;
+				if(++j >= sizeof(layoutTable) / sizeof(layoutTable[0]))
+				{
+					G_ClientPrint(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), CLIENT_NULL);
+					G_ClientCP(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), NULL, CLIENT_NULL);
+					G_LogPrintf("^1Error: ^7Too many buildables (%d)!\n", sizeof(layoutTable) / sizeof(layoutTable[0]));
+					return;
+				}
+			}
+			else
+			{
+			  G_Printf( S_COLOR_YELLOW "WARNING: bad buildable name (%s) in "
+				" layout.  skipping\n", buildName );
+			}
 		  }
 		}
 		layout++;

@@ -4849,8 +4849,8 @@ void G_LayoutSave( char *name )
     if( ent->s.eType != ET_BUILDABLE )
       continue;
 
-    s = va( "%i %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
-      ent->s.modelindex,
+    s = va( "%s %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
+      BG_Buildable( ent->s.modelindex )->name,
       ent->s.pos.trBase[ 0 ],
       ent->s.pos.trBase[ 1 ],
       ent->s.pos.trBase[ 2 ],
@@ -5036,7 +5036,8 @@ void G_LayoutLoad( void )
   int len;
   char *layout, *layoutHead;
   char map[ MAX_QPATH ];
-  int buildable = BA_NONE;
+  char buildName[ MAX_TOKEN_CHARS ];
+  int buildable;
   vec3_t origin = { 0.0f, 0.0f, 0.0f };
   vec3_t angles = { 0.0f, 0.0f, 0.0f };
   vec3_t origin2 = { 0.0f, 0.0f, 0.0f };
@@ -5075,19 +5076,32 @@ void G_LayoutLoad( void )
     if( *layout == '\n' )
     {
       i = 0;
-      sscanf( line, "%d %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
-        &buildable,
+      sscanf( line, "%s %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f\n",
+        &buildName,
         &origin[ 0 ], &origin[ 1 ], &origin[ 2 ],
         &angles[ 0 ], &angles[ 1 ], &angles[ 2 ],
         &origin2[ 0 ], &origin2[ 1 ], &origin2[ 2 ],
         &angles2[ 0 ], &angles2[ 1 ], &angles2[ 2 ],
         &groupID, &reserved, &reserved2 );
-
+      buildable = atoi( buildName );
       if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
-        G_LayoutBuildItem( buildable, origin, angles, origin2, angles2, groupID, reserved, reserved2 );
+      {
+        if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
+          G_LayoutBuildItem( buildable, origin, angles, origin2, angles2, groupID, reserved, reserved2 );
+        else
+          G_Printf( S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
+            " layout.  skipping\n", buildable );
+      }
       else
-        G_Printf( S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
-          " layout.  skipping\n", buildable );
+      {
+        buildable = BG_BuildableByName( buildName )->number
+
+        if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
+          G_LayoutBuildItem( buildable, origin, angles, origin2, angles2, groupID, reserved, reserved2 );
+        else
+          G_Printf( S_COLOR_YELLOW "WARNING: bad buildable name (%s) in "
+            " layout.  skipping\n", buildName );
+      }
     }
     layout++;
   }
