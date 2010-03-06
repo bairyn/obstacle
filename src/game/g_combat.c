@@ -235,15 +235,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     if( attacker->client )
       killerName = attacker->client->pers.netname;
     else
-      killerName = "<non-client>";
+      killerName = "<world>";
   }
   else
-  {
-    killer = ENTITYNUM_WORLD;
-    killerName = "<world>";
-  }
-
-  if( killer < 0 || killer >= MAX_CLIENTS )
   {
     killer = ENTITYNUM_WORLD;
     killerName = "<world>";
@@ -1401,13 +1395,10 @@ void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
                        ( mod == MOD_DECONSTRUCT && self->deconstruct ) );
   G_BuildLogSet( log, self );
 
-  if( !actor || !actor->client )
+  if( !actor )
     return;
 
-  if( mod == MOD_NOCREEP )
-    return;
-
-  if( actor->client->pers.teamSelection ==
+  if( actor->client && actor->client->pers.teamSelection ==
     BG_Buildable( self->s.modelindex )->team )
   {
     G_TeamCommand( actor->client->ps.stats[ STAT_TEAM ],
@@ -1424,5 +1415,5 @@ void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
     modNames[ mod ],
     BG_Buildable( self->s.modelindex )->humanName,
     mod == MOD_DECONSTRUCT ? "deconstructed" : "destroyed",
-    actor->client->pers.netname );
+    actor->client ? actor->client->pers.netname : "<world>" );
 }
