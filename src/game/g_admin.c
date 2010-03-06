@@ -941,11 +941,11 @@ qboolean G_admin_cmd_check( gentity_t *ent )
 
 static const char *G_admin_namelog_find_name( const char *guid )
 {
-  g_admin_namelog_t *n;
+  namelog_t         *n;
 
   if( !guid )
     return "<world>";
-  for( n = g_admin_namelogs; n; n = n->next )
+  for( n = level.namelogs; n; n = n->next )
   {
     if( !Q_stricmp( guid, n->guid ) )
     {
@@ -963,16 +963,16 @@ static const char *G_admin_namelog_find_guid( char *name )
 {
   char              cleanName[ MAX_NAME_LENGTH ];
   char              testName[ MAX_NAME_LENGTH ];
-  g_admin_namelog_t *n;
+  namelog_t         *n;
   int               i;
   char              *guid = NULL;
 
   G_SanitiseString( name, cleanName, sizeof( cleanName ) );
   if( !cleanName[ 0 ] )
     return NULL;
-  for( n = g_admin_namelogs; n; n = n->next )
+  for( n = level.namelogs; n; n = n->next )
   {
-    for( i = 0; i < MAX_ADMIN_NAMELOG_NAMES && n->name[ i ][ 0 ]; i++ )
+    for( i = 0; i < MAX_NAMELOG_NAMES && n->name[ i ][ 0 ]; i++ )
     {
       G_SanitiseString( n->name[ i ], testName, sizeof( testName ) );
       if( strstr( testName, cleanName ) )
