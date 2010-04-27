@@ -1263,7 +1263,7 @@ void Cmd_CallVote_f( gentity_t *ent )
             return;
           }
 
-          if( !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg, arg2 ), NULL, FS_READ ) )
+          if( strcmp( arg2, "*BUILTIN*" ) != 0 && !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg, arg2 ), NULL, FS_READ ) )
           {
             trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
               "'layouts/%s/%s.dat' could not be found on the server\n\"", cmd, arg, arg2 ) );
@@ -1331,7 +1331,7 @@ void Cmd_CallVote_f( gentity_t *ent )
             return;
           }
 
-          if( !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg, arg2 ), NULL, FS_READ ) )
+          if( strcmp( arg2, "*BUILTIN*" ) != 0 && !trap_FS_FOpenFile( va( "layouts/%s/%s.dat", arg, arg2 ), NULL, FS_READ ) )
           {
             trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
                   "'layouts/%s/%s.dat' could not be found on the server\n\"", cmd, arg, arg2 ) );
