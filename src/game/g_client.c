@@ -1146,6 +1146,14 @@ char *ClientUserinfoChanged( int clientNum )
   else
     client->ps.persistant[ PERS_STATE ] &= ~PS_SPRINTTOGGLE;
 
+  // old sprint
+  s = Info_ValueForKey( userinfo, "cg_oldSprint" );
+
+  if( atoi( s ) )
+    client->ps.persistant[ PERS_STATE ] |= PS_OLDSPRINT;
+  else
+    client->ps.persistant[ PERS_STATE ] &= ~PS_OLDSPRINT;
+
   // fly speed
   s = Info_ValueForKey( userinfo, "cg_flySpeed" );
 
