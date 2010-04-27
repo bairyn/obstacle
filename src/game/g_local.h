@@ -215,7 +215,6 @@ struct gentity_s
   int               clientSpawnTime;    // the time until this spawn can spawn a client
 
   int               credits[ MAX_CLIENTS ];     // human credits for each client
-  qboolean          creditsHash[ MAX_CLIENTS ]; // track who has claimed credit
   int               killedBy;                   // clientNum of killer
 
   gentity_t         *targeted;          // true if the player is currently a valid target of a turret
@@ -317,6 +316,7 @@ typedef struct
   weapon_t            humanItemSelection; // humans have a starting item
   team_t              teamSelection;      // player team (copied to ps.stats[ STAT_TEAM ])
 
+  int                 teamChangeTime;     // level.time of last team change
   namelog_t           *namelog;
   g_admin_admin_t     *admin;
 
@@ -754,7 +754,7 @@ void              G_BaseSelfDestruct( team_t team );
 int               G_NextQueueTime( int queuedBP, int totalBP, int queueBaseRate );
 void              G_QueueBuildPoints( gentity_t *self );
 int               G_GetBuildPoints( const vec3_t pos, team_t team, int dist );
-qboolean          G_FindPower( gentity_t *self );
+qboolean          G_FindPower( gentity_t *self, qboolean searchUnspawned );
 gentity_t         *G_PowerEntityForPoint( const vec3_t origin );
 gentity_t         *G_PowerEntityForEntity( gentity_t *ent );
 gentity_t         *G_RepeaterEntityForPoint( vec3_t origin );
@@ -957,7 +957,7 @@ int  G_TimeTilSuddenDeath( void );
 // g_client.c
 //
 char *ClientConnect( int clientNum, qboolean firstTime );
-void ClientUserinfoChanged( int clientNum );
+char *ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );
 void ClientBegin( int clientNum );
 void ClientCommand( int clientNum );
