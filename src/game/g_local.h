@@ -1265,6 +1265,8 @@ extern  vmCvar_t  g_alienMaxStage;
 extern  vmCvar_t  g_alienStage2Threshold;
 extern  vmCvar_t  g_alienStage3Threshold;
 extern  vmCvar_t  g_freeFundPeriod;
+extern  vmCvar_t  g_instantDomination;
+extern  vmCvar_t  g_nextInstantDomination;
 
 extern  vmCvar_t  g_unlagged;
 

@@ -104,6 +104,8 @@ vmCvar_t  g_alienMaxStage;
 vmCvar_t  g_alienStage2Threshold;
 vmCvar_t  g_alienStage3Threshold;
 vmCvar_t  g_freeFundPeriod;
+vmCvar_t  g_instantDomination;
+vmCvar_t  g_nextInstantDomination;
 
 vmCvar_t  g_unlagged;
 
@@ -252,6 +254,8 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_alienStage2Threshold, "g_alienStage2Threshold", DEFAULT_ALIEN_STAGE2_THRESH, 0, 0, qfalse  },
   { &g_alienStage3Threshold, "g_alienStage3Threshold", DEFAULT_ALIEN_STAGE3_THRESH, 0, 0, qfalse  },
   { &g_freeFundPeriod, "g_freeFundPeriod", DEFAULT_FREEKILL_PERIOD, CVAR_ARCHIVE, 0, qtrue },
+  { &g_instantDomination, "g_instantDomination", DOMINATION_INSTANT_DEFAULT, CVAR_ARCHIVE, 0, qtrue },
+  { &g_nextInstantDomination, "g_nextInstantDomination", "", 0, 0, qtrue },
 
   { &g_unlagged, "g_unlagged", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
 
@@ -673,6 +677,12 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   G_InitMapRotations( );
   G_InitSpawnQueue( &level.alienSpawnQueue );
   G_InitSpawnQueue( &level.humanSpawnQueue );
+
+  if( g_nextInstantDomination.string[ 0 ] )
+  {
+    trap_Cvar_Set( "g_instantDomination", g_nextInstantDomination.string );
+    trap_Cvar_Set( "g_nextInstantDomination", "" );
+  }
 
   if( g_debugMapRotation.integer )
     G_PrintRotations( );
@@ -1143,18 +1153,35 @@ void G_CalculateBuildPoints( void )
   int               i, j;
   buildPointZone_t  *zone;
   int               dps = G_DominationPoints();
-  float             alienModifier;
-  float             humanModifier;
+  float             alienModifier, alienQueueModifier;
+  float             humanModifier, humanQueueModifier;
 
   if( dps > 0 )
   {
-    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+    if( g_instantDomination.integer )
+    {
+      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+
+      alienQueueModifier = INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+      humanQueueModifier = INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+    }
+    else
+    {
+      alienModifier = DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+      humanModifier = DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+
+      alienQueueModifier = DOMINATION_ALIEN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+      humanQueueModifier = DOMINATION_HUMAN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+    }
   }
   else
   {
     alienModifier = 1.f;
     humanModifier = 1.f;
+
+    alienQueueModifier = 1.f;
+    humanQueueModifier = 1.f;
   }
 
   // BP queue updates
@@ -1164,7 +1191,7 @@ void G_CalculateBuildPoints( void )
     level.alienBuildPointQueue--;
     level.alienNextQueueTime += G_NextQueueTime( level.alienBuildPointQueue,
                                                  g_alienBuildPoints.integer,
-                                                 g_alienBuildQueueTime.integer / alienModifier );
+                                                 g_alienBuildQueueTime.integer / alienQueueModifier );
   }
 
   while( level.humanBuildPointQueue > 0 &&
@@ -1173,7 +1200,7 @@ void G_CalculateBuildPoints( void )
     level.humanBuildPointQueue--;
     level.humanNextQueueTime += G_NextQueueTime( level.humanBuildPointQueue,
                                                  g_humanBuildPoints.integer,
-                                                 g_humanBuildQueueTime.integer / humanModifier );
+                                                 g_humanBuildQueueTime.integer / humanQueueModifier );
   }
 
   // walking buildable updates

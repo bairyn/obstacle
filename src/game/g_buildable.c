@@ -135,8 +135,16 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
 
   if( dps > 0 )
   {
-    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+    if( g_instantDomination.integer )
+    {
+      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+    }
+    else
+    {
+      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
+      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+    }
   }
   else
   {
@@ -191,7 +199,7 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
         break;
 
       default:
-        requiredDistance = DOMINATION_RANGE;
+        requiredDistance = ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE );
         break;
     }
 
@@ -238,7 +246,8 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
 
           buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
 
-          if( buildPoints >= 0 || ALWAYS_POWER )
+          if( buildPoints >= 0 ||
+              ( g_instantDomination.integer ? INSTANT_DOMINATION_ALWAYS_POWER : DOMINATION_ALWAYS_POWER ) )
           {
             // Return immediately
             self->parentNode = ent;
@@ -285,7 +294,8 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
 
           buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
 
-          if( buildPoints >= 0 || ALWAYS_POWER )
+          if( buildPoints >= 0 ||
+              ( g_instantDomination.integer ? INSTANT_DOMINATION_ALWAYS_POWER : DOMINATION_ALWAYS_POWER ) )
           {
             closestProvider = ent;
             minDistance = distance;
@@ -461,7 +471,7 @@ qboolean G_InPowerZone( gentity_t *self )
       else if( ent->s.modelindex == BA_H_REPEATER && distance <= REPEATER_BASESIZE )
         return qtrue;
       // allow repeaters to be built within range of domination points
-      //else if( BG_IsDPoint( ent->s.modelindex ) && distance <= DOMINATION_RANGE )
+      //else if( BG_IsDPoint( ent->s.modelindex ) && distance <= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
         //return qtrue;
     }
   }
@@ -2264,6 +2274,11 @@ void Domination_Think( gentity_t *self )
   gentity_t *ent;
   float balance, distance;
 
+  if( g_instantDomination.integer )
+  {
+    range[0] = range[1] = range[2] = INSTANT_DOMINATION_RANGE;
+  }
+
   players[ TEAM_ALIENS ] = 0;
   players[ TEAM_HUMANS ] = 0;
   client[ TEAM_ALIENS ] = -1;
@@ -2315,13 +2330,23 @@ void Domination_Think( gentity_t *self )
     {
       team = ent->client->pers.teamSelection;
       if( team == TEAM_HUMANS )
-        weight = DOMINATION_TIME_HUMAN;
+      {
+        if( self->dominationTeam == TEAM_ALIENS )
+          weight = ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_HUMAN_CLEAR : DOMINATION_TIME_HUMAN_CLEAR );
+        else
+          weight = ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_HUMAN : DOMINATION_TIME_HUMAN );
         //weight = BG_GetValueOfPlayer( &ent->client->ps ) /
                  //DOMINATION_WS_HUMAN;
+      }
       else if( team == TEAM_ALIENS )
-        weight = -DOMINATION_TIME_ALIEN;
+      {
+        if( self->dominationTeam == TEAM_HUMANS )
+          weight = -( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_ALIEN_CLEAR : DOMINATION_TIME_ALIEN_CLEAR );
+        else
+          weight = -( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_ALIEN : DOMINATION_TIME_ALIEN );
         //weight = -BG_Buildable( ent->client->ps.stats[ STAT_CLASS ] )->value /
                  //DOMINATION_WS_ALIEN;
+      }
       if( client[ team ] < 0 )
         client[ team ] = entityList[ i ];
     }
@@ -2333,9 +2358,9 @@ void Domination_Think( gentity_t *self )
     // Square fall-off with distance
     VectorSubtract( self->s.origin, ent->s.origin, dir );
     distance = VectorLength( dir );
-    if( distance >= DOMINATION_RANGE )
+    if( distance >= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
       continue;
-    weight *= DOMINATION_RANGE_SQRT / sqrt( DOMINATION_RANGE - distance );
+    weight *= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE_SQRT : DOMINATION_RANGE_SQRT ) / sqrt( ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) - distance );
     if( weight < 0.1f && weight > -0.9f )
       continue;
 
@@ -2351,7 +2376,7 @@ void Domination_Think( gentity_t *self )
     if( self->dominationTeam != TEAM_ALIENS && balance < 0 )
     {
       self->dominationAttacking = TEAM_ALIENS;
-      self->timestamp = level.time + DOMINATION_COOLDOWN;
+      self->timestamp = level.time + ( g_instantDomination.integer ? INSTANT_DOMINATION_COOLDOWN : DOMINATION_COOLDOWN );
       //trap_SendServerCommand( -1, va( "print \"^1Aliens^7 attacking %s^7!\n\"",
                               //self->dominationName ) );
       if( self->dominationTeam == TEAM_NONE )
@@ -2363,7 +2388,7 @@ void Domination_Think( gentity_t *self )
     else if( self->dominationTeam != TEAM_HUMANS && balance > 0 )
     {
       self->dominationAttacking = TEAM_HUMANS;
-      self->timestamp = level.time + DOMINATION_COOLDOWN;
+      self->timestamp = level.time + ( g_instantDomination.integer ? INSTANT_DOMINATION_COOLDOWN : DOMINATION_COOLDOWN );
       //trap_SendServerCommand( -1, va( "print \"^5Humans^7 attacking %s^7!\n\"",
                               //self->dominationName ) );
       if( self->dominationTeam == TEAM_NONE )
@@ -2375,12 +2400,12 @@ void Domination_Think( gentity_t *self )
   // Neutral and not under attack; decrement the domination time
   if( self->dominationTeam == TEAM_NONE && !players[ TEAM_HUMANS ] &&
       !players[ TEAM_ALIENS ] )
-    self->dominationTime -= 100.0 * think_interval / DOMINATION_TIME_CLEAR;
+    self->dominationTime -= 100.0 * think_interval / ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_CLEAR : DOMINATION_TIME_CLEAR );
 
   // Claimed and not under attack; increment the domination time
   else if( ( self->dominationTeam == TEAM_HUMANS && !players[ TEAM_ALIENS ] ) ||
            ( self->dominationTeam == TEAM_ALIENS && !players[ TEAM_HUMANS ] ) )
-    self->dominationTime += 100.0 * think_interval / DOMINATION_TIME_CLEAR;
+    self->dominationTime += 100.0 * think_interval / ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_CLEAR : DOMINATION_TIME_CLEAR );
 
   // Increment the domination timer according to the balance shift
   else if( self->dominationTeam == TEAM_HUMANS ||
@@ -2500,10 +2525,14 @@ void HMedistat_Think( gentity_t *self )
   int       entityList[ MAX_GENTITIES ];
   vec3_t    mins, maxs;
   int       i, num;
+  int       dps  = G_DominationPoints();
+  float     modifier;
   gentity_t *player;
   qboolean  occupied = qfalse;
 
-  self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
+  modifier = ( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_HEAL_SCALE : DOMINATION_HUMAN_HEAL_SCALE ) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+
+  self->nextthink = level.time + modifier * DOMINATION_HUMAN_HEAL_SCALE * BG_Buildable( self->s.modelindex )->nextthink;
 
   self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
@@ -4062,7 +4091,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
 
           VectorSubtract( origin, tempent->s.origin, dir );
           distance = VectorLength( dir );
-          if( distance < DOMINATION_RANGE )
+          if( distance < ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
             return IBE_NEARDP;
         }
       }

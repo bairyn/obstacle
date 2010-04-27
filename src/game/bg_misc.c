@@ -632,7 +632,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     ( 1 << WP_HBUILD )|
     ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
-    100,                   //int       nextthink;
+    DOMINATION_THINK,      //int       nextthink;
     0,                     //int       buildTime;
     qfalse,                //qboolean  usable;
     0,                     //int       turretRange;
@@ -668,7 +668,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     ( 1 << WP_HBUILD )|
     ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
-    100,                   //int       nextthink;
+    DOMINATION_THINK,      //int       nextthink;
     0,                     //int       buildTime;
     qfalse,                //qboolean  usable;
     0,                     //int       turretRange;
@@ -704,7 +704,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     ( 1 << WP_HBUILD )|
     ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
-    100,                   //int       nextthink;
+    DOMINATION_THINK,      //int       nextthink;
     0,                     //int       buildTime;
     qfalse,                //qboolean  usable;
     0,                     //int       turretRange;
@@ -740,7 +740,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
     ( 1 << WP_HBUILD )|
     ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
     BANIM_IDLE1,           //int       idleAnim;
-    100,                   //int       nextthink;
+    DOMINATION_THINK,      //int       nextthink;
     0,                     //int       buildTime;
     qfalse,                //qboolean  usable;
     0,                     //int       turretRange;
