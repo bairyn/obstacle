@@ -1307,7 +1307,7 @@ void Cmd_CallVote_f( gentity_t *ent )
           return;
         }
 
-        if( G_MapExists( g_nextMap.string ) && level.numNextVotes == 0 )
+        if( G_MapExists( g_nextMap.string ) && level.numNextVotes == 0 && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
         {
           trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
             "the next map is already set to '%s^7'\n\"", cmd, g_nextMap.string ) );
