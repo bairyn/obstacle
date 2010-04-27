@@ -1,6 +1,6 @@
-From 67914903593c5a25235db9e1012f1aed6e685651 Mon Sep 17 00:00:00 2001
-From: bob <KrabbyKrap@gmail.com>
-Date: Thu, 7 Jan 2010 22:56:51 +0000
+From 73a6d80cf1cac2fb8a904e60f1c8dc98e97e3626 Mon Sep 17 00:00:00 2001
+From: Byron Johnson <KrabbyKrap@gmail.com>
+Date: Tue, 27 Apr 2010 23:30:43 +0000
 Subject: [PATCH] Domination
 
 ---
@@ -19,7 +19,6 @@ Subject: [PATCH] Domination
  assets/layouts/1984b4/dom.dat                   |   15 +
  assets/layouts/ancient_remains_1-0/dom.dat      |   21 +
  assets/layouts/arachnid2/dom.dat                |   23 +
- assets/layouts/atcs/dom.dat                     |   19 +
  assets/layouts/atcs/test.dat                    |   19 +
  assets/layouts/atcs3/dom.dat                    |   22 +
  assets/layouts/atcszalpha-b2/dom.dat            |   16 +
@@ -57,22 +56,21 @@ Subject: [PATCH] Domination
  assets/sound/buildables/dpoint_c/sound.cfg      |   14 +
  assets/sound/buildables/dpoint_d/sound.cfg      |   14 +
  src/cgame/cg_buildable.c                        |   67 ++-
- src/cgame/cg_draw.c                             |  100 ++++
+ src/cgame/cg_draw.c                             |  100 +++
  src/cgame/cg_local.h                            |   11 +
  src/cgame/cg_main.c                             |   11 +
  src/cgame/cg_servercmds.c                       |    9 +
  src/game/bg_misc.c                              |  160 +++++
- src/game/bg_oc.h                                |    4 +-
  src/game/bg_public.h                            |   18 +-
- src/game/g_active.c                             |   52 ++-
- src/game/g_buildable.c                          |  725 ++++++++++++++++------
- src/game/g_cmds.c                               |   21 +-
+ src/game/g_active.c                             |  111 +++-
+ src/game/g_buildable.c                          |  759 +++++++++++++++++------
+ src/game/g_cmds.c                               |   56 ++-
  src/game/g_combat.c                             |    2 +
- src/game/g_local.h                              |   42 +-
- src/game/g_main.c                               |   97 ++--
- src/game/tremulous.h                            |   35 ++
+ src/game/g_local.h                              |   45 +-
+ src/game/g_main.c                               |  126 +++--
+ src/game/tremulous.h                            |   59 ++
  src/ui/ui_main.c                                |   13 +-
- 68 files changed, 1850 insertions(+), 284 deletions(-)
+ 66 files changed, 2012 insertions(+), 283 deletions(-)
  create mode 100644 assets/configs/buildables/aoeu/dpoint_a.cfg
  create mode 100644 assets/configs/buildables/aoeu/dpoint_b.cfg
  create mode 100644 assets/configs/buildables/aoeu/dpoint_c.cfg
@@ -88,7 +86,6 @@ Subject: [PATCH] Domination
  create mode 100644 assets/layouts/1984b4/dom.dat
  create mode 100644 assets/layouts/ancient_remains_1-0/dom.dat
  create mode 100644 assets/layouts/arachnid2/dom.dat
- create mode 100644 assets/layouts/atcs/dom.dat
  create mode 100644 assets/layouts/atcs/test.dat
  create mode 100644 assets/layouts/atcs3/dom.dat
  create mode 100644 assets/layouts/atcszalpha-b2/dom.dat
@@ -335,31 +332,6 @@ index 0000000..589e705
 +1 792.000000 -3216.000000 -144.875000 0.000000 180.000000 0.000000 0.000000 0.000000 1.000000 0.000000 180.000000 0.000000
 +17 -15.000000 -2493.000000 -63.000000 0.000000 269.000000 360.000000 0.000000 0.000000 1.000000 0.000000 269.000000 1.000000
 +2 792.000000 -3360.000000 -8.875000 0.000000 200.000000 0.000000 0.000000 0.000000 1.000000 0.000000 200.000000 0.000000
-diff --git a/assets/layouts/atcs/dom.dat b/assets/layouts/atcs/dom.dat
-new file mode 100644
-index 0000000..3ee9bd5
---- /dev/null
-+++ b/assets/layouts/atcs/dom.dat
-@@ -0,0 +1,19 @@
-+4 -1904.000000 176.000000 -112.875000 0.000000 90.000000 0.000000 0.000000 0.000000 1.000000 0.000000 90.000000 0.000000
-+14 1696.000000 200.000000 23.125000 0.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000
-+12 1616.000000 200.000000 29.125000 0.000000 90.000000 0.000000 0.000000 0.000000 1.000000 0.000000 90.000000 0.000000
-+10 1760.000000 64.000000 -107.875000 0.000000 180.000000 0.000000 0.000000 0.000000 1.000000 0.000000 180.000000 0.000000
-+10 1632.000000 -256.000000 36.125000 0.000000 270.000000 0.000000 0.000000 0.000000 1.000000 0.000000 270.000000 0.000000
-+10 1760.000000 -64.000000 -107.875000 0.000000 180.000000 0.000000 0.000000 0.000000 1.000000 0.000000 180.000000 0.000000
-+4 -1680.000000 -336.000000 31.125000 0.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000
-+4 -1712.000000 -176.000000 -112.875000 0.000000 90.000000 0.000000 0.000000 0.000000 1.000000 0.000000 90.000000 0.000000
-+4 -1712.000000 176.000000 -112.875000 0.000000 180.000000 0.000000 0.000000 0.000000 1.000000 0.000000 180.000000 0.000000
-+1 -1856.000000 448.000000 31.125000 0.000000 405.000000 0.000000 0.000000 0.000000 1.000000 0.000000 405.000000 0.000000
-+1 -1728.000000 320.000000 31.125000 0.000000 405.000000 0.000000 0.000000 0.000000 1.000000 0.000000 405.000000 0.000000
-+2 -1744.000000 448.000000 31.125000 0.000000 45.000000 0.000000 0.000000 0.000000 1.000000 0.000000 45.000000 0.000000
-+9 1792.000000 448.000000 20.125000 0.000000 495.000000 0.000000 0.000000 0.000000 1.000000 0.000000 495.000000 0.000000
-+9 1664.000000 320.000000 20.125000 0.000000 495.000000 0.000000 0.000000 0.000000 1.000000 0.000000 495.000000 0.000000
-+15 1664.000000 448.000000 31.125000 0.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000
-+17 -30.000000 224.000000 113.000000 0.000000 537.000000 360.000000 0.000000 0.000000 1.000000 0.000000 537.000000 1.000000
-+4 -1896.000000 -304.000000 31.125000 0.000000 270.000000 0.000000 0.000000 0.000000 1.000000 0.000000 270.000000 0.000000
-+18 -34.000000 -1090.000000 -239.000000 0.000000 447.000000 360.000000 0.000000 0.000000 1.000000 0.000000 447.000000 1.000000
-+4 -1904.000000 -176.000000 -112.875000 0.000000 180.000000 0.000000 0.000000 0.000000 1.000000 0.000000 180.000000 0.000000
 diff --git a/assets/layouts/atcs/test.dat b/assets/layouts/atcs/test.dat
 new file mode 100644
 index 0000000..f9a4b3f
@@ -4401,10 +4373,10 @@ index c246435..33ef09a 100644
  
    //rescale the model
 diff --git a/src/cgame/cg_draw.c b/src/cgame/cg_draw.c
-index 27c2c98..224cb1c 100644
+index 0993d87..2becbfa 100644
 --- a/src/cgame/cg_draw.c
 +++ b/src/cgame/cg_draw.c
-@@ -3389,6 +3389,105 @@ static void CG_DrawWarmup( void )
+@@ -3401,6 +3401,105 @@ static void CG_DrawWarmup( void )
    UI_Text_Paint( 320 - w / 2, 200 + 1.5f * h, size, colorWhite, text, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
  }
  
@@ -4510,7 +4482,7 @@ index 27c2c98..224cb1c 100644
  //==================================================================================
  
  /*
-@@ -3442,6 +3541,7 @@ static void CG_Draw2D( void )
+@@ -3454,6 +3553,7 @@ static void CG_Draw2D( void )
    CG_DrawVote( cg.predictedPlayerState.stats[ STAT_TEAM ] );
    CG_DrawWarmup( );
    CG_DrawQueue( );
@@ -4519,10 +4491,10 @@ index 27c2c98..224cb1c 100644
    // don't draw center string if scoreboard is up
    cg.scoreBoardShowing = CG_DrawScoreboard( );
 diff --git a/src/cgame/cg_local.h b/src/cgame/cg_local.h
-index ac7d977..0284f68 100644
+index 1f53d42..a0cda78 100644
 --- a/src/cgame/cg_local.h
 +++ b/src/cgame/cg_local.h
-@@ -1239,6 +1239,15 @@ typedef struct
+@@ -1234,6 +1234,15 @@ typedef struct
    qhandle_t   redBuildShader;
    qhandle_t   humanSpawningShader;
  
@@ -4538,7 +4510,7 @@ index ac7d977..0284f68 100644
    // disconnect
    qhandle_t   disconnectPS;
    qhandle_t   disconnectSound;
-@@ -1439,6 +1448,7 @@ typedef struct
+@@ -1434,6 +1443,7 @@ typedef struct
  
    buildStat_t   alienBuildStat;
    buildStat_t   humanBuildStat;
@@ -4546,7 +4518,7 @@ index ac7d977..0284f68 100644
  
    // media
    cgMedia_t           media;
-@@ -1702,6 +1712,7 @@ void        CG_GhostBuildable( buildable_t buildable );
+@@ -1697,6 +1707,7 @@ void        CG_GhostBuildable( buildable_t buildable );
  void        CG_Buildable( centity_t *cent );
  void        CG_BuildableStatusParse( const char *filename, buildStat_t *bs );
  void        CG_DrawBuildableStatus( void );
@@ -4555,10 +4527,10 @@ index ac7d977..0284f68 100644
  void        CG_HumanBuildableExplosion( vec3_t origin, vec3_t dir );
  void        CG_AlienBuildableExplosion( vec3_t origin, vec3_t dir );
 diff --git a/src/cgame/cg_main.c b/src/cgame/cg_main.c
-index e6a7bd2..5391743 100644
+index 64151dc..aa9562b 100644
 --- a/src/cgame/cg_main.c
 +++ b/src/cgame/cg_main.c
-@@ -778,6 +778,16 @@ static void CG_RegisterGraphics( void )
+@@ -781,6 +781,16 @@ static void CG_RegisterGraphics( void )
    cgs.media.redBuildShader            = trap_R_RegisterShader("gfx/misc/redbuild" );
    cgs.media.humanSpawningShader       = trap_R_RegisterShader("models/buildables/telenode/rep_cyl" );
  
@@ -4575,7 +4547,7 @@ index e6a7bd2..5391743 100644
    for( i = 0; i < 8; i++ )
      cgs.media.buildWeaponTimerPie[ i ] = trap_R_RegisterShader( buildWeaponTimerPieShaders[ i ] );
  
-@@ -824,6 +834,7 @@ static void CG_RegisterGraphics( void )
+@@ -827,6 +837,7 @@ static void CG_RegisterGraphics( void )
  
    CG_BuildableStatusParse( "ui/assets/human/buildstat.cfg", &cgs.humanBuildStat );
    CG_BuildableStatusParse( "ui/assets/alien/buildstat.cfg", &cgs.alienBuildStat );
@@ -4584,7 +4556,7 @@ index e6a7bd2..5391743 100644
    // register the inline models
    cgs.numInlineModels = trap_CM_NumInlineModels( );
 diff --git a/src/cgame/cg_servercmds.c b/src/cgame/cg_servercmds.c
-index 8b71388..1734ba6 100644
+index 9b48178..8be0e55 100644
 --- a/src/cgame/cg_servercmds.c
 +++ b/src/cgame/cg_servercmds.c
 @@ -532,6 +532,15 @@ void CG_Menu( int menu, int arg )
@@ -4604,7 +4576,7 @@ index 8b71388..1734ba6 100644
  
      // Since cheating commands have no default binds, they will often be done
 diff --git a/src/game/bg_misc.c b/src/game/bg_misc.c
-index f6123ee..78731fb 100644
+index 724ba97..d34b04b 100644
 --- a/src/game/bg_misc.c
 +++ b/src/game/bg_misc.c
 @@ -68,6 +68,7 @@ static const buildableAttributes_t bg_buildableList[ ] =
@@ -4754,7 +4726,7 @@ index f6123ee..78731fb 100644
 +    ( 1 << WP_HBUILD )|
 +    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
 +    BANIM_IDLE1,           //int       idleAnim;
-+    100,                   //int       nextthink;
++    DOMINATION_THINK,      //int       nextthink;
 +    0,                     //int       buildTime;
 +    qfalse,                //qboolean  usable;
 +    0,                     //int       turretRange;
@@ -4790,7 +4762,7 @@ index f6123ee..78731fb 100644
 +    ( 1 << WP_HBUILD )|
 +    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
 +    BANIM_IDLE1,           //int       idleAnim;
-+    100,                   //int       nextthink;
++    DOMINATION_THINK,      //int       nextthink;
 +    0,                     //int       buildTime;
 +    qfalse,                //qboolean  usable;
 +    0,                     //int       turretRange;
@@ -4826,7 +4798,7 @@ index f6123ee..78731fb 100644
 +    ( 1 << WP_HBUILD )|
 +    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
 +    BANIM_IDLE1,           //int       idleAnim;
-+    100,                   //int       nextthink;
++    DOMINATION_THINK,      //int       nextthink;
 +    0,                     //int       buildTime;
 +    qfalse,                //qboolean  usable;
 +    0,                     //int       turretRange;
@@ -4862,7 +4834,7 @@ index f6123ee..78731fb 100644
 +    ( 1 << WP_HBUILD )|
 +    ( 1 << WP_ABUILD )|( 1 << WP_ABUILD2 ),    //weapon_t  buildWeapon;
 +    BANIM_IDLE1,           //int       idleAnim;
-+    100,                   //int       nextthink;
++    DOMINATION_THINK,      //int       nextthink;
 +    0,                     //int       buildTime;
 +    qfalse,                //qboolean  usable;
 +    0,                     //int       turretRange;
@@ -4880,33 +4852,11 @@ index f6123ee..78731fb 100644
    }
  };
  
-diff --git a/src/game/bg_oc.h b/src/game/bg_oc.h
-index c967c81..43a2984 100644
---- a/src/game/bg_oc.h
-+++ b/src/game/bg_oc.h
-@@ -1513,7 +1513,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
- 		{ \
- 			default: \
- 			case 0: \
--				self->powered = G_FindCreep(self); \
-+				self->powered = G_FindProvider(self); \
- 				break; \
-  \
- 			case 1: \
-@@ -1571,7 +1571,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
- 		{ \
- 			default: \
- 			case 0: \
--				self->powered = G_FindPower(self); \
-+				self->powered = G_FindProvider(self); \
- 				break; \
-  \
- 			case 1: \
 diff --git a/src/game/bg_public.h b/src/game/bg_public.h
-index 8ebeab4..b51a2f5 100644
+index 53cb505..0d3df1b 100644
 --- a/src/game/bg_public.h
 +++ b/src/game/bg_public.h
-@@ -421,9 +421,20 @@ typedef enum
+@@ -428,9 +428,20 @@ typedef enum
    BA_H_REACTOR,
    BA_H_REPEATER,
  
@@ -4927,7 +4877,7 @@ index 8ebeab4..b51a2f5 100644
  // reward sounds (stored in ps->persistant[PERS_PLAYEREVENTS])
  #define PLAYEREVENT_DENIEDREWARD      0x0001
  #define PLAYEREVENT_GAUNTLETREWARD    0x0002
-@@ -568,6 +579,9 @@ typedef enum
+@@ -575,6 +586,9 @@ typedef enum
    MN_CMD_HUMAN,
    MN_CMD_LIVING,
  
@@ -4937,7 +4887,7 @@ index 8ebeab4..b51a2f5 100644
    //alien stuff
    MN_A_CLASS,
    MN_A_BUILD,
-@@ -1034,8 +1048,10 @@ typedef struct
+@@ -1044,8 +1058,10 @@ typedef struct
    qboolean      dccTest;
    qboolean      transparentTest;
    qboolean      uniqueTest;
@@ -4950,35 +4900,61 @@ index 8ebeab4..b51a2f5 100644
  
  typedef struct
 diff --git a/src/game/g_active.c b/src/game/g_active.c
-index fac1240..0027061 100644
+index 2ef66bc..c6dd39d 100644
 --- a/src/game/g_active.c
 +++ b/src/game/g_active.c
-@@ -570,6 +570,24 @@ void ClientTimerActions( gentity_t *ent, int msec )
+@@ -609,6 +609,50 @@ void ClientTimerActions( gentity_t *ent, int msec )
              crouched = qfalse, jumping = qfalse,
              strafing = qfalse;
    int       i;
 +  int       dps  = G_DominationPoints();
 +  team_t    team = ent->client->pers.teamSelection;
-+  float     alienModifier;
-+  float     humanModifier;
-+  float     modifier;
++  float     alienModifierFreeFunds, alienModifierBuildTimer;
++  float     humanModifierFreeFunds, humanModifierBuildTimer;
++  float     modifierFreeFunds, modifierBuildTimer;
 +
 +  if( dps > 0 )
 +  {
-+    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-+    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    if( g_instantDomination.integer )
++    {
++      alienModifierFreeFunds = INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifierFreeFunds = INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++
++      alienModifierBuildTimer = INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifierBuildTimer = INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
++    else
++    {
++      alienModifierFreeFunds = DOMINATION_ALIEN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifierFreeFunds = DOMINATION_HUMAN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++
++      alienModifierBuildTimer = DOMINATION_ALIEN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifierBuildTimer = DOMINATION_HUMAN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
 +  }
 +  else
 +  {
-+    alienModifier = 1.f;
-+    humanModifier = 1.f;
++    alienModifierFreeFunds = 1.f;
++    humanModifierFreeFunds = 1.f;
++
++    alienModifierBuildTimer = 1.f;
++    humanModifierBuildTimer = 1.f;
 +  }
 +
-+  modifier = team == TEAM_ALIENS ? alienModifier : humanModifier;
++  if( team == TEAM_ALIENS )
++  {
++    modifierFreeFunds  = alienModifierFreeFunds;
++    modifierBuildTimer = alienModifierBuildTimer;
++  }
++  else
++  {
++    modifierFreeFunds  = humanModifierFreeFunds;
++    modifierBuildTimer = humanModifierBuildTimer;
++  }
  
    ucmd = &ent->client->pers.cmd;
  
-@@ -618,9 +636,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
+@@ -657,9 +701,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
      if( weapon == WP_ABUILD || weapon == WP_ABUILD2 ||
          BG_InventoryContainsWeapon( WP_HBUILD, client->ps.stats ) )
      {
@@ -4986,26 +4962,26 @@ index fac1240..0027061 100644
 +        //update build timer
          if( client->ps.stats[ STAT_MISC ] > 0 )
 -          client->ps.stats[ STAT_MISC ] -= 100;
-+          client->ps.stats[ STAT_MISC ] -= 100 * modifier;
++          client->ps.stats[ STAT_MISC ] -= 100 * modifierBuildTimer;
  
          if( client->ps.stats[ STAT_MISC ] < 0 )
            client->ps.stats[ STAT_MISC ] = 0;
-@@ -744,19 +762,25 @@ void ClientTimerActions( gentity_t *ent, int msec )
+@@ -798,19 +842,25 @@ void ClientTimerActions( gentity_t *ent, int msec )
        client->voiceEnthusiasm -= VOICE_ENTHUSIASM_DECAY;
      else
        client->voiceEnthusiasm = 0.0f;
 +  }
++
++  client->pers.aliveSeconds++;
++
++  // Give clients some credit periodically
++  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 && !G_OC_NoFreeFunds() )
++  {
++    int period = (float) g_freeFundPeriod.integer * 1000.f / modifierFreeFunds;
  
 -    client->pers.aliveSeconds++;
 -    if( g_freeFundPeriod.integer > 0 &&
 -        client->pers.aliveSeconds % g_freeFundPeriod.integer == 0 )
-+  client->pers.aliveSeconds++;
-+
-+  // Give clients some credit periodically
-+  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 )
-+  {
-+    int period = (float) g_freeFundPeriod.integer * 1000.f / modifier;
-+
 +    if( !ent->client->pers.lastFreeFundTime )
 +      ent->client->pers.lastFreeFundTime = level.time;
 +
@@ -5027,7 +5003,48 @@ index fac1240..0027061 100644
      }
    }
  
-@@ -1435,7 +1459,7 @@ void ClientThink_real( gentity_t *ent )
+@@ -1286,9 +1336,40 @@ void ClientThink_real( gentity_t *ent )
+   int       oldEventSequence;
+   int       msec;
+   usercmd_t *ucmd;
++  int       dps  = G_DominationPoints();
++  float     alienModifierHeal, humanModifierHeal;
++  float     modifierHeal;
+ 
+   client = ent->client;
+ 
++  if( dps > 0 )
++  {
++    if( g_instantDomination.integer )
++    {
++      alienModifierHeal = INSTANT_DOMINATION_ALIEN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifierHeal = INSTANT_DOMINATION_HUMAN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
++    else
++    {
++      alienModifierHeal = DOMINATION_ALIEN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifierHeal = DOMINATION_HUMAN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
++  }
++  else
++  {
++    alienModifierHeal = 1.f;
++    humanModifierHeal = 1.f;
++  }
++
++  if( client->pers.teamSelection == TEAM_ALIENS )
++  {
++    modifierHeal = alienModifierHeal;
++  }
++  else
++  {
++    modifierHeal = humanModifierHeal;
++  }
++
+   // don't think if the client is not yet connected (and thus not yet spawned in)
+   if( client->pers.connected != CON_CONNECTED )
+     return;
+@@ -1490,7 +1571,7 @@ void ClientThink_real( gentity_t *ent )
        // Transmit heal rate to the client so it can be displayed on the HUD
        client->ps.stats[ STAT_STATE ] |= SS_HEALING_ACTIVE;
        client->ps.stats[ STAT_STATE ] &= ~( SS_HEALING_2X | SS_HEALING_3X );
@@ -5036,11 +5053,20 @@ index fac1240..0027061 100644
        {
          client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_ACTIVE;
          modifier *= ALIEN_REGEN_NOCREEP_MOD;
+@@ -1500,6 +1581,8 @@ void ClientThink_real( gentity_t *ent )
+       else if( modifier >= 2.0f )
+         client->ps.stats[ STAT_STATE ] |= SS_HEALING_2X;
+ 
++	  modifier *= modifierHeal;
++
+       interval = 1000 / ( regenRate * modifier );
+       // if recovery interval is less than frametime, compensate
+       count = 1 + ( level.time - ent->nextRegenTime ) / interval;
 diff --git a/src/game/g_buildable.c b/src/game/g_buildable.c
-index eb365ed..205c8ea 100644
+index d92396d..55904e8 100644
 --- a/src/game/g_buildable.c
 +++ b/src/game/g_buildable.c
-@@ -115,37 +115,52 @@ gentity_t *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal,
+@@ -115,37 +115,60 @@ gentity_t *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal,
  
  /*
  ================
@@ -5051,8 +5077,8 @@ index eb365ed..205c8ea 100644
 +Attempt to find power or creep for self; return qtrue and set self->parentNode if successful
  ================
  */
--qboolean G_FindPower( gentity_t *self )
-+qboolean G_FindProvider( gentity_t *self )
+-qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
++qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
  {
    int       i, j;
    gentity_t *ent, *ent2;
@@ -5071,19 +5097,27 @@ index eb365ed..205c8ea 100644
 -    return qfalse;
 +  if( dps > 0 )
 +  {
-+    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-+    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    if( g_instantDomination.integer )
++    {
++      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
++    else
++    {
++      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
 +  }
 +  else
 +  {
 +    alienModifier = 1.f;
 +    humanModifier = 1.f;
 +  }
++
++  modifier = self->buildableTeam == TEAM_ALIENS ? alienModifier : humanModifier;
  
 -  // Reactor is always powered
 -  if( self->s.modelindex == BA_H_REACTOR )
-+  modifier = self->buildableTeam == TEAM_ALIENS ? alienModifier : humanModifier;
-+
 +  // Core buildables are always powered
 +  if( G_IsCore( self->s.modelindex ) )
    {
@@ -5106,8 +5140,8 @@ index eb365ed..205c8ea 100644
 +      return ( self->parentNode = G_Reactor( )  ) != NULL;
    }
  
-   // Reset parent
-@@ -157,22 +172,50 @@ qboolean G_FindPower( gentity_t *self )
+   // Iterate through entities
+@@ -154,22 +177,50 @@ qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
      if( ent->s.eType != ET_BUILDABLE )
        continue;
  
@@ -5135,13 +5169,13 @@ index eb365ed..205c8ea 100644
 +        break;
 +
 +      default:
-+        requiredDistance = DOMINATION_RANGE;
++        requiredDistance = ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE );
 +        break;
 +    }
 +
 +    // If entity is a providing item calculate the distance to it
 +    if( ( G_IsCore( ent->s.modelindex ) || ent->s.modelindex == BA_H_REPEATER || ent->s.modelindex == BA_A_SPAWN || BG_IsDPoint( ent->s.modelindex ) ) &&
-         ent->spawned && ent->powered && ent->health > 0 )
+         ( searchUnspawned || ent->spawned ) && ent->powered && ent->health > 0 )
      {
        VectorSubtract( self->s.origin, ent->s.origin, temp_v );
        distance = VectorLength( temp_v );
@@ -5158,15 +5192,15 @@ index eb365ed..205c8ea 100644
 -          int buildPoints = g_humanBuildPoints.integer;
 +          // Only power as much BP as the reactor can supply
 +          int buildPoints = ent->buildableTeam == TEAM_ALIENS ? g_alienBuildPoints.integer : g_humanBuildPoints.integer;
++
++          buildPoints *= modifier;
  
 -          // Scan the buildables in the reactor zone
-+          buildPoints *= modifier;
-+
 +          // Scan the buildables in the same zone and look at the BP remaining
            for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
            {
              gentity_t *powerEntity;
-@@ -180,51 +223,48 @@ qboolean G_FindPower( gentity_t *self )
+@@ -177,51 +228,49 @@ qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
              if( ent2->s.eType != ET_BUILDABLE )
                continue;
  
@@ -5190,7 +5224,9 @@ index eb365ed..205c8ea 100644
  
            buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
  
-           if( buildPoints >= 0 || ALWAYS_POWER )
+-          if( buildPoints >= 0 || ALWAYS_POWER )
++          if( buildPoints >= 0 ||
++              ( g_instantDomination.integer ? INSTANT_DOMINATION_ALWAYS_POWER : DOMINATION_ALWAYS_POWER ) )
            {
 +            // Return immediately
              self->parentNode = ent;
@@ -5233,7 +5269,7 @@ index eb365ed..205c8ea 100644
            for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
            {
              gentity_t *powerEntity;
-@@ -237,7 +277,7 @@ qboolean G_FindPower( gentity_t *self )
+@@ -234,7 +283,7 @@ qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
  
              powerEntity = ent2->parentNode;
  
@@ -5242,19 +5278,20 @@ index eb365ed..205c8ea 100644
              {
                buildPoints -= BG_Buildable( ent2->s.modelindex )->buildPoints;
              }
-@@ -248,9 +288,9 @@ qboolean G_FindPower( gentity_t *self )
+@@ -245,9 +294,10 @@ qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
  
            buildPoints -= BG_Buildable( self->s.modelindex )->buildPoints;
  
 -          if( buildPoints >= 0 )
-+          if( buildPoints >= 0 || ALWAYS_POWER )
++          if( buildPoints >= 0 ||
++              ( g_instantDomination.integer ? INSTANT_DOMINATION_ALWAYS_POWER : DOMINATION_ALWAYS_POWER ) )
            {
 -            closestPower = ent;
 +            closestProvider = ent;
              minDistance = distance;
            }
            else
-@@ -259,61 +299,56 @@ qboolean G_FindPower( gentity_t *self )
+@@ -256,61 +306,56 @@ qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
  
              // TODO: handle combined power zones here
            }
@@ -5327,12 +5364,12 @@ index eb365ed..205c8ea 100644
 -gentity_t *G_PowerEntityForEntity( gentity_t *ent )
 +gentity_t *G_ProvidingEntityForEntity( gentity_t *ent )
  {
--  if( G_FindPower( ent ) )
-+  if( G_FindProvider( ent ) )
+-  if( G_FindPower( ent, qfalse ) )
++  if( G_FindProvider( ent, qfalse ) )
      return ent->parentNode;
    return NULL;
  }
-@@ -322,13 +357,13 @@ gentity_t *G_PowerEntityForEntity( gentity_t *ent )
+@@ -319,13 +364,13 @@ gentity_t *G_PowerEntityForEntity( gentity_t *ent )
  ================
  G_IsPowered
  
@@ -5348,7 +5385,7 @@ index eb365ed..205c8ea 100644
  
    if( ent )
      return ent->s.modelindex;
-@@ -346,30 +381,43 @@ Get the number of build points from a position
+@@ -343,30 +388,43 @@ Get the number of build points from a position
  */
  int G_GetBuildPoints( const vec3_t pos, team_t team, int extraDistance )
  {
@@ -5361,7 +5398,8 @@ index eb365ed..205c8ea 100644
 -  else if( team == TEAM_ALIENS )
 +
 +  if( powerPoint && G_IsCore( powerPoint->s.modelindex ) )
-+  {
+   {
+-    return level.alienBuildPoints;
 +    if     ( team == TEAM_ALIENS )
 +    {
 +      return level.alienBuildPoints;
@@ -5370,22 +5408,21 @@ index eb365ed..205c8ea 100644
 +    {
 +      return level.humanBuildPoints;
 +    }
-+  }
-+
-+  if( powerPoint &&
-+      powerPoint->usesBuildPointZone && level.buildPointZones[ powerPoint->buildPointZone ].active )
-   {
--    return level.alienBuildPoints;
-+    return level.buildPointZones[ powerPoint->buildPointZone ].totalBuildPoints -
-+           level.buildPointZones[ powerPoint->buildPointZone ].queuedBuildPoints;
    }
 -  else if( team == TEAM_HUMANS )
-+  else
-   {
+-  {
 -    gentity_t *powerPoint = G_PowerEntityForPoint( pos );
--
+ 
 -    if( powerPoint && powerPoint->s.modelindex == BA_H_REACTOR )
 -      return level.humanBuildPoints;
++  if( powerPoint &&
++      powerPoint->usesBuildPointZone && level.buildPointZones[ powerPoint->buildPointZone ].active )
++  {
++    return level.buildPointZones[ powerPoint->buildPointZone ].totalBuildPoints -
++           level.buildPointZones[ powerPoint->buildPointZone ].queuedBuildPoints;
++  }
++  else
++  {
 +    // Return the BP of the main zone by default
  
 -    if( powerPoint && powerPoint->s.modelindex == BA_H_REPEATER &&
@@ -5406,7 +5443,7 @@ index eb365ed..205c8ea 100644
    }
  
    return 0;
-@@ -405,7 +453,7 @@ qboolean G_InPowerZone( gentity_t *self )
+@@ -402,7 +460,7 @@ qboolean G_InPowerZone( gentity_t *self )
        continue;
  
      // if entity is a power item calculate the distance to it
@@ -5415,17 +5452,17 @@ index eb365ed..205c8ea 100644
          ent->spawned && ent->powered )
      {
        VectorSubtract( self->s.origin, ent->s.origin, temp_v );
-@@ -415,6 +463,9 @@ qboolean G_InPowerZone( gentity_t *self )
+@@ -412,6 +470,9 @@ qboolean G_InPowerZone( gentity_t *self )
          return qtrue;
        else if( ent->s.modelindex == BA_H_REPEATER && distance <= REPEATER_BASESIZE )
          return qtrue;
 +      // allow repeaters to be built within range of domination points
-+      //else if( BG_IsDPoint( ent->s.modelindex ) && distance <= DOMINATION_RANGE )
++      //else if( BG_IsDPoint( ent->s.modelindex ) && distance <= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
 +        //return qtrue;
      }
    }
  
-@@ -538,82 +589,37 @@ gentity_t *G_Overmind( void )
+@@ -535,82 +596,37 @@ gentity_t *G_Overmind( void )
  
  /*
  ================
@@ -5509,10 +5546,10 @@ index eb365ed..205c8ea 100644
 +buildable_t G_IsCreepHereForPlayer( vec3_t origin )
  {
 -  gentity_t dummy;
--
--  memset( &dummy, 0, sizeof( gentity_t ) );
 +  gentity_t *ent = G_ProvidingEntityForPoint( origin, TEAM_ALIENS );
  
+-  memset( &dummy, 0, sizeof( gentity_t ) );
+-
 -  dummy.parentNode = NULL;
 -  dummy.s.modelindex = BA_NONE;
 -  VectorCopy( origin, dummy.s.origin );
@@ -5525,37 +5562,34 @@ index eb365ed..205c8ea 100644
  }
  
  /*
-@@ -779,7 +785,7 @@ void AGeneric_CreepCheck( gentity_t *self )
+@@ -780,7 +796,7 @@ void AGeneric_CreepCheck( gentity_t *self )
      return;
  
    spawn = self->parentNode;
--  if( !G_FindCreep( self ) )
-+  if( !G_FindProvider( self ) )
+-  if( !G_FindCreep( self, qfalse ) )
++  if( !G_FindProvider( self, qfalse ) )
    {
-     if( spawn && self->killedBy != ENTITYNUM_NONE )
-       G_Damage( self, NULL, g_entities + self->killedBy, NULL, NULL,
-@@ -799,11 +805,7 @@ A generic think function for Alien buildables
+     if( spawn )
+       G_Damage( self, NULL, g_entities + spawn->killedBy, NULL, NULL,
+@@ -800,7 +816,7 @@ A generic think function for Alien buildables
  */
  void AGeneric_Think( gentity_t *self )
  {
--<<<<<<< HEAD:src/game/g_buildable.c
-   self->powered = G_FindProvider( self ) && G_Overmind( );
--=======
--  self->powered = G_FindCreep( self );
-->>>>>>> 9c720c6... Revert the commits for domination so that a single unified diff can be easily made:src/game/g_buildable.c
+-  self->powered = G_FindCreep( self, qfalse );
++  self->powered = G_FindProvider( self, qfalse ) && G_Overmind( );
    self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
    AGeneric_CreepCheck( self );
    G_OC_DefaultAlienPowered();
-@@ -1921,7 +1923,7 @@ void HSpawn_Think( gentity_t *self )
+@@ -1909,7 +1925,7 @@ void HSpawn_Think( gentity_t *self )
    G_SuicideIfNoPower( self );
  
    // set parentNode
--  self->powered = G_FindPower( self );
-+  self->powered = G_FindProvider( self ) && G_Reactor( );
+-  self->powered = G_FindPower( self, qfalse );
++  self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
  
    if( self->spawned )
    {
-@@ -1990,14 +1992,6 @@ static void HRepeater_Die( gentity_t *self, gentity_t *inflictor, gentity_t *att
+@@ -1978,14 +1994,6 @@ static void HRepeater_Die( gentity_t *self, gentity_t *inflictor, gentity_t *att
    }
  
    G_LogDestruction( self, attacker, mod );
@@ -5570,7 +5604,7 @@ index eb365ed..205c8ea 100644
  }
  
  /*
-@@ -2012,7 +2006,6 @@ void HRepeater_Think( gentity_t *self )
+@@ -2000,7 +2008,6 @@ void HRepeater_Think( gentity_t *self )
    int               i;
    qboolean          reactor = qfalse;
    gentity_t         *ent;
@@ -5578,7 +5612,7 @@ index eb365ed..205c8ea 100644
  
    if( self->spawned )
    {
-@@ -2035,29 +2028,6 @@ void HRepeater_Think( gentity_t *self )
+@@ -2023,29 +2030,6 @@ void HRepeater_Think( gentity_t *self )
  
    G_IdlePowerState( self );
  
@@ -5608,21 +5642,21 @@ index eb365ed..205c8ea 100644
    self->powered = reactor;
  
    G_OC_DefaultHumanPowered();
-@@ -2245,7 +2215,7 @@ void HArmoury_Think( gentity_t *self )
+@@ -2233,7 +2217,7 @@ void HArmoury_Think( gentity_t *self )
    //make sure we have power
    self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
  
--  self->powered = G_FindPower( self );
-+  self->powered = G_FindProvider( self ) && G_Reactor( );
+-  self->powered = G_FindPower( self, qfalse );
++  self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
    G_OC_DefaultHumanPowered();
  
    G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
-@@ -2274,13 +2244,231 @@ void HDCC_Think( gentity_t *self )
+@@ -2262,13 +2246,249 @@ void HDCC_Think( gentity_t *self )
    //make sure we have power
    self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
  
--  self->powered = G_FindPower( self )
-+  self->powered = G_FindProvider( self ) && G_Reactor( );
+-  self->powered = G_FindPower( self, qfalse );
++  self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
    G_OC_DefaultHumanPowered();
  
    G_SuicideIfNoPower( self );
@@ -5650,6 +5684,11 @@ index eb365ed..205c8ea 100644
 +  gentity_t *ent;
 +  float balance, distance;
 +
++  if( g_instantDomination.integer )
++  {
++    range[0] = range[1] = range[2] = INSTANT_DOMINATION_RANGE;
++  }
++
 +  players[ TEAM_ALIENS ] = 0;
 +  players[ TEAM_HUMANS ] = 0;
 +  client[ TEAM_ALIENS ] = -1;
@@ -5670,6 +5709,9 @@ index eb365ed..205c8ea 100644
 +    team_t team;
 +
 +    ent = &g_entities[ entityList[ i ] ];
++
++    if( ent->flags & FL_NOTARGET )
++      continue;
 +
 +    // Must be alive and visible to the point
 +    if( ent->health <= 0 || !G_Visible( self, ent, CONTENTS_SOLID ) )
@@ -5698,13 +5740,23 @@ index eb365ed..205c8ea 100644
 +    {
 +      team = ent->client->pers.teamSelection;
 +      if( team == TEAM_HUMANS )
-+        weight = DOMINATION_TIME_HUMAN;
++      {
++        if( self->dominationTeam == TEAM_ALIENS )
++          weight = ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_HUMAN_CLEAR : DOMINATION_TIME_HUMAN_CLEAR );
++        else
++          weight = ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_HUMAN : DOMINATION_TIME_HUMAN );
 +        //weight = BG_GetValueOfPlayer( &ent->client->ps ) /
 +                 //DOMINATION_WS_HUMAN;
++      }
 +      else if( team == TEAM_ALIENS )
-+        weight = -DOMINATION_TIME_ALIEN;
++      {
++        if( self->dominationTeam == TEAM_HUMANS )
++          weight = -( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_ALIEN_CLEAR : DOMINATION_TIME_ALIEN_CLEAR );
++        else
++          weight = -( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_ALIEN : DOMINATION_TIME_ALIEN );
 +        //weight = -BG_Buildable( ent->client->ps.stats[ STAT_CLASS ] )->value /
 +                 //DOMINATION_WS_ALIEN;
++      }
 +      if( client[ team ] < 0 )
 +        client[ team ] = entityList[ i ];
 +    }
@@ -5716,9 +5768,9 @@ index eb365ed..205c8ea 100644
 +    // Square fall-off with distance
 +    VectorSubtract( self->s.origin, ent->s.origin, dir );
 +    distance = VectorLength( dir );
-+    if( distance >= DOMINATION_RANGE )
++    if( distance >= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
 +      continue;
-+    weight *= DOMINATION_RANGE_SQRT / sqrt( DOMINATION_RANGE - distance );
++    weight *= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE_SQRT : DOMINATION_RANGE_SQRT ) / sqrt( ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) - distance );
 +    if( weight < 0.1f && weight > -0.9f )
 +      continue;
 +
@@ -5734,7 +5786,7 @@ index eb365ed..205c8ea 100644
 +    if( self->dominationTeam != TEAM_ALIENS && balance < 0 )
 +    {
 +      self->dominationAttacking = TEAM_ALIENS;
-+      self->timestamp = level.time + DOMINATION_COOLDOWN;
++      self->timestamp = level.time + ( g_instantDomination.integer ? INSTANT_DOMINATION_COOLDOWN : DOMINATION_COOLDOWN );
 +      //trap_SendServerCommand( -1, va( "print \"^1Aliens^7 attacking %s^7!\n\"",
 +                              //self->dominationName ) );
 +      if( self->dominationTeam == TEAM_NONE )
@@ -5746,7 +5798,7 @@ index eb365ed..205c8ea 100644
 +    else if( self->dominationTeam != TEAM_HUMANS && balance > 0 )
 +    {
 +      self->dominationAttacking = TEAM_HUMANS;
-+      self->timestamp = level.time + DOMINATION_COOLDOWN;
++      self->timestamp = level.time + ( g_instantDomination.integer ? INSTANT_DOMINATION_COOLDOWN : DOMINATION_COOLDOWN );
 +      //trap_SendServerCommand( -1, va( "print \"^5Humans^7 attacking %s^7!\n\"",
 +                              //self->dominationName ) );
 +      if( self->dominationTeam == TEAM_NONE )
@@ -5758,12 +5810,12 @@ index eb365ed..205c8ea 100644
 +  // Neutral and not under attack; decrement the domination time
 +  if( self->dominationTeam == TEAM_NONE && !players[ TEAM_HUMANS ] &&
 +      !players[ TEAM_ALIENS ] )
-+    self->dominationTime -= 100.0 * think_interval / DOMINATION_TIME_CLEAR;
++    self->dominationTime -= 100.0 * think_interval / ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_CLEAR : DOMINATION_TIME_CLEAR );
 +
 +  // Claimed and not under attack; increment the domination time
 +  else if( ( self->dominationTeam == TEAM_HUMANS && !players[ TEAM_ALIENS ] ) ||
 +           ( self->dominationTeam == TEAM_ALIENS && !players[ TEAM_HUMANS ] ) )
-+    self->dominationTime += 100.0 * think_interval / DOMINATION_TIME_CLEAR;
++    self->dominationTime += 100.0 * think_interval / ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_CLEAR : DOMINATION_TIME_CLEAR );
 +
 +  // Increment the domination timer according to the balance shift
 +  else if( self->dominationTeam == TEAM_HUMANS ||
@@ -5850,34 +5902,44 @@ index eb365ed..205c8ea 100644
  
  
  //==================================================================================
-@@ -2322,7 +2510,7 @@ void HMedistat_Think( gentity_t *self )
+@@ -2305,12 +2525,16 @@ void HMedistat_Think( gentity_t *self )
+   int       entityList[ MAX_GENTITIES ];
+   vec3_t    mins, maxs;
+   int       i, num;
++  int       dps  = G_DominationPoints();
++  float     modifier;
+   gentity_t *player;
+   qboolean  occupied = qfalse;
  
-   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
+-  self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
++  modifier = ( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_HEAL_SCALE : DOMINATION_HUMAN_HEAL_SCALE ) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++
++  self->nextthink = level.time + modifier * DOMINATION_HUMAN_HEAL_SCALE * BG_Buildable( self->s.modelindex )->nextthink;
  
--  self->powered = G_FindPower( self );
-+  self->powered = G_FindProvider( self ) && G_Reactor( );
+-  self->powered = G_FindPower( self, qfalse );
++  self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
    G_OC_DefaultHumanPowered();
    G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
  
-@@ -2666,7 +2854,7 @@ void HMGTurret_Think( gentity_t *self )
+@@ -2660,7 +2884,7 @@ void HMGTurret_Think( gentity_t *self )
    // Turn off client side muzzle flashes
    self->s.eFlags &= ~EF_FIRING;
  
--  self->powered = G_FindPower( self );
-+  self->powered = G_FindProvider( self ) && G_Reactor( );
+-  self->powered = G_FindPower( self, qfalse );
++  self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
    G_OC_DefaultHumanPowered();
  
    G_SuicideIfNoPower( self );
-@@ -2753,7 +2941,7 @@ void HTeslaGen_Think( gentity_t *self )
+@@ -2747,7 +2971,7 @@ void HTeslaGen_Think( gentity_t *self )
    G_IdlePowerState( self );
  
    //if not powered don't do anything and check again for power next think
--  self->powered = G_FindPower( self );
-+  self->powered = G_FindProvider( self ) && G_Reactor( );
+-  self->powered = G_FindPower( self, qfalse );
++  self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
    G_OC_DefaultHumanPowered();
    if( !self->powered )
    {
-@@ -2845,12 +3033,17 @@ void G_QueueBuildPoints( gentity_t *self )
+@@ -2852,12 +3076,17 @@ void G_QueueBuildPoints( gentity_t *self )
        break;
  
      case TEAM_HUMANS:
@@ -5897,7 +5959,7 @@ index eb365ed..205c8ea 100644
          {
            case BA_H_REACTOR:
              nqt = G_NextQueueTime( level.humanBuildPointQueue,
-@@ -2872,7 +3065,7 @@ void G_QueueBuildPoints( gentity_t *self )
+@@ -2878,7 +3107,7 @@ void G_QueueBuildPoints( gentity_t *self )
  
                nqt = G_NextQueueTime( zone->queuedBuildPoints,
                                       zone->totalBuildPoints,
@@ -5906,7 +5968,7 @@ index eb365ed..205c8ea 100644
  
                if( !zone->queuedBuildPoints ||
                    level.time + nqt < zone->nextQueueTime )
-@@ -2974,9 +3167,11 @@ General think function for buildables
+@@ -2979,9 +3208,11 @@ General think function for buildables
  */
  void G_BuildableThink( gentity_t *ent, int msec )
  {
@@ -5918,7 +5980,7 @@ index eb365ed..205c8ea 100644
  
    //toggle spawned flag for buildables
    if( !ent->spawned && ent->health > 0 )
-@@ -3043,6 +3238,53 @@ void G_BuildableThink( gentity_t *ent, int msec )
+@@ -3048,6 +3279,53 @@ void G_BuildableThink( gentity_t *ent, int msec )
  
    // Fall back on normal physics routines
    G_Physics( ent, msec );
@@ -5972,7 +6034,7 @@ index eb365ed..205c8ea 100644
  }
  
  
-@@ -3200,7 +3442,7 @@ static int G_CompareBuildablesForRemoval( const void *a, const void *b )
+@@ -3217,7 +3495,7 @@ static int G_CompareBuildablesForRemoval( const void *a, const void *b )
    // They're the same type
    if( buildableA->s.modelindex == buildableB->s.modelindex )
    {
@@ -5981,7 +6043,7 @@ index eb365ed..205c8ea 100644
  
      // Prefer the entity that is providing power for this point
      aMatches = ( powerEntity == buildableA );
-@@ -3247,6 +3489,10 @@ void G_ClearDeconMarks( void )
+@@ -3264,6 +3542,10 @@ void G_ClearDeconMarks( void )
      if( ent->s.eType != ET_BUILDABLE )
        continue;
  
@@ -5992,7 +6054,7 @@ index eb365ed..205c8ea 100644
      ent->deconstruct = qfalse;
    }
  }
-@@ -3366,6 +3612,9 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
+@@ -3383,6 +3665,9 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
      spawn           = BA_H_SPAWN;
      core            = BA_H_REACTOR;
    }
@@ -6002,7 +6064,7 @@ index eb365ed..205c8ea 100644
    else
    {
      Com_Error( ERR_FATAL, "team is %d\n", team );
-@@ -3433,7 +3682,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
+@@ -3450,7 +3735,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
      if( team == TEAM_HUMANS &&
          buildable != BA_H_REACTOR &&
          buildable != BA_H_REPEATER &&
@@ -6011,7 +6073,7 @@ index eb365ed..205c8ea 100644
        continue;
  
      if( !ent->inuse )
-@@ -3456,7 +3705,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
+@@ -3473,7 +3758,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
  
      // Don't allow a power source to be replaced by a dependant
      if( team == TEAM_HUMANS &&
@@ -6020,7 +6082,7 @@ index eb365ed..205c8ea 100644
          buildable != BA_H_REPEATER &&
          buildable != core )
        continue;
-@@ -3605,6 +3854,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3629,6 +3914,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
    int               contents;
    playerState_t     *ps = &ent->client->ps;
    int               buildPoints;
@@ -6028,7 +6090,7 @@ index eb365ed..205c8ea 100644
  
    if( G_OC_NeedAlternateCanBuild() )
    {
-@@ -3639,7 +3889,16 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3663,7 +3949,16 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
    if( ( tempReason = G_SufficientBPAvailable( buildable, origin ) ) != IBE_NONE )
      reason = tempReason;
  
@@ -6046,7 +6108,7 @@ index eb365ed..205c8ea 100644
    {
      //alien criteria
  
-@@ -3677,7 +3936,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3701,7 +3996,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
      //human criteria
  
      // Check for power
@@ -6055,7 +6117,7 @@ index eb365ed..205c8ea 100644
      {
        //tell player to build a repeater to provide power
        if( buildable != BA_H_REACTOR && buildable != BA_H_REPEATER )
-@@ -3756,6 +4015,28 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3780,6 +4075,28 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
    if( reason != IBE_NONE )
      level.numBuildablesForRemoval = 0;
  
@@ -6075,7 +6137,7 @@ index eb365ed..205c8ea 100644
 +
 +          VectorSubtract( origin, tempent->s.origin, dir );
 +          distance = VectorLength( dir );
-+          if( distance < DOMINATION_RANGE )
++          if( distance < ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
 +            return IBE_NEARDP;
 +        }
 +      }
@@ -6084,7 +6146,7 @@ index eb365ed..205c8ea 100644
    return reason;
  }
  
-@@ -3812,10 +4093,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+@@ -3836,10 +4153,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
      // in-game building by a player
      BG_GetClientNormal( &builder->client->ps, normal );
  
@@ -6098,7 +6160,7 @@ index eb365ed..205c8ea 100644
    }
  
    // when building the initial layout, spawn the entity slightly off its
-@@ -3848,6 +4129,34 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+@@ -3872,6 +4189,34 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
    built->reserved = builder->reserved;
    built->reserved2 = builder->reserved2;
  
@@ -6133,12 +6195,12 @@ index eb365ed..205c8ea 100644
    //things that vary for each buildable that aren't in the dbase
    switch( buildable )
    {
-@@ -3990,11 +4299,18 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+@@ -4014,11 +4359,18 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
      built->powered = qtrue;
      built->s.eFlags |= EF_B_POWERED;
    }
 -  else if( ( built->powered = G_FindPower( built ) ) )
-+  else if( BG_Buildable( buildable )->team == TEAM_HUMANS && ( built->powered = G_FindProvider( built ) ) )
++  else if( BG_Buildable( buildable )->team == TEAM_HUMANS && ( built->powered = G_FindProvider( built, qfalse ) ) )
      built->s.eFlags |= EF_B_POWERED;
  
    built->s.eFlags &= ~EF_B_SPAWNED;
@@ -6153,7 +6215,7 @@ index eb365ed..205c8ea 100644
    VectorCopy( normal, built->s.origin2 );
  
    G_AddEvent( built, EV_BUILD_CONSTRUCT, 0 );
-@@ -4112,6 +4428,10 @@ qboolean G_BuildIfValid( gentity_t *ent, buildable_t buildable )
+@@ -4136,6 +4488,10 @@ qboolean G_BuildIfValid( gentity_t *ent, buildable_t buildable )
        G_TriggerMenu( ent->client->ps.clientNum, MN_B_LASTSPAWN );
        return qfalse;
  
@@ -6164,7 +6226,7 @@ index eb365ed..205c8ea 100644
      default:
        break;
    }
-@@ -4796,3 +5116,12 @@ void G_BaseSelfDestruct( team_t team )
+@@ -4834,3 +5190,12 @@ void G_BaseSelfDestruct( team_t team )
    }
  }
  
@@ -6178,10 +6240,66 @@ index eb365ed..205c8ea 100644
 +  return buildable == BA_A_OVERMIND || buildable == BA_H_REACTOR;
 +}
 diff --git a/src/game/g_cmds.c b/src/game/g_cmds.c
-index 8b1747f..a4935a2 100644
+index ec3107c..43d077b 100644
 --- a/src/game/g_cmds.c
 +++ b/src/game/g_cmds.c
-@@ -1843,7 +1843,7 @@ void Cmd_Destroy_f( gentity_t *ent )
+@@ -1362,6 +1362,37 @@ void Cmd_CallVote_f( gentity_t *ent )
+         level.voteNextMap = qtrue;
+       }
+     }
++    else if( !Q_stricmp( vote, "instant_domination" ) )
++    {
++      if( g_disableVoteInstantDomination.integer && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
++      {
++        trap_SendServerCommand ( ent - g_entities, va( "print \"%s: "
++              "calling this vote is not allowed here\n\"", cmd ) );
++
++        return;
++      }
++
++      if( g_nextInstantDomination.string[ 0 ] && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
++      {
++        trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
++          "the next Domination mode is already set to '%s^7'\n\"", cmd, g_nextMap.string ) );
++        return;
++      }
++
++      if( arg[ 0 ] != '0' || arg[ 0 ] != '1' )
++      {
++        trap_SendServerCommand( ent - g_entities, va( "print \"Usage: %s "
++          "(0|1)\n\"", cmd ) );
++        return;
++      }
++
++      Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
++        "set g_nextInstantDomination \"%c\"", arg[ 0 ] );
++
++      Com_sprintf( level.voteDisplayString[ team ],
++        sizeof( level.voteDisplayString[ team ] ),
++        "'%s' instant Domination mode", arg[ 0 ] == '0' ? "Disable" : "Enable" );
++    }
+     else if( !Q_stricmp( vote, "draw" ) )
+     {
+       if(G_OC_NeedAlternateDrawVote())
+@@ -1382,7 +1413,7 @@ void Cmd_CallVote_f( gentity_t *ent )
+     {
+       trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
+       trap_SendServerCommand( ent-g_entities, va( "print \"Valid vote commands are: "
+-        "map, nextmap, map_restart, sudden_death, draw, kick%s, mute and unmute\n", G_OC_OtherCommandDescription() ) );
++        "map, nextmap, map_restart, sudden_death, draw, kick%s, mute, unmute and instant_domination\n", G_OC_OtherCommandDescription() ) );
+       return;
+     }
+   }
+@@ -1461,7 +1492,7 @@ void Cmd_CallVote_f( gentity_t *ent )
+   {
+     trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
+     trap_SendServerCommand( ent-g_entities, va( "print \"Valid vote commands are: "
+-      "map, nextmap, map_restart, sudden_death, draw, kick%s, mute and unmute\n", G_OC_OtherCommandDescription() ) );
++      "map, nextmap, map_restart, sudden_death, draw, kick%s, mute, unmute and instant_domination\n", G_OC_OtherCommandDescription() ) );
+     return;
+   }
+ 
+@@ -1872,7 +1903,7 @@ void Cmd_Destroy_f( gentity_t *ent )
  
    if( tr.fraction < 1.0f &&
        ( traceEnt->s.eType == ET_BUILDABLE ) &&
@@ -6190,7 +6308,7 @@ index 8b1747f..a4935a2 100644
        ( ( ent->client->ps.weapon >= WP_ABUILD ) &&
          ( ent->client->ps.weapon <= WP_HBUILD ) ) )
    {
-@@ -1856,6 +1856,16 @@ void Cmd_Destroy_f( gentity_t *ent )
+@@ -1885,6 +1916,16 @@ void Cmd_Destroy_f( gentity_t *ent )
        return;
      }
  
@@ -6207,25 +6325,25 @@ index 8b1747f..a4935a2 100644
      // Cancel deconstruction (unmark)
      if( deconstruct && g_markDeconstruct.integer && traceEnt->deconstruct && !G_OC_NoMarkDeconstruct() )
      {
-@@ -1897,7 +1907,7 @@ void Cmd_Destroy_f( gentity_t *ent )
+@@ -1926,7 +1967,7 @@ void Cmd_Destroy_f( gentity_t *ent )
  
      if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) ||
          ( ent->client->pers.teamSelection == TEAM_HUMANS &&
--          !G_FindPower( traceEnt ) ) )
-+          !G_FindProvider( traceEnt ) ) )
+-          !G_FindPower( traceEnt, qtrue ) ) )
++          !G_FindProvider( traceEnt, qtrue ) ) )
      {
        if( ent->client->ps.stats[ STAT_MISC ] > 0 )
        {
-@@ -1915,7 +1925,7 @@ void Cmd_Destroy_f( gentity_t *ent )
+@@ -1944,7 +1985,7 @@ void Cmd_Destroy_f( gentity_t *ent )
        }
        else if( g_markDeconstruct.integer &&
                 ( ent->client->pers.teamSelection != TEAM_HUMANS ||
--                 G_FindPower( traceEnt ) || lastSpawn ) )
-+                 G_FindProvider( traceEnt ) || lastSpawn ) )
+-                 G_FindPower( traceEnt, qtrue ) || lastSpawn ) )
++                 G_FindProvider( traceEnt, qtrue ) || lastSpawn ) )
        {
          traceEnt->deconstruct     = qtrue; // Mark buildable for deconstruction
          traceEnt->deconstructTime = level.time;
-@@ -2588,6 +2598,10 @@ void Cmd_Build_f( gentity_t *ent )
+@@ -2662,6 +2703,10 @@ void Cmd_Build_f( gentity_t *ent )
          break;
  
        // more serious errors just pop a menu
@@ -6236,16 +6354,16 @@ index 8b1747f..a4935a2 100644
        case IBE_NOALIENBP:
          err = MN_A_NOBP;
          break;
-@@ -3719,4 +3733,3 @@ void Cmd_AdminMessage_f( gentity_t *ent )
+@@ -3701,4 +3746,3 @@ void Cmd_AdminMessage_f( gentity_t *ent )
  
    G_AdminMessage( ent, ConcatArgs( 1 ) );
  }
 -
 diff --git a/src/game/g_combat.c b/src/game/g_combat.c
-index 7a65441..461d065 100644
+index 093c314..d0aa2b0 100644
 --- a/src/game/g_combat.c
 +++ b/src/game/g_combat.c
-@@ -1150,6 +1150,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
+@@ -1160,6 +1160,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
          targ->health = -999;
  
        targ->enemy = attacker;
@@ -6255,10 +6373,10 @@ index 7a65441..461d065 100644
        return;
      }
 diff --git a/src/game/g_local.h b/src/game/g_local.h
-index c37dcee..23f95e6 100644
+index 2b3cdb1..26f57d9 100644
 --- a/src/game/g_local.h
 +++ b/src/game/g_local.h
-@@ -259,6 +259,12 @@ struct gentity_s
+@@ -258,6 +258,12 @@ struct gentity_s
  
    qboolean          nonSegModel;        // this entity uses a nonsegmented player model
  
@@ -6271,15 +6389,15 @@ index c37dcee..23f95e6 100644
    buildable_t       bTriggers[ BA_NUM_BUILDABLES ]; // which buildables are triggers
    class_t           cTriggers[ PCL_NUM_CLASSES ];   // which classes are triggers
    weapon_t          wTriggers[ WP_NUM_WEAPONS ];    // which weapons are triggers
-@@ -380,6 +386,7 @@ typedef struct
+@@ -391,6 +397,7 @@ typedef struct
    g_admin_admin_t     *admin;
  
    int                 aliveSeconds;       // time player has been alive in seconds
 +  int                 lastFreeFundTime;   // last time the player got free credits
  
-   int                 nameChangeTime;
-   int                 nameChanges;
-@@ -544,11 +551,12 @@ void      G_PrintSpawnQueue( spawnQueue_t *sq );
+   // used to save persistant[] values while in SPECTATOR_FOLLOW mode
+   int                 credit;
+@@ -552,11 +559,12 @@ void      G_PrintSpawnQueue( spawnQueue_t *sq );
  // build point zone
  typedef struct
  {
@@ -6296,7 +6414,7 @@ index c37dcee..23f95e6 100644
  } buildPointZone_t;
  
  // store locational damage regions
-@@ -712,6 +720,8 @@ typedef struct
+@@ -720,6 +728,8 @@ typedef struct
  
    buildPointZone_t  *buildPointZones;
  
@@ -6305,7 +6423,7 @@ index c37dcee..23f95e6 100644
    gentity_t         *markedBuildables[ MAX_GENTITIES ];
    int               numBuildablesForRemoval;
  
-@@ -783,6 +793,11 @@ typedef struct
+@@ -793,6 +803,11 @@ typedef struct
    void ( *cmdHandler )( gentity_t *ent );
  } commands_t;
  
@@ -6317,7 +6435,7 @@ index c37dcee..23f95e6 100644
  //
  // g_spawn.c
  //
-@@ -867,6 +882,8 @@ typedef enum
+@@ -877,6 +892,8 @@ typedef enum
    IBE_PERMISSION,
    IBE_LASTSPAWN,
  
@@ -6326,7 +6444,7 @@ index c37dcee..23f95e6 100644
    IBE_MAXERRORS
  } itemBuildError_t;
  
-@@ -878,9 +895,11 @@ qboolean          G_IsDCCBuilt( void );
+@@ -888,9 +905,11 @@ qboolean          G_IsDCCBuilt( void );
  int               G_FindDCC( gentity_t *self );
  gentity_t         *G_Reactor( void );
  gentity_t         *G_Overmind( void );
@@ -6339,14 +6457,14 @@ index c37dcee..23f95e6 100644
  gentity_t         *G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
  void              G_ClearDeconMarks( void );
  itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin );
-@@ -898,11 +917,12 @@ void              G_BaseSelfDestruct( team_t team );
+@@ -908,11 +927,12 @@ void              G_BaseSelfDestruct( team_t team );
  int               G_NextQueueTime( int queuedBP, int totalBP, int queueBaseRate );
  void              G_QueueBuildPoints( gentity_t *self );
  int               G_GetBuildPoints( const vec3_t pos, team_t team, int dist );
--qboolean          G_FindPower( gentity_t *self );
+-qboolean          G_FindPower( gentity_t *self, qboolean searchUnspawned );
 -gentity_t         *G_PowerEntityForPoint( const vec3_t origin );
 -gentity_t         *G_PowerEntityForEntity( gentity_t *ent );
-+qboolean          G_FindProvider( gentity_t *self );
++qboolean          G_FindProvider( gentity_t *self, qboolean searchUnspawned );
 +gentity_t         *G_ProvidingEntityForPoint( const vec3_t origin, team_t team );
 +gentity_t         *G_ProvidingEntityForEntity( gentity_t *ent );
  gentity_t         *G_RepeaterEntityForPoint( vec3_t origin );
@@ -6355,7 +6473,7 @@ index c37dcee..23f95e6 100644
  
  //
  // g_utils.c
-@@ -1230,9 +1250,9 @@ extern  vmCvar_t  g_alienBuildPoints;
+@@ -1231,9 +1251,9 @@ extern  vmCvar_t  g_alienBuildPoints;
  extern  vmCvar_t  g_alienBuildQueueTime;
  extern  vmCvar_t  g_humanBuildPoints;
  extern  vmCvar_t  g_humanBuildQueueTime;
@@ -6368,8 +6486,18 @@ index c37dcee..23f95e6 100644
  extern  vmCvar_t  g_humanStage;
  extern  vmCvar_t  g_humanCredits;
  extern  vmCvar_t  g_humanMaxStage;
+@@ -1245,6 +1265,9 @@ extern  vmCvar_t  g_alienMaxStage;
+ extern  vmCvar_t  g_alienStage2Threshold;
+ extern  vmCvar_t  g_alienStage3Threshold;
+ extern  vmCvar_t  g_freeFundPeriod;
++extern  vmCvar_t  g_instantDomination;
++extern  vmCvar_t  g_nextInstantDomination;
++extern  vmCvar_t  g_disableVoteInstantDomination;
+ 
+ extern  vmCvar_t  g_unlagged;
+ 
 diff --git a/src/game/g_main.c b/src/game/g_main.c
-index 4800c9f..afad315 100644
+index 4554d8e..4e17694 100644
 --- a/src/game/g_main.c
 +++ b/src/game/g_main.c
 @@ -90,9 +90,9 @@ vmCvar_t  g_alienBuildPoints;
@@ -6385,7 +6513,17 @@ index 4800c9f..afad315 100644
  vmCvar_t  g_humanStage;
  vmCvar_t  g_humanCredits;
  vmCvar_t  g_humanMaxStage;
-@@ -236,9 +236,9 @@ static cvarTable_t   gameCvarTable[ ] =
+@@ -104,6 +104,9 @@ vmCvar_t  g_alienMaxStage;
+ vmCvar_t  g_alienStage2Threshold;
+ vmCvar_t  g_alienStage3Threshold;
+ vmCvar_t  g_freeFundPeriod;
++vmCvar_t  g_instantDomination;
++vmCvar_t  g_nextInstantDomination;
++vmCvar_t  g_disableVoteInstantDomination;
+ 
+ vmCvar_t  g_unlagged;
+ 
+@@ -239,9 +242,9 @@ static cvarTable_t   gameCvarTable[ ] =
    { &g_alienBuildQueueTime, "g_alienBuildQueueTime", DEFAULT_ALIEN_QUEUE_TIME, CVAR_ARCHIVE, 0, qfalse  },
    { &g_humanBuildPoints, "g_humanBuildPoints", DEFAULT_HUMAN_BUILDPOINTS, 0, 0, qfalse  },
    { &g_humanBuildQueueTime, "g_humanBuildQueueTime", DEFAULT_HUMAN_QUEUE_TIME, CVAR_ARCHIVE, 0, qfalse  },
@@ -6398,7 +6536,30 @@ index 4800c9f..afad315 100644
    { &g_humanStage, "g_humanStage", "0", 0, 0, qfalse  },
    { &g_humanCredits, "g_humanCredits", "0", 0, 0, qfalse  },
    { &g_humanMaxStage, "g_humanMaxStage", DEFAULT_HUMAN_MAX_STAGE, 0, 0, qfalse  },
-@@ -1119,7 +1119,7 @@ G_TimeTilSuddenDeath
+@@ -253,6 +256,9 @@ static cvarTable_t   gameCvarTable[ ] =
+   { &g_alienStage2Threshold, "g_alienStage2Threshold", DEFAULT_ALIEN_STAGE2_THRESH, 0, 0, qfalse  },
+   { &g_alienStage3Threshold, "g_alienStage3Threshold", DEFAULT_ALIEN_STAGE3_THRESH, 0, 0, qfalse  },
+   { &g_freeFundPeriod, "g_freeFundPeriod", DEFAULT_FREEKILL_PERIOD, CVAR_ARCHIVE, 0, qtrue },
++  { &g_instantDomination, "g_instantDomination", DOMINATION_INSTANT_DEFAULT, CVAR_ARCHIVE, 0, qtrue },
++  { &g_nextInstantDomination, "g_nextInstantDomination", "", 0, 0, qtrue },
++  { &g_disableVoteInstantDomination, "g_disableVoteInstantDomination", "0", CVAR_ARCHIVE, 0, qtrue },
+ 
+   { &g_unlagged, "g_unlagged", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
+ 
+@@ -676,6 +682,12 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
+   G_InitSpawnQueue( &level.alienSpawnQueue );
+   G_InitSpawnQueue( &level.humanSpawnQueue );
+ 
++  if( g_nextInstantDomination.string[ 0 ] )
++  {
++    trap_Cvar_Set( "g_instantDomination", g_nextInstantDomination.string );
++    trap_Cvar_Set( "g_nextInstantDomination", "" );
++  }
++
+   if( g_debugMapRotation.integer )
+     G_PrintRotations( );
+ 
+@@ -1123,7 +1135,7 @@ G_TimeTilSuddenDeath
  int G_TimeTilSuddenDeath( void )
  {
    if( ( !g_suddenDeathTime.integer && level.suddenDeathBeginTime==0 ) || 
@@ -6407,52 +6568,69 @@ index 4800c9f..afad315 100644
      return SUDDENDEATHWARNING + 1; // Always some time away
  
    return ( ( level.suddenDeathBeginTime ) - ( level.time - level.startTime ) );
-@@ -1139,8 +1139,21 @@ Recalculate the quantity of building points available to the teams
+@@ -1143,8 +1155,38 @@ Recalculate the quantity of building points available to the teams
  void G_CalculateBuildPoints( void )
  {
    int               i, j;
 -  buildable_t       buildable;
    buildPointZone_t  *zone;
 +  int               dps = G_DominationPoints();
-+  float             alienModifier;
-+  float             humanModifier;
++  float             alienModifier, alienQueueModifier;
++  float             humanModifier, humanQueueModifier;
 +
 +  if( dps > 0 )
 +  {
-+    alienModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-+    humanModifier = DOMINATION_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    if( g_instantDomination.integer )
++    {
++      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++
++      alienQueueModifier = INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanQueueModifier = INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
++    else
++    {
++      alienModifier = DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanModifier = DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++
++      alienQueueModifier = DOMINATION_ALIEN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
++      humanQueueModifier = DOMINATION_HUMAN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
++    }
 +  }
 +  else
 +  {
 +    alienModifier = 1.f;
 +    humanModifier = 1.f;
++
++    alienQueueModifier = 1.f;
++    humanQueueModifier = 1.f;
 +  }
  
    // BP queue updates
    while( level.alienBuildPointQueue > 0 &&
-@@ -1148,8 +1161,8 @@ void G_CalculateBuildPoints( void )
+@@ -1152,8 +1194,8 @@ void G_CalculateBuildPoints( void )
    {
      level.alienBuildPointQueue--;
      level.alienNextQueueTime += G_NextQueueTime( level.alienBuildPointQueue,
 -                                               g_alienBuildPoints.integer,
 -                                               g_alienBuildQueueTime.integer );
 +                                                 g_alienBuildPoints.integer,
-+                                                 g_alienBuildQueueTime.integer / alienModifier );
++                                                 g_alienBuildQueueTime.integer / alienQueueModifier );
    }
  
    while( level.humanBuildPointQueue > 0 &&
-@@ -1157,8 +1170,8 @@ void G_CalculateBuildPoints( void )
+@@ -1161,8 +1203,8 @@ void G_CalculateBuildPoints( void )
    {
      level.humanBuildPointQueue--;
      level.humanNextQueueTime += G_NextQueueTime( level.humanBuildPointQueue,
 -                                               g_humanBuildPoints.integer,
 -                                               g_humanBuildQueueTime.integer );
 +                                                 g_humanBuildPoints.integer,
-+                                                 g_humanBuildQueueTime.integer / humanModifier );
++                                                 g_humanBuildQueueTime.integer / humanQueueModifier );
    }
  
    // walking buildable updates
-@@ -1394,22 +1407,23 @@ void G_CalculateBuildPoints( void )
+@@ -1398,22 +1440,23 @@ void G_CalculateBuildPoints( void )
      level.suddenDeathWarning = TW_IMMINENT;
    }
  
@@ -6482,7 +6660,7 @@ index 4800c9f..afad315 100644
      buildPointZone_t  *zone;
      buildable_t       buildable;
      int               cost;
-@@ -1420,7 +1434,7 @@ void G_CalculateBuildPoints( void )
+@@ -1424,7 +1467,7 @@ void G_CalculateBuildPoints( void )
      // mark a zone as active
      if( ent->usesBuildPointZone )
      {
@@ -6491,7 +6669,7 @@ index 4800c9f..afad315 100644
  
        zone = &level.buildPointZones[ ent->buildPointZone ];
        zone->active = qtrue;
-@@ -1430,21 +1444,19 @@ void G_CalculateBuildPoints( void )
+@@ -1434,21 +1477,19 @@ void G_CalculateBuildPoints( void )
      buildable = ent->s.modelindex;
      cost = BG_Buildable( buildable )->buildPoints;
  
@@ -6524,7 +6702,7 @@ index 4800c9f..afad315 100644
      }
    }
  
-@@ -1454,13 +1466,7 @@ void G_CalculateBuildPoints( void )
+@@ -1458,13 +1499,7 @@ void G_CalculateBuildPoints( void )
    {
      gentity_t *ent = &g_entities[ i ];
  
@@ -6539,7 +6717,7 @@ index 4800c9f..afad315 100644
        continue;
  
      if( ent->usesBuildPointZone && level.buildPointZones[ ent->buildPointZone ].active )
-@@ -1469,13 +1475,15 @@ void G_CalculateBuildPoints( void )
+@@ -1473,13 +1508,15 @@ void G_CalculateBuildPoints( void )
  
        if( G_TimeTilSuddenDeath( ) > 0 )
        {
@@ -6557,7 +6735,7 @@ index 4800c9f..afad315 100644
  
            zone->queuedBuildPoints--;
          }
-@@ -2490,10 +2498,10 @@ void CheckCvars( void )
+@@ -2494,10 +2531,10 @@ void CheckCvars( void )
    }
  
    // If the number of zones changes, we need a new array
@@ -6570,7 +6748,7 @@ index 4800c9f..afad315 100644
      size_t            oldsize = lastNumZones * sizeof( buildPointZone_t );
  
      newZones = BG_Alloc( newsize );
-@@ -2504,7 +2512,7 @@ void CheckCvars( void )
+@@ -2508,7 +2545,7 @@ void CheckCvars( void )
      }
  
      level.buildPointZones = newZones;
@@ -6579,16 +6757,16 @@ index 4800c9f..afad315 100644
    }
  
    level.frameMsec = trap_Milliseconds( );
-@@ -2725,4 +2733,3 @@ void G_RunFrame( int levelTime )
+@@ -2729,4 +2766,3 @@ void G_RunFrame( int levelTime )
  
    level.frameMsec = trap_Milliseconds();
  }
 -
 diff --git a/src/game/tremulous.h b/src/game/tremulous.h
-index ec49eef..fab9488 100644
+index 791a12b..3e93f1b 100644
 --- a/src/game/tremulous.h
 +++ b/src/game/tremulous.h
-@@ -701,5 +701,40 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+@@ -712,4 +712,63 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
                                           
  #define MAXIMUM_BUILD_TIME          20000 // used for pie timer
  
@@ -6596,44 +6774,67 @@ index ec49eef..fab9488 100644
 + * Domination
 + */
 +
-+#define DOMINATION_RANGE            400.0f // how close a player needs to be to attack a domination point
-+#define DOMINATION_RANGE_SQRT       20.0f  // square root of the range (used in falloff calculation)
-+//#define DOMINATION_TIME             10000  // how long (in msec) a team must dominate a point to claim it
-+#define DOMINATION_COOLDOWN         5000   // msec between announcements
-+#define DOMINATION_HEALTH           100    // health scale of a domination point
-+#define DOMINATION_THINK            500    // msec between player presence checks
-+#define DOMINATION_SCALE            1.f    // better or worse by 50% * this
++#define DOMINATION_INSTANT_DEFAULT        "0"    // default is non-instant
++#define DOMINATION_HEALTH                 100    // health scale of a domination point
++#define DOMINATION_THINK                  100    // msec between player presence checks
 +
-+/* Domination speed is determined by the 'domination weight' of the players
-+   present */
-+//#define DOMINATION_WS_NORMAL        50     // normalizes domination weights
-+// instant domination
-+/*
-+#define DOMINATION_WS_HUMAN         1.0    // divide value of a  human (in credits)
-+#define DOMINATION_WS_ALIEN         2.0    // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
-+#define DOMINATION_WS_BUILDABLE     50     // divide build time of a buildable (in msec)
-+#define DOMINATION_FREEKILL_ALIEN   0
-+#define DOMINATION_FREEKILL_HUMAN   0
-+#define ALWAYS_POWER qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
-+*/
-+// slow domination
-+//#define DOMINATION_WS_HUMAN         8    // divide value of a  human (in credits)
-+//#define DOMINATION_WS_ALIEN         24    // divide value of an alien (in credits); have aliens take a bit longer to capture since they are more mobile
-+//#define DOMINATION_WS_BUILDABLE 800
-+#define DOMINATION_TIME_ALIEN     12000
-+#define DOMINATION_TIME_HUMAN     10000
-+#define DOMINATION_TIME_BUILDABLE 24000
-+#define DOMINATION_TIME_CLEAR     8000
-+#define DOMINATION_FREEKILL_ALIEN   50
-+#define DOMINATION_FREEKILL_HUMAN   25
-+#define ALWAYS_POWER qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
- 
++
++#define DOMINATION_RANGE                  400.0f // how close a player needs to be to attack a domination point
++#define DOMINATION_RANGE_SQRT             20.0f  // square root of the range (used in falloff calculation)
++#define DOMINATION_COOLDOWN               5000   // msec between the announcement start of domination point attacks (no longer existent)
++#define DOMINATION_ALWAYS_POWER           qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
++#define DOMINATION_TIME_ALIEN             12000  // the amount of time it takes for a single player of this team to capture a domination point in ms
++#define DOMINATION_TIME_HUMAN             10000
++#define DOMINATION_TIME_BUILDABLE         24000  // the amount of time in ms it takes for a buildable to capture a domination point
++#define DOMINATION_TIME_ALIEN_CLEAR       12000  // the amount of time in ms it takes for a single player of this team to clear an already captured domination point
++#define DOMINATION_TIME_HUMAN_CLEAR       8000
++#define DOMINATION_TIME_CLEAR             8000   // how long is takes for an almost-captured point to clear (proportional to amount captured)
++#define DOMINATION_FREEKILL_ALIEN         100    // amount of funds given to a player who cleared a domination point
++#define DOMINATION_FREEKILL_HUMAN         50
++
++// better or worse by 50% * scale
++#define DOMINATION_ALIEN_BP_SCALE         0.5f
++#define DOMINATION_HUMAN_BP_SCALE         0.4f
++#define DOMINATION_ALIEN_BPQUEUE_SCALE    1.0f
++#define DOMINATION_HUMAN_BPQUEUE_SCALE    1.0f
++#define DOMINATION_ALIEN_FREEFUNDS_SCALE  1.5f
++#define DOMINATION_HUMAN_FREEFUNDS_SCALE  1.0f
++#define DOMINATION_ALIEN_BUILDTIMER_SCALE 1.0f
++#define DOMINATION_HUMAN_BUILDTIMER_SCALE 0.75f
++#define DOMINATION_ALIEN_HEAL_SCALE       1.0f
++#define DOMINATION_HUMAN_HEAL_SCALE       1.0f
++
++
++#define INSTANT_DOMINATION_RANGE                  100.0f
++#define INSTANT_DOMINATION_RANGE_SQRT             10.0f
++#define INSTANT_DOMINATION_COOLDOWN               1000
++#define INSTANT_DOMINATION_ALWAYS_POWER           qtrue
++#define INSTANT_DOMINATION_TIME_ALIEN             100
++#define INSTANT_DOMINATION_TIME_HUMAN             100
++#define INSTANT_DOMINATION_TIME_BUILDABLE         500
++#define INSTANT_DOMINATION_TIME_ALIEN_CLEAR       500
++#define INSTANT_DOMINATION_TIME_HUMAN_CLEAR       500
++#define INSTANT_DOMINATION_TIME_CLEAR             100
++#define INSTANT_DOMINATION_FREEKILL_ALIEN         10
++#define INSTANT_DOMINATION_FREEKILL_HUMAN         5
++
++#define INSTANT_DOMINATION_ALIEN_BP_SCALE         0.5f
++#define INSTANT_DOMINATION_HUMAN_BP_SCALE         0.4f
++#define INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE    1.0f
++#define INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE    1.0f
++#define INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE  1.5f
++#define INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE  1.0f
++#define INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE 1.0f
++#define INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE 0.75f
++#define INSTANT_DOMINATION_ALIEN_HEAL_SCALE       1.0f
++#define INSTANT_DOMINATION_HUMAN_HEAL_SCALE       1.0f
++
  #endif /* #ifndef _TREMULOUS_H */
 diff --git a/src/ui/ui_main.c b/src/ui/ui_main.c
-index 6c70ecd..d774f98 100644
+index db12c33..cc9f527 100644
 --- a/src/ui/ui_main.c
 +++ b/src/ui/ui_main.c
-@@ -2711,16 +2711,20 @@ UI_LoadAlienBuilds
+@@ -2714,16 +2714,20 @@ UI_LoadAlienBuilds
  static void UI_LoadAlienBuilds( void )
  {
    int     i, j = 0;
@@ -6655,7 +6856,7 @@ index 6c70ecd..d774f98 100644
          BG_Buildable( i )->buildWeapon & uiInfo.weapons &&
          BG_BuildableAllowedInStage( i, stage ) &&
          BG_BuildableIsAllowed( i ) )
-@@ -2747,16 +2751,20 @@ UI_LoadHumanBuilds
+@@ -2750,16 +2754,20 @@ UI_LoadHumanBuilds
  static void UI_LoadHumanBuilds( void )
  {
    int     i, j = 0;
@@ -6677,11 +6878,11 @@ index 6c70ecd..d774f98 100644
          BG_Buildable( i )->buildWeapon & uiInfo.weapons &&
          BG_BuildableAllowedInStage( i, stage ) &&
          BG_BuildableIsAllowed( i ) )
-@@ -4911,4 +4919,3 @@ void UI_UpdateNews( qboolean begin )
+@@ -4892,4 +4900,3 @@ void UI_UpdateNews( qboolean begin )
    if( finished )
      uiInfo.newsInfo.refreshActive = qfalse;
  }
 -
 -- 
-1.6.1.2
+1.7.1
 
