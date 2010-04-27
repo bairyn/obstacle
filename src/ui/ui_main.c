@@ -1391,7 +1391,11 @@ void UI_ParseMenu( const char *menuFile )
   handle = trap_Parse_LoadSource( menuFile );
 
   if( !handle )
+  {
+    Com_Printf( S_COLOR_YELLOW "WARNING: Menu file %s not found\n",
+                menuFile );
     return;
+  }
 
   while( 1 )
   {

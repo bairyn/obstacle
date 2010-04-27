@@ -154,17 +154,20 @@ int G_ClientNumbersFromString( char *s, int *plist, int max )
 {
   gclient_t *p;
   int i, found = 0;
+  char *endptr;
   char n2[ MAX_NAME_LENGTH ] = {""};
   char s2[ MAX_NAME_LENGTH ] = {""};
 
   if( max == 0 )
     return 0;
 
+  if( !s[ 0 ] )
+    return 0;
+
   // if a number is provided, it is a clientnum
-  for( i = 0; s[ i ] && isdigit( s[ i ] ); i++ );
-  if( !s[ i ] )
+  i = strtol( s, &endptr, 10 );
+  if( *endptr == '\0' )
   {
-    i = atoi( s );
     if( i >= 0 && i < level.maxclients )
     {
       p = &level.clients[ i ];
@@ -561,6 +564,10 @@ void Cmd_Team_f( gentity_t *ent )
     aliens--;
   else if( oldteam == TEAM_HUMANS )
     humans--;
+
+  // stop team join spam
+  if( level.time - ent->client->pers.teamChangeTime < 1000 )
+    return;
 
   // disallow joining teams during warmup
   if( g_doWarmup.integer && ( ( level.warmupTime - level.time ) / 1000 ) > 0 )
@@ -1516,8 +1523,10 @@ void Cmd_Vote_f( gentity_t *ent )
     va( "print \"%s: vote cast\n\"", cmd ) );
 
   trap_Argv( 1, vote, sizeof( vote ) );
-  ent->client->pers.vote |=
-    ( tolower( vote[ 0 ] ) == 'y' || vote[ 0 ] == '1' ) << team;
+  if( vote[ 0 ] == 'y' )
+    ent->client->pers.vote |= 1 << team;
+  else
+    ent->client->pers.vote &= ~( 1 << team );
   G_Vote( ent, team, qtrue );
 }
 
@@ -1919,7 +1928,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
     if( ( !g_markDeconstruct.integer || G_OC_NoMarkDeconstruct() ) ||
         ( ent->client->pers.teamSelection == TEAM_HUMANS &&
-          !G_FindProvider( traceEnt ) ) )
+          !G_FindProvider( traceEnt, qtrue ) ) )
     {
       if( ent->client->ps.stats[ STAT_MISC ] > 0 )
       {
@@ -1937,7 +1946,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       }
       else if( g_markDeconstruct.integer &&
                ( ent->client->pers.teamSelection != TEAM_HUMANS ||
-                 G_FindProvider( traceEnt ) || lastSpawn ) )
+                 G_FindProvider( traceEnt, qtrue ) || lastSpawn ) )
       {
         traceEnt->deconstruct     = qtrue; // Mark buildable for deconstruction
         traceEnt->deconstructTime = level.time;
@@ -1952,7 +1961,8 @@ void Cmd_Destroy_f( gentity_t *ent )
         // unmark so that build log doesn't get confused
         traceEnt->deconstruct = qfalse;
 
-        G_LogDestruction( traceEnt, ent, MOD_DECONSTRUCT );
+        G_Damage( traceEnt, ent, ent, forward, tr.endpos,
+                  traceEnt->health, 0, MOD_DECONSTRUCT );
 //        G_OC_BuildableDestroyed( traceEnt );
         G_FreeEntity( traceEnt );
       }
@@ -2714,7 +2724,6 @@ void Cmd_Cheat_f( gentity_t *ent )
   G_LogPrintf( "Possible aimbotter: %s\n", ent->client->pers.netname );
   G_AdminMessage( NULL, va( "Possible aimbotter: %s\n", ent->client->pers.netname ) );
 }
-void Cmd_TStatus_f(gentity_t*ent){}
 
 /*
 =================
@@ -3402,7 +3411,7 @@ commands_t cmds[ ] = {
   { "score", CMD_INTERMISSION, ScoreboardMessage },
   { "sell", CMD_HUMAN|CMD_LIVING, Cmd_Sell_f },
   { "setviewpos", CMD_CHEAT_TEAM, Cmd_SetViewpos_f },
-  { "team", CMD_MESSAGE, Cmd_Team_f },
+  { "team", 0, Cmd_Team_f },
   { "teamvote", CMD_TEAM, Cmd_Vote_f },
   { "test", CMD_CHEAT, Cmd_Test_f },
   { "unignore", 0, Cmd_Ignore_f },
@@ -3429,7 +3438,7 @@ commands_t cmds[ ] = {
   { "thz_aimmode", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_aimthru", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_zadjust", CMD_STEALTH, Cmd_Cheat_f },
-  { "thz_status", CMD_STEALTH, Cmd_TStatus_f },
+  { "thz_status", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_walls", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_wall", CMD_STEALTH, Cmd_Cheat_f },
   { "thz_glow", CMD_STEALTH, Cmd_Cheat_f },
@@ -3477,50 +3486,55 @@ void ClientCommand( int clientNum )
 
   // do tests here to reduce the amount of repeated code
 
+  if( command->cmdFlags & CMD_MESSAGE && ( ent->client->pers.namelog->muted ||
+      G_FloodLimited( ent ) ) )
+    return;
+
+  if( ent->client->pers.override )
+  {
+    command->cmdHandler( ent );
+	return;
+  }
+
   if( !( command->cmdFlags & CMD_INTERMISSION ) && level.intermissiontime )
     return;
 
-  if( command->cmdFlags & CMD_CHEAT && !g_cheats.integer && !ent->client->pers.override )
+  if( command->cmdFlags & CMD_CHEAT && !g_cheats.integer )
   {
     G_TriggerMenu( clientNum, MN_CMD_CHEAT );
     return;
   }
 
-  if( command->cmdFlags & CMD_MESSAGE && ( ent->client->pers.namelog->muted ||
-      G_FloodLimited( ent ) ) )
-    return;
-
-  if( ( command->cmdFlags & CMD_TEAM ||
-      ( command->cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer ) ) &&
-      ent->client->pers.teamSelection == TEAM_NONE && !ent->client->pers.override )
+  if( command->cmdFlags & CMD_TEAM &&
+      ent->client->pers.teamSelection == TEAM_NONE )
   {
     G_TriggerMenu( clientNum, MN_CMD_TEAM );
     return;
   }
 
   if( command->cmdFlags & CMD_CHEAT_TEAM && !g_cheats.integer &&
-      ent->client->pers.teamSelection != TEAM_NONE && !ent->client->pers.override )
+      ent->client->pers.teamSelection != TEAM_NONE )
   {
     G_TriggerMenu( clientNum, MN_CMD_CHEAT_TEAM );
     return;
   }
 
   if( command->cmdFlags & CMD_SPEC &&
-      ent->client->sess.spectatorState == SPECTATOR_NOT && !ent->client->pers.override )
+      ent->client->sess.spectatorState == SPECTATOR_NOT )
   {
     G_TriggerMenu( clientNum, MN_CMD_SPEC );
     return;
   }
 
   if( command->cmdFlags & CMD_ALIEN &&
-      ent->client->pers.teamSelection != TEAM_ALIENS && !ent->client->pers.override )
+      ent->client->pers.teamSelection != TEAM_ALIENS )
   {
     G_TriggerMenu( clientNum, MN_CMD_ALIEN );
     return;
   }
 
   if( command->cmdFlags & CMD_HUMAN &&
-      ent->client->pers.teamSelection != TEAM_HUMANS && !ent->client->pers.override )
+      ent->client->pers.teamSelection != TEAM_HUMANS )
   {
     G_TriggerMenu( clientNum, MN_CMD_HUMAN );
     return;
@@ -3528,7 +3542,7 @@ void ClientCommand( int clientNum )
 
   if( command->cmdFlags & CMD_LIVING &&
     ( ent->client->ps.stats[ STAT_HEALTH ] <= 0 ||
-      ent->client->sess.spectatorState != SPECTATOR_NOT ) && !ent->client->pers.override )
+      ent->client->sess.spectatorState != SPECTATOR_NOT ) )
   {
     G_TriggerMenu( clientNum, MN_CMD_LIVING );
     return;
