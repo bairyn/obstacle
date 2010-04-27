@@ -1395,7 +1395,6 @@ void ClientBegin( int clientNum )
 
   client->pers.connected = CON_CONNECTED;
   client->pers.enterTime = level.time;
-  client->pers.displayConnectMessage = qtrue;
 
   // save eflags around this, because changing teams will
   // cause this to happen with a valid entity, and we
@@ -1412,8 +1411,12 @@ void ClientBegin( int clientNum )
 
   G_OC_ClientBegin();
 
-  if( G_ConnectMessage( ent, buf, sizeof( buf ) ) )
-    G_ClientPrint( ent, buf, CLIENT_SPECTATORS );
+  if( g_isConnectMessageDisplayedInitially.integer )
+  {
+    client->pers.displayConnectMessage = qtrue;
+    if( G_ConnectMessage( ent, buf, sizeof( buf ) ) )
+      G_ClientPrint( ent, buf, CLIENT_SPECTATORS );
+  }
 
   trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname ) );
 

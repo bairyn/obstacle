@@ -696,7 +696,15 @@ Cmd_DisplayCM_f
 */
 void Cmd_DisplayCM_f( gentity_t *ent )
 {
-  ent->client->pers.displayConnectMessage = qtrue;
+  if( !ent->client->pers.displayConnectMessage )
+  {
+    char buf[ MAX_STRING_CHARS ] = {""};
+
+    ent->client->pers.displayConnectMessage = qtrue;
+
+    if( G_ConnectMessage( ent, buf, sizeof( buf ) ) )
+      G_ClientPrint( ent, buf, CLIENT_SPECTATORS );
+  }
 }
 
 /*
