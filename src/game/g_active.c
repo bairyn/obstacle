@@ -609,50 +609,6 @@ void ClientTimerActions( gentity_t *ent, int msec )
             crouched = qfalse, jumping = qfalse,
             strafing = qfalse;
   int       i;
-  int       dps  = G_DominationPoints();
-  team_t    team = ent->client->pers.teamSelection;
-  float     alienModifierFreeFunds, alienModifierBuildTimer;
-  float     humanModifierFreeFunds, humanModifierBuildTimer;
-  float     modifierFreeFunds, modifierBuildTimer;
-
-  if( dps > 0 )
-  {
-    if( g_instantDomination.integer )
-    {
-      alienModifierFreeFunds = INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifierFreeFunds = INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-
-      alienModifierBuildTimer = INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifierBuildTimer = INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-    }
-    else
-    {
-      alienModifierFreeFunds = DOMINATION_ALIEN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifierFreeFunds = DOMINATION_HUMAN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-
-      alienModifierBuildTimer = DOMINATION_ALIEN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifierBuildTimer = DOMINATION_HUMAN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-    }
-  }
-  else
-  {
-    alienModifierFreeFunds = 1.f;
-    humanModifierFreeFunds = 1.f;
-
-    alienModifierBuildTimer = 1.f;
-    humanModifierBuildTimer = 1.f;
-  }
-
-  if( team == TEAM_ALIENS )
-  {
-    modifierFreeFunds  = alienModifierFreeFunds;
-    modifierBuildTimer = alienModifierBuildTimer;
-  }
-  else
-  {
-    modifierFreeFunds  = humanModifierFreeFunds;
-    modifierBuildTimer = humanModifierBuildTimer;
-  }
 
   ucmd = &ent->client->pers.cmd;
 
@@ -701,9 +657,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( weapon == WP_ABUILD || weapon == WP_ABUILD2 ||
         BG_InventoryContainsWeapon( WP_HBUILD, client->ps.stats ) )
     {
-        //update build timer
+        // Update build timer
         if( client->ps.stats[ STAT_MISC ] > 0 )
-          client->ps.stats[ STAT_MISC ] -= 100 * modifierBuildTimer;
+          client->ps.stats[ STAT_MISC ] -= 100;
 
         if( client->ps.stats[ STAT_MISC ] < 0 )
           client->ps.stats[ STAT_MISC ] = 0;
@@ -842,25 +798,19 @@ void ClientTimerActions( gentity_t *ent, int msec )
       client->voiceEnthusiasm -= VOICE_ENTHUSIASM_DECAY;
     else
       client->voiceEnthusiasm = 0.0f;
-  }
 
-  client->pers.aliveSeconds++;
-
-  // Give clients some credit periodically
-  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 && !G_OC_NoFreeFunds() )
-  {
-    int period = (float) g_freeFundPeriod.integer * 1000.f / modifierFreeFunds;
-
-    if( !ent->client->pers.lastFreeFundTime )
-      ent->client->pers.lastFreeFundTime = level.time;
-
-    if( ent->client->pers.lastFreeFundTime + period < level.time )
+    client->pers.aliveSeconds++;
+    if( g_freeFundPeriod.integer > 0 &&
+        client->pers.aliveSeconds % g_freeFundPeriod.integer == 0 )
     {
-      G_AddCreditToClient( ent->client,
-          team == TEAM_ALIENS ? FREEKILL_ALIEN : FREEKILL_HUMAN,
-          qtrue );
-
-      ent->client->pers.lastFreeFundTime = level.time;
+      // Give clients some credit periodically
+      if( G_TimeTilSuddenDeath( ) > 0 )
+      {
+        if( client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+          G_AddCreditToClient( client, FREEKILL_ALIEN, qtrue );
+        else if( client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
+          G_AddCreditToClient( client, FREEKILL_HUMAN, qtrue );
+      }
     }
   }
 
@@ -1336,39 +1286,8 @@ void ClientThink_real( gentity_t *ent )
   int       oldEventSequence;
   int       msec;
   usercmd_t *ucmd;
-  int       dps  = G_DominationPoints();
-  float     alienModifierHeal, humanModifierHeal;
-  float     modifierHeal;
 
   client = ent->client;
-
-  if( dps > 0 )
-  {
-    if( g_instantDomination.integer )
-    {
-      alienModifierHeal = INSTANT_DOMINATION_ALIEN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifierHeal = INSTANT_DOMINATION_HUMAN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-    }
-    else
-    {
-      alienModifierHeal = DOMINATION_ALIEN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifierHeal = DOMINATION_HUMAN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
-    }
-  }
-  else
-  {
-    alienModifierHeal = 1.f;
-    humanModifierHeal = 1.f;
-  }
-
-  if( client->pers.teamSelection == TEAM_ALIENS )
-  {
-    modifierHeal = alienModifierHeal;
-  }
-  else
-  {
-    modifierHeal = humanModifierHeal;
-  }
 
   // don't think if the client is not yet connected (and thus not yet spawned in)
   if( client->pers.connected != CON_CONNECTED )
@@ -1571,7 +1490,7 @@ void ClientThink_real( gentity_t *ent )
       // Transmit heal rate to the client so it can be displayed on the HUD
       client->ps.stats[ STAT_STATE ] |= SS_HEALING_ACTIVE;
       client->ps.stats[ STAT_STATE ] &= ~( SS_HEALING_2X | SS_HEALING_3X );
-      if( modifier == 1.0f && G_IsCreepHereForPlayer( ent->s.origin ) == BA_NONE )
+      if( modifier == 1.0f && !G_FindCreep( ent ) )
       {
         client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_ACTIVE;
         modifier *= ALIEN_REGEN_NOCREEP_MOD;
@@ -1580,8 +1499,6 @@ void ClientThink_real( gentity_t *ent )
         client->ps.stats[ STAT_STATE ] |= SS_HEALING_3X;
       else if( modifier >= 2.0f )
         client->ps.stats[ STAT_STATE ] |= SS_HEALING_2X;
-
-	  modifier *= modifierHeal;
 
       interval = 1000 / ( regenRate * modifier );
       // if recovery interval is less than frametime, compensate
