@@ -106,6 +106,7 @@ vmCvar_t  g_alienStage3Threshold;
 vmCvar_t  g_freeFundPeriod;
 vmCvar_t  g_instantDomination;
 vmCvar_t  g_nextInstantDomination;
+vmCvar_t  g_disableVoteInstantDomination;
 
 vmCvar_t  g_unlagged;
 
@@ -257,6 +258,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_freeFundPeriod, "g_freeFundPeriod", DEFAULT_FREEKILL_PERIOD, CVAR_ARCHIVE, 0, qtrue },
   { &g_instantDomination, "g_instantDomination", DOMINATION_INSTANT_DEFAULT, CVAR_ARCHIVE, 0, qtrue },
   { &g_nextInstantDomination, "g_nextInstantDomination", "", 0, 0, qtrue },
+  { &g_disableVoteInstantDomination, "g_disableVoteInstantDomination", "0", CVAR_ARCHIVE, 0, qtrue },
 
   { &g_unlagged, "g_unlagged", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
 
