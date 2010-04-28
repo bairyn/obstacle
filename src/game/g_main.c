@@ -1166,19 +1166,19 @@ void G_CalculateBuildPoints( void )
   {
     if( g_instantDomination.integer )
     {
-      alienModifier = (1 + INSTANT_DOMINATION_ALIEN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
-      humanModifier = (1 + INSTANT_DOMINATION_HUMAN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
+      alienModifier = 1 + INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
+      humanModifier = 1 + INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
 
-      alienQueueModifier = (1 + INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
-      humanQueueModifier = (1 + INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
+      alienQueueModifier = 1 + INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
+      humanQueueModifier = 1 + INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
     }
     else
     {
-      alienModifier = (1 + DOMINATION_ALIEN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
-      humanModifier = (1 + DOMINATION_HUMAN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
+      alienModifier = 1 + DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
+      humanModifier = 1 + DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
 
-      alienQueueModifier = (1 + DOMINATION_ALIEN_BPQUEUE_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
-      humanQueueModifier = (1 + DOMINATION_HUMAN_BPQUEUE_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
+      alienQueueModifier = 1 + DOMINATION_ALIEN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
+      humanQueueModifier = 1 + DOMINATION_HUMAN_BPQUEUE_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
     }
   }
   else
