@@ -619,19 +619,19 @@ void ClientTimerActions( gentity_t *ent, int msec )
   {
     if( g_instantDomination.integer )
     {
-      alienModifierFreeFunds = ( 1 + INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps)) / 2;
-      humanModifierFreeFunds = ( 1 + INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps)) / 2;
+      alienModifierFreeFunds = 1.0f - ( INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifierFreeFunds = 1.0f - ( INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
 
-      alienModifierBuildTimer = ( 1 + INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps)) / 2;
-      humanModifierBuildTimer = ( 1 + INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps)) / 2;
+      alienModifierBuildTimer = 1.0f - ( INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifierBuildTimer = 1.0f - ( INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
     else
     {
-      alienModifierFreeFunds = ( 1 + DOMINATION_ALIEN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps)) / 2;
-      humanModifierFreeFunds = ( 1 + DOMINATION_HUMAN_FREEFUNDS_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps)) / 2;
+      alienModifierFreeFunds = 1.0f - ( DOMINATION_ALIEN_FREEFUNDS_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifierFreeFunds = 1.0f - ( DOMINATION_HUMAN_FREEFUNDS_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
 
-      alienModifierBuildTimer = ( 1 + DOMINATION_ALIEN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps)) / 2;
-      humanModifierBuildTimer = ( 1 + DOMINATION_HUMAN_BUILDTIMER_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps)) / 2;
+      alienModifierBuildTimer = 1.0f - ( DOMINATION_ALIEN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifierBuildTimer = 1.0f - ( DOMINATION_HUMAN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
   }
   else
@@ -1346,13 +1346,13 @@ void ClientThink_real( gentity_t *ent )
   {
     if( g_instantDomination.integer )
     {
-      alienModifierHeal = 1 + INSTANT_DOMINATION_ALIEN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
-      humanModifierHeal = 1 + INSTANT_DOMINATION_HUMAN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
+      alienModifierHeal = 1.0f - ( INSTANT_DOMINATION_ALIEN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifierHeal = 1.0f - ( INSTANT_DOMINATION_HUMAN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
     else
     {
-      alienModifierHeal = 1 + DOMINATION_ALIEN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
-      humanModifierHeal = 1 + DOMINATION_HUMAN_HEAL_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
+      alienModifierHeal = 1.0f - ( DOMINATION_ALIEN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifierHeal = 1.0f - ( DOMINATION_HUMAN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
   }
   else

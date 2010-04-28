@@ -137,13 +137,13 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
   {
     if( g_instantDomination.integer )
     {
-      alienModifier = ( 1 + INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps)) / 2;
-      humanModifier = ( 1 + INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps)) / 2;
+      alienModifier = 1.0f - ( INSTANT_DOMINATION_ALIEN_BP_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifier = 1.0f - ( INSTANT_DOMINATION_HUMAN_BP_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
     else
     {
-      alienModifier = ( 1 + INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps)) / 2;
-      humanModifier = ( 1 + INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps)) / 2;
+      alienModifier = 1.0f - ( DOMINATION_ALIEN_BP_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      humanModifier = 1.0f - ( DOMINATION_HUMAN_BP_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
   }
   else
@@ -2530,7 +2530,7 @@ void HMedistat_Think( gentity_t *self )
   gentity_t *player;
   qboolean  occupied = qfalse;
 
-  modifier = ( 1 + ( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_HEAL_SCALE : DOMINATION_HUMAN_HEAL_SCALE ) * (0.5f + (float) level.dominationPoints[ self->buildableTeam ] / (float) dps)) / 2;
+  modifier = 1.0f - ( ( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_HEAL_SCALE : DOMINATION_HUMAN_HEAL_SCALE ) * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ self->buildableTeam ] / (float) dps ) ) );
 
   self->nextthink = level.time + modifier * BG_Buildable( self->s.modelindex )->nextthink;
 
