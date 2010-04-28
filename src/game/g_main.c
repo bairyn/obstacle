@@ -131,6 +131,7 @@ vmCvar_t  g_voiceChats;
 vmCvar_t  g_shove;
 
 vmCvar_t  g_isConnectMessageDisplayedInitially;
+vmCvar_t  g_centerPrintCM;
 vmCvar_t  g_connectMessage1;
 
 vmCvar_t  g_mapConfigs;
@@ -286,6 +287,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_shove, "g_shove", "0.0", CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_isConnectMessageDisplayedInitially, "g_isConnectMessageDisplayedInitially", "1", CVAR_ARCHIVE, 0, qfalse  },
+  { &g_centerPrintCM, "g_centerPrintCM", "0", CVAR_ARCHIVE, 0, qfalse  },
   { &g_connectMessage1, "g_connectMessage1", "", CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_mapConfigs, "g_mapConfigs", "", CVAR_ARCHIVE, 0, qfalse  },

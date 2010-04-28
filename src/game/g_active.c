@@ -425,7 +425,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
   else
     queued = qfalse;
 
-  if( client->pers.displayConnectMessageNextTime <= level.time || !client->pers.displayConnectMessageNextTime )
+  if( g_centerPrintCM.integer && ( client->pers.displayConnectMessageNextTime <= level.time || !client->pers.displayConnectMessageNextTime ) )
   {
     client->pers.displayConnectMessageNextTime = level.time + CONNECTMESSAGERATE;
 
