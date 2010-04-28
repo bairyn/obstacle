@@ -137,13 +137,13 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
   {
     if( g_instantDomination.integer )
     {
-      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+      alienModifier = (1 + INSTANT_DOMINATION_ALIEN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
+      humanModifier = (1 + INSTANT_DOMINATION_HUMAN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
     }
     else
     {
-      alienModifier = INSTANT_DOMINATION_ALIEN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps);
-      humanModifier = INSTANT_DOMINATION_HUMAN_BP_SCALE * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+      alienModifier = (1 + INSTANT_DOMINATION_ALIEN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps) / 2;
+      humanModifier = (1 + INSTANT_DOMINATION_HUMAN_BP_SCALE) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps) / 2;
     }
   }
   else
@@ -2530,9 +2530,9 @@ void HMedistat_Think( gentity_t *self )
   gentity_t *player;
   qboolean  occupied = qfalse;
 
-  modifier = ( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_HEAL_SCALE : DOMINATION_HUMAN_HEAL_SCALE ) * (0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps);
+  modifier = ( 1 + ( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_HEAL_SCALE : DOMINATION_HUMAN_HEAL_SCALE ) ) * (0.5f + (float) level.dominationPoints[ self->buildableTeam ] / (float) dps) / 2;
 
-  self->nextthink = level.time + modifier * DOMINATION_HUMAN_HEAL_SCALE * BG_Buildable( self->s.modelindex )->nextthink;
+  self->nextthink = level.time + modifier * BG_Buildable( self->s.modelindex )->nextthink;
 
   self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
