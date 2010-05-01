@@ -1084,8 +1084,8 @@ void Cmd_CallVote_f( gentity_t *ent )
 
   // detect clientNum for partial name match votes
   if( !Q_stricmp( vote, "kick" ) ||
-    !Q_stricmp( vote, "mute" ) ||
-    !Q_stricmp( vote, "unmute" ) G_OC_NamedVoteMatches() )
+      !Q_stricmp( vote, "mute" ) || !Q_stricmp( vote, "unmute" ) ||
+      !Q_stricmp( vote, "denybuild" ) || !Q_stricmp( vote, "allowbuild" ) G_OC_NamedVoteMatches() )
   {
     int  clientNums[ MAX_CLIENTS ];
     int  matches = 0;
@@ -1121,16 +1121,16 @@ void Cmd_CallVote_f( gentity_t *ent )
         va( "print \"%s: invalid player\n\"", cmd ) );
       return;
     }
-  }
 
-  if( !Q_stricmp( vote, "kick" ) || !Q_stricmp( vote, "mute" ) ||
-      !Q_stricmp( vote, "denybuild" ) G_OC_NamedVoteNegativeMatches() )
-  {
-    if( G_admin_permission( g_entities + clientNum, ADMF_IMMUNITY ) )
+    if( !Q_stricmp( vote, "kick" ) || !Q_stricmp( vote, "mute" ) ||
+        !Q_stricmp( vote, "denybuild" ) G_OC_NamedVoteNegativeMatches() )
     {
-      trap_SendServerCommand( ent-g_entities,
-        va( "print \"%s: admin is immune\n\"", cmd ) );
-      return;
+      if( G_admin_permission( g_entities + clientNum, ADMF_IMMUNITY ) )
+      {
+        trap_SendServerCommand( ent-g_entities,
+          va( "print \"%s: admin is immune\n\"", cmd ) );
+        return;
+      }
     }
   }
 
