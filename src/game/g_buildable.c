@@ -311,17 +311,8 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
     }
   }
 
-  // If there were no power items nearby give up
-  if( closestProvider )
-  {
-    self->parentNode = closestProvider;
-
-    return qtrue;
-  }
-  else
-  {
-    return qfalse;
-  }
+  self->parentNode = closestPower;
+  return self->parentNode != NULL;
 }
 
 /*
@@ -2020,6 +2011,7 @@ void HRepeater_Think( gentity_t *self )
   {
     // if the repeater is inside of another power zone then disappear
     G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_SUICIDE );
+    return;
   }
 
   G_IdlePowerState( self );
