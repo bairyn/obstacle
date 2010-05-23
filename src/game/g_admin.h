@@ -166,8 +166,6 @@ qboolean G_admin_changemap( gentity_t *ent );
 qboolean G_admin_mute( gentity_t *ent );
 qboolean G_admin_override( gentity_t *ent );
 qboolean G_admin_denybuild( gentity_t *ent );
-qboolean G_admin_buildlog( gentity_t *ent );
-qboolean G_admin_revert( gentity_t *ent );
 qboolean G_admin_showbans( gentity_t *ent );
 qboolean G_admin_adminhelp( gentity_t *ent );
 qboolean G_admin_admintest( gentity_t *ent );

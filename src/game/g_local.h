@@ -584,37 +584,6 @@ typedef enum
   TW_PASSED
 } timeWarning_t;
 
-// fate of a buildable
-typedef enum
-{
-  BF_BUILT,
-  BF_MOVED,
-  BF_DECONNED,
-  BF_DESTROYED,
-  BF_TEAMKILLED,
-  BF_NOPOWER,
-  BF_FATE_COUNT,
-  BF_INVALID
-} buildFate_t;
-
-// data needed to revert a change in layout
-typedef struct buildLog_s buildLog_t;
-struct buildLog_s
-{
-  buildLog_t *next;   // linked list
-  buildLog_t *marked; // linked list of removed buildings
-  int         id;
-  int         time;
-  buildFate_t fate;
-  char        guid[ 33 ];
-  buildable_t buildable;
-  buildable_t parent; // power/creep provider
-  vec3_t      origin;
-  vec3_t      angles;
-  vec3_t      origin2;
-  vec3_t      angles2;
-};
-
 //
 // this structure is cleared as each map is entered
 //
@@ -776,8 +745,6 @@ typedef struct
   emoticon_t        emoticons[ MAX_EMOTICONS ];
   int               emoticonCount;
 
-  buildLog_t        *buildLog;
-
   int               nextCPTime;
 
   namelog_t         *namelogs;
@@ -854,12 +821,6 @@ qboolean G_RoomForClassChange( gentity_t *ent, class_t class, vec3_t newOrigin )
 // g_physics.c
 //
 void G_Physics( gentity_t *ent, int msec );
-
-void              G_BuildLogFree( buildLog_t *log );
-void              G_BuildLogCleanup( void );
-buildLog_t        *G_BuildLogNew( gentity_t *attacker, buildFate_t fate, qboolean marked );
-void              G_BuildLogSet( buildLog_t *log, gentity_t *buildable );
-const char        *G_RevertBuild( buildLog_t *log );
 
 //
 // g_buildable.c

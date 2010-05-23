@@ -1786,13 +1786,7 @@ static void G_SuicideIfNoPower( gentity_t *self )
     if( self->count < 0 )
       self->count = level.time;
     else if( self->count > 0 && ( ( level.time - self->count ) > HUMAN_BUILDABLE_INACTIVE_TIME ) )
-    {
-      if( self->parentNode )
-        G_Damage( self, NULL, g_entities + self->parentNode->killedBy, 
-                  NULL, NULL, self->health, 0, MOD_NOCREEP );
-      else
-        G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_NOCREEP );
-    }
+      G_Damage( self, NULL, NULL, NULL, NULL, self->health, 0, MOD_SUICIDE );
   }
   else
   {
@@ -4100,6 +4094,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
   return reason;
 }
 
+
 /*
 ================
 G_Build
@@ -4113,11 +4108,6 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
   vec3_t    normal;
   char      readable[ MAX_STRING_CHARS ];
   char      buildnums[ MAX_STRING_CHARS ];
-  buildLog_t *log = NULL;
-
-  // add build log so that next function can find it
-  if( builder && builder->client )
-    log = G_BuildLogNew( builder, BF_BUILT, qfalse );
 
   // Free existing buildables
   G_FreeMarkedBuildables( builder, readable, sizeof( readable ),
@@ -4404,9 +4394,6 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
       readable );
   }
 
-  if( log )
-    G_BuildLogSet( log, built );
-
   return built;
 }
 
@@ -4515,7 +4502,6 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
   buildable_t buildable = ent->s.modelindex;
 
   built = G_Build( ent, buildable, ent->s.pos.trBase, ent->s.angles );
-  built->deconstruct = ent->deconstruct;
   G_FreeEntity( ent );
 
   built->takedamage = qtrue;
@@ -4551,300 +4537,6 @@ static void G_FinishSpawningBuildable( gentity_t *ent )
 
   G_OC_BUILDABLEBUILT( built );
 }
-
-/*
-============
-Build Log
-============
-*/
-void G_BuildLogFree( buildLog_t *log )
-{
-  buildLog_t *tmp;
-
-  while( ( tmp = log ) )
-  {
-    log = log->marked;
-    BG_Free( tmp );
-  }
-}
-
-void G_BuildLogCleanup( void )
-{
-  buildLog_t *tmp;
-
-  while( ( tmp = level.buildLog ) )
-  {
-    level.buildLog = level.buildLog->next;
-    G_BuildLogFree( tmp );
-  }
-}
-
-static int G_BuildLogId( void )
-{
-  static int id = 0;
-  buildLog_t *ptr, *tmp;
-  int        i;
-
-  // keep the log trimmed
-  for( tmp = level.buildLog, i = 0; tmp && i < 64 - 2; tmp = tmp->next, i++ );
-  if( tmp )
-  {
-    ptr = tmp->next;
-    tmp->next = NULL;
-
-    while( ( tmp = ptr ) )
-    {
-      ptr = ptr->next;
-      G_BuildLogFree( tmp );
-    }
-  }
-
-  id++;
-  return id;
-}
-
-buildLog_t *G_BuildLogNew( gentity_t *attacker, buildFate_t fate, qboolean marked )
-{
-  buildLog_t *log;
-
-  log = BG_Alloc( sizeof( buildLog_t ) );
-  log->time = level.time;
-  if( attacker && attacker->client )
-    Q_strncpyz( log->guid, attacker->client->pers.guid, sizeof( log->guid ) );
-  log->fate = fate;
-
-  if( marked && level.buildLog )
-  {
-    log->id = level.buildLog->id;
-    log->marked = level.buildLog->marked;
-    level.buildLog->marked = log;
-  }
-  else
-  {
-    log->id = G_BuildLogId( );
-    log->next = level.buildLog;
-    level.buildLog = log;
-  }
-
-  return log;
-}
-
-void G_BuildLogSet( buildLog_t *log, gentity_t *buildable )
-{
-  log->buildable = buildable->s.modelindex;
-  VectorCopy( buildable->s.pos.trBase, log->origin );
-  VectorCopy( buildable->s.angles, log->angles );
-  VectorCopy( buildable->s.origin2, log->origin2 );
-  VectorCopy( buildable->s.angles2, log->angles2 );
-
-  if( buildable->parentNode )
-    log->parent = buildable->parentNode->s.modelindex;
-  else
-    log->parent = BA_NONE;
-}
-
-static qboolean G_RevertCanFit( buildLog_t * log )
-{
-  trace_t   tr;
-  vec3_t    mins, maxs;
-  vec3_t    start, end;
-  int       blockers[ MAX_GENTITIES ];
-  int       num;
-  gentity_t *ghosts[ MAX_GENTITIES ];
-  int       ghostNum = 0;
-  gentity_t *targ;
-  int       i;
-
-  BG_BuildableBoundingBox( log->buildable, mins, maxs );
-  VectorAdd( log->origin, mins, mins );
-  VectorAdd( log->origin, maxs, maxs );
-
-  num = trap_EntitiesInBox( mins, maxs, blockers, MAX_GENTITIES );
-  for( i = 0; i < num; i++ )
-  {
-    targ = g_entities + blockers[ i ];
-    if( targ->s.eType == ET_PLAYER ||
-        ( targ->s.eType == ET_BUILDABLE && targ->health <= 0 ) )
-    {
-      // ignore players and dead buildables
-      trap_UnlinkEntity( targ );
-      ghosts[ ghostNum++ ] = targ;
-    }
-  }
-
-  BG_BuildableBoundingBox( log->buildable, mins, maxs );
-  // trace the same as when placing
-  VectorScale( log->origin2, 1.0f, start );
-  VectorAdd( log->origin, start, start );
-
-  VectorScale( log->origin2, -1.0f, end );
-  VectorAdd( log->origin, end, end );
-
-  trap_Trace( &tr, start, mins, maxs, end, ENTITYNUM_NONE, MASK_PLAYERSOLID );
-
-  // restore ignored entities
-  for( i = 0; i < ghostNum; i++ )
-    trap_LinkEntity( ghosts[ i ] );
-
-  return ( !tr.startsolid );
-}
-
-static void G_RevertThink( gentity_t *self )
-{
-  vec3_t mins, maxs;
-  int    blockers[ MAX_GENTITIES ];
-  int    num;
-  int    victims = 0;
-  int    i;
-
-  BG_BuildableBoundingBox( self->s.modelindex, mins, maxs );
-  VectorAdd( self->s.pos.trBase, mins, mins );
-  VectorAdd( self->s.pos.trBase, maxs, maxs );
-  num = trap_EntitiesInBox( mins, maxs, blockers, MAX_GENTITIES );
-  for( i = 0; i < num; i++ )
-  {
-    gentity_t *targ;
-    vec3_t    shove;
-
-    targ = g_entities + blockers[ i ];
-    if( targ->client )
-    {
-      VectorSet( shove, crandom() * 150, crandom() * 150, random() * 150 );
-      VectorAdd( targ->client->ps.velocity, shove, targ->client->ps.velocity );
-      victims++;
-    }
-  }
-
-  if( victims )
-  {
-    self->nextthink = level.time + ( FRAMETIME * 2 );
-    return;
-  }
-
-  level.numBuildablesForRemoval = 0;
-  G_FinishSpawningBuildable( self );
-}
-
-static void G_RevertSpawn( buildLog_t *log, qboolean marked )
-{
-  gentity_t *built;
-  gentity_t *targ;
-  vec3_t    mins, maxs;
-  int       blockers[ MAX_GENTITIES ];
-  int       num;
-  int       i;
-
-  BG_BuildableBoundingBox( log->buildable, mins, maxs );
-  VectorAdd( log->origin, mins, mins );
-  VectorAdd( log->origin, maxs, maxs );
-  num = trap_EntitiesInBox( mins, maxs, blockers, MAX_GENTITIES );
-  for( i = 0; i < num; i++ )
-  {
-    targ = g_entities + blockers[ i ];
-    if( targ->s.eType == ET_BUILDABLE && targ->health <= 0 )
-    {
-      // old dead entity
-      G_FreeEntity( targ );
-    }
-  }
-
-  built = G_Spawn( );
-  built->r.contents = 0;
-  built->s.modelindex = log->buildable;
-  built->deconstruct = marked;
-
-  VectorCopy( log->origin, built->s.pos.trBase );
-  VectorCopy( log->angles, built->s.angles );
-  VectorCopy( log->origin2, built->s.origin2 );
-  VectorCopy( log->angles2, built->s.angles2 );
-
-  built->think = G_RevertThink;
-  built->nextthink = level.time + 50;
-}
-
-const char *G_RevertBuild( buildLog_t *log )
-{
-  gentity_t *targ;
-  vec3_t    dist;
-  int       i;
-
-  // revert a build
-  if( log->fate == BF_BUILT )
-  {
-    buildLog_t *mark;
-
-    for( i = MAX_CLIENTS; i < level.num_entities; i++ )
-    {
-      targ = g_entities + i;
-
-      if( targ->s.eType != ET_BUILDABLE ||
-          targ->s.modelindex != log->buildable )
-        continue;
-
-      VectorSubtract( targ->s.pos.trBase, log->origin, dist );
-      if( VectorLength( dist ) > 5 )
-        continue;
-
-      trap_UnlinkEntity( targ );
-      for( mark = log->marked; mark; mark = mark->marked )
-      {
-        if( !G_RevertCanFit( mark ) )
-        {
-          trap_LinkEntity( targ );
-          return "conflict with an existing buildable or map feature";
-        }
-      }
-
-      G_FreeEntity( targ );
-      for( mark = log->marked; mark; mark = mark->marked )
-        G_RevertSpawn( mark, qtrue );
-      return NULL;
-    }
-
-    return "unable to find buildable";
-  }
-
-  // revert a removal
-  if( G_RevertCanFit( log ) )
-  {
-    G_RevertSpawn( log, qfalse );
-
-    // give back queued build points
-    if( ( log->fate == BF_DESTROYED || log->fate == BF_TEAMKILLED ) &&
-        log->parent != BA_NONE )
-    {
-      int              value = BG_Buildable( log->buildable )->buildPoints;
-      team_t           team  = BG_Buildable( log->buildable )->team;
-      gentity_t        *power;
-      buildPointZone_t *zone;
-
-      power = G_ProvidingEntityForPoint( log->origin, team );
-      if( power && power->usesBuildPointZone )
-      {
-        zone = &level.buildPointZones[ power->buildPointZone ];
-        zone->queuedBuildPoints = MAX( 0, zone->queuedBuildPoints - value );
-      }
-      else
-      {
-        if     ( team == TEAM_ALIENS )
-        {
-          level.alienBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
-        }
-        else if( team == TEAM_HUMANS )
-        {
-          level.humanBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
-        }
-        else
-        {
-        }
-      }
-    }
-
-    return NULL;
-  }
-  return "conflict with an existing buildable or map feature";
-}
-
 
 /*
 ============
