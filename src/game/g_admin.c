@@ -815,7 +815,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search )
         colorlen += 2;
     }
 
-    ADMBP( va( "%4i %4i %*s^7 %s\n",
+    ADMBP( va( "%4i %4i %*s^7 %s" S_COLOR_WHITE "\n",
       ( i + MAX_CLIENTS ),
       a->level,
       admin_level_maxname + colorlen,
@@ -1211,7 +1211,8 @@ qboolean G_admin_readconfig( gentity_t *ent )
     {
       level.clients[ i ].pers.admin =
         G_admin_admin( level.clients[ i ].pers.guid );
-      G_admin_authlog( &g_entities[ i ] );
+      if( level.clients[ i ].pers.admin )
+        G_admin_authlog( &g_entities[ i ] );
     }
   }
 
