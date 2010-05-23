@@ -1386,8 +1386,24 @@ Log deconstruct/destroy events
 */
 void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
 {
-  if( !actor || !actor->client )
-    return;
+  buildFate_t fate;
+
+  switch( mod )
+  {
+    case MOD_DECONSTRUCT:
+      fate = BF_DECONSTRUCT;
+      break;
+    case MOD_REPLACE:
+      fate = BF_REPLACE;
+      break;
+    case MOD_NOCREEP:
+      fate = ( actor->client ) ? BF_UNPOWER : BF_AUTO;
+      break;
+    default:
+      fate = ( actor->client ) ? BF_DESTROY : BF_AUTO;
+      break;
+  }
+  G_BuildLogAuto( actor, self, fate );
 
   if( actor->client->pers.teamSelection ==
     BG_Buildable( self->s.modelindex )->team )

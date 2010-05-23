@@ -560,8 +560,8 @@ void G_KillBox( gentity_t *ent )
   if( !G_OC_SpotNeverTelefrags() )
     return;
 
-  VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
-  VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
+  VectorAdd( ent->s.origin, ent->r.mins, mins );
+  VectorAdd( ent->s.origin, ent->r.maxs, maxs );
   num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
 
   for( i = 0; i < num; i++ )
