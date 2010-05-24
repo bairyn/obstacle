@@ -1,6 +1,6 @@
-From dfe2313e5db047eaed7dba4c58f62846a91c2637 Mon Sep 17 00:00:00 2001
+From ea93fd00358ad1700041c7fe3dd546e289cc8685 Mon Sep 17 00:00:00 2001
 From: Byron Johnson <KrabbyKrap@gmail.com>
-Date: Wed, 28 Apr 2010 01:32:38 +0000
+Date: Mon, 24 May 2010 01:07:05 +0000
 Subject: [PATCH] Domination
 
 ---
@@ -60,17 +60,17 @@ Subject: [PATCH] Domination
  src/cgame/cg_local.h                            |   11 +
  src/cgame/cg_main.c                             |   11 +
  src/cgame/cg_servercmds.c                       |    9 +
- src/game/bg_misc.c                              |  160 +++++
+ src/game/bg_misc.c                              |  160 ++++
  src/game/bg_public.h                            |   18 +-
  src/game/g_active.c                             |  111 +++-
- src/game/g_buildable.c                          |  759 +++++++++++++++++------
+ src/game/g_buildable.c                          |  932 ++++++++++++++++++-----
  src/game/g_cmds.c                               |   56 ++-
  src/game/g_combat.c                             |    2 +
  src/game/g_local.h                              |   45 +-
- src/game/g_main.c                               |  126 +++--
+ src/game/g_main.c                               |  126 ++--
  src/game/tremulous.h                            |   59 ++
  src/ui/ui_main.c                                |   13 +-
- 66 files changed, 2012 insertions(+), 283 deletions(-)
+ 66 files changed, 2181 insertions(+), 287 deletions(-)
  create mode 100644 assets/configs/buildables/aoeu/dpoint_a.cfg
  create mode 100644 assets/configs/buildables/aoeu/dpoint_b.cfg
  create mode 100644 assets/configs/buildables/aoeu/dpoint_c.cfg
@@ -4527,10 +4527,10 @@ index 1f53d42..a0cda78 100644
  void        CG_HumanBuildableExplosion( vec3_t origin, vec3_t dir );
  void        CG_AlienBuildableExplosion( vec3_t origin, vec3_t dir );
 diff --git a/src/cgame/cg_main.c b/src/cgame/cg_main.c
-index 64151dc..aa9562b 100644
+index 9253a14..3be27e3 100644
 --- a/src/cgame/cg_main.c
 +++ b/src/cgame/cg_main.c
-@@ -781,6 +781,16 @@ static void CG_RegisterGraphics( void )
+@@ -782,6 +782,16 @@ static void CG_RegisterGraphics( void )
    cgs.media.redBuildShader            = trap_R_RegisterShader("gfx/misc/redbuild" );
    cgs.media.humanSpawningShader       = trap_R_RegisterShader("models/buildables/telenode/rep_cyl" );
  
@@ -4547,7 +4547,7 @@ index 64151dc..aa9562b 100644
    for( i = 0; i < 8; i++ )
      cgs.media.buildWeaponTimerPie[ i ] = trap_R_RegisterShader( buildWeaponTimerPieShaders[ i ] );
  
-@@ -827,6 +837,7 @@ static void CG_RegisterGraphics( void )
+@@ -828,6 +838,7 @@ static void CG_RegisterGraphics( void )
  
    CG_BuildableStatusParse( "ui/assets/human/buildstat.cfg", &cgs.humanBuildStat );
    CG_BuildableStatusParse( "ui/assets/alien/buildstat.cfg", &cgs.alienBuildStat );
@@ -5063,7 +5063,7 @@ index e7120e5..6b3d426 100644
        // if recovery interval is less than frametime, compensate
        count = 1 + ( level.time - ent->nextRegenTime ) / interval;
 diff --git a/src/game/g_buildable.c b/src/game/g_buildable.c
-index d92396d..964e498 100644
+index c64ef7f..fc9a571 100644
 --- a/src/game/g_buildable.c
 +++ b/src/game/g_buildable.c
 @@ -115,37 +115,60 @@ gentity_t *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal,
@@ -5113,11 +5113,11 @@ index d92396d..964e498 100644
 +    alienModifier = 1.f;
 +    humanModifier = 1.f;
 +  }
-+
-+  modifier = self->buildableTeam == TEAM_ALIENS ? alienModifier : humanModifier;
  
 -  // Reactor is always powered
 -  if( self->s.modelindex == BA_H_REACTOR )
++  modifier = self->buildableTeam == TEAM_ALIENS ? alienModifier : humanModifier;
++
 +  // Core buildables are always powered
 +  if( G_IsCore( self->s.modelindex ) )
    {
@@ -5261,10 +5261,10 @@ index d92396d..964e498 100644
 -        {
 -          int buildPoints = g_humanRepeaterBuildPoints.integer;
 +          int buildPoints = g_zoneBuildPoints.integer;
-+
-+          buildPoints *= modifier;
  
 -          // Scan the buildables in the repeater zone
++          buildPoints *= modifier;
++
 +          // Scan the buildables in the same zone
            for( j = MAX_CLIENTS, ent2 = g_entities + j; j < level.num_entities; j++, ent2++ )
            {
@@ -5291,7 +5291,7 @@ index d92396d..964e498 100644
              minDistance = distance;
            }
            else
-@@ -256,61 +306,56 @@ qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
+@@ -256,55 +306,47 @@ qboolean G_FindPower( gentity_t *self, qboolean searchUnspawned )
  
              // TODO: handle combined power zones here
            }
@@ -5306,19 +5306,9 @@ index d92396d..964e498 100644
      }
    }
  
-   // If there were no power items nearby give up
--  if( closestPower )
-+  if( closestProvider )
-   {
--    self->parentNode = closestPower;
-+    self->parentNode = closestProvider;
-+
-     return qtrue;
-   }
-   else
-+  {
-     return qfalse;
-+  }
+-  self->parentNode = closestPower;
++  self->parentNode = closestProvider;
+   return self->parentNode != NULL;
  }
  
  /*
@@ -5369,7 +5359,7 @@ index d92396d..964e498 100644
      return ent->parentNode;
    return NULL;
  }
-@@ -319,13 +364,13 @@ gentity_t *G_PowerEntityForEntity( gentity_t *ent )
+@@ -313,13 +355,13 @@ gentity_t *G_PowerEntityForEntity( gentity_t *ent )
  ================
  G_IsPowered
  
@@ -5385,7 +5375,7 @@ index d92396d..964e498 100644
  
    if( ent )
      return ent->s.modelindex;
-@@ -343,30 +388,43 @@ Get the number of build points from a position
+@@ -337,30 +379,43 @@ Get the number of build points from a position
  */
  int G_GetBuildPoints( const vec3_t pos, team_t team, int extraDistance )
  {
@@ -5443,7 +5433,7 @@ index d92396d..964e498 100644
    }
  
    return 0;
-@@ -402,7 +460,7 @@ qboolean G_InPowerZone( gentity_t *self )
+@@ -396,7 +451,7 @@ qboolean G_InPowerZone( gentity_t *self )
        continue;
  
      // if entity is a power item calculate the distance to it
@@ -5452,7 +5442,7 @@ index d92396d..964e498 100644
          ent->spawned && ent->powered )
      {
        VectorSubtract( self->s.origin, ent->s.origin, temp_v );
-@@ -412,6 +470,9 @@ qboolean G_InPowerZone( gentity_t *self )
+@@ -406,6 +461,9 @@ qboolean G_InPowerZone( gentity_t *self )
          return qtrue;
        else if( ent->s.modelindex == BA_H_REPEATER && distance <= REPEATER_BASESIZE )
          return qtrue;
@@ -5462,7 +5452,7 @@ index d92396d..964e498 100644
      }
    }
  
-@@ -535,82 +596,37 @@ gentity_t *G_Overmind( void )
+@@ -529,82 +587,37 @@ gentity_t *G_Overmind( void )
  
  /*
  ================
@@ -5546,10 +5536,10 @@ index d92396d..964e498 100644
 +buildable_t G_IsCreepHereForPlayer( vec3_t origin )
  {
 -  gentity_t dummy;
+-
+-  memset( &dummy, 0, sizeof( gentity_t ) );
 +  gentity_t *ent = G_ProvidingEntityForPoint( origin, TEAM_ALIENS );
  
--  memset( &dummy, 0, sizeof( gentity_t ) );
--
 -  dummy.parentNode = NULL;
 -  dummy.s.modelindex = BA_NONE;
 -  VectorCopy( origin, dummy.s.origin );
@@ -5562,7 +5552,16 @@ index d92396d..964e498 100644
  }
  
  /*
-@@ -780,7 +796,7 @@ void AGeneric_CreepCheck( gentity_t *self )
+@@ -643,7 +656,7 @@ static void G_CreepSlow( gentity_t *self )
+ 
+     if( enemy->client && enemy->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS &&
+         enemy->client->ps.groundEntityNum != ENTITYNUM_NONE &&
+-	    ( G_Visible( self, enemy, CONTENTS_SOLID ) || G_OC_NoCreepThroughWalls() ) )
++      ( G_Visible( self, enemy, CONTENTS_SOLID ) || G_OC_NoCreepThroughWalls() ) )
+     {
+       enemy->client->ps.stats[ STAT_STATE ] |= SS_CREEPSLOWED;
+       enemy->client->lastCreepSlowTime = level.time;
+@@ -774,7 +787,7 @@ void AGeneric_CreepCheck( gentity_t *self )
      return;
  
    spawn = self->parentNode;
@@ -5571,7 +5570,7 @@ index d92396d..964e498 100644
    {
      if( spawn )
        G_Damage( self, NULL, g_entities + spawn->killedBy, NULL, NULL,
-@@ -800,7 +816,7 @@ A generic think function for Alien buildables
+@@ -794,7 +807,7 @@ A generic think function for Alien buildables
  */
  void AGeneric_Think( gentity_t *self )
  {
@@ -5580,7 +5579,7 @@ index d92396d..964e498 100644
    self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
    AGeneric_CreepCheck( self );
    G_OC_DefaultAlienPowered();
-@@ -1909,7 +1925,7 @@ void HSpawn_Think( gentity_t *self )
+@@ -1897,7 +1910,7 @@ void HSpawn_Think( gentity_t *self )
    G_SuicideIfNoPower( self );
  
    // set parentNode
@@ -5589,7 +5588,7 @@ index d92396d..964e498 100644
  
    if( self->spawned )
    {
-@@ -1978,14 +1994,6 @@ static void HRepeater_Die( gentity_t *self, gentity_t *inflictor, gentity_t *att
+@@ -1966,14 +1979,6 @@ static void HRepeater_Die( gentity_t *self, gentity_t *inflictor, gentity_t *att
    }
  
    G_LogDestruction( self, attacker, mod );
@@ -5604,7 +5603,7 @@ index d92396d..964e498 100644
  }
  
  /*
-@@ -2000,7 +2008,6 @@ void HRepeater_Think( gentity_t *self )
+@@ -1988,7 +1993,6 @@ void HRepeater_Think( gentity_t *self )
    int               i;
    qboolean          reactor = qfalse;
    gentity_t         *ent;
@@ -5612,7 +5611,7 @@ index d92396d..964e498 100644
  
    if( self->spawned )
    {
-@@ -2023,29 +2030,6 @@ void HRepeater_Think( gentity_t *self )
+@@ -2012,29 +2016,6 @@ void HRepeater_Think( gentity_t *self )
  
    G_IdlePowerState( self );
  
@@ -5642,7 +5641,7 @@ index d92396d..964e498 100644
    self->powered = reactor;
  
    G_OC_DefaultHumanPowered();
-@@ -2233,7 +2217,7 @@ void HArmoury_Think( gentity_t *self )
+@@ -2222,7 +2203,7 @@ void HArmoury_Think( gentity_t *self )
    //make sure we have power
    self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
  
@@ -5651,7 +5650,7 @@ index d92396d..964e498 100644
    G_OC_DefaultHumanPowered();
  
    G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
-@@ -2262,13 +2246,249 @@ void HDCC_Think( gentity_t *self )
+@@ -2251,13 +2232,249 @@ void HDCC_Think( gentity_t *self )
    //make sure we have power
    self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
  
@@ -5902,7 +5901,7 @@ index d92396d..964e498 100644
  
  
  //==================================================================================
-@@ -2305,12 +2525,16 @@ void HMedistat_Think( gentity_t *self )
+@@ -2294,12 +2511,16 @@ void HMedistat_Think( gentity_t *self )
    int       entityList[ MAX_GENTITIES ];
    vec3_t    mins, maxs;
    int       i, num;
@@ -5921,7 +5920,7 @@ index d92396d..964e498 100644
    G_OC_DefaultHumanPowered();
    G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
  
-@@ -2660,7 +2884,7 @@ void HMGTurret_Think( gentity_t *self )
+@@ -2649,7 +2870,7 @@ void HMGTurret_Think( gentity_t *self )
    // Turn off client side muzzle flashes
    self->s.eFlags &= ~EF_FIRING;
  
@@ -5930,7 +5929,7 @@ index d92396d..964e498 100644
    G_OC_DefaultHumanPowered();
  
    G_SuicideIfNoPower( self );
-@@ -2747,7 +2971,7 @@ void HTeslaGen_Think( gentity_t *self )
+@@ -2736,7 +2957,7 @@ void HTeslaGen_Think( gentity_t *self )
    G_IdlePowerState( self );
  
    //if not powered don't do anything and check again for power next think
@@ -5939,7 +5938,7 @@ index d92396d..964e498 100644
    G_OC_DefaultHumanPowered();
    if( !self->powered )
    {
-@@ -2852,12 +3076,17 @@ void G_QueueBuildPoints( gentity_t *self )
+@@ -2855,12 +3076,17 @@ void G_QueueBuildPoints( gentity_t *self )
        break;
  
      case TEAM_HUMANS:
@@ -5959,7 +5958,7 @@ index d92396d..964e498 100644
          {
            case BA_H_REACTOR:
              nqt = G_NextQueueTime( level.humanBuildPointQueue,
-@@ -2878,7 +3107,7 @@ void G_QueueBuildPoints( gentity_t *self )
+@@ -2881,7 +3107,7 @@ void G_QueueBuildPoints( gentity_t *self )
  
                nqt = G_NextQueueTime( zone->queuedBuildPoints,
                                       zone->totalBuildPoints,
@@ -5968,7 +5967,7 @@ index d92396d..964e498 100644
  
                if( !zone->queuedBuildPoints ||
                    level.time + nqt < zone->nextQueueTime )
-@@ -2979,9 +3208,11 @@ General think function for buildables
+@@ -2982,9 +3208,11 @@ General think function for buildables
  */
  void G_BuildableThink( gentity_t *ent, int msec )
  {
@@ -5980,7 +5979,7 @@ index d92396d..964e498 100644
  
    //toggle spawned flag for buildables
    if( !ent->spawned && ent->health > 0 )
-@@ -3048,6 +3279,53 @@ void G_BuildableThink( gentity_t *ent, int msec )
+@@ -3051,6 +3279,53 @@ void G_BuildableThink( gentity_t *ent, int msec )
  
    // Fall back on normal physics routines
    G_Physics( ent, msec );
@@ -6034,7 +6033,7 @@ index d92396d..964e498 100644
  }
  
  
-@@ -3217,7 +3495,7 @@ static int G_CompareBuildablesForRemoval( const void *a, const void *b )
+@@ -3220,7 +3495,7 @@ static int G_CompareBuildablesForRemoval( const void *a, const void *b )
    // They're the same type
    if( buildableA->s.modelindex == buildableB->s.modelindex )
    {
@@ -6043,7 +6042,7 @@ index d92396d..964e498 100644
  
      // Prefer the entity that is providing power for this point
      aMatches = ( powerEntity == buildableA );
-@@ -3264,6 +3542,10 @@ void G_ClearDeconMarks( void )
+@@ -3267,6 +3542,10 @@ void G_ClearDeconMarks( void )
      if( ent->s.eType != ET_BUILDABLE )
        continue;
  
@@ -6054,7 +6053,7 @@ index d92396d..964e498 100644
      ent->deconstruct = qfalse;
    }
  }
-@@ -3383,6 +3665,9 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
+@@ -3386,6 +3665,9 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
      spawn           = BA_H_SPAWN;
      core            = BA_H_REACTOR;
    }
@@ -6064,7 +6063,7 @@ index d92396d..964e498 100644
    else
    {
      Com_Error( ERR_FATAL, "team is %d\n", team );
-@@ -3450,7 +3735,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
+@@ -3453,7 +3735,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
      if( team == TEAM_HUMANS &&
          buildable != BA_H_REACTOR &&
          buildable != BA_H_REPEATER &&
@@ -6073,7 +6072,7 @@ index d92396d..964e498 100644
        continue;
  
      if( !ent->inuse )
-@@ -3473,7 +3758,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
+@@ -3476,7 +3758,7 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
  
      // Don't allow a power source to be replaced by a dependant
      if( team == TEAM_HUMANS &&
@@ -6082,7 +6081,7 @@ index d92396d..964e498 100644
          buildable != BA_H_REPEATER &&
          buildable != core )
        continue;
-@@ -3629,6 +3914,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3632,6 +3914,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
    int               contents;
    playerState_t     *ps = &ent->client->ps;
    int               buildPoints;
@@ -6090,7 +6089,7 @@ index d92396d..964e498 100644
  
    if( G_OC_NeedAlternateCanBuild() )
    {
-@@ -3663,7 +3949,16 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3666,7 +3949,16 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
    if( ( tempReason = G_SufficientBPAvailable( buildable, origin ) ) != IBE_NONE )
      reason = tempReason;
  
@@ -6108,7 +6107,7 @@ index d92396d..964e498 100644
    {
      //alien criteria
  
-@@ -3701,7 +3996,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3704,7 +3996,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
      //human criteria
  
      // Check for power
@@ -6117,7 +6116,7 @@ index d92396d..964e498 100644
      {
        //tell player to build a repeater to provide power
        if( buildable != BA_H_REACTOR && buildable != BA_H_REPEATER )
-@@ -3780,6 +4075,28 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
+@@ -3783,6 +4075,28 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
    if( reason != IBE_NONE )
      level.numBuildablesForRemoval = 0;
  
@@ -6146,7 +6145,7 @@ index d92396d..964e498 100644
    return reason;
  }
  
-@@ -3836,10 +4153,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+@@ -3841,10 +4155,10 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
      // in-game building by a player
      BG_GetClientNormal( &builder->client->ps, normal );
  
@@ -6160,7 +6159,7 @@ index d92396d..964e498 100644
    }
  
    // when building the initial layout, spawn the entity slightly off its
-@@ -3872,6 +4189,34 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+@@ -3877,6 +4191,34 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
    built->reserved = builder->reserved;
    built->reserved2 = builder->reserved2;
  
@@ -6195,7 +6194,7 @@ index d92396d..964e498 100644
    //things that vary for each buildable that aren't in the dbase
    switch( buildable )
    {
-@@ -4014,11 +4359,18 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
+@@ -4019,11 +4361,18 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
      built->powered = qtrue;
      built->s.eFlags |= EF_B_POWERED;
    }
@@ -6215,7 +6214,7 @@ index d92396d..964e498 100644
    VectorCopy( normal, built->s.origin2 );
  
    G_AddEvent( built, EV_BUILD_CONSTRUCT, 0 );
-@@ -4136,6 +4488,10 @@ qboolean G_BuildIfValid( gentity_t *ent, buildable_t buildable )
+@@ -4141,6 +4490,10 @@ qboolean G_BuildIfValid( gentity_t *ent, buildable_t buildable )
        G_TriggerMenu( ent->client->ps.clientNum, MN_B_LASTSPAWN );
        return qfalse;
  
@@ -6226,7 +6225,29 @@ index d92396d..964e498 100644
      default:
        break;
    }
-@@ -4834,3 +5190,12 @@ void G_BaseSelfDestruct( team_t team )
+@@ -4181,7 +4534,7 @@ static gentity_t *G_FinishSpawningBuildable( gentity_t *ent, qboolean force )
+     G_Printf( S_COLOR_YELLOW "G_FinishSpawningBuildable: %s startsolid at %s\n",
+               built->classname, vtos( built->s.origin ) );
+     G_FreeEntity( built );
+-    return;
++    return NULL;
+   }
+ 
+   //point items in the correct direction
+@@ -4290,9 +4643,9 @@ void G_LayoutSave( char *name )
+       ent->s.angles2[ 0 ],
+       ent->s.angles2[ 1 ],
+       ent->s.angles2[ 2 ],
+-	  ent->groupID,
+-	  ent->reserved,
+-	  ent->reserved2 );
++    ent->groupID,
++    ent->reserved,
++    ent->reserved2 );
+     trap_FS_Write( s, strlen( s ), f );
+   }
+   trap_FS_FCloseFile( f );
+@@ -4558,3 +4911,180 @@ void G_BaseSelfDestruct( team_t team )
    }
  }
  
@@ -6239,8 +6260,176 @@ index d92396d..964e498 100644
 +{
 +  return buildable == BA_A_OVERMIND || buildable == BA_H_REACTOR;
 +}
++
++/*
++============
++build log
++============
++*/
++buildLog_t *G_BuildLogNew( gentity_t *actor, buildFate_t fate )
++{
++  buildLog_t *log = &level.buildLog[ level.buildId++ % MAX_BUILDLOG ];
++
++  if( level.numBuildLogs < MAX_BUILDLOG )
++    level.numBuildLogs++;
++  log->time = level.time;
++  log->fate = fate;
++  log->actor = actor && actor->client ? actor->client->pers.namelog : NULL;
++  return log;
++}
++
++void G_BuildLogSet( buildLog_t *log, gentity_t *ent )
++{
++  log->modelindex = ent->s.modelindex;
++  log->deconstruct = log->deconstruct;
++  log->deconstructTime = ent->deconstructTime;
++  VectorCopy( ent->s.pos.trBase, log->origin );
++  VectorCopy( ent->s.angles, log->angles );
++  VectorCopy( ent->s.origin2, log->origin2 );
++  VectorCopy( ent->s.angles2, log->angles2 );
++  log->powerSource = ent->parentNode ? ent->parentNode->s.modelindex : BA_NONE;
++  log->powerValue = G_QueueValue( ent );
++}
++
++void G_BuildLogAuto( gentity_t *actor, gentity_t *buildable, buildFate_t fate )
++{
++  G_BuildLogSet( G_BuildLogNew( actor, fate ), buildable );
++}
++
++void G_BuildLogRevertThink( gentity_t *ent )
++{
++  gentity_t *built;
++  vec3_t    mins, maxs;
++  int       blockers[ MAX_GENTITIES ];
++  int       num;
++  int       victims = 0;
++  int       i;
++
++  if( ent->suicideTime > level.time )
++  {
++    BG_BuildableBoundingBox( ent->s.modelindex, mins, maxs );
++    VectorAdd( ent->s.pos.trBase, mins, mins );
++    VectorAdd( ent->s.pos.trBase, maxs, maxs );
++    num = trap_EntitiesInBox( mins, maxs, blockers, MAX_GENTITIES );
++    for( i = 0; i < num; i++ )
++    {
++      gentity_t *targ;
++      vec3_t    push;
++
++      targ = g_entities + blockers[ i ];
++      if( targ->client )
++      {
++        float val = ( targ->client->ps.eFlags & EF_WALLCLIMB) ? 300.0 : 150.0;
++
++        VectorSet( push, crandom() * val, crandom() * val, random() * val );
++        VectorAdd( targ->client->ps.velocity, push, targ->client->ps.velocity );
++        victims++;
++      }
++    }
++
++    if( victims )
++    {
++      // still a blocker
++      ent->nextthink = level.time + FRAMETIME;
++      return;
++    }
++  }
++
++  built = G_FinishSpawningBuildable( ent, qtrue );
++  if( ( built->deconstruct = ent->deconstruct ) )
++    built->deconstructTime = ent->deconstructTime;
++  built->buildTime = built->s.time = 0;
++  G_KillBox( built );
++
++  G_LogPrintf( "revert: restore %d %s\n",
++    built - g_entities, BG_Buildable( built->s.modelindex )->name );
++
++  G_FreeEntity( ent );
++}
++
++void G_BuildLogRevert( int id )
++{
++  buildLog_t *log;
++  gentity_t  *ent;
++  int        i;
++  vec3_t     dist;
++
++  level.numBuildablesForRemoval = 0;
++
++  level.numBuildLogs -= level.buildId - id;
++  while( level.buildId > id )
++  {
++    log = &level.buildLog[ --level.buildId % MAX_BUILDLOG ];
++    if( log->fate == BF_CONSTRUCT )
++    {
++      for( i = MAX_CLIENTS; i < level.num_entities; i++ )
++      {
++        ent = &g_entities[ i ];
++        if( ent->s.eType != ET_BUILDABLE ||
++          ent->s.modelindex != log->modelindex ||
++          ent->health <= 0 )
++          continue;
++
++        VectorSubtract( ent->s.pos.trBase, log->origin, dist );
++        if( VectorLengthSquared( dist ) > 2.0f )
++          continue;
++
++        G_LogPrintf( "revert: remove %d %s\n",
++          ent - g_entities, BG_Buildable( ent->s.modelindex )->name );
++        G_FreeEntity( ent );
++        break;
++      }
++    }
++    else
++    {
++      if( log->fate == BF_DESTROY )
++      {
++        gentity_t        *builder = G_Spawn();
++        int              value = log->powerValue;
++        team_t           team  = BG_Buildable( log->modelindex )->team;
++        gentity_t        *power;
++        buildPointZone_t *zone;
++
++        builder->client = NULL;
++        VectorCopy( log->origin, builder->s.pos.trBase );
++        VectorCopy( log->angles, builder->s.angles );
++        VectorCopy( log->origin2, builder->s.origin2 );
++        VectorCopy( log->angles2, builder->s.angles2 );
++        builder->s.modelindex = log->modelindex;
++        builder->deconstruct = log->deconstruct;
++        builder->deconstructTime = log->deconstructTime;
++
++        builder->think = G_BuildLogRevertThink;
++        builder->nextthink = level.time + FRAMETIME;
++        builder->suicideTime = level.time + 3000;
++
++        power = G_ProvidingEntityForPoint( log->origin, team );
++        if( power && power->usesBuildPointZone )
++        {
++          zone = &level.buildPointZones[ power->buildPointZone ];
++          zone->queuedBuildPoints = MAX( 0, zone->queuedBuildPoints - value );
++        }
++        else
++        {
++          if     ( team == TEAM_ALIENS )
++          {
++            level.alienBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
++          }
++          else if( team == TEAM_HUMANS )
++          {
++            level.humanBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
++          }
++          else
++          {
++          }
++        }
++      }
++    }
++  }
++}
++
 diff --git a/src/game/g_cmds.c b/src/game/g_cmds.c
-index b168bb7..f20ab85 100644
+index 3342771..924aba1 100644
 --- a/src/game/g_cmds.c
 +++ b/src/game/g_cmds.c
 @@ -1359,6 +1359,37 @@ void Cmd_CallVote_f( gentity_t *ent )
@@ -6343,7 +6532,7 @@ index b168bb7..f20ab85 100644
        {
          traceEnt->deconstruct     = qtrue; // Mark buildable for deconstruction
          traceEnt->deconstructTime = level.time;
-@@ -2659,6 +2700,10 @@ void Cmd_Build_f( gentity_t *ent )
+@@ -2657,6 +2698,10 @@ void Cmd_Build_f( gentity_t *ent )
          break;
  
        // more serious errors just pop a menu
@@ -6354,13 +6543,13 @@ index b168bb7..f20ab85 100644
        case IBE_NOALIENBP:
          err = MN_A_NOBP;
          break;
-@@ -3698,4 +3743,3 @@ void Cmd_AdminMessage_f( gentity_t *ent )
+@@ -3696,4 +3741,3 @@ void Cmd_AdminMessage_f( gentity_t *ent )
  
    G_AdminMessage( ent, ConcatArgs( 1 ) );
  }
 -
 diff --git a/src/game/g_combat.c b/src/game/g_combat.c
-index 093c314..d0aa2b0 100644
+index 13ecd53..eaa454e 100644
 --- a/src/game/g_combat.c
 +++ b/src/game/g_combat.c
 @@ -1160,6 +1160,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
@@ -6373,7 +6562,7 @@ index 093c314..d0aa2b0 100644
        return;
      }
 diff --git a/src/game/g_local.h b/src/game/g_local.h
-index 6bc33e6..16ec712 100644
+index 509fb49..f416e4e 100644
 --- a/src/game/g_local.h
 +++ b/src/game/g_local.h
 @@ -258,6 +258,12 @@ struct gentity_s
@@ -6414,7 +6603,7 @@ index 6bc33e6..16ec712 100644
  } buildPointZone_t;
  
  // store locational damage regions
-@@ -720,6 +728,8 @@ typedef struct
+@@ -718,6 +726,8 @@ typedef struct
  
    buildPointZone_t  *buildPointZones;
  
@@ -6435,7 +6624,7 @@ index 6bc33e6..16ec712 100644
  //
  // g_spawn.c
  //
-@@ -877,6 +892,8 @@ typedef enum
+@@ -871,6 +886,8 @@ typedef enum
    IBE_PERMISSION,
    IBE_LASTSPAWN,
  
@@ -6444,7 +6633,7 @@ index 6bc33e6..16ec712 100644
    IBE_MAXERRORS
  } itemBuildError_t;
  
-@@ -888,9 +905,11 @@ qboolean          G_IsDCCBuilt( void );
+@@ -882,9 +899,11 @@ qboolean          G_IsDCCBuilt( void );
  int               G_FindDCC( gentity_t *self );
  gentity_t         *G_Reactor( void );
  gentity_t         *G_Overmind( void );
@@ -6457,7 +6646,7 @@ index 6bc33e6..16ec712 100644
  gentity_t         *G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
  void              G_ClearDeconMarks( void );
  itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin );
-@@ -908,11 +927,12 @@ void              G_BaseSelfDestruct( team_t team );
+@@ -902,11 +921,12 @@ void              G_BaseSelfDestruct( team_t team );
  int               G_NextQueueTime( int queuedBP, int totalBP, int queueBaseRate );
  void              G_QueueBuildPoints( gentity_t *self );
  int               G_GetBuildPoints( const vec3_t pos, team_t team, int dist );
@@ -6470,10 +6659,10 @@ index 6bc33e6..16ec712 100644
  gentity_t         *G_RepeaterEntityForPoint( vec3_t origin );
  qboolean          G_InPowerZone( gentity_t *self );
 +qboolean          G_IsCore( buildable_t buildable );
- 
- //
- // g_utils.c
-@@ -1231,9 +1251,9 @@ extern  vmCvar_t  g_alienBuildPoints;
+ buildLog_t        *G_BuildLogNew( gentity_t *actor, buildFate_t fate );
+ void              G_BuildLogSet( buildLog_t *log, gentity_t *ent );
+ void              G_BuildLogAuto( gentity_t *actor, gentity_t *buildable, buildFate_t fate );
+@@ -1229,9 +1249,9 @@ extern  vmCvar_t  g_alienBuildPoints;
  extern  vmCvar_t  g_alienBuildQueueTime;
  extern  vmCvar_t  g_humanBuildPoints;
  extern  vmCvar_t  g_humanBuildQueueTime;
@@ -6486,7 +6675,7 @@ index 6bc33e6..16ec712 100644
  extern  vmCvar_t  g_humanStage;
  extern  vmCvar_t  g_humanCredits;
  extern  vmCvar_t  g_humanMaxStage;
-@@ -1245,6 +1265,9 @@ extern  vmCvar_t  g_alienMaxStage;
+@@ -1243,6 +1263,9 @@ extern  vmCvar_t  g_alienMaxStage;
  extern  vmCvar_t  g_alienStage2Threshold;
  extern  vmCvar_t  g_alienStage3Threshold;
  extern  vmCvar_t  g_freeFundPeriod;
@@ -6497,7 +6686,7 @@ index 6bc33e6..16ec712 100644
  extern  vmCvar_t  g_unlagged;
  
 diff --git a/src/game/g_main.c b/src/game/g_main.c
-index ce3bac6..599a52a 100644
+index 60c5aa0..6270c7e 100644
 --- a/src/game/g_main.c
 +++ b/src/game/g_main.c
 @@ -90,9 +90,9 @@ vmCvar_t  g_alienBuildPoints;
@@ -6735,7 +6924,7 @@ index ce3bac6..599a52a 100644
  
            zone->queuedBuildPoints--;
          }
-@@ -2496,10 +2533,10 @@ void CheckCvars( void )
+@@ -2494,10 +2531,10 @@ void CheckCvars( void )
    }
  
    // If the number of zones changes, we need a new array
@@ -6748,7 +6937,7 @@ index ce3bac6..599a52a 100644
      size_t            oldsize = lastNumZones * sizeof( buildPointZone_t );
  
      newZones = BG_Alloc( newsize );
-@@ -2510,7 +2547,7 @@ void CheckCvars( void )
+@@ -2508,7 +2545,7 @@ void CheckCvars( void )
      }
  
      level.buildPointZones = newZones;
@@ -6757,7 +6946,7 @@ index ce3bac6..599a52a 100644
    }
  
    level.frameMsec = trap_Milliseconds( );
-@@ -2731,4 +2768,3 @@ void G_RunFrame( int levelTime )
+@@ -2729,4 +2766,3 @@ void G_RunFrame( int levelTime )
  
    level.frameMsec = trap_Milliseconds();
  }
