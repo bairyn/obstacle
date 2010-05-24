@@ -258,12 +258,6 @@ struct gentity_s
 
   qboolean          nonSegModel;        // this entity uses a nonsegmented player model
 
-  team_t            dominationTeam;       // defending team
-  team_t            dominationAttacking;  // attacking team
-  float             dominationTime;       // how much captured
-  char              dominationName[ 64 ]; // domination point name
-  int               dominationClient;     // client that initiated the attack
-
   buildable_t       bTriggers[ BA_NUM_BUILDABLES ]; // which buildables are triggers
   class_t           cTriggers[ PCL_NUM_CLASSES ];   // which classes are triggers
   weapon_t          wTriggers[ WP_NUM_WEAPONS ];    // which weapons are triggers
@@ -397,7 +391,6 @@ typedef struct
   g_admin_admin_t     *admin;
 
   int                 aliveSeconds;       // time player has been alive in seconds
-  int                 lastFreeFundTime;   // last time the player got free credits
 
   // used to save persistant[] values while in SPECTATOR_FOLLOW mode
   int                 credit;
@@ -559,12 +552,11 @@ void      G_PrintSpawnQueue( spawnQueue_t *sq );
 // build point zone
 typedef struct
 {
-  int    active;
+  int active;
 
-  int    totalBuildPoints;
-  int    queuedBuildPoints;
-  int    nextQueueTime;
-  team_t team;
+  int totalBuildPoints;
+  int queuedBuildPoints;
+  int nextQueueTime;
 } buildPointZone_t;
 
 // store locational damage regions
@@ -726,8 +718,6 @@ typedef struct
 
   buildPointZone_t  *buildPointZones;
 
-  int               dominationPoints[ NUM_TEAMS ];
-
   gentity_t         *markedBuildables[ MAX_GENTITIES ];
   int               numBuildablesForRemoval;
 
@@ -802,11 +792,6 @@ typedef struct
   int  cmdFlags;
   void ( *cmdHandler )( gentity_t *ent );
 } commands_t;
-
-// Convenience macro to get the total number of DPs
-#define G_DominationPoints() (level.dominationPoints[ TEAM_NONE ] +\
-                              level.dominationPoints[ TEAM_ALIENS ] +\
-                              level.dominationPoints[ TEAM_HUMANS ])
 
 //
 // g_spawn.c
@@ -886,8 +871,6 @@ typedef enum
   IBE_PERMISSION,
   IBE_LASTSPAWN,
 
-  IBE_NEARDP,
-
   IBE_MAXERRORS
 } itemBuildError_t;
 
@@ -899,11 +882,9 @@ qboolean          G_IsDCCBuilt( void );
 int               G_FindDCC( gentity_t *self );
 gentity_t         *G_Reactor( void );
 gentity_t         *G_Overmind( void );
-buildable_t       G_IsCreepHere( vec3_t origin );
-buildable_t       G_IsCreepHereForPlayer( vec3_t origin );
+qboolean          G_FindCreep( gentity_t *self );
 
 void              G_BuildableThink( gentity_t *ent, int msec );
-void              G_BuildableDie( gentity_t *ent );
 gentity_t         *G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
 void              G_ClearDeconMarks( void );
 itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin );
@@ -921,12 +902,11 @@ void              G_BaseSelfDestruct( team_t team );
 int               G_NextQueueTime( int queuedBP, int totalBP, int queueBaseRate );
 void              G_QueueBuildPoints( gentity_t *self );
 int               G_GetBuildPoints( const vec3_t pos, team_t team, int dist );
-qboolean          G_FindProvider( gentity_t *self, qboolean searchUnspawned );
-gentity_t         *G_ProvidingEntityForPoint( const vec3_t origin, team_t team );
-gentity_t         *G_ProvidingEntityForEntity( gentity_t *ent );
+qboolean          G_FindPower( gentity_t *self, qboolean searchUnspawned );
+gentity_t         *G_PowerEntityForPoint( const vec3_t origin );
+gentity_t         *G_PowerEntityForEntity( gentity_t *ent );
 gentity_t         *G_RepeaterEntityForPoint( vec3_t origin );
 qboolean          G_InPowerZone( gentity_t *self );
-qboolean          G_IsCore( buildable_t buildable );
 buildLog_t        *G_BuildLogNew( gentity_t *actor, buildFate_t fate );
 void              G_BuildLogSet( buildLog_t *log, gentity_t *ent );
 void              G_BuildLogAuto( gentity_t *actor, gentity_t *buildable, buildFate_t fate );
@@ -1249,9 +1229,9 @@ extern  vmCvar_t  g_alienBuildPoints;
 extern  vmCvar_t  g_alienBuildQueueTime;
 extern  vmCvar_t  g_humanBuildPoints;
 extern  vmCvar_t  g_humanBuildQueueTime;
-extern  vmCvar_t  g_zoneBuildPoints;
-extern  vmCvar_t  g_zoneBuildQueueTime;
-extern  vmCvar_t  g_zoneMax;
+extern  vmCvar_t  g_humanRepeaterBuildPoints;
+extern  vmCvar_t  g_humanRepeaterBuildQueueTime;
+extern  vmCvar_t  g_humanRepeaterMaxZones;
 extern  vmCvar_t  g_humanStage;
 extern  vmCvar_t  g_humanCredits;
 extern  vmCvar_t  g_humanMaxStage;
@@ -1263,9 +1243,6 @@ extern  vmCvar_t  g_alienMaxStage;
 extern  vmCvar_t  g_alienStage2Threshold;
 extern  vmCvar_t  g_alienStage3Threshold;
 extern  vmCvar_t  g_freeFundPeriod;
-extern  vmCvar_t  g_instantDomination;
-extern  vmCvar_t  g_nextInstantDomination;
-extern  vmCvar_t  g_disableVoteInstantDomination;
 
 extern  vmCvar_t  g_unlagged;
 
