@@ -1234,6 +1234,15 @@ typedef struct
   qhandle_t   redBuildShader;
   qhandle_t   humanSpawningShader;
 
+  // domination shaders
+  qhandle_t   noneDominationShader;
+  qhandle_t   alienDominationShader;
+  qhandle_t   humanDominationShader;
+  qhandle_t   dominationBarShader;
+  qhandle_t   dominationBarAShader;
+  qhandle_t   dominationBarHShader;
+  qhandle_t   dominationIcon[ BA_DPOINT_LAST - BA_DPOINT_FIRST + 1 ];
+
   // disconnect
   qhandle_t   disconnectPS;
   qhandle_t   disconnectSound;
@@ -1434,6 +1443,7 @@ typedef struct
 
   buildStat_t   alienBuildStat;
   buildStat_t   humanBuildStat;
+  buildStat_t   domBuildStat;
 
   // media
   cgMedia_t           media;
@@ -1697,6 +1707,7 @@ void        CG_GhostBuildable( buildable_t buildable );
 void        CG_Buildable( centity_t *cent );
 void        CG_BuildableStatusParse( const char *filename, buildStat_t *bs );
 void        CG_DrawBuildableStatus( void );
+void        CG_DrawDominationStatus( void );
 void        CG_InitBuildables( void );
 void        CG_HumanBuildableExplosion( vec3_t origin, vec3_t dir );
 void        CG_AlienBuildableExplosion( vec3_t origin, vec3_t dir );
