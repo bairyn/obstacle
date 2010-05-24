@@ -311,7 +311,7 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
     }
   }
 
-  self->parentNode = closestPower;
+  self->parentNode = closestProvider;
   return self->parentNode != NULL;
 }
 
@@ -656,7 +656,7 @@ static void G_CreepSlow( gentity_t *self )
 
     if( enemy->client && enemy->client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS &&
         enemy->client->ps.groundEntityNum != ENTITYNUM_NONE &&
-	    ( G_Visible( self, enemy, CONTENTS_SOLID ) || G_OC_NoCreepThroughWalls() ) )
+      ( G_Visible( self, enemy, CONTENTS_SOLID ) || G_OC_NoCreepThroughWalls() ) )
     {
       enemy->client->ps.stats[ STAT_STATE ] |= SS_CREEPSLOWED;
       enemy->client->lastCreepSlowTime = level.time;
@@ -4534,7 +4534,7 @@ static gentity_t *G_FinishSpawningBuildable( gentity_t *ent, qboolean force )
     G_Printf( S_COLOR_YELLOW "G_FinishSpawningBuildable: %s startsolid at %s\n",
               built->classname, vtos( built->s.origin ) );
     G_FreeEntity( built );
-    return;
+    return NULL;
   }
 
   //point items in the correct direction
@@ -4643,9 +4643,9 @@ void G_LayoutSave( char *name )
       ent->s.angles2[ 0 ],
       ent->s.angles2[ 1 ],
       ent->s.angles2[ 2 ],
-	  ent->groupID,
-	  ent->reserved,
-	  ent->reserved2 );
+    ent->groupID,
+    ent->reserved,
+    ent->reserved2 );
     trap_FS_Write( s, strlen( s ), f );
   }
   trap_FS_FCloseFile( f );
@@ -5042,49 +5042,45 @@ void G_BuildLogRevert( int id )
     }
     else
     {
-      gentity_t  *builder = G_Spawn();
-
-      builder->client = NULL;
-      VectorCopy( log->origin, builder->s.pos.trBase );
-      VectorCopy( log->angles, builder->s.angles );
-      VectorCopy( log->origin2, builder->s.origin2 );
-      VectorCopy( log->angles2, builder->s.angles2 );
-      builder->s.modelindex = log->modelindex;
-      builder->deconstruct = log->deconstruct;
-      builder->deconstructTime = log->deconstructTime;
-
-      builder->think = G_BuildLogRevertThink;
-      builder->nextthink = level.time + FRAMETIME;
-      builder->suicideTime = level.time + 3000;
-
       if( log->fate == BF_DESTROY )
       {
-        int value = log->powerValue;
+        gentity_t        *builder = G_Spawn();
+        int              value = log->powerValue;
+        team_t           team  = BG_Buildable( log->modelindex )->team;
+        gentity_t        *power;
+        buildPointZone_t *zone;
 
-        if( BG_Buildable( log->modelindex )->team == TEAM_ALIENS )
+        builder->client = NULL;
+        VectorCopy( log->origin, builder->s.pos.trBase );
+        VectorCopy( log->angles, builder->s.angles );
+        VectorCopy( log->origin2, builder->s.origin2 );
+        VectorCopy( log->angles2, builder->s.angles2 );
+        builder->s.modelindex = log->modelindex;
+        builder->deconstruct = log->deconstruct;
+        builder->deconstructTime = log->deconstructTime;
+
+        builder->think = G_BuildLogRevertThink;
+        builder->nextthink = level.time + FRAMETIME;
+        builder->suicideTime = level.time + 3000;
+
+        power = G_ProvidingEntityForPoint( log->origin, team );
+        if( power && power->usesBuildPointZone )
         {
-          level.alienBuildPointQueue =
-            MAX( 0, level.alienBuildPointQueue - value );
+          zone = &level.buildPointZones[ power->buildPointZone ];
+          zone->queuedBuildPoints = MAX( 0, zone->queuedBuildPoints - value );
         }
         else
         {
-          if( log->powerSource == BA_H_REACTOR )
+          if     ( team == TEAM_ALIENS )
           {
-            level.humanBuildPointQueue =
-              MAX( 0, level.humanBuildPointQueue - value );
+            level.alienBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
           }
-          else if( log->powerSource == BA_H_REPEATER )
+          else if( team == TEAM_HUMANS )
           {
-            gentity_t        *source;
-            buildPointZone_t *zone;
-
-            source = G_PowerEntityForPoint( log->origin );
-            if( source && source->usesBuildPointZone )
-            {
-              zone = &level.buildPointZones[ source->buildPointZone ];
-              zone->queuedBuildPoints =
-                MAX( 0, zone->queuedBuildPoints - value );
-            }
+            level.humanBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
+          }
+          else
+          {
           }
         }
       }
