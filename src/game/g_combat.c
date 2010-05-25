@@ -1405,7 +1405,26 @@ void G_LogDestruction( gentity_t *self, gentity_t *actor, int mod )
   }
   G_BuildLogAuto( actor, self, fate );
 
-  if( actor->client->pers.teamSelection ==
+  // don't log when marked structures are removed
+  if( mod == MOD_REPLACE )
+    return;
+
+  G_LogPrintf( S_COLOR_YELLOW "Deconstruct: %d %d %s %s: %s %s by %s\n",
+    actor - g_entities,
+    self - g_entities,
+    BG_Buildable( self->s.modelindex )->name,
+    modNames[ mod ],
+    BG_Buildable( self->s.modelindex )->humanName,
+    mod == MOD_DECONSTRUCT ? "deconstructed" : "destroyed",
+    actor->client ? actor->client->pers.netname : "<world>" );
+
+  // No-power deaths for humans come after some minutes and it's confusing
+  //  when the messages appear attributed to the deconner. Just don't print them.
+  if( mod == MOD_NOCREEP && actor->client && 
+      actor->client->pers.teamSelection == TEAM_HUMANS )
+    return;
+
+  if( actor->client && actor->client->pers.teamSelection ==
     BG_Buildable( self->s.modelindex )->team )
   {
     G_TeamCommand( actor->client->ps.stats[ STAT_TEAM ],
