@@ -819,7 +819,7 @@ qboolean BG_BuildableAllowedInStage( buildable_t buildable,
 {
   int stages = BG_Buildable( buildable )->stages;
 
-  if( stages & ( 1 << stage ) || stage == S4 )
+  if( stages & ( 1 << stage ) || ( BG_OC_OCMode() && stage == S4 ) )
     return qtrue;
   else
     return qfalse;
