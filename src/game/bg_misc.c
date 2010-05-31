@@ -1526,7 +1526,7 @@ qboolean BG_ClassAllowedInStage( class_t class,
 {
   int stages = BG_Class( class )->stages;
 
-  return stages & ( 1 << stage ) || stage == S4;  // special case to enable all
+  return stages & ( 1 << stage ) || ( BG_OC_OCMode() && stage == S4 );  // special case to enable all
 }
 
 static classConfig_t bg_classConfigList[ PCL_NUM_CLASSES ];
@@ -2713,7 +2713,7 @@ qboolean BG_WeaponAllowedInStage( weapon_t weapon, stage_t stage )
 {
   int stages = BG_Weapon( weapon )->stages;
 
-  return stages & ( 1 << stage ) || stage == S4;  // special case to enable all
+  return stages & ( 1 << stage ) || ( BG_OC_OCMode() && stage == S4 );  // special case to enable all
 }
 
 /*
@@ -3024,7 +3024,7 @@ qboolean BG_UpgradeAllowedInStage( upgrade_t upgrade, stage_t stage )
 {
   int stages = BG_Upgrade( upgrade )->stages;
 
-  return stages & ( 1 << stage ) || stage == S4;
+  return stages & ( 1 << stage ) || ( BG_OC_OCMode() && stage == S4 );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
