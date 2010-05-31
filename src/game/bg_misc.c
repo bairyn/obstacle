@@ -2924,7 +2924,7 @@ static const upgradeAttributes_t bg_upgrades[ ] =
   {
     UP_BATTLESUIT_CHROME,          //int   upgradeNum;
     BSUIT_CHROME_PRICE,            //int   price;
-    ( 1 << S3 ),            //int  stages
+    ( 1 << S4 ),            //int  stages
     SLOT_HEAD|SLOT_TORSO|SLOT_ARMS|SLOT_LEGS|SLOT_BACKPACK, //int   slots;
     "bsuit_chrome",                //char  *upgradeName;
     "Chrome Battlesuit",           //char  *humanName;
@@ -2939,7 +2939,7 @@ static const upgradeAttributes_t bg_upgrades[ ] =
   {
     UP_BATTLESUIT_GOLD,          //int   upgradeNum;
     BSUIT_GOLD_PRICE,            //int   price;
-    ( 1 << S3 ),            //int  stages
+    ( 1 << S4 ),            //int  stages
     SLOT_HEAD|SLOT_TORSO|SLOT_ARMS|SLOT_LEGS|SLOT_BACKPACK, //int   slots;
     "bsuit_gold",                //char  *upgradeName;
     "Gold Battlesuit",           //char  *humanName;
