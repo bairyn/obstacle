@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MCONCAT(x, y) x # y
 #define MTOSTRING(x) MCONCAT("", x)
 
-#define VERSION "Bob's OC v2.00.44-beta"
+#define VERSION "Bob's OC v2.00.45-beta"
 //#define BUILDID MTOSTRING(GAMESUM)  // this doesn't work with QVM's
 //#define BUILDID GAMESUM  // TODO FIXME: uncomment this after qvm's recognize macros
 #define BUILDID "TODO FIXME"
