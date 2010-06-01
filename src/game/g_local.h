@@ -1216,6 +1216,8 @@ extern  vmCvar_t  g_minNameChangePeriod;
 extern  vmCvar_t  g_maxNameChanges;
 
 extern  vmCvar_t  g_timelimit;
+extern  vmCvar_t  g_timelimitPlayers;
+extern  vmCvar_t  g_timelimitSeparateValuesEnable;
 extern  vmCvar_t  g_suddenDeathTime;
 extern  vmCvar_t  g_friendlyFire;
 extern  vmCvar_t  g_friendlyBuildableFire;

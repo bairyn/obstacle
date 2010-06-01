@@ -47,6 +47,8 @@ gentity_t   g_entities[ MAX_GENTITIES ];
 gclient_t   g_clients[ MAX_CLIENTS ];
 
 vmCvar_t  g_timelimit;
+vmCvar_t  g_timelimitPlayers;
+vmCvar_t  g_timelimitSeparateValuesEnable;
 vmCvar_t  g_suddenDeathTime;
 vmCvar_t  g_friendlyFire;
 vmCvar_t  g_friendlyBuildableFire;
@@ -195,6 +197,8 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_maxGameClients, "g_maxGameClients", "0", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse  },
 
   { &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
+  { &g_timelimitPlayers, "timelimitPlayers", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
+  { &g_timelimitSeparateValuesEnable, "timelimitSeparateValuesEnable", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
   { &g_suddenDeathTime, "g_suddenDeathTime", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 
   { &g_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO, 0, qfalse  },
@@ -2284,6 +2288,13 @@ can see the last frag.
 */
 void CheckExitRules( void )
 {
+  int timelimit;
+
+  if( g_timelimitSeparateValuesEnable.integer && level.numPlayingClients > 0 )
+    timelimit = g_timelimitPlayers.integer;
+  else
+    timelimit = g_timelimit.integer;
+
   // if at the intermission, wait for all non-bots to
   // signal ready, then go to next level
   if( level.intermissiontime )
@@ -2303,9 +2314,9 @@ void CheckExitRules( void )
     return;
   }
 
-  if( g_timelimit.integer && G_OC_NeedEndGameTimelimit() )
+  if( timelimit && G_OC_NeedEndGameTimelimit() )
   {
-    if( level.time - level.startTime >= g_timelimit.integer * 60000 )
+    if( level.time - level.startTime >= timelimit * 60000 )
     {
       level.lastWin = TEAM_NONE;
       trap_SendServerCommand( -1, "print \"Timelimit hit\n\"" );
@@ -2313,13 +2324,13 @@ void CheckExitRules( void )
       LogExit( "Timelimit hit." );
       return;
     }
-    else if( level.time - level.startTime >= ( g_timelimit.integer - 5 ) * 60000 &&
+    else if( level.time - level.startTime >= ( timelimit - 5 ) * 60000 &&
           level.timelimitWarning < TW_IMMINENT && G_OC_NeedTimelimigMg() )
     {
       trap_SendServerCommand( -1, "cp \"5 minutes remaining!\"" );
       level.timelimitWarning = TW_IMMINENT;
     }
-    else if( level.time - level.startTime >= ( g_timelimit.integer - 1 ) * 60000 &&
+    else if( level.time - level.startTime >= ( timelimit - 1 ) * 60000 &&
           level.timelimitWarning < TW_PASSED && G_OC_NeedTimelimigMg() )
     {
       trap_SendServerCommand( -1, "cp \"1 minute remaining!\"" );
