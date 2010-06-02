@@ -1376,10 +1376,10 @@ void Cmd_CallVote_f( gentity_t *ent )
         return;
       }
 
-      if( arg[ 0 ] != '0' || arg[ 0 ] != '1' )
+      if( arg[ 0 ] != '0' && arg[ 0 ] != '1' )
       {
-        trap_SendServerCommand( ent - g_entities, va( "print \"Usage: %s "
-          "(0|1)\n\"", cmd ) );
+        trap_SendServerCommand( ent - g_entities, va( "print \"Usage: %s %s "
+          "(0|1)\n\"", cmd, vote ) );
         return;
       }
 
