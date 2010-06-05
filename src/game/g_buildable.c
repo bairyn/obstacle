@@ -2517,7 +2517,7 @@ void HMedistat_Think( gentity_t *self )
   gentity_t *player;
   qboolean  occupied = qfalse;
 
-  modifier = 1.0f - ( -( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_HEAL_SCALE : DOMINATION_HUMAN_HEAL_SCALE ) * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ self->buildableTeam ] / (float) dps ) ) );
+  modifier = 1.0f - ( -( g_instantDomination.integer ? INSTANT_DOMINATION_HUMAN_MEDI_HEAL_SCALE : DOMINATION_HUMAN_MEDI_HEAL_SCALE ) * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ self->buildableTeam ] / (float) dps ) ) );
 
   self->nextthink = level.time + modifier * BG_Buildable( self->s.modelindex )->nextthink;
 

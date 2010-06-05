@@ -614,6 +614,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
   float     alienModifierFreeFunds, alienModifierBuildTimer;
   float     humanModifierFreeFunds, humanModifierBuildTimer;
   float     modifierFreeFunds, modifierBuildTimer;
+  float     modifierPoisonDmg, modifierMedkitStartupTime;
 
   if( dps > 0 )
   {
@@ -624,6 +625,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
 
       alienModifierBuildTimer = 1.0f - ( INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
       humanModifierBuildTimer = 1.0f - ( INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
+
+      modifierPoisonDmg = 1.0f + ( INSTANT_DOMINATION_POISON_DMG_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      modifierMedkitStartupTime = 1.0f - ( INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
     else
     {
@@ -632,6 +636,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
 
       alienModifierBuildTimer = 1.0f - ( DOMINATION_ALIEN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
       humanModifierBuildTimer = 1.0f - ( DOMINATION_HUMAN_BUILDTIMER_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
+
+      modifierPoisonDmg = 1.0f + ( DOMINATION_POISON_DMG_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      modifierMedkitStartupTime = 1.0f - ( DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
   }
   else
@@ -750,7 +757,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( ent->client->pers.teamSelection == TEAM_HUMANS && 
         ( client->ps.stats[ STAT_STATE ] & SS_HEALING_2X ) )
     {
-      int remainingStartupTime = MEDKIT_STARTUP_TIME - ( level.time - client->lastMedKitTime );
+      int remainingStartupTime = MEDKIT_STARTUP_TIME * modifierMedkitStartupTime - ( level.time - client->lastMedKitTime );
 
       if( remainingStartupTime < 0 )
       {
@@ -795,7 +802,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
     {
       int damage = ALIEN_POISON_DMG;
 
-	  damage *= ( g_instantDomination.integer ? INSTANT_DOMINATION_POISON_DMG_SCALE : DOMINATION_POISON_DMG_SCALE );
+      damage *= modifierPoisonDmg;
 
       if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, client->ps.stats ) )
         damage -= BSUIT_POISON_PROTECTION;
@@ -1341,6 +1348,7 @@ void ClientThink_real( gentity_t *ent )
   int       dps  = G_DominationPoints();
   float     alienModifierHeal, humanModifierHeal;
   float     modifierHeal;
+  float     modifierPoisonTime, modifierBoostTime, modifierPoisonCloud, modifierMedkitStartupTime;
 
   client = ent->client;
 
@@ -1349,12 +1357,22 @@ void ClientThink_real( gentity_t *ent )
     if( g_instantDomination.integer )
     {
       alienModifierHeal = 1.0f - ( INSTANT_DOMINATION_ALIEN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
-      humanModifierHeal = 1.0f - ( INSTANT_DOMINATION_HUMAN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
+      humanModifierHeal = 1.0f - ( INSTANT_DOMINATION_HUMAN_MEDI_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
+
+      modifierPoisonTime = 1.0f + ( INSTANT_DOMINATION_POISON_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      modifierBoostTime = 1.0f + ( INSTANT_DOMINATION_BOOST_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      modifierPoisonCloud = 1.0f + ( INSTANT_DOMINATION_POISON_CLOUD_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+	  modifierMedkitStartupTime = 1.0f - ( INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
     else
     {
       alienModifierHeal = 1.0f - ( DOMINATION_ALIEN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
-      humanModifierHeal = 1.0f - ( DOMINATION_HUMAN_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
+      humanModifierHeal = 1.0f - ( DOMINATION_HUMAN_MEDI_HEAL_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
+
+      modifierPoisonTime = 1.0f + ( DOMINATION_POISON_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      modifierBoostTime = 1.0f + ( DOMINATION_BOOST_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+      modifierPoisonCloud = 1.0f + ( DOMINATION_POISON_CLOUD_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_ALIENS ] / (float) dps ) ) );
+	  modifierMedkitStartupTime = 1.0f - ( DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE * ( 1.0f - ( 0.5f + (float) level.dominationPoints[ TEAM_HUMANS ] / (float) dps ) ) );
     }
   }
   else
@@ -1474,20 +1492,20 @@ void ClientThink_real( gentity_t *ent )
   client->ps.stats[ STAT_STATE ] &= ~SS_BOOSTEDWARNING;
   if( client->ps.stats[ STAT_STATE ] & SS_BOOSTED )
   {
-    if( level.time - client->boostedTime >= BOOST_TIME )
+    if( level.time - client->boostedTime >= BOOST_TIME * modifierBoostTime )
       client->ps.stats[ STAT_STATE ] &= ~SS_BOOSTED;
-    else if( level.time - client->boostedTime >= BOOST_WARN_TIME )
+    else if( level.time - client->boostedTime >= BOOST_WARN_TIME * modifierBoostTime )
       client->ps.stats[ STAT_STATE ] |= SS_BOOSTEDWARNING;
   }
 
   // Check if poison cloud has worn off
   if( ( client->ps.eFlags & EF_POISONCLOUDED ) &&
-      BG_PlayerPoisonCloudTime( &client->ps ) - level.time +
+      BG_PlayerPoisonCloudTime( &client->ps ) * modifierPoisonCloud - level.time +
       client->lastPoisonCloudedTime <= 0 )
     client->ps.eFlags &= ~EF_POISONCLOUDED;
 
   if( client->ps.stats[ STAT_STATE ] & SS_POISONED &&
-      client->lastPoisonTime + ALIEN_POISON_TIME * ( g_instantDomination.integer ? INSTANT_DOMINATION_POISON_TIME_SCALE : DOMINATION_POISON_TIME_SCALE ) < level.time )
+      client->lastPoisonTime + ALIEN_POISON_TIME * modifierPoisonTime < level.time )
     client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
 
   client->ps.gravity = g_gravity.value;
@@ -1516,7 +1534,7 @@ void ClientThink_real( gentity_t *ent )
       client->medKitHealthToRestore =
         client->ps.stats[ STAT_MAX_HEALTH ] - client->ps.stats[ STAT_HEALTH ];
       client->medKitIncrementTime = level.time +
-        ( MEDKIT_STARTUP_TIME / MEDKIT_STARTUP_SPEED );
+        ( MEDKIT_STARTUP_TIME * modifierMedkitStartupTime / MEDKIT_STARTUP_SPEED );
 
       G_AddEvent( ent, EV_MEDKIT_USED, 0 );
     }
@@ -1583,7 +1601,7 @@ void ClientThink_real( gentity_t *ent )
       else if( modifier >= 2.0f )
         client->ps.stats[ STAT_STATE ] |= SS_HEALING_2X;
 
-	  modifier *= modifierHeal;
+      modifier *= modifierHeal;
 
       interval = 1000 / ( regenRate * modifier );
       // if recovery interval is less than frametime, compensate
