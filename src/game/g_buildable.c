@@ -2299,9 +2299,9 @@ void Domination_Think( gentity_t *self )
       if( ent->spawned && ent->powered && ent->health > 0 )
       {
         team = ent->buildableTeam;
-        weight = DOMINATION_TIME_BUILDABLE;
+        weight = ( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_BUILDABLE : DOMINATION_TIME_BUILDABLE );
         //weight = BG_Buildable( ent->s.modelindex )->buildTime /
-                 //DOMINATION_WS_BUILDABLE;
+                 //( g_instantDomination.integer ? INSTANT_DOMINATION_TIME_BUILDABLE : DOMINATION_TIME_BUILDABLE );
         if( team == TEAM_ALIENS )
           weight = -weight;
         else if( team != TEAM_HUMANS )
