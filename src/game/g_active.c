@@ -795,6 +795,8 @@ void ClientTimerActions( gentity_t *ent, int msec )
     {
       int damage = ALIEN_POISON_DMG;
 
+	  damage *= ( g_instantDomination.integer ? INSTANT_DOMINATION_POISON_DMG_SCALE : DOMINATION_POISON_DMG_SCALE );
+
       if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, client->ps.stats ) )
         damage -= BSUIT_POISON_PROTECTION;
 
@@ -1485,7 +1487,7 @@ void ClientThink_real( gentity_t *ent )
     client->ps.eFlags &= ~EF_POISONCLOUDED;
 
   if( client->ps.stats[ STAT_STATE ] & SS_POISONED &&
-      client->lastPoisonTime + ALIEN_POISON_TIME < level.time )
+      client->lastPoisonTime + ALIEN_POISON_TIME * ( g_instantDomination.integer ? INSTANT_DOMINATION_POISON_TIME_SCALE : DOMINATION_POISON_TIME_SCALE ) < level.time )
     client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
 
   client->ps.gravity = g_gravity.value;
