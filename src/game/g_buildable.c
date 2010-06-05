@@ -199,7 +199,7 @@ qboolean G_FindProvider( gentity_t *self, qboolean searchUnspawned )
         break;
 
       default:
-        requiredDistance = ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE );
+        requiredDistance = ( g_instantDomination.integer ? INSTANT_DOMINATION_BUILD_RANGE : DOMINATION_BUILD_RANGE );
         break;
     }
 
@@ -462,7 +462,7 @@ qboolean G_InPowerZone( gentity_t *self )
       else if( ent->s.modelindex == BA_H_REPEATER && distance <= REPEATER_BASESIZE )
         return qtrue;
       // allow repeaters to be built within range of domination points
-      //else if( BG_IsDPoint( ent->s.modelindex ) && distance <= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
+      //else if( BG_IsDPoint( ent->s.modelindex ) && distance <= ( g_instantDomination.integer ? INSTANT_DOMINATION_BUILD_RANGE : DOMINATION_BUILD_RANGE ) )
         //return qtrue;
     }
   }

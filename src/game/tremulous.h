@@ -723,6 +723,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define DOMINATION_RANGE                  400.0f // how close a player needs to be to attack a domination point
 #define DOMINATION_RANGE_SQRT             20.0f  // square root of the range (used in falloff calculation)
+#define DOMINATION_BUILD_RANGE            600.0f
 #define DOMINATION_COOLDOWN               5000   // msec between the announcement start of domination point attacks (no longer existent)
 #define DOMINATION_ALWAYS_POWER           qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
 #define DOMINATION_TIME_ALIEN             12000  // the amount of time it takes for a single player of this team to capture a domination point in ms
@@ -749,6 +750,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define INSTANT_DOMINATION_RANGE                  100.0f
 #define INSTANT_DOMINATION_RANGE_SQRT             10.0f
+#define INSTANT_DOMINATION_BUILD_RANGE            600.0f
 #define INSTANT_DOMINATION_COOLDOWN               1000
 #define INSTANT_DOMINATION_ALWAYS_POWER           qtrue
 #define INSTANT_DOMINATION_TIME_ALIEN             50
