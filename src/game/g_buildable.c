@@ -2346,7 +2346,8 @@ void Domination_Think( gentity_t *self )
     distance = VectorLength( dir );
     if( distance >= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) )
       continue;
-    weight *= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE_SQRT : DOMINATION_RANGE_SQRT ) / sqrt( ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) - distance );
+    if( ent->s.eType != ET_BUILDABLE )
+      weight *= ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE_SQRT : DOMINATION_RANGE_SQRT ) / sqrt( ( g_instantDomination.integer ? INSTANT_DOMINATION_RANGE : DOMINATION_RANGE ) - distance );
     if( weight < 0.1f && weight > -0.9f )
       continue;
 
