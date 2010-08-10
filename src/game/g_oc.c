@@ -473,7 +473,7 @@ qboolean G_admin_hide(void *ent)
     }
   }
 
-  ClientUserinfoChanged(pids[0]);
+  ClientUserinfoChanged(pids[0], qfalse);
   return qtrue;
 }
 
@@ -1362,7 +1362,7 @@ void G_OC_RestartClient(gentity_t *ent, int quick, int resetScrimTeam)
 		  //remove credit
 		//          G_AddCreditToClient(ent->client, -(short)numLevels, qtrue);
 		  ent->client->pers.classSelection = PCL_ALIEN_LEVEL0;
-		  ClientUserinfoChanged(ent - g_entities);
+		  ClientUserinfoChanged(ent - g_entities, qfalse);
 		  if(!G_RoomForClassChange(ent, PCL_ALIEN_LEVEL0, infestOrigin))
 			G_Damage(ent, NULL, NULL, NULL, NULL, 10000, 0, MOD_TRIGGER_HURT);
 		  VectorCopy(infestOrigin, ent->s.pos.trBase);

@@ -3098,7 +3098,7 @@ void G_QueueBuildPoints( gentity_t *self )
         {
           nqt = G_NextQueueTime( level.alienBuildPointQueue,
                                  alienBuildPointModifier * g_alienBuildPoints.integer,
-                                 g_alienBuildQueueTime.integer );
+                                 g_alienBuildQueueTime.integer / invAlienQueueModifier );
           if( !level.alienBuildPointQueue ||
               level.time + nqt < level.alienNextQueueTime )
             level.alienNextQueueTime = level.time + nqt;
@@ -3117,7 +3117,7 @@ void G_QueueBuildPoints( gentity_t *self )
         {
           nqt = G_NextQueueTime( level.humanBuildPointQueue,
                                  humanBuildPointModifier * g_humanBuildPoints.integer,
-                                 humanQueueModifier * g_humanBuildQueueTime.integer );
+                                 g_humanBuildQueueTime.integer / invHumanQueueModifier );
           if( !level.humanBuildPointQueue ||
               level.time + nqt < level.humanNextQueueTime )
             level.humanNextQueueTime = level.time + nqt;
