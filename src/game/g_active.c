@@ -609,17 +609,6 @@ void ClientTimerActions( gentity_t *ent, int msec )
             crouched = qfalse, jumping = qfalse,
             strafing = qfalse;
   int       i;
-  team_t    team = ent->client->pers.teamSelection;
-  float     freeFundsTimeModifier, buildTimerModifier, poisonDmgModifier, medkitStartupTimeModifier;
-
-  freeFundsTimeModifier = G_DModifier( team, qtrue,
-		  DOMINATION_ALIEN_FREEFUNDS_SCALE, DOMINATION_HUMAN_FREEFUNDS_SCALE, INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE, INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE );
-  buildTimerModifier = G_DModifier( team, qtrue,
-		  DOMINATION_ALIEN_BUILDTIMER_SCALE, DOMINATION_HUMAN_BUILDTIMER_SCALE, INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE, INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE );
-  poisonDmgModifier = G_DModifier( TEAM_ALIENS, qfalse,
-		  DOMINATION_POISON_DMG_SCALE, DOMINATION_POISON_DMG_SCALE, INSTANT_DOMINATION_POISON_DMG_SCALE, INSTANT_DOMINATION_POISON_DMG_SCALE );
-  medkitStartupTimeModifier = G_DModifier( TEAM_HUMANS, qtrue,
-		  DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE, DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE, INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE, INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE );
 
   ucmd = &ent->client->pers.cmd;
 
@@ -668,9 +657,9 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( weapon == WP_ABUILD || weapon == WP_ABUILD2 ||
         BG_InventoryContainsWeapon( WP_HBUILD, client->ps.stats ) )
     {
-        //update build timer
+        // Update build timer
         if( client->ps.stats[ STAT_MISC ] > 0 )
-          client->ps.stats[ STAT_MISC ] -= 100 * buildTimerModifier;
+          client->ps.stats[ STAT_MISC ] -= 100;
 
         if( client->ps.stats[ STAT_MISC ] < 0 )
           client->ps.stats[ STAT_MISC ] = 0;
@@ -717,7 +706,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( ent->client->pers.teamSelection == TEAM_HUMANS && 
         ( client->ps.stats[ STAT_STATE ] & SS_HEALING_2X ) )
     {
-      int remainingStartupTime = MEDKIT_STARTUP_TIME * medkitStartupTimeModifier - ( level.time - client->lastMedKitTime );
+      int remainingStartupTime = MEDKIT_STARTUP_TIME - ( level.time - client->lastMedKitTime );
 
       if( remainingStartupTime < 0 )
       {
@@ -761,8 +750,6 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( client->ps.stats[ STAT_STATE ] & SS_POISONED )
     {
       int damage = ALIEN_POISON_DMG;
-
-      damage *= poisonDmgModifier;
 
       if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, client->ps.stats ) )
         damage -= BSUIT_POISON_PROTECTION;
@@ -811,25 +798,19 @@ void ClientTimerActions( gentity_t *ent, int msec )
       client->voiceEnthusiasm -= VOICE_ENTHUSIASM_DECAY;
     else
       client->voiceEnthusiasm = 0.0f;
-  }
 
-  client->pers.aliveSeconds++;
-
-  // Give clients some credit periodically
-  if( g_freeFundPeriod.integer > 0 && G_TimeTilSuddenDeath( ) > 0 && !G_OC_NoFreeFunds() )
-  {
-    int period = (float) g_freeFundPeriod.integer * 1000.f / freeFundsTimeModifier;
-
-    if( !ent->client->pers.lastFreeFundTime )
-      ent->client->pers.lastFreeFundTime = level.time;
-
-    if( ent->client->pers.lastFreeFundTime + period < level.time )
+    client->pers.aliveSeconds++;
+    if( g_freeFundPeriod.integer > 0 &&
+        client->pers.aliveSeconds % g_freeFundPeriod.integer == 0 )
     {
-      G_AddCreditToClient( ent->client,
-          team == TEAM_ALIENS ? FREEKILL_ALIEN : FREEKILL_HUMAN,
-          qtrue );
-
-      ent->client->pers.lastFreeFundTime = level.time;
+      // Give clients some credit periodically
+      if( G_TimeTilSuddenDeath( ) > 0 )
+      {
+        if( client->ps.stats[ STAT_TEAM ] == TEAM_ALIENS )
+          G_AddCreditToClient( client, FREEKILL_ALIEN, qtrue );
+        else if( client->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
+          G_AddCreditToClient( client, FREEKILL_HUMAN, qtrue );
+      }
     }
   }
 
@@ -1305,7 +1286,6 @@ void ClientThink_real( gentity_t *ent )
   int       oldEventSequence;
   int       msec;
   usercmd_t *ucmd;
-  float     healModifier, poisonTimeModifier, boostTimeModifier, poisonCloudTimeModifier, medkitStartupTimeModifier;
 
   client = ent->client;
 
@@ -1351,17 +1331,6 @@ void ClientThink_real( gentity_t *ent )
     //if (ucmd->serverTime - client->ps.commandTime <= 0)
     //  return;
   }
-
-  healModifier = G_DModifier( client->pers.teamSelection, qfalse,
-		  DOMINATION_ALIEN_HEAL_SCALE, DOMINATION_HUMAN_MEDI_HEAL_SCALE, INSTANT_DOMINATION_ALIEN_HEAL_SCALE, INSTANT_DOMINATION_HUMAN_MEDI_HEAL_SCALE );
-  poisonTimeModifier = G_DModifier( client->pers.teamSelection, qtrue,
-		  DOMINATION_POISON_TIME_SCALE, DOMINATION_POISON_TIME_SCALE, INSTANT_DOMINATION_POISON_TIME_SCALE, INSTANT_DOMINATION_POISON_TIME_SCALE );
-  boostTimeModifier = G_DModifier( TEAM_HUMANS, qfalse,
-		  DOMINATION_ALIEN_BP_SCALE, DOMINATION_HUMAN_BP_SCALE, INSTANT_DOMINATION_ALIEN_BP_SCALE, INSTANT_DOMINATION_HUMAN_BP_SCALE );
-  poisonCloudTimeModifier = G_DModifier( TEAM_ALIENS, qfalse,
-		  DOMINATION_POISON_CLOUD_TIME_SCALE, DOMINATION_POISON_CLOUD_TIME_SCALE, INSTANT_DOMINATION_POISON_CLOUD_TIME_SCALE, INSTANT_DOMINATION_POISON_CLOUD_TIME_SCALE );
-  medkitStartupTimeModifier = G_DModifier( client->pers.teamSelection, qtrue,
-		  DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE, DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE, INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE, INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE );
 
   //
   // check for exiting intermission
@@ -1422,20 +1391,20 @@ void ClientThink_real( gentity_t *ent )
   client->ps.stats[ STAT_STATE ] &= ~SS_BOOSTEDWARNING;
   if( client->ps.stats[ STAT_STATE ] & SS_BOOSTED )
   {
-    if( level.time - client->boostedTime >= BOOST_TIME * boostTimeModifier )
+    if( level.time - client->boostedTime >= BOOST_TIME )
       client->ps.stats[ STAT_STATE ] &= ~SS_BOOSTED;
-    else if( level.time - client->boostedTime >= BOOST_WARN_TIME * boostTimeModifier )
+    else if( level.time - client->boostedTime >= BOOST_WARN_TIME )
       client->ps.stats[ STAT_STATE ] |= SS_BOOSTEDWARNING;
   }
 
   // Check if poison cloud has worn off
   if( ( client->ps.eFlags & EF_POISONCLOUDED ) &&
-      BG_PlayerPoisonCloudTime( &client->ps ) * poisonCloudTimeModifier - level.time +
+      BG_PlayerPoisonCloudTime( &client->ps ) - level.time +
       client->lastPoisonCloudedTime <= 0 )
     client->ps.eFlags &= ~EF_POISONCLOUDED;
 
   if( client->ps.stats[ STAT_STATE ] & SS_POISONED &&
-      client->lastPoisonTime + ALIEN_POISON_TIME * poisonTimeModifier < level.time )
+      client->lastPoisonTime + ALIEN_POISON_TIME < level.time )
     client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
 
   client->ps.gravity = g_gravity.value;
@@ -1464,7 +1433,7 @@ void ClientThink_real( gentity_t *ent )
       client->medKitHealthToRestore =
         client->ps.stats[ STAT_MAX_HEALTH ] - client->ps.stats[ STAT_HEALTH ];
       client->medKitIncrementTime = level.time +
-        ( MEDKIT_STARTUP_TIME * medkitStartupTimeModifier / MEDKIT_STARTUP_SPEED );
+        ( MEDKIT_STARTUP_TIME / MEDKIT_STARTUP_SPEED );
 
       G_AddEvent( ent, EV_MEDKIT_USED, 0 );
     }
@@ -1521,7 +1490,7 @@ void ClientThink_real( gentity_t *ent )
       // Transmit heal rate to the client so it can be displayed on the HUD
       client->ps.stats[ STAT_STATE ] |= SS_HEALING_ACTIVE;
       client->ps.stats[ STAT_STATE ] &= ~( SS_HEALING_2X | SS_HEALING_3X );
-      if( modifier == 1.0f && G_IsCreepHereForPlayer( ent->s.origin ) == BA_NONE )
+      if( modifier == 1.0f && !G_FindCreep( ent ) )
       {
         client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_ACTIVE;
         modifier *= ALIEN_REGEN_NOCREEP_MOD;
@@ -1530,8 +1499,6 @@ void ClientThink_real( gentity_t *ent )
         client->ps.stats[ STAT_STATE ] |= SS_HEALING_3X;
       else if( modifier >= 2.0f )
         client->ps.stats[ STAT_STATE ] |= SS_HEALING_2X;
-
-      modifier *= healModifier;
 
       interval = 1000 / ( regenRate * modifier );
       // if recovery interval is less than frametime, compensate

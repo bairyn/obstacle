@@ -868,18 +868,12 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   qboolean        visible = qfalse;
   vec3_t          mins, maxs;
   entityState_t   *hit;
-  team_t          team;
   int             anim;
 
-  team = BG_Buildable( es->modelindex )->team;
-  if( team == TEAM_ALIENS )
+  if( BG_Buildable( es->modelindex )->team == TEAM_ALIENS )
     bs = &cgs.alienBuildStat;
-  else if( team == TEAM_HUMANS )
-    bs = &cgs.humanBuildStat;
-  else if( team == TEAM_NONE && BG_IsDPoint( es->modelindex ) )
-    bs = &cgs.domBuildStat;
   else
-    return;
+    bs = &cgs.humanBuildStat;
 
   if( !bs->loaded )
     return;
@@ -998,14 +992,6 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   else if( healthScale > 1.0f )
     healthScale = 1.0f;
 
-  // Offset the origin to account for Z-Offset models
-  origin[ 2 ] += BG_BuildableConfig( es->modelindex )->zOffset;
-
-  // Do not show domination status if full
-  if( BG_IsDPoint( es->modelindex ) &&
-      ( healthScale == 0.f || healthScale == 1.f ) )
-    visible = qfalse;
-
   if( CG_WorldToScreen( origin, &x, &y ) )
   {
     float  picH = bs->frameHeight;
@@ -1068,19 +1054,6 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
       else
         Vector4Copy( bs->healthSevereColor, healthColor );
 
-      // Domination points use team color
-      if( BG_IsDPoint( es->modelindex ) ) {
-        if( marked ) {
-          healthColor[ 0 ] = 0.02;
-          healthColor[ 1 ] = 0.69;
-          healthColor[ 2 ] = 0.78;
-        } else {
-          healthColor[ 0 ] = 0.77;
-          healthColor[ 1 ] = 0.;
-          healthColor[ 2 ] = 0.;
-        }
-      }
-
       healthColor[ 3 ] = color[ 3 ];
       trap_R_SetColor( healthColor );
 
@@ -1106,7 +1079,7 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
     }
 
     trap_R_SetColor( color );
-    if( !powered && bs->noPowerShader )
+    if( !powered )
     {
       float pX;
 
@@ -1114,7 +1087,7 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
       CG_DrawPic( pX, subY, subH, subH, bs->noPowerShader );
     }
 
-    if( marked && bs->markedShader )
+    if( marked )
     {
       float mX;
 
@@ -1179,17 +1152,13 @@ CG_PlayerIsBuilder
 */
 static qboolean CG_PlayerIsBuilder( buildable_t buildable )
 {
-  team_t team = BG_Buildable( buildable )->team;
-
-  if( team == TEAM_NONE && BG_IsDPoint( buildable ) )
-    return qtrue;
-
   switch( cg.predictedPlayerState.weapon )
   {
     case WP_ABUILD:
     case WP_ABUILD2:
     case WP_HBUILD:
-      return team == BG_Weapon( cg.predictedPlayerState.weapon )->team;
+      return BG_Buildable( buildable )->team ==
+             BG_Weapon( cg.predictedPlayerState.weapon )->team;
 
     default:
       return qfalse;
@@ -1337,30 +1306,6 @@ void CG_Buildable( centity_t *cent )
       prebuildSound = cgs.media.alienBuildablePrebuild;
 
     trap_S_AddLoopingSound( es->number, cent->lerpOrigin, vec3_origin, prebuildSound );
-  }
-
-  // captured domination point effects
-  if( es->modelindex >= BA_DPOINT_FIRST && es->modelindex <= BA_DPOINT_LAST &&
-      es->eFlags & EF_B_POWERED )
-  {
-    vec3_t dl_origin;
-
-    VectorCopy( cent->lerpOrigin, dl_origin );
-    dl_origin[ 2 ] += 66.f;
-
-    // marked = humans
-    if( es->eFlags & EF_B_MARKED )
-    {
-      ent.customShader = cgs.media.humanDominationShader;
-      trap_R_AddLightToScene( dl_origin, 125, 0.02f, 0.69f, 0.78f);
-    }
-
-    // unmarked = aliens
-    else
-    {
-      ent.customShader = cgs.media.alienDominationShader;
-      trap_R_AddLightToScene( dl_origin, 125, 0.75f, 0.f, 0.f);
-    }
   }
 
   CG_BuildableAnimation( cent, &ent.oldframe, &ent.frame, &ent.backlerp );
