@@ -685,16 +685,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define DEFAULT_ALIEN_BUILDPOINTS   "150"
 #define DEFAULT_ALIEN_QUEUE_TIME    "12000"
+#define DEFAULT_ALIEN_ZONE_BUILDPOINTS "20"
+#define DEFAULT_ALIEN_ZONE_QUEUE_TIME "0"
 #define DEFAULT_ALIEN_STAGE2_THRESH "8000"
 #define DEFAULT_ALIEN_STAGE3_THRESH "16000"
 #define DEFAULT_ALIEN_MAX_STAGE     "2"
 #define DEFAULT_HUMAN_BUILDPOINTS   "100"
-#define DEFAULT_HUMAN_QUEUE_TIME    "6000"
-//#define DEFAULT_HUMAN_BUILDPOINTS   "100"
-//#define DEFAULT_HUMAN_QUEUE_TIME    "8000"
-#define DEFAULT_HUMAN_REPEATER_BUILDPOINTS "20"
-#define DEFAULT_HUMAN_REPEATER_QUEUE_TIME "0"
-#define DEFAULT_HUMAN_REPEATER_MAX_ZONES "500"
+#define DEFAULT_HUMAN_QUEUE_TIME    "8000"
+#define DEFAULT_HUMAN_ZONE_BUILDPOINTS "20"
+#define DEFAULT_HUMAN_ZONE_QUEUE_TIME "0"
 #define DEFAULT_HUMAN_STAGE2_THRESH "4000"
 #define DEFAULT_HUMAN_STAGE3_THRESH "8000"
 #define DEFAULT_HUMAN_MAX_STAGE     "2"
@@ -720,20 +719,35 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DOMINATION_HEALTH                 100    // health scale of a domination point
 #define DOMINATION_THINK                  100    // msec between player presence checks
 
+// settings specific to the value of the instant domination setting
 
-#define DOMINATION_RANGE                  400.0f // how close a player needs to be to attack a domination point
-#define DOMINATION_RANGE_SQRT             20.0f  // square root of the range (used in falloff calculation)
-#define DOMINATION_BUILD_RANGE            600.0f
-#define DOMINATION_COOLDOWN               5000   // msec between the announcement start of domination point attacks (no longer existent)
-#define DOMINATION_ALWAYS_POWER           qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
-#define DOMINATION_TIME_ALIEN             12000  // the amount of time it takes for a single player of this team to capture a domination point in ms
-#define DOMINATION_TIME_HUMAN             10000
-#define DOMINATION_TIME_BUILDABLE         24000  // the amount of time in ms it takes for a buildable to capture a domination point
-#define DOMINATION_TIME_ALIEN_CLEAR       12000  // the amount of time in ms it takes for a single player of this team to clear an already captured domination point
-#define DOMINATION_TIME_HUMAN_CLEAR       8000
-#define DOMINATION_TIME_CLEAR             8000   // how long is takes for an almost-captured point to clear (proportional to amount captured)
-#define DOMINATION_FREEKILL_ALIEN         100    // amount of funds given to a player who cleared a domination point
-#define DOMINATION_FREEKILL_HUMAN         50
+#define DOMINATION_RANGE                    400.0f // how close a player needs to be to attack a domination point
+#define DOMINATION_RANGE_SQRT               20.0f  // square root of the range (used in falloff calculation)
+#define DOMINATION_BUILD_RANGE              600.0f
+#define DOMINATION_COOLDOWN                 5000   // msec between the announcement start of domination point attacks (no longer existent)
+#define DOMINATION_ALWAYS_POWER             qtrue  // if a buildable is within range of a repeater or reactor, always power it even if more buildables than BP is built
+#define DOMINATION_TIME_ALIEN               12000  // the amount of time it takes for a single player of this team to capture a domination point in ms
+#define DOMINATION_TIME_HUMAN               10000
+#define DOMINATION_TIME_BUILDABLE           24000  // the amount of time in ms it takes for a buildable to capture a domination point
+#define DOMINATION_TIME_ALIEN_CLEAR         12000  // the amount of time in ms it takes for a single player of this team to clear an already captured domination point
+#define DOMINATION_TIME_HUMAN_CLEAR         8000
+#define DOMINATION_TIME_CLEAR               8000   // how long is takes for an almost-captured point to clear (proportional to amount captured)
+#define DOMINATION_FREEKILL_ALIEN           100    // amount of funds given to a player who cleared a domination point
+#define DOMINATION_FREEKILL_HUMAN           50
+
+#define INSTANT_DOMINATION_RANGE            100.0f
+#define INSTANT_DOMINATION_RANGE_SQRT       10.0f
+#define INSTANT_DOMINATION_BUILD_RANGE      600.0f
+#define INSTANT_DOMINATION_COOLDOWN         1000
+#define INSTANT_DOMINATION_ALWAYS_POWER     qtrue
+#define INSTANT_DOMINATION_TIME_ALIEN       50
+#define INSTANT_DOMINATION_TIME_HUMAN       50
+#define INSTANT_DOMINATION_TIME_BUILDABLE   20
+#define INSTANT_DOMINATION_TIME_ALIEN_CLEAR 100
+#define INSTANT_DOMINATION_TIME_HUMAN_CLEAR 100
+#define INSTANT_DOMINATION_TIME_CLEAR       100
+#define INSTANT_DOMINATION_FREEKILL_ALIEN   10
+#define INSTANT_DOMINATION_FREEKILL_HUMAN   5
 
 // better or worse by 50% * scale
 #define DOMINATION_ALIEN_BP_SCALE         0.95f
@@ -752,35 +766,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DOMINATION_BOOST_TIME_SCALE       1.0f
 #define DOMINATION_POISON_CLOUD_TIME_SCALE 0.9f
 
-
-#define INSTANT_DOMINATION_RANGE                  100.0f
-#define INSTANT_DOMINATION_RANGE_SQRT             10.0f
-#define INSTANT_DOMINATION_BUILD_RANGE            600.0f
-#define INSTANT_DOMINATION_COOLDOWN               1000
-#define INSTANT_DOMINATION_ALWAYS_POWER           qtrue
-#define INSTANT_DOMINATION_TIME_ALIEN             50
-#define INSTANT_DOMINATION_TIME_HUMAN             50
-#define INSTANT_DOMINATION_TIME_BUILDABLE         20
-#define INSTANT_DOMINATION_TIME_ALIEN_CLEAR       100
-#define INSTANT_DOMINATION_TIME_HUMAN_CLEAR       100
-#define INSTANT_DOMINATION_TIME_CLEAR             100
-#define INSTANT_DOMINATION_FREEKILL_ALIEN         10
-#define INSTANT_DOMINATION_FREEKILL_HUMAN         5
-
-#define INSTANT_DOMINATION_ALIEN_BP_SCALE         0.95f
-#define INSTANT_DOMINATION_HUMAN_BP_SCALE         0.6f
-#define INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE    1.0f
-#define INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE    1.0f
-#define INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE  1.5f
-#define INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE  1.0f
-#define INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE 1.0f
-#define INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE 0.75f
-#define INSTANT_DOMINATION_ALIEN_HEAL_SCALE       2.0f
-#define INSTANT_DOMINATION_HUMAN_MEDI_HEAL_SCALE  2.0f
+#define INSTANT_DOMINATION_ALIEN_BP_SCALE                0.95f
+#define INSTANT_DOMINATION_HUMAN_BP_SCALE                0.6f
+#define INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE           1.0f
+#define INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE           1.0f
+#define INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE         1.5f
+#define INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE         1.0f
+#define INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE        1.0f
+#define INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE        0.75f
+#define INSTANT_DOMINATION_ALIEN_HEAL_SCALE              2.0f
+#define INSTANT_DOMINATION_HUMAN_MEDI_HEAL_SCALE         2.0f
 #define INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE 2.0f
-#define INSTANT_DOMINATION_POISON_DMG_SCALE       0.5f
-#define INSTANT_DOMINATION_POISON_TIME_SCALE      1.0f
-#define INSTANT_DOMINATION_BOOST_TIME_SCALE       1.0f
-#define INSTANT_DOMINATION_POISON_CLOUD_TIME_SCALE 0.9f
+#define INSTANT_DOMINATION_POISON_DMG_SCALE              0.5f
+#define INSTANT_DOMINATION_POISON_TIME_SCALE             1.0f
+#define INSTANT_DOMINATION_BOOST_TIME_SCALE              1.0f
+#define INSTANT_DOMINATION_POISON_CLOUD_TIME_SCALE       0.9f
 
 #endif /* #ifndef _TREMULOUS_H */

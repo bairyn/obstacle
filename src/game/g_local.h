@@ -931,6 +931,7 @@ buildLog_t        *G_BuildLogNew( gentity_t *actor, buildFate_t fate );
 void              G_BuildLogSet( buildLog_t *log, gentity_t *ent );
 void              G_BuildLogAuto( gentity_t *actor, gentity_t *buildable, buildFate_t fate );
 void              G_BuildLogRevert( int id );
+float             G_DModifier( team_t team, qboolean inverse, float alienScale, float humanScale, float instantAlienScale, float instantHumanScale );
 
 //
 // g_utils.c
@@ -1251,8 +1252,10 @@ extern  vmCvar_t  g_alienBuildPoints;
 extern  vmCvar_t  g_alienBuildQueueTime;
 extern  vmCvar_t  g_humanBuildPoints;
 extern  vmCvar_t  g_humanBuildQueueTime;
-extern  vmCvar_t  g_zoneBuildPoints;
-extern  vmCvar_t  g_zoneBuildQueueTime;
+extern  vmCvar_t  g_zoneAlienBuildPoints;
+extern  vmCvar_t  g_zoneHumanBuildPoints;
+extern  vmCvar_t  g_zoneAlienBuildQueueTime;
+extern  vmCvar_t  g_zoneHumanBuildQueueTime;
 extern  vmCvar_t  g_zoneMax;
 extern  vmCvar_t  g_humanStage;
 extern  vmCvar_t  g_humanCredits;
@@ -1267,6 +1270,7 @@ extern  vmCvar_t  g_alienStage3Threshold;
 extern  vmCvar_t  g_freeFundPeriod;
 extern  vmCvar_t  g_instantDomination;
 extern  vmCvar_t  g_nextInstantDomination;
+extern  vmCvar_t  g_disableDomination;
 extern  vmCvar_t  g_disableVoteInstantDomination;
 
 extern  vmCvar_t  g_unlagged;
