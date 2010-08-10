@@ -1168,35 +1168,49 @@ Recalculate the quantity of building points available to the teams
 void G_CalculateBuildPoints( void )
 {
   int               i, j;
-  float             alienQueueModifier, humanQueueModifier, alienBuildPointModifier, humanBuildPointModifier;
+  float             invAlienQueueModifier, invHumanQueueModifier, alienBuildPointModifier, humanBuildPointModifier;
   buildPointZone_t  *zone;
 
   alienBuildPointModifier = G_DModifier( TEAM_ALIENS, qfalse,
       DOMINATION_ALIEN_BP_SCALE, DOMINATION_HUMAN_BP_SCALE, INSTANT_DOMINATION_ALIEN_BP_SCALE, INSTANT_DOMINATION_HUMAN_BP_SCALE );
   humanBuildPointModifier = G_DModifier( TEAM_HUMANS, qfalse,
       DOMINATION_ALIEN_BP_SCALE, DOMINATION_HUMAN_BP_SCALE, INSTANT_DOMINATION_ALIEN_BP_SCALE, INSTANT_DOMINATION_HUMAN_BP_SCALE );
-  alienQueueModifier = G_DModifier( TEAM_ALIENS, qtrue,
-      DOMINATION_ALIEN_BPQUEUE_SCALE, DOMINATION_HUMAN_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE );
-  humanQueueModifier = G_DModifier( TEAM_HUMANS, qtrue,
-      DOMINATION_ALIEN_BPQUEUE_SCALE, DOMINATION_HUMAN_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE );
+  invAlienQueueModifier = G_DModifier( TEAM_ALIENS, qtrue,
+      DOMINATION_ALIEN_INV_BPQUEUE_SCALE, DOMINATION_HUMAN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_INV_BPQUEUE_SCALE );
+  invHumanQueueModifier = G_DModifier( TEAM_HUMANS, qtrue,
+      DOMINATION_ALIEN_INV_BPQUEUE_SCALE, DOMINATION_HUMAN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_INV_BPQUEUE_SCALE );
 
   // BP queue updates
-  while( level.alienBuildPointQueue > 0 &&
-         level.alienNextQueueTime < level.time )
+  if( invAlienQueueModifier <= 0.1f )
   {
-    level.alienBuildPointQueue--;
-    level.alienNextQueueTime += G_NextQueueTime( level.alienBuildPointQueue,
-                                                 g_alienBuildPoints.integer,
-                                                 alienQueueModifier * g_alienBuildQueueTime.integer );
+    level.alienNextQueueTime = level.time;
+  }
+  else
+  {
+    while( level.alienBuildPointQueue > 0 &&
+           level.alienNextQueueTime < level.time )
+    {
+      level.alienBuildPointQueue--;
+      level.alienNextQueueTime += G_NextQueueTime( level.alienBuildPointQueue,
+                                                   g_alienBuildPoints.integer,
+                                                   g_alienBuildQueueTime.integer / invAlienQueueModifier );
+    }
   }
 
-  while( level.humanBuildPointQueue > 0 &&
-         level.humanNextQueueTime < level.time )
+  if( invHumanQueueModifier <= 0.1f )
   {
-    level.humanBuildPointQueue--;
-    level.humanNextQueueTime += G_NextQueueTime( level.humanBuildPointQueue,
-                                                 g_humanBuildPoints.integer,
-                                                 alienQueueModifier * g_humanBuildQueueTime.integer );
+    level.humanNextQueueTime = level.time;
+  }
+  else
+  {
+    while( level.humanBuildPointQueue > 0 &&
+           level.humanNextQueueTime < level.time )
+    {
+      level.humanBuildPointQueue--;
+      level.humanNextQueueTime += G_NextQueueTime( level.humanBuildPointQueue,
+                                                   g_humanBuildPoints.integer,
+                                                   g_humanBuildQueueTime.integer / invHumanQueueModifier );
+    }
   }
 
   // walking buildable updates

@@ -3036,7 +3036,7 @@ void G_QueueBuildPoints( gentity_t *self )
 {
   int       nqt;
   int       queuePoints;
-  float     alienQueueModifier, humanQueueModifier, alienBuildPointModifier, humanBuildPointModifier;
+  float     invAlienQueueModifier, invHumanQueueModifier, alienBuildPointModifier, humanBuildPointModifier;
   gentity_t *powerEntity;
 
   queuePoints = G_QueueValue( self );
@@ -3051,25 +3051,35 @@ void G_QueueBuildPoints( gentity_t *self )
       DOMINATION_ALIEN_BP_SCALE, DOMINATION_HUMAN_BP_SCALE, INSTANT_DOMINATION_ALIEN_BP_SCALE, INSTANT_DOMINATION_HUMAN_BP_SCALE );
   humanBuildPointModifier = G_DModifier( TEAM_HUMANS, qfalse,
       DOMINATION_ALIEN_BP_SCALE, DOMINATION_HUMAN_BP_SCALE, INSTANT_DOMINATION_ALIEN_BP_SCALE, INSTANT_DOMINATION_HUMAN_BP_SCALE );
-  alienQueueModifier = G_DModifier( TEAM_ALIENS, qtrue,
-      DOMINATION_ALIEN_BPQUEUE_SCALE, DOMINATION_HUMAN_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE );
-  humanQueueModifier = G_DModifier( TEAM_HUMANS, qtrue,
-      DOMINATION_ALIEN_BPQUEUE_SCALE, DOMINATION_HUMAN_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_BPQUEUE_SCALE );
+  invAlienQueueModifier = G_DModifier( TEAM_ALIENS, qtrue,
+      DOMINATION_ALIEN_INV_BPQUEUE_SCALE, DOMINATION_HUMAN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_INV_BPQUEUE_SCALE );
+  invHumanQueueModifier = G_DModifier( TEAM_HUMANS, qtrue,
+      DOMINATION_ALIEN_INV_BPQUEUE_SCALE, DOMINATION_HUMAN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_ALIEN_INV_BPQUEUE_SCALE, INSTANT_DOMINATION_HUMAN_INV_BPQUEUE_SCALE );
 
   if( powerEntity->usesBuildPointZone &&
       level.buildPointZones[ powerEntity->buildPointZone ].active )
   {
+    float            invQueueModifier;
     buildPointZone_t *zone = &level.buildPointZones[ powerEntity->buildPointZone ];
 
-    nqt = G_NextQueueTime( zone->queuedBuildPoints,
-                           zone->totalBuildPoints,
-                           zone->team == TEAM_ALIENS ? alienQueueModifier * g_zoneAlienBuildQueueTime.integer : humanQueueModifier * g_zoneHumanBuildPoints.integer );
+    invQueueModifier = zone->team == TEAM_ALIENS ? invAlienQueueModifier : invHumanQueueModifier;
 
-    if( !zone->queuedBuildPoints ||
-        level.time + nqt < zone->nextQueueTime )
-      zone->nextQueueTime = level.time + nqt;
+    if( invQueueModifier <= 0.1f )
+    {
+      zone->nextQueueTime = level.time;
+    }
+    else
+    {
+      nqt = G_NextQueueTime( zone->queuedBuildPoints,
+                             zone->totalBuildPoints,
+                             ( zone->team == TEAM_ALIENS ? g_zoneAlienBuildQueueTime.integer : g_zoneHumanBuildPoints.integer ) / invQueueModifier );
 
-    zone->queuedBuildPoints += queuePoints;
+      if( !zone->queuedBuildPoints ||
+          level.time + nqt < zone->nextQueueTime )
+        zone->nextQueueTime = level.time + nqt;
+
+      zone->queuedBuildPoints += queuePoints;
+    }
   }
   else
   {
@@ -3080,26 +3090,40 @@ void G_QueueBuildPoints( gentity_t *self )
         return;
 
       case TEAM_ALIENS:
-        nqt = G_NextQueueTime( level.alienBuildPointQueue,
-                               alienBuildPointModifier * g_alienBuildPoints.integer,
-                               g_alienBuildQueueTime.integer );
-        if( !level.alienBuildPointQueue ||
-            level.time + nqt < level.alienNextQueueTime )
-          level.alienNextQueueTime = level.time + nqt;
+        if( invAlienQueueModifier <= 0.1f )
+        {
+          level.alienNextQueueTime = level.time;
+        }
+        else
+        {
+          nqt = G_NextQueueTime( level.alienBuildPointQueue,
+                                 alienBuildPointModifier * g_alienBuildPoints.integer,
+                                 g_alienBuildQueueTime.integer );
+          if( !level.alienBuildPointQueue ||
+              level.time + nqt < level.alienNextQueueTime )
+            level.alienNextQueueTime = level.time + nqt;
 
-        level.alienBuildPointQueue += queuePoints;
+          level.alienBuildPointQueue += queuePoints;
 
-        break;
+          break;
+        }
 
       case TEAM_HUMANS:
-        nqt = G_NextQueueTime( level.humanBuildPointQueue,
-                               humanBuildPointModifier * g_humanBuildPoints.integer,
-                               humanQueueModifier * g_humanBuildQueueTime.integer );
-        if( !level.humanBuildPointQueue ||
-            level.time + nqt < level.humanNextQueueTime )
-          level.humanNextQueueTime = level.time + nqt;
+        if( invHumanQueueModifier <= 0.1f )
+        {
+          level.humanNextQueueTime = level.time;
+        }
+        else
+        {
+          nqt = G_NextQueueTime( level.humanBuildPointQueue,
+                                 humanBuildPointModifier * g_humanBuildPoints.integer,
+                                 humanQueueModifier * g_humanBuildQueueTime.integer );
+          if( !level.humanBuildPointQueue ||
+              level.time + nqt < level.humanNextQueueTime )
+            level.humanNextQueueTime = level.time + nqt;
 
-        level.humanBuildPointQueue += queuePoints;
+          level.humanBuildPointQueue += queuePoints;
+        }
 
         break;
     }
