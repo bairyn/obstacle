@@ -428,8 +428,19 @@ typedef enum
   BA_H_REACTOR,
   BA_H_REPEATER,
 
+  /* Domination points */
+  BA_DPOINT_A,
+  BA_DPOINT_B,
+  BA_DPOINT_C,
+  BA_DPOINT_D,
+  BA_DPOINT_FIRST = BA_DPOINT_A,
+  BA_DPOINT_LAST  = BA_DPOINT_D,
+
   BA_NUM_BUILDABLES
 } buildable_t;
+
+// Returns true if m (an entity modelindex) is in the domination point range
+#define BG_IsDPoint(m) ((m) >= BA_DPOINT_FIRST && (m) <= BA_DPOINT_LAST)
 
 // reward sounds (stored in ps->persistant[PERS_PLAYEREVENTS])
 #define PLAYEREVENT_DENIEDREWARD      0x0001
@@ -574,6 +585,9 @@ typedef enum
   MN_CMD_ALIEN,
   MN_CMD_HUMAN,
   MN_CMD_LIVING,
+
+  // Domination
+  MN_NEARDP,
 
   //alien stuff
   MN_A_CLASS,
@@ -1044,8 +1058,10 @@ typedef struct
   qboolean      dccTest;
   qboolean      transparentTest;
   qboolean      uniqueTest;
+
+  qboolean      zone;
   
-  int       value;
+  int           value;
 } buildableAttributes_t;
 
 typedef struct
