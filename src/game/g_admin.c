@@ -1195,7 +1195,7 @@ qboolean G_admin_register( gentity_t *ent )
     level = 1;
 
   trap_SendConsoleCommand( EXEC_APPEND, va( "setlevel %d %d;",ent - g_entities, level ) );
-  ClientUserinfoChanged( ent - g_entities );
+  ClientUserinfoChanged( ent - g_entities, qfalse );
 
   AP( va( "print \"^3register: ^7%s^7 is now a protected nickname.\n\"", ent->client->pers.netname ) );
 

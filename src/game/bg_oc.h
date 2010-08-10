@@ -2661,7 +2661,7 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 						client->pers.evolveHealthFraction = 1.0f; \
 	 \
 					client->pers.classSelection = newClass; \
-					ClientUserinfoChanged(ent - g_entities); \
+					ClientUserinfoChanged(ent - g_entities, qfalse); \
 					VectorCopy(infestOrigin, ent->s.pos.trBase); \
 					ClientSpawn(ent, ent, ent->s.pos.trBase, ent->s.apos.trBase); \
 				} \
