@@ -6453,10 +6453,10 @@ index 3342771..924aba1 100644
 +        return;
 +      }
 +
-+      if( arg[ 0 ] != '0' && arg[ 0 ] != '1' )
++      if( arg[ 0 ] != '0' || arg[ 0 ] != '1' )
 +      {
-+        trap_SendServerCommand( ent - g_entities, va( "print \"Usage: %s %s "
-+          "(0|1)\n\"", cmd, vote ) );
++        trap_SendServerCommand( ent - g_entities, va( "print \"Usage: %s "
++          "(0|1)\n\"", cmd ) );
 +        return;
 +      }
 +
@@ -6998,11 +6998,11 @@ index 791a12b..3e93f1b 100644
 +#define INSTANT_DOMINATION_RANGE_SQRT             10.0f
 +#define INSTANT_DOMINATION_COOLDOWN               1000
 +#define INSTANT_DOMINATION_ALWAYS_POWER           qtrue
-+#define INSTANT_DOMINATION_TIME_ALIEN             50
-+#define INSTANT_DOMINATION_TIME_HUMAN             50
-+#define INSTANT_DOMINATION_TIME_BUILDABLE         40
-+#define INSTANT_DOMINATION_TIME_ALIEN_CLEAR       100
-+#define INSTANT_DOMINATION_TIME_HUMAN_CLEAR       100
++#define INSTANT_DOMINATION_TIME_ALIEN             100
++#define INSTANT_DOMINATION_TIME_HUMAN             100
++#define INSTANT_DOMINATION_TIME_BUILDABLE         500
++#define INSTANT_DOMINATION_TIME_ALIEN_CLEAR       500
++#define INSTANT_DOMINATION_TIME_HUMAN_CLEAR       500
 +#define INSTANT_DOMINATION_TIME_CLEAR             100
 +#define INSTANT_DOMINATION_FREEKILL_ALIEN         10
 +#define INSTANT_DOMINATION_FREEKILL_HUMAN         5
