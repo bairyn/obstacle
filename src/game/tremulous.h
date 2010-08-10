@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ABUILDER_BLOB_REPEAT        1000
 #define ABUILDER_BLOB_SPEED         800.0f
 #define ABUILDER_BLOB_SPEED_MOD     0.5f
-#define ABUILDER_BLOB_TIME          1000
+#define ABUILDER_BLOB_TIME          2000
 
 #define LEVEL0_BITE_DMG             TREMULOUS_VALUE(ADM(36), ADM(48))
 #define LEVEL0_BITE_RANGE           64.0f
@@ -603,7 +603,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DC_SPLASHDAMAGE             50
 #define DC_SPLASHRADIUS             100
 #define DC_ATTACK_PERIOD            10000 // how often to spam "under attack"
-#define DC_HEALRATE                 3
+#define DC_HEALRATE                 4
 #define DC_RANGE                    1000
 #define DC_VALUE                    HBVM(DC_BP)
 

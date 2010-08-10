@@ -1117,7 +1117,7 @@ int  G_TimeTilSuddenDeath( void );
 //
 qboolean G_ConnectMessage( gentity_t *ent, char *buf, size_t buflen );
 char *ClientConnect( int clientNum, qboolean firstTime );
-char *ClientUserinfoChanged( int clientNum );
+char *ClientUserinfoChanged( int clientNum, qboolean forceName );
 void ClientDisconnect( int clientNum );
 void ClientBegin( int clientNum );
 void ClientCommand( int clientNum );

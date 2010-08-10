@@ -91,12 +91,19 @@ void G_AddCreditToClient( gclient_t *client, short credit, qboolean cap )
   if( !client )
     return;
 
-  client->pers.credit += credit;
-  capAmount = client->pers.teamSelection == TEAM_ALIENS ?
-               ALIEN_MAX_CREDITS : HUMAN_MAX_CREDITS;
-
-  if( cap && client->pers.credit > capAmount )
-    client->pers.credit = capAmount;
+  if( cap && credit > 0 )
+  {
+    capAmount = client->pers.teamSelection == TEAM_ALIENS ?
+                ALIEN_MAX_CREDITS : HUMAN_MAX_CREDITS;
+    if( client->pers.credit < capAmount )
+    {
+      client->pers.credit += credit;
+      if( client->pers.credit > capAmount )
+        client->pers.credit = capAmount;
+    }
+  }
+  else
+    client->pers.credit += credit;
 
   if( client->pers.credit < 0 )
     client->pers.credit = 0;
@@ -996,7 +1003,7 @@ The game can override any of the settings and call trap_SetUserinfo
 if desired.
 ============
 */
-char *ClientUserinfoChanged( int clientNum )
+char *ClientUserinfoChanged( int clientNum, qboolean forceName )
 {
   gentity_t *ent;
   char      *s;
@@ -1041,7 +1048,7 @@ char *ClientUserinfoChanged( int clientNum )
 
   if( strcmp( oldname, newname ) )
   {
-    if( client->pers.namelog->nameChangeTime &&
+    if( !forceName && client->pers.namelog->nameChangeTime &&
       level.time - client->pers.namelog->nameChangeTime <=
       g_minNameChangePeriod.value * 1000 )
     {
@@ -1050,7 +1057,7 @@ char *ClientUserinfoChanged( int clientNum )
          g_minNameChangePeriod.integer ) );
       revertName = qtrue;
     }
-    else if( g_maxNameChanges.integer > 0 &&
+    else if( !forceName && g_maxNameChanges.integer > 0 &&
       client->pers.namelog->nameChanges >= g_maxNameChanges.integer  )
     {
       trap_SendServerCommand( ent - g_entities, va(
@@ -1058,7 +1065,7 @@ char *ClientUserinfoChanged( int clientNum )
          g_maxNameChanges.integer ) );
       revertName = qtrue;
     }
-    else if( client->pers.namelog->muted )
+    else if( !forceName && client->pers.namelog->muted )
     {
       trap_SendServerCommand( ent - g_entities,
         "print \"You cannot change your name while you are muted\n\"" );
@@ -1081,7 +1088,7 @@ char *ClientUserinfoChanged( int clientNum )
     {
       Q_strncpyz( client->pers.netname, newname,
         sizeof( client->pers.netname ) );
-      if( client->pers.connected == CON_CONNECTED )
+      if( !forceName && client->pers.connected == CON_CONNECTED )
       {
         client->pers.namelog->nameChangeTime = level.time;
         client->pers.namelog->nameChanges++;
@@ -1306,7 +1313,7 @@ char *ClientConnect( int clientNum, qboolean firstTime )
 
   // get and distribute relevent paramters
   G_namelog_connect( client );
-  userInfoError = ClientUserinfoChanged( clientNum );
+  userInfoError = ClientUserinfoChanged( clientNum, qfalse );
   if( userInfoError != NULL )
     return userInfoError;
 
@@ -1392,6 +1399,10 @@ void ClientBegin( int clientNum )
   ent = g_entities + clientNum;
 
   client = level.clients + clientNum;
+
+  // ignore if client allready entered the game
+  if( client->pers.connected == CON_CONNECTED )
+    return;
 
   if( ent->r.linked )
     trap_UnlinkEntity( ent );
