@@ -985,44 +985,13 @@ void G_OC_LayoutLoad(char *layout)
 			&angles2[ 0 ], &angles2[ 1 ], &angles2[ 2 ],
 			&groupID, &reserved, &reserved2 );
 		  buildable = atoi( buildName );
-		  if( g_disableDomination.integer && BG_IsDPoint( buildable ) )
+		  if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
 		  {
-		  }
-		  else
-		  {
-			  if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
+			  if( g_disableDomination.integer && BG_IsDPoint( buildable ) )
 			  {
-				if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
-				{
-					l->buildable = buildable;
-					VectorCopy(origin, l->origin);
-					VectorCopy(angles, l->angles);
-					VectorCopy(origin2, l->origin2);
-					VectorCopy(angles2, l->angles2);
-					l->groupID = groupID;
-					l->reserved = reserved;
-					l->reserved2 = reserved2;
-					l++;
-					if(++j >= sizeof(layoutTable) / sizeof(layoutTable[0]))
-					{
-						G_ClientPrint(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), CLIENT_NULL);
-						G_ClientCP(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), NULL, CLIENT_NULL);
-						G_LogPrintf("^1Error: ^7Too many buildables (%d)!\n", sizeof(layoutTable) / sizeof(layoutTable[0]));
-						return;
-					}
-				}
-				else
-				{
-				  G_Printf( S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
-					" layout.  skipping\n", buildable );
-				}
 			  }
 			  else
 			  {
-				buildable = BG_BuildableByName( buildName )->number;
-
-				if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
-				{
 					l->buildable = buildable;
 					VectorCopy(origin, l->origin);
 					VectorCopy(angles, l->angles);
@@ -1039,14 +1008,48 @@ void G_OC_LayoutLoad(char *layout)
 						G_LogPrintf("^1Error: ^7Too many buildables (%d)!\n", sizeof(layoutTable) / sizeof(layoutTable[0]));
 						return;
 					}
+			  }
+		    }
+		    else
+		    {
+			  /*
+			  G_Printf( S_COLOR_YELLOW "WARNING: bad buildable number (%d) in "
+				" layout.  skipping\n", buildable );
+			  */
+
+              buildable = BG_BuildableByName( buildName )->number;
+
+			  if( buildable > BA_NONE && buildable < BA_NUM_BUILDABLES )
+			  {
+				  if( g_disableDomination.integer && BG_IsDPoint( buildable ) )
+				  {
+				  }
+				  else
+				  {
+						l->buildable = buildable;
+						VectorCopy(origin, l->origin);
+						VectorCopy(angles, l->angles);
+						VectorCopy(origin2, l->origin2);
+						VectorCopy(angles2, l->angles2);
+						l->groupID = groupID;
+						l->reserved = reserved;
+						l->reserved2 = reserved2;
+						l++;
+						if(++j >= sizeof(layoutTable) / sizeof(layoutTable[0]))
+						{
+							G_ClientPrint(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), CLIENT_NULL);
+							G_ClientCP(NULL, va("^1Error: ^7Too many buildables (%d)!", sizeof(layoutTable) / sizeof(layoutTable[0])), NULL, CLIENT_NULL);
+							G_LogPrintf("^1Error: ^7Too many buildables (%d)!\n", sizeof(layoutTable) / sizeof(layoutTable[0]));
+							return;
+						}
+				  }
 				}
 				else
 				{
 				  G_Printf( S_COLOR_YELLOW "WARNING: bad buildable name (%s) in "
 					" layout.  skipping\n", buildName );
 				}
-			  }
-		  }
+			}
 		}
 		layout++;
 	}
