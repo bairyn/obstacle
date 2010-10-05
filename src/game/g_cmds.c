@@ -1359,37 +1359,6 @@ void Cmd_CallVote_f( gentity_t *ent )
         level.voteNextMap = qtrue;
       }
     }
-    else if( !Q_stricmp( vote, "instant_domination" ) )
-    {
-      if( g_disableVoteInstantDomination.integer && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
-      {
-        trap_SendServerCommand ( ent - g_entities, va( "print \"%s: "
-              "calling this vote is not allowed here\n\"", cmd ) );
-
-        return;
-      }
-
-      if( g_nextInstantDomination.string[ 0 ] && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) )
-      {
-        trap_SendServerCommand( ent - g_entities, va( "print \"%s: "
-          "the next Domination mode is already set to '%s^7'\n\"", cmd, g_nextMap.string ) );
-        return;
-      }
-
-      if( arg[ 0 ] != '0' && arg[ 0 ] != '1' )
-      {
-        trap_SendServerCommand( ent - g_entities, va( "print \"Usage: %s %s "
-          "(0|1)\n\"", cmd, vote ) );
-        return;
-      }
-
-      Com_sprintf( level.voteString[ team ], sizeof( level.voteString ),
-        "set g_nextInstantDomination \"%c\"", arg[ 0 ] );
-
-      Com_sprintf( level.voteDisplayString[ team ],
-        sizeof( level.voteDisplayString[ team ] ),
-        "'%s' instant Domination mode", arg[ 0 ] == '0' ? "Disable" : "Enable" );
-    }
     else if( !Q_stricmp( vote, "draw" ) )
     {
       if(G_OC_NeedAlternateDrawVote())
@@ -1410,7 +1379,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     {
       trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
       trap_SendServerCommand( ent-g_entities, va( "print \"Valid vote commands are: "
-        "map, nextmap, map_restart, sudden_death, draw, kick%s, mute, unmute and instant_domination\n", G_OC_OtherCommandDescription() ) );
+        "map, nextmap, map_restart, sudden_death, draw, kick%s, mute and unmute\n", G_OC_OtherCommandDescription() ) );
       return;
     }
   }
@@ -1489,7 +1458,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   {
     trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string\n\"" );
     trap_SendServerCommand( ent-g_entities, va( "print \"Valid vote commands are: "
-      "map, nextmap, map_restart, sudden_death, draw, kick%s, mute, unmute and instant_domination\n", G_OC_OtherCommandDescription() ) );
+      "map, nextmap, map_restart, sudden_death, draw, kick%s, mute and unmute\n", G_OC_OtherCommandDescription() ) );
     return;
   }
 
@@ -1900,7 +1869,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
   if( tr.fraction < 1.0f &&
       ( traceEnt->s.eType == ET_BUILDABLE ) &&
-      ( traceEnt->buildableTeam == ent->client->pers.teamSelection || traceEnt->buildableTeam == TEAM_NONE || G_OC_CanBuildableBeDestoryedOnOtherTeam() ) &&
+      ( traceEnt->buildableTeam == ent->client->pers.teamSelection || ( g_cheats.integer && traceEnt->buildableTeam == TEAM_NONE ) || G_OC_CanBuildableBeDestoryedOnOtherTeam() ) &&
       ( ( ent->client->ps.weapon >= WP_ABUILD ) &&
         ( ent->client->ps.weapon <= WP_HBUILD ) ) )
   {

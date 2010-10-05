@@ -261,6 +261,7 @@ struct gentity_s
   team_t            dominationTeam;       // defending team
   team_t            dominationAttacking;  // attacking team
   float             dominationTime;       // how much captured
+  float             dominationBalance;    // highest recorded balance value
   char              dominationName[ 64 ]; // domination point name
   int               dominationClient;     // client that initiated the attack
 
@@ -803,11 +804,6 @@ typedef struct
   void ( *cmdHandler )( gentity_t *ent );
 } commands_t;
 
-// Convenience macro to get the total number of DPs
-#define G_DominationPoints() (level.dominationPoints[ TEAM_NONE ] +\
-                              level.dominationPoints[ TEAM_ALIENS ] +\
-                              level.dominationPoints[ TEAM_HUMANS ])
-
 //
 // g_spawn.c
 //
@@ -931,7 +927,6 @@ buildLog_t        *G_BuildLogNew( gentity_t *actor, buildFate_t fate );
 void              G_BuildLogSet( buildLog_t *log, gentity_t *ent );
 void              G_BuildLogAuto( gentity_t *actor, gentity_t *buildable, buildFate_t fate );
 void              G_BuildLogRevert( int id );
-float             G_DModifier( team_t team, qboolean inverse, float alienScale, float humanScale, float instantAlienScale, float instantHumanScale );
 
 //
 // g_utils.c
@@ -1268,7 +1263,6 @@ extern  vmCvar_t  g_alienMaxStage;
 extern  vmCvar_t  g_alienStage2Threshold;
 extern  vmCvar_t  g_alienStage3Threshold;
 extern  vmCvar_t  g_freeFundPeriod;
-extern  vmCvar_t  g_instantDomination;
 extern  vmCvar_t  g_nextInstantDomination;
 extern  vmCvar_t  g_disableDomination;
 extern  vmCvar_t  g_disableVoteInstantDomination;

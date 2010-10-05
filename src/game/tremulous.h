@@ -715,71 +715,36 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * Domination
  */
 
-#define DOMINATION_INSTANT_DEFAULT        "0"    // default is non-instant
 #define DOMINATION_HEALTH                 100    // health scale of a domination point
 #define DOMINATION_THINK                  100    // msec between player presence checks
 
 // settings specific to the value of the instant domination setting
 
-#define DOMINATION_RANGE                    400.0f // how close a player needs to be to attack a domination point
-#define DOMINATION_RANGE_SQRT               20.0f  // square root of the range (used in falloff calculation)
+#define DOMINATION_RANGE                    200.0f // how close a player needs to be to attack a domination point
+#define DOMINATION_RANGE_SQRT               14.142135623730951f  // square root of the range (used in falloff calculation)
 #define DOMINATION_BUILD_RANGE              600.0f
-#define DOMINATION_COOLDOWN                 5000   // msec between the announcement start of domination point attacks (no longer existent)
 #define DOMINATION_ALWAYS_POWER             qtrue  // if a buildable is within range of a repeater or reactor, always power it, even if it means proving more power than its max
-#define DOMINATION_TIME_ALIEN               12000  // the amount of time it takes for a single player of this team to capture a domination point in ms
-#define DOMINATION_TIME_HUMAN               10000
-#define DOMINATION_TIME_BUILDABLE           24000  // the amount of time in ms it takes for a buildable to capture a domination point
-#define DOMINATION_TIME_ALIEN_CLEAR         12000  // the amount of time in ms it takes for a single player of this team to clear an already captured domination point
-#define DOMINATION_TIME_HUMAN_CLEAR         8000
-#define DOMINATION_TIME_CLEAR               8000   // how long is takes for an almost-captured point to clear (proportional to amount captured)
-#define DOMINATION_FREEKILL_ALIEN           100    // amount of funds given to a player who cleared a domination point
-#define DOMINATION_FREEKILL_HUMAN           50
+#define DOMINATION_TIME_ALIEN               26000  // the amount of time it takes for a single player of this team to capture a domination point in ms
+#define DOMINATION_TIME_HUMAN               22000
+#define DOMINATION_TIME_BUILDABLE           35000  // the amount of time in ms it takes for a buildable to capture a domination point
+#define DOMINATION_TIME_CLEAR_ALIEN         35000  // the amount of time in ms it takes for a single player of this team to clear a captured domination point
+#define DOMINATION_TIME_CLEAR_HUMAN         26000
+#define DOMINATION_TIME_CLEAR_BUILDABLE     45000
+#define DOMINATION_FREEKILL_ALIEN           20     // amount of funds given to a player who cleared a domination point (first to walk over)
+#define DOMINATION_FREEKILL_HUMAN           10 
+#define DOMINATION_STOP_WHEN_CLEAR          qfalse // whether a team stops attacking a point when it is cleared if no players of that team are near it
 
-#define INSTANT_DOMINATION_RANGE            100.0f
-#define INSTANT_DOMINATION_RANGE_SQRT       10.0f
-#define INSTANT_DOMINATION_BUILD_RANGE      600.0f
-#define INSTANT_DOMINATION_COOLDOWN         1000
-#define INSTANT_DOMINATION_ALWAYS_POWER     qtrue
-#define INSTANT_DOMINATION_TIME_ALIEN       50
-#define INSTANT_DOMINATION_TIME_HUMAN       50
-#define INSTANT_DOMINATION_TIME_BUILDABLE   12
-#define INSTANT_DOMINATION_TIME_ALIEN_CLEAR 100
-#define INSTANT_DOMINATION_TIME_HUMAN_CLEAR 100
-#define INSTANT_DOMINATION_TIME_CLEAR       100
-#define INSTANT_DOMINATION_FREEKILL_ALIEN   10
-#define INSTANT_DOMINATION_FREEKILL_HUMAN   5
+// parameters modified by domination
+#define DC(team)          (level.dominationPoints[ team ])
+#define DT                (level.dominationPoints[ TEAM_NONE ] +\
+                           level.dominationPoints[ TEAM_ALIENS ] +\
+                           level.dominationPoints[ TEAM_HUMANS ])
+#define DR(team)          (((float) DC(team)) / ((float) DT))
+#define DLERP(team, f, t) (DT == 0 ? 1.0f : ((f) - (DR(team) * ((f) - (t)))))
+#define DRERP(team, f, t) (DT == 0 ? 1.0f : (DR(team) <= 0.5f ? DLERP(team, (f), 2.0f - (f)) : DLERP(team, 2.0f - (t), (t))))
 
-// better or worse by 50% * scale
-#define DOMINATION_ALIEN_BP_SCALE                        0.4f
-#define DOMINATION_HUMAN_BP_SCALE                        0.25f
-#define DOMINATION_ALIEN_INV_BPQUEUE_SCALE               2.0f
-#define DOMINATION_HUMAN_INV_BPQUEUE_SCALE               2.0f
-#define DOMINATION_ALIEN_FREEFUNDS_SCALE                 2.5f
-#define DOMINATION_HUMAN_FREEFUNDS_SCALE                 1.5f
-#define DOMINATION_ALIEN_BUILDTIMER_SCALE                0.0f
-#define DOMINATION_HUMAN_BUILDTIMER_SCALE                0.0f
-#define DOMINATION_ALIEN_HEAL_SCALE                      1.0f
-#define DOMINATION_HUMAN_MEDI_HEAL_SCALE                 0.0f
-#define DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE         0.0f
-#define DOMINATION_POISON_DMG_SCALE                      0.0f
-#define DOMINATION_POISON_TIME_SCALE                     0.0f
-#define DOMINATION_BOOST_TIME_SCALE                      0.0f
-#define DOMINATION_POISON_CLOUD_TIME_SCALE               0.0f
-
-#define INSTANT_DOMINATION_ALIEN_BP_SCALE                0.4f
-#define INSTANT_DOMINATION_HUMAN_BP_SCALE                0.25f
-#define INSTANT_DOMINATION_ALIEN_INV_BPQUEUE_SCALE       2.0f
-#define INSTANT_DOMINATION_HUMAN_INV_BPQUEUE_SCALE       2.0f
-#define INSTANT_DOMINATION_ALIEN_FREEFUNDS_SCALE         2.5f
-#define INSTANT_DOMINATION_HUMAN_FREEFUNDS_SCALE         1.5f
-#define INSTANT_DOMINATION_ALIEN_BUILDTIMER_SCALE        0.0f
-#define INSTANT_DOMINATION_HUMAN_BUILDTIMER_SCALE        0.0f
-#define INSTANT_DOMINATION_ALIEN_HEAL_SCALE              1.0f
-#define INSTANT_DOMINATION_HUMAN_MEDI_HEAL_SCALE         0.0f
-#define INSTANT_DOMINATION_HUMAN_MEDK_STARTUP_TIME_SCALE 0.0f
-#define INSTANT_DOMINATION_POISON_DMG_SCALE              0.0f
-#define INSTANT_DOMINATION_POISON_TIME_SCALE             0.0f
-#define INSTANT_DOMINATION_BOOST_TIME_SCALE              0.0f
-#define INSTANT_DOMINATION_POISON_CLOUD_TIME_SCALE       0.0f
+#define DOMINATION_SCALE_BP(team)              (DRERP(team, 0.8f, 1.5f))
+#define DOMINATION_SCALE_BPQUEUE_PERIOD(team)  (DRERP(team, 2.0f, 0.5f))
+#define DOMINATION_SCALE_FREEFUND_PERIOD(team) (DRERP(team, 1.5f, 0.4f))
 
 #endif /* #ifndef _TREMULOUS_H */
