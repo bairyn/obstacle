@@ -2560,16 +2560,20 @@ UI_LoadAlienBuilds
 static void UI_LoadAlienBuilds( void )
 {
   int     i, j = 0;
+  int     cheats, team;
   stage_t stage;
 
   UI_ParseCarriageList( );
   stage = UI_GetCurrentAlienStage( );
+  cheats = trap_Cvar_VariableValue( "sv_cheats" );
 
   uiInfo.alienBuildCount = 0;
 
   for( i = BA_NONE + 1; i < BA_NUM_BUILDABLES; i++ )
   {
-    if( BG_Buildable( i )->team == TEAM_ALIENS &&
+    team = BG_Buildable( i )->team;
+
+    if( ( team == TEAM_ALIENS || ( team == TEAM_NONE && cheats ) ) &&
         BG_Buildable( i )->buildWeapon & uiInfo.weapons &&
         BG_BuildableAllowedInStage( i, stage ) &&
         BG_BuildableIsAllowed( i ) )
@@ -2596,16 +2600,20 @@ UI_LoadHumanBuilds
 static void UI_LoadHumanBuilds( void )
 {
   int     i, j = 0;
+  int     cheats, team;
   stage_t stage;
 
   UI_ParseCarriageList( );
   stage = UI_GetCurrentHumanStage( );
+  cheats = trap_Cvar_VariableValue( "sv_cheats" );
 
   uiInfo.humanBuildCount = 0;
 
   for( i = BA_NONE + 1; i < BA_NUM_BUILDABLES; i++ )
   {
-    if( BG_Buildable( i )->team == TEAM_HUMANS &&
+    team = BG_Buildable( i )->team;
+
+    if( ( team == TEAM_HUMANS || ( team == TEAM_NONE && cheats ) ) &&
         BG_Buildable( i )->buildWeapon & uiInfo.weapons &&
         BG_BuildableAllowedInStage( i, stage ) &&
         BG_BuildableIsAllowed( i ) )
@@ -4650,4 +4658,3 @@ void UI_UpdateNews( qboolean begin )
   if( finished )
     uiInfo.newsInfo.refreshActive = qfalse;
 }
-

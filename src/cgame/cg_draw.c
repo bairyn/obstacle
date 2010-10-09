@@ -3247,6 +3247,105 @@ static void CG_DrawWarmup( void )
   UI_Text_Paint( 320 - w / 2, 200 + 1.5f * h, size, colorWhite, text, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
 }
 
+/*
+=================
+CG_DrawDominationOverlay
+
+Draw an overlay displaying the domination point status
+TODO: ownerdraw
+=================
+*/
+static int QDECL SortDominationPoints( const void *a, const void *b )
+{
+  entityState_t *es1 = &cg_entities[ *(int *)a ].currentState,
+                *es2 = &cg_entities[ *(int *)b ].currentState;
+  return es1->modelindex - es2->modelindex;
+}
+
+#define DOM_HEIGHT 24.f
+#define DOM_ICON_W 24.f
+#define DOM_BAR_W  4.f
+
+static void CG_DrawDominationOverlay( void )
+{
+  vec4_t color_none = { 0.5f, 0.5f, 0.5f, 1.f },
+         color_alien = { 0.75f, 0.f, 0.f, 1.f },
+         color_human = { 0.02f, 0.69f, 0.78f, 1.f };
+  int points[ 16 ];
+  centity_t *cent;
+  entityState_t *es;
+  int i, dps = 0;
+  float x, y, *color;
+
+  // Make a sorted list of all domination points
+  for( i = 0; i < MAX_GENTITIES; i++ )
+  {
+    cent = cg_entities + i;
+    es = &cent->currentState;
+    if( !cent->valid || es->eType != ET_BUILDABLE ||
+        es->modelindex < BA_DPOINT_FIRST || es->modelindex > BA_DPOINT_LAST )
+      continue;
+    points[ dps++ ] = i;
+  }
+  if( !dps )
+    return;
+  qsort( points, dps, sizeof( points[ 0 ] ), SortDominationPoints );
+
+  // Render the letters for the domination points
+  x = 640.f - DOM_ICON_W - DOM_BAR_W - 3.f;
+  y = 240.f - dps * ( DOM_HEIGHT + 4.f ) / 2.f;
+  for( i = 0; i < dps; i++ )
+  {
+    int health;
+    float healthScale, bar_height;
+
+    cent = cg_entities + points[ i ];
+    es = &cent->currentState;
+    health = es->generic1;
+    healthScale = (float) health / (float) BG_Buildable( es->modelindex )->health;
+
+    if( health > 0 && healthScale < 0.01f )
+      healthScale = 0.01f;
+    else if( healthScale < 0.0f )
+      healthScale = 0.0f;
+    else if( healthScale > 1.0f )
+      healthScale = 1.0f;
+
+    // Draw domination point icon
+    if( es->eFlags & EF_B_POWERED )
+    {
+      if( es->eFlags & EF_B_MARKED )
+        color = color_human;
+      else
+        color = color_alien;
+    }
+    else
+      color =  color_none;
+    color[3] = 1.f;
+    trap_R_SetColor( color );
+    CG_DrawPic( x, y, DOM_ICON_W, DOM_HEIGHT,
+                cgs.media.dominationIcon[ es->modelindex - BA_DPOINT_A ] );
+
+    // Draw domination point progress bar
+    color[3] = 0.5;
+    CG_FillRect( x + DOM_ICON_W, y + 1.f, 1.f, DOM_HEIGHT - 2.f, color );
+    CG_FillRect( x + DOM_ICON_W + DOM_BAR_W - 1.f, y + 1.f, 1.f,
+                 DOM_HEIGHT - 2.f, color );
+    CG_FillRect( x + DOM_ICON_W + 1.f, y + 1.f, DOM_BAR_W - 2.f, 1.f, color );
+    CG_FillRect( x + DOM_ICON_W + 1.f, y + DOM_HEIGHT - 2.f,
+                 DOM_BAR_W - 2.f, 1.f, color );
+    bar_height = healthScale * (DOM_HEIGHT - 4.f);
+    if( es->eFlags & EF_B_MARKED )
+      color = color_human;
+    else
+      color = color_alien;
+    color[3] = 1.f;
+    CG_FillRect( x + DOM_ICON_W + 1.f, y + DOM_HEIGHT - bar_height - 2.f,
+                 DOM_BAR_W - 2.f, bar_height, color );
+    y += DOM_HEIGHT;
+  }
+}
+
 //==================================================================================
 
 /*
@@ -3299,6 +3398,7 @@ static void CG_Draw2D( void )
   CG_DrawVote( cg.predictedPlayerState.stats[ STAT_TEAM ] );
   CG_DrawWarmup( );
   CG_DrawQueue( );
+  CG_DrawDominationOverlay( );
 
   // don't draw center string if scoreboard is up
   cg.scoreBoardShowing = CG_DrawScoreboard( );

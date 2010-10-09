@@ -1608,7 +1608,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
   if( tr.fraction < 1.0f &&
       ( traceEnt->s.eType == ET_BUILDABLE ) &&
-      ( traceEnt->buildableTeam == ent->client->pers.teamSelection ) &&
+      ( traceEnt->buildableTeam == ent->client->pers.teamSelection || ( g_cheats.integer && traceEnt->buildableTeam == TEAM_NONE ) ) &&
       ( ( ent->client->ps.weapon >= WP_ABUILD ) &&
         ( ent->client->ps.weapon <= WP_HBUILD ) ) )
   {
@@ -1617,6 +1617,16 @@ void Cmd_Destroy_f( gentity_t *ent )
     {
       G_QueueBuildPoints( traceEnt );
       G_FreeEntity( traceEnt );
+      return;
+    }
+
+    // Always destroy no-team buildables; update domination point counts
+    if( traceEnt->buildableTeam == TEAM_NONE )
+    {
+      if ( BG_IsDPoint( traceEnt->s.modelindex) )
+        level.dominationPoints[ traceEnt->dominationTeam ]--;
+      G_FreeEntity( traceEnt );
+
       return;
     }
 
@@ -1657,7 +1667,7 @@ void Cmd_Destroy_f( gentity_t *ent )
 
     if( !g_markDeconstruct.integer ||
         ( ent->client->pers.teamSelection == TEAM_HUMANS &&
-          !G_FindPower( traceEnt, qtrue ) ) )
+          !G_FindProvider( traceEnt, qtrue ) ) )
     {
       if( ent->client->ps.stats[ STAT_MISC ] > 0 )
       {
@@ -1675,7 +1685,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       }
       else if( g_markDeconstruct.integer &&
                ( ent->client->pers.teamSelection != TEAM_HUMANS ||
-                 G_FindPower( traceEnt , qtrue ) || lastSpawn ) )
+                 G_FindProvider( traceEnt, qtrue ) || lastSpawn ) )
       {
         traceEnt->deconstruct     = qtrue; // Mark buildable for deconstruction
         traceEnt->deconstructTime = level.time;
@@ -2223,6 +2233,10 @@ void Cmd_Build_f( gentity_t *ent )
         break;
 
       // more serious errors just pop a menu
+      case IBE_NEARDP:
+        G_TriggerMenu( ent->client->ps.clientNum, MN_NEARDP );
+        break;
+
       case IBE_NOALIENBP:
         err = MN_A_NOBP;
         break;
@@ -3121,4 +3135,3 @@ void Cmd_AdminMessage_f( gentity_t *ent )
 
   G_AdminMessage( ent, ConcatArgs( 1 ) );
 }
-
