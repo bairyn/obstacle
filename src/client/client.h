@@ -46,6 +46,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
 
+#define _(String) Sys_Gettext(String)
+
 // snapshots are a view of the server at a given time
 typedef struct {
 	qboolean		valid;			// cleared if delta parsing was invalid

@@ -94,7 +94,7 @@ void IN_KeyDown( kbutton_t *b ) {
 	} else if ( !b->down[1] ) {
 		b->down[1] = k;
 	} else {
-		Com_Printf ("Three keys down for a button!\n");
+		Com_Printf (_("Three keys down for a button!\n"));
 		return;
 	}
 	
@@ -389,7 +389,7 @@ Joystick values stay set until changed
 */
 void CL_JoystickEvent( int axis, int value, int time ) {
 	if ( axis < 0 || axis >= MAX_JOYSTICK_AXIS ) {
-		Com_Error( ERR_DROP, "CL_JoystickEvent: bad axis %i", axis );
+		Com_Error( ERR_DROP, _("CL_JoystickEvent: bad axis %i"), axis );
 	}
 	cl.joystickAxis[axis] = value;
 }

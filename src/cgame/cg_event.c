@@ -51,7 +51,7 @@ static void CG_Obituary( entityState_t *ent )
   mod = ent->eventParm;
 
   if( target < 0 || target >= MAX_CLIENTS )
-    CG_Error( "CG_Obituary: target out of range" );
+    CG_Error( _("CG_Obituary: target out of range") );
 
   ci = &cgs.clientinfo[ target ];
   gender = ci->gender;
@@ -196,7 +196,7 @@ static void CG_Obituary( entityState_t *ent )
 
   if( message )
   {
-    CG_Printf( "%s" S_COLOR_WHITE " %s\n", targetName, message );
+    CG_Printf( _("%s" S_COLOR_WHITE " %s\n"), targetName, message );
     return;
   }
 
@@ -219,128 +219,128 @@ static void CG_Obituary( entityState_t *ent )
     switch( mod )
     {
       case MOD_PAINSAW:
-        message = "was sawn by";
+        message = _("was sawn by");
         break;
       case MOD_BLASTER:
-        message = "was blasted by";
+        message = _("was blasted by");
         break;
       case MOD_MACHINEGUN:
-        message = "was machinegunned by";
+        message = _("was machinegunned by");
         break;
       case MOD_CHAINGUN:
-        message = "was chaingunned by";
+        message = _("was chaingunned by");
         break;
       case MOD_SHOTGUN:
-        message = "was gunned down by";
+        message = _("was gunned down by");
         break;
       case MOD_PRIFLE:
-        message = "was pulse rifled by";
+        message = _("was pulse rifled by");
         break;
       case MOD_MDRIVER:
-        message = "was mass driven by";
+        message = _("was mass driven by");
         break;
       case MOD_LASGUN:
-        message = "was lasgunned by";
+        message = _("was lasgunned by");
         break;
       case MOD_FLAMER:
-        message = "was grilled by";
-        message2 = "'s flamer";
+        message = _("was grilled by");
+        message2 = _("'s flamer");
         break;
       case MOD_FLAMER_SPLASH:
-        message = "was toasted by";
-        message2 = "'s flamer";
+        message = _("was toasted by");
+        message2 = _("'s flamer");
         break;
       case MOD_LCANNON:
-        message = "felt the full force of";
-        message2 = "'s lucifer cannon";
+        message = _("felt the full force of");
+        message2 = _("'s lucifer cannon");
         break;
       case MOD_LCANNON_SPLASH:
-        message = "was caught in the fallout of";
-        message2 = "'s lucifer cannon";
+        message = _("was caught in the fallout of");
+        message2 = _("'s lucifer cannon");
         break;
       case MOD_GRENADE:
-        message = "couldn't escape";
-        message2 = "'s grenade";
+        message = _("couldn't escape");
+        message2 = _("'s grenade");
         break;
 
       case MOD_ABUILDER_CLAW:
-        message = "should leave";
-        message2 = "'s buildings alone";
+        message = _("should leave");
+        message2 = _("'s buildings alone");
         break;
       case MOD_LEVEL0_BITE:
-        message = "was bitten by";
+        message = _("was bitten by");
         break;
       case MOD_LEVEL1_CLAW:
-        message = "was swiped by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL1 )->humanName );
+        message = _("was swiped by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL1 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL2_CLAW:
-        message = "was clawed by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL2 )->humanName );
+        message = _("was clawed by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL2 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL2_ZAP:
-        message = "was zapped by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL2 )->humanName );
+        message = _("was zapped by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL2 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL3_CLAW:
-        message = "was chomped by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL3 )->humanName );
+        message = _("was chomped by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL3 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL3_POUNCE:
-        message = "was pounced upon by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL3 )->humanName );
+        message = _("was pounced upon by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL3 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL3_BOUNCEBALL:
-        message = "was sniped by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL3 )->humanName );
+        message = _("was sniped by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL3 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL4_CLAW:
-        message = "was mauled by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL4 )->humanName );
+        message = _("was mauled by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL4 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL4_TRAMPLE:
-        message = "should have gotten out of the way of";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL4 )->humanName );
+        message = _("should have gotten out of the way of");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL4 )->humanName) );
         message2 = className;
         break;
       case MOD_LEVEL4_CRUSH:
-        message = "was crushed under";
-        message2 = "'s weight";
+        message = _("was crushed under");
+        message2 = _("'s weight");
         break;
 
       case MOD_POISON:
-        message = "should have used a medkit against";
-        message2 = "'s poison";
+        message = _("should have used a medkit against");
+        message2 = _("'s poison");
         break;
       case MOD_LEVEL1_PCLOUD:
-        message = "was gassed by";
-        Com_sprintf( className, 64, "'s %s",
-            BG_ClassConfig( PCL_ALIEN_LEVEL1 )->humanName );
+        message = _("was gassed by");
+        Com_sprintf( className, 64, _("'s %s"),
+            _(BG_ClassConfig( PCL_ALIEN_LEVEL1 )->humanName) );
         message2 = className;
         break;
 
 
       case MOD_TELEFRAG:
-        message = "tried to invade";
-        message2 = "'s personal space";
+        message = _("tried to invade");
+        message2 = _("'s personal space");
         break;
       default:
-        message = "was killed by";
+        message = _("was killed by");
         break;
     }
 
@@ -348,12 +348,12 @@ static void CG_Obituary( entityState_t *ent )
     {
       CG_Printf( "%s" S_COLOR_WHITE " %s %s%s" S_COLOR_WHITE "%s\n",
         targetName, message,
-        ( teamKill ) ? S_COLOR_RED "TEAMMATE " S_COLOR_WHITE : "",
+        ( teamKill ) ? _(S_COLOR_RED "TEAMMATE " S_COLOR_WHITE) : "",
         attackerName, message2 );
       if( teamKill && attacker == cg.clientNum )
       {
-        CG_CenterPrint( va ( "You killed " S_COLOR_RED "TEAMMATE "
-          S_COLOR_WHITE "%s", targetName ),
+        CG_CenterPrint( va ( _("You killed " S_COLOR_RED "TEAMMATE "
+          S_COLOR_WHITE "%s"), targetName ),
           SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
       }
       return;
@@ -361,7 +361,7 @@ static void CG_Obituary( entityState_t *ent )
   }
 
   // we don't know what it was
-  CG_Printf( "%s" S_COLOR_WHITE " died\n", targetName );
+  CG_Printf( _("%s" S_COLOR_WHITE " died\n"), targetName );
 }
 
 
@@ -481,7 +481,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
   event = es->event & ~EV_EVENT_BITS;
 
   if( cg_debugEvents.integer )
-    CG_Printf( "ent:%3i  event:%3i %s\n", es->number, event,
+    CG_Printf( _("ent:%3i  event:%3i %s\n"), es->number, event,
                BG_EventName( event ) );
 
   if( !event )
@@ -901,7 +901,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
       if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_ALIENS )
       {
         trap_S_StartLocalSound( cgs.media.alienOvermindAttack, CHAN_ANNOUNCER );
-        CG_CenterPrint( "The Overmind is under attack!", 200, GIANTCHAR_WIDTH * 4 );
+        CG_CenterPrint( _("The Overmind is under attack!"), 200, GIANTCHAR_WIDTH * 4 );
       }
       break;
 
@@ -909,7 +909,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
       if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_ALIENS )
       {
         trap_S_StartLocalSound( cgs.media.alienOvermindDying, CHAN_ANNOUNCER );
-        CG_CenterPrint( "The Overmind is dying!", 200, GIANTCHAR_WIDTH * 4 );
+        CG_CenterPrint( _("The Overmind is dying!"), 200, GIANTCHAR_WIDTH * 4 );
       }
       break;
 
@@ -917,7 +917,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
       if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_HUMANS )
       {
         //trap_S_StartLocalSound( cgs.media.humanDCCAttack, CHAN_ANNOUNCER );
-        CG_CenterPrint( "Our base is under attack!", 200, GIANTCHAR_WIDTH * 4 );
+        CG_CenterPrint( _("Our base is under attack!"), 200, GIANTCHAR_WIDTH * 4 );
       }
       break;
 
@@ -929,7 +929,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
       if( cg.predictedPlayerState.stats[ STAT_TEAM ] == TEAM_ALIENS )
       {
         trap_S_StartLocalSound( cgs.media.alienOvermindSpawns, CHAN_ANNOUNCER );
-        CG_CenterPrint( "The Overmind needs spawns!", 200, GIANTCHAR_WIDTH * 4 );
+        CG_CenterPrint( _("The Overmind needs spawns!"), 200, GIANTCHAR_WIDTH * 4 );
       }
       break;
 
@@ -989,7 +989,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
       break;
 
     default:
-      CG_Error( "Unknown event: %i", event );
+      CG_Error( _("Unknown event: %i"), event );
       break;
   }
 }

@@ -32,6 +32,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../sys/sys_loadlib.h"
 
+#define _(String) Sys_Gettext(String)
+
 LPALENABLE qalEnable;
 LPALDISABLE qalDisable;
 LPALISENABLED qalIsEnabled;
@@ -124,13 +126,13 @@ static void *GPA(char *str)
 	rv = Sys_LoadFunction(OpenALLib, str);
 	if(!rv)
 	{
-		Com_Printf( " Can't load symbol %s\n", str);
+		Com_Printf( _(" Can't load symbol %s\n"), str);
 		alinit_fail = qtrue;
 		return NULL;
 	}
 	else
 	{
-		Com_DPrintf( " Loaded symbol %s (%p)\n", str, rv);
+		Com_DPrintf( _(" Loaded symbol %s (%p)\n"), str, rv);
         return rv;
 	}
 }
@@ -145,7 +147,7 @@ qboolean QAL_Init(const char *libname)
 	if(OpenALLib)
 		return qtrue;
 
-	Com_Printf( "Loading \"%s\"...\n", libname);
+	Com_Printf( _("Loading \"%s\"...\n"), libname);
 	if( (OpenALLib = Sys_LoadLibrary(libname)) == 0 )
 	{
 #ifdef _WIN32
@@ -244,7 +246,7 @@ qboolean QAL_Init(const char *libname)
 	if(alinit_fail)
 	{
 		QAL_Shutdown();
-		Com_Printf( " One or more symbols not found\n");
+		Com_Printf( _(" One or more symbols not found\n"));
 		return qfalse;
 	}
 

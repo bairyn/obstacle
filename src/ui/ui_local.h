@@ -63,6 +63,8 @@ void UI_DrawConnectScreen( qboolean overlay );
 #define MAX_HELP_INFOPANES 32
 #define MAX_RESOLUTIONS 32
 
+#define _(String) gettext(String)
+
 typedef struct
 {
   const char *mapName;
@@ -396,5 +398,8 @@ int       trap_RealTime( qtime_t *qtime );
 void      trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );
 
 void      trap_SetPbClStatus( int status );
+
+void      trap_Gettext ( char *buffer, const char *msgid, int bufferLength );
+char      *gettext ( const char *msgid );
 
 #endif

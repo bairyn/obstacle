@@ -33,6 +33,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SND_CHUNK_SIZE_FLOAT	(SND_CHUNK_SIZE/2)		// floats
 #define SND_CHUNK_SIZE_BYTE		(SND_CHUNK_SIZE*2)		// floats
 
+#define _(String) Sys_Gettext(String)
+
 typedef struct {
 	int			left;	// the final values will be clamped to +/- 0x00ffff00 and shifted down
 	int			right;

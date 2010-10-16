@@ -98,7 +98,7 @@ void CG_TestModel_f( void )
 
   if( !cg.testModelEntity.hModel )
   {
-    CG_Printf( "Can't register model\n" );
+    CG_Printf( _("Can't register model\n") );
     return;
   }
 
@@ -177,7 +177,7 @@ static void CG_AddTestModel( void )
 
   if( !cg.testModelEntity.hModel )
   {
-    CG_Printf( "Can't register model\n" );
+    CG_Printf( _("Can't register model\n") );
     return;
   }
 
@@ -1497,6 +1497,6 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
   CG_DrawActive( stereoView );
 
   if( cg_stats.integer )
-    CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
+    CG_Printf( _("cg.clientFrame:%i\n"), cg.clientFrame );
 }
 

@@ -96,7 +96,7 @@ qboolean GetNews( qboolean begin )
 	if( begin ) { // if not already using curl, start the download
 		if( !clc.downloadCURLM ) { 
 			if(!CL_cURL_Init()) {
-				Cvar_Set( "cl_newsString", "^1Error: Could not load cURL library" );
+				Cvar_Set( "cl_newsString", _("^1Error: Could not load cURL library") );
 				return qtrue;
 			}
 			clc.activeCURLNotGameRelated = qtrue;
@@ -760,7 +760,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		|| !strncmp(VMA(2), "vid_restart", 11)
 		|| !strncmp(VMA(2), "quit", 5)))
 		{
-			Com_Printf (S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n", (const char*)VMA(2));
+			Com_Printf (_(S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n"), (const char*)VMA(2));
 			args[1] = EXEC_INSERT;
 		}
 		Cbuf_ExecuteText( args[1], VMA(2) );
@@ -1046,8 +1046,12 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		re.RemapShader( VMA(1), VMA(2), VMA(3) );
 		return 0;
 
+	case UI_GETTEXT:
+		strncpy( VMA(1), _(VMA(2)), args[3] );
+		return 0;
+
 	default:
-		Com_Error( ERR_DROP, "Bad UI system trap: %ld", (long int) args[0] );
+		Com_Error( ERR_DROP, _("Bad UI system trap: %ld"), (long int) args[0] );
 
 	}
 
@@ -1091,9 +1095,9 @@ void CL_InitUI( void ) {
 	}
 	uivm = VM_Create( "ui", CL_UISystemCalls, interpret );
 	if ( !uivm ) {
-		Com_Printf( "Failed to find a valid UI vm. The following paths were searched:\n" );
+		Com_Printf( _("Failed to find a valid UI vm. The following paths were searched:\n") );
 		Cmd_ExecuteString( "path/\n" );
-		Com_Error( ERR_FATAL, "VM_Create on UI failed" );
+		Com_Error( ERR_FATAL, _("VM_Create on UI failed") );
 	}
 
 	// sanity check
@@ -1103,7 +1107,7 @@ void CL_InitUI( void ) {
 		VM_Call( uivm, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE));
 	}
 	else if (v != UI_API_VERSION) {
-		Com_Error( ERR_DROP, "User Interface is version %d, expected %d", v, UI_API_VERSION );
+		Com_Error( ERR_DROP, _("User Interface is version %d, expected %d"), v, UI_API_VERSION );
 		cls.uiStarted = qfalse;
 	}
 	else {

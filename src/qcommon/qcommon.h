@@ -489,6 +489,9 @@ void	Cvar_Update( vmCvar_t *vmCvar );
 void 	Cvar_Set( const char *var_name, const char *value );
 // will create the variable with no flags if it doesn't exist
 
+void Cvar_SetIFlag( const char *var_name );
+// sets the cvar by the name that begins with a backslash to "1"
+
 void Cvar_SetLatched( const char *var_name, const char *value);
 // don't set the cvar immediately
 
@@ -817,6 +820,7 @@ extern	cvar_t	*com_maxfpsUnfocused;
 extern	cvar_t	*com_minimized;
 extern	cvar_t	*com_maxfpsMinimized;
 extern	cvar_t	*com_altivec;
+extern	cvar_t	*com_translatePrint;
 
 // both client and server must agree to pause
 extern	cvar_t	*cl_paused;
@@ -1083,6 +1087,8 @@ void	Sys_Sleep(int msec);
 qboolean Sys_LowPhysicalMemory( void );
 
 void Sys_SetEnv(const char *name, const char *value);
+
+char *Sys_Gettext(const char *msgid);
 
 /* This is based on the Adaptive Huffman algorithm described in Sayood's Data
  * Compression book.  The ranks are not actually stored, but implicitly defined

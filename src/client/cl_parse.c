@@ -121,7 +121,7 @@ void CL_ParsePacketEntities( msg_t *msg, clSnapshot_t *oldframe, clSnapshot_t *n
 		}
 
 		if ( msg->readcount > msg->cursize ) {
-			Com_Error (ERR_DROP,"CL_ParsePacketEntities: end of message");
+			Com_Error (ERR_DROP,_("CL_ParsePacketEntities: end of message"));
 		}
 
 		while ( oldnum < newnum ) {
@@ -249,13 +249,13 @@ void CL_ParseSnapshot( msg_t *msg ) {
 		old = &cl.snapshots[newSnap.deltaNum & PACKET_MASK];
 		if ( !old->valid ) {
 			// should never happen
-			Com_Printf ("Delta from invalid frame (not supposed to happen!).\n");
+			Com_Printf (_("Delta from invalid frame (not supposed to happen!).\n"));
 		} else if ( old->messageNum != newSnap.deltaNum ) {
 			// The frame that the server did the delta from
 			// is too old, so we can't reconstruct it properly.
-			Com_Printf ("Delta frame too old.\n");
+			Com_Printf (_("Delta frame too old.\n"));
 		} else if ( cl.parseEntitiesNum - old->parseEntitiesNum > MAX_PARSE_ENTITIES-128 ) {
-			Com_Printf ("Delta parseEntitiesNum too old.\n");
+			Com_Printf (_("Delta parseEntitiesNum too old.\n"));
 		} else {
 			newSnap.valid = qtrue;	// valid delta parse
 		}
@@ -266,7 +266,7 @@ void CL_ParseSnapshot( msg_t *msg ) {
 	
 	if(len > sizeof(newSnap.areamask))
 	{
-		Com_Error (ERR_DROP,"CL_ParseSnapshot: Invalid size %d for areamask.", len);
+		Com_Error (ERR_DROP,_("CL_ParseSnapshot: Invalid size %d for areamask."), len);
 		return;
 	}
 	
@@ -401,7 +401,7 @@ void CL_SystemInfoChanged( void ) {
 		{
 			if(FS_CheckDirTraversal(value))
 			{
-				Com_Printf(S_COLOR_YELLOW "WARNING: Server sent invalid fs_game value %s\n", value);
+				Com_Printf(_(S_COLOR_YELLOW "WARNING: Server sent invalid fs_game value %s\n"), value);
 				continue;
 			}
 				
@@ -415,7 +415,7 @@ void CL_SystemInfoChanged( void ) {
 			// If this cvar may not be modified by a server discard the value.
 			if(!(cvar_flags & (CVAR_SYSTEMINFO | CVAR_SERVER_CREATED)))
 			{
-				Com_Printf(S_COLOR_YELLOW "WARNING: server is not allowed to set %s=%s\n", key, value);
+				Com_Printf(_(S_COLOR_YELLOW "WARNING: server is not allowed to set %s=%s\n"), key, value);
 				continue;
 			}
 
@@ -485,13 +485,13 @@ void CL_ParseGamestate( msg_t *msg ) {
 
 			i = MSG_ReadShort( msg );
 			if ( i < 0 || i >= MAX_CONFIGSTRINGS ) {
-				Com_Error( ERR_DROP, "configstring > MAX_CONFIGSTRINGS" );
+				Com_Error( ERR_DROP, _("configstring > MAX_CONFIGSTRINGS") );
 			}
 			s = MSG_ReadBigString( msg );
 			len = strlen( s );
 
 			if ( len + 1 + cl.gameState.dataCount > MAX_GAMESTATE_CHARS ) {
-				Com_Error( ERR_DROP, "MAX_GAMESTATE_CHARS exceeded" );
+				Com_Error( ERR_DROP, _("MAX_GAMESTATE_CHARS exceeded") );
 			}
 
 			// append it to the gameState string buffer
@@ -501,13 +501,13 @@ void CL_ParseGamestate( msg_t *msg ) {
 		} else if ( cmd == svc_baseline ) {
 			newnum = MSG_ReadBits( msg, GENTITYNUM_BITS );
 			if ( newnum < 0 || newnum >= MAX_GENTITIES ) {
-				Com_Error( ERR_DROP, "Baseline number out of range: %i", newnum );
+				Com_Error( ERR_DROP, _("Baseline number out of range: %i"), newnum );
 			}
 			Com_Memset (&nullstate, 0, sizeof(nullstate));
 			es = &cl.entityBaselines[ newnum ];
 			MSG_ReadDeltaEntity( msg, &nullstate, es, newnum );
 		} else {
-			Com_Error( ERR_DROP, "CL_ParseGamestate: bad command byte" );
+			Com_Error( ERR_DROP, _("CL_ParseGamestate: bad command byte") );
 		}
 	}
 
@@ -552,7 +552,7 @@ void CL_ParseDownload ( msg_t *msg ) {
 	int block;
 
 	if (!*clc.downloadTempName) {
-		Com_Printf("Server sending download, but no download was requested\n");
+		Com_Printf(_("Server sending download, but no download was requested\n"));
 		CL_AddReliableCommand("stopdl", qfalse);
 		return;
 	}
@@ -577,14 +577,14 @@ void CL_ParseDownload ( msg_t *msg ) {
 	size = MSG_ReadShort ( msg );
 	if (size < 0 || size > sizeof(data))
 	{
-		Com_Error(ERR_DROP, "CL_ParseDownload: Invalid size %d for download chunk.", size);
+		Com_Error(ERR_DROP, _("CL_ParseDownload: Invalid size %d for download chunk."), size);
 		return;
 	}
 	
 	MSG_ReadData(msg, data, size);
 
 	if (clc.downloadBlock != block) {
-		Com_DPrintf( "CL_ParseDownload: Expected block %d, got %d\n", clc.downloadBlock, block);
+		Com_DPrintf( _("CL_ParseDownload: Expected block %d, got %d\n"), clc.downloadBlock, block);
 		return;
 	}
 
@@ -594,7 +594,7 @@ void CL_ParseDownload ( msg_t *msg ) {
 		clc.download = FS_SV_FOpenFileWrite( clc.downloadTempName );
 
 		if (!clc.download) {
-			Com_Printf( "Could not create %s\n", clc.downloadTempName );
+			Com_Printf( _("Could not create %s\n"), clc.downloadTempName );
 			CL_AddReliableCommand("stopdl", qfalse);
 			CL_NextDownload();
 			return;
@@ -673,7 +673,7 @@ void CL_ParseVoip ( msg_t *msg ) {
 	int written = 0;
 	int i;
 
-	Com_DPrintf("VoIP: %d-byte packet from client %d\n", packetsize, sender);
+	Com_DPrintf(_("VoIP: %d-byte packet from client %d\n"), packetsize, sender);
 
 	if (sender < 0)
 		return;   // short/invalid packet, bail.
@@ -711,31 +711,31 @@ void CL_ParseVoip ( msg_t *msg ) {
 
 	// !!! FIXME: make sure data is narrowband? Does decoder handle this?
 
-	Com_DPrintf("VoIP: packet accepted!\n");
+	Com_DPrintf(_("VoIP: packet accepted!\n"));
 
 	// This is a new "generation" ... a new recording started, reset the bits.
 	if (generation != clc.voipIncomingGeneration[sender]) {
-		Com_DPrintf("VoIP: new generation %d!\n", generation);
+		Com_DPrintf(_("VoIP: new generation %d!\n"), generation);
 		speex_bits_reset(&clc.speexDecoderBits[sender]);
 		clc.voipIncomingGeneration[sender] = generation;
 		seqdiff = 0;
 	} else if (seqdiff < 0) {   // we're ahead of the sequence?!
 		// This shouldn't happen unless the packet is corrupted or something.
-		Com_DPrintf("VoIP: misordered sequence! %d < %d!\n",
+		Com_DPrintf(_("VoIP: misordered sequence! %d < %d!\n"),
 		            sequence, clc.voipIncomingSequence[sender]);
 		// reset the bits just in case.
 		speex_bits_reset(&clc.speexDecoderBits[sender]);
 		seqdiff = 0;
 	} else if (seqdiff > 100) { // more than 2 seconds of audio dropped?
 		// just start over.
-		Com_DPrintf("VoIP: Dropped way too many (%d) frames from client #%d\n",
+		Com_DPrintf(_("VoIP: Dropped way too many (%d) frames from client #%d\n"),
 		            seqdiff, sender);
 		speex_bits_reset(&clc.speexDecoderBits[sender]);
 		seqdiff = 0;
 	}
 
 	if (seqdiff != 0) {
-		Com_DPrintf("VoIP: Dropped %d frames from client #%d\n",
+		Com_DPrintf(_("VoIP: Dropped %d frames from client #%d\n"),
 		            seqdiff, sender);
 		// tell speex that we're missing frames...
 		for (i = 0; i < seqdiff; i++) {
@@ -749,14 +749,14 @@ void CL_ParseVoip ( msg_t *msg ) {
 		char encoded[256];
 		const int len = MSG_ReadByte(msg);
 		if (len < 0) {
-			Com_DPrintf("VoIP: Short packet!\n");
+			Com_DPrintf(_("VoIP: Short packet!\n"));
 			break;
 		}
 		MSG_ReadData(msg, encoded, len);
 
 		// shouldn't happen, but just in case...
 		if ((written + clc.speexFrameSize) * 2 > sizeof (decoded)) {
-			Com_DPrintf("VoIP: playback %d bytes, %d samples, %d frames\n",
+			Com_DPrintf(_("VoIP: playback %d bytes, %d samples, %d frames\n"),
 			            written * 2, written, i);
 			S_RawSamples(sender + 1, written, clc.speexSampleRate, 2, 1,
 			             (const byte *) decoded, clc.voipGain[sender]);
@@ -779,7 +779,7 @@ void CL_ParseVoip ( msg_t *msg ) {
 		written += clc.speexFrameSize;
 	}
 
-	Com_DPrintf("VoIP: playback %d bytes, %d samples, %d frames\n",
+	Com_DPrintf(_("VoIP: playback %d bytes, %d samples, %d frames\n"),
 	            written * 2, written, i);
 
 	if (written > 0) {
@@ -830,7 +830,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	if ( cl_shownet->integer == 1 ) {
 		Com_Printf ("%i ",msg->cursize);
 	} else if ( cl_shownet->integer >= 2 ) {
-		Com_Printf ("------------------\n");
+		Com_Printf (_("------------------\n"));
 	}
 
 	MSG_Bitstream(msg);
@@ -847,7 +847,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	//
 	while ( 1 ) {
 		if ( msg->readcount > msg->cursize ) {
-			Com_Error (ERR_DROP,"CL_ParseServerMessage: read past end of server message");
+			Com_Error (ERR_DROP,_("CL_ParseServerMessage: read past end of server message"));
 			break;
 		}
 
@@ -882,7 +882,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	// other commands
 		switch ( cmd ) {
 		default:
-			Com_Error (ERR_DROP,"CL_ParseServerMessage: Illegible server message\n");
+			Com_Error (ERR_DROP,_("CL_ParseServerMessage: Illegible server message\n"));
 			break;			
 		case svc_nop:
 			break;

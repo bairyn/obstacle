@@ -119,3 +119,5 @@ equ ceil                              -209
 equ testPrintInt                      -210
 equ testPrintFloat                    -211
 
+equ trap_Gettext                      -301
+

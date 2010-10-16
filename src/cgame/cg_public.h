@@ -196,7 +196,9 @@ typedef enum
 
   CG_TESTPRINTINT,
   CG_TESTPRINTFLOAT,
-  CG_ACOS
+  CG_ACOS,
+
+  CG_GETTEXT = 300
 } cgameImport_t;
 
 

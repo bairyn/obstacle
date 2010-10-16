@@ -82,6 +82,7 @@ cvar_t	*com_unfocused;
 cvar_t	*com_maxfpsUnfocused;
 cvar_t	*com_minimized;
 cvar_t	*com_maxfpsMinimized;
+cvar_t  *com_translatePrint;
 
 // com_speeds times
 int		time_game;
@@ -141,7 +142,7 @@ A raw string should NEVER be passed as fmt, because of "%f" type crashers.
 */
 void QDECL Com_Printf( const char *fmt, ... ) {
 	va_list		argptr;
-	char		msg[MAXPRINTMSG];
+	char		msg[MAXPRINTMSG], *str = msg;
   static qboolean opening_qconsole = qfalse;
 
 
@@ -161,14 +162,17 @@ void QDECL Com_Printf( const char *fmt, ... ) {
 		return;
 	}
 
+	if ( com_translatePrint && com_translatePrint->integer )
+		str = Sys_Gettext( msg );
+
 #ifndef DEDICATED
-	CL_ConsolePrint( msg );
+	CL_ConsolePrint( str );
 #endif
 
-	Q_StripIndentMarker( msg );
+	Q_StripIndentMarker( str );
 
 	// echo to dedicated console and early console
-	Sys_Print( msg );
+	Sys_Print( str );
 
 	// logfile
 	if ( com_logfile && com_logfile->integer ) {
@@ -205,7 +209,7 @@ void QDECL Com_Printf( const char *fmt, ... ) {
       opening_qconsole = qfalse;
 		}
 		if ( logfile && FS_Initialized()) {
-			FS_Write(msg, strlen(msg), logfile);
+			FS_Write(str, strlen(str), logfile);
 		}
 	}
 }
@@ -2616,6 +2620,8 @@ void Com_Init( char *commandLine ) {
 	com_maxfpsUnfocused = Cvar_Get( "com_maxfpsUnfocused", "0", CVAR_ARCHIVE );
 	com_minimized = Cvar_Get( "com_minimized", "0", CVAR_ROM );
 	com_maxfpsMinimized = Cvar_Get( "com_maxfpsMinimized", "0", CVAR_ARCHIVE );
+
+	com_ansiColor = Cvar_Get( "com_translatePrint", "0", CVAR_ARCHIVE );
 
 	s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
 	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO );

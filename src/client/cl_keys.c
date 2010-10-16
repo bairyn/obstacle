@@ -885,14 +885,14 @@ void Key_Unbind_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("unbind <key> : remove commands from a key\n");
+		Com_Printf (_("unbind <key> : remove commands from a key\n"));
 		return;
 	}
 	
 	b = Key_StringToKeynum (Cmd_Argv(1));
 	if (b==-1)
 	{
-		Com_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+		Com_Printf (_("\"%s\" isn't a valid key\n"), Cmd_Argv(1));
 		return;
 	}
 
@@ -928,13 +928,13 @@ void Key_Bind_f (void)
 
 	if (c < 2)
 	{
-		Com_Printf ("bind <key> [command] : attach a command to a key\n");
+		Com_Printf (_("bind <key> [command] : attach a command to a key\n"));
 		return;
 	}
 	b = Key_StringToKeynum (Cmd_Argv(1));
 	if (b==-1)
 	{
-		Com_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+		Com_Printf (_("\"%s\" isn't a valid key\n"), Cmd_Argv(1));
 		return;
 	}
 
@@ -943,7 +943,7 @@ void Key_Bind_f (void)
 		if (keys[b].binding)
 			Com_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keys[b].binding );
 		else
-			Com_Printf ("\"%s\" is not bound\n", Cmd_Argv(1) );
+			Com_Printf (_("\"%s\" is not bound\n"), Cmd_Argv(1) );
 		return;
 	}
 	
@@ -1370,7 +1370,7 @@ void CL_LoadConsoleHistory( void )
 	consoleSaveBufferSize = FS_FOpenFileRead( CONSOLE_HISTORY_FILE, &f, qfalse );
 	if( !f )
 	{
-		Com_Printf( "Couldn't read %s.\n", CONSOLE_HISTORY_FILE );
+		Com_Printf( _("Couldn't read %s.\n"), CONSOLE_HISTORY_FILE );
 		return;
 	}
 
@@ -1398,7 +1398,7 @@ void CL_LoadConsoleHistory( void )
 			text_p++;
 			if( numChars > ( strlen( consoleSaveBuffer ) -	( text_p - consoleSaveBuffer ) ) )
 			{
-				Com_DPrintf( S_COLOR_YELLOW "WARNING: probable corrupt history\n" );
+				Com_DPrintf( _(S_COLOR_YELLOW "WARNING: probable corrupt history\n") );
 				break;
 			}
 			Com_Memcpy( historyEditLines[ i ].buffer,
@@ -1417,7 +1417,7 @@ void CL_LoadConsoleHistory( void )
 		historyLine = nextHistoryLine = numLines;
 	}
 	else
-		Com_Printf( "Couldn't read %s.\n", CONSOLE_HISTORY_FILE );
+		Com_Printf( _("Couldn't read %s.\n"), CONSOLE_HISTORY_FILE );
 
 	FS_FCloseFile( f );
 }
@@ -1470,12 +1470,12 @@ void CL_SaveConsoleHistory( void )
 	f = FS_FOpenFileWrite( CONSOLE_HISTORY_FILE );
 	if( !f )
 	{
-		Com_Printf( "Couldn't write %s.\n", CONSOLE_HISTORY_FILE );
+		Com_Printf( _("Couldn't write %s.\n"), CONSOLE_HISTORY_FILE );
 		return;
 	}
 
 	if( FS_Write( consoleSaveBuffer, consoleSaveBufferSize, f ) < consoleSaveBufferSize )
-		Com_Printf( "Couldn't write %s.\n", CONSOLE_HISTORY_FILE );
+		Com_Printf( _("Couldn't write %s.\n"), CONSOLE_HISTORY_FILE );
 
 	FS_FCloseFile( f );
 }

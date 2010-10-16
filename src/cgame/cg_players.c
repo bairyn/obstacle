@@ -69,7 +69,7 @@ sfxHandle_t CG_CustomSound( int clientNum, const char *soundName )
       return ci->sounds[ i ];
   }
 
-  CG_Error( "Unknown custom sound: %s", soundName );
+  CG_Error( _("Unknown custom sound: %s"), soundName );
   return 0;
 }
 
@@ -112,7 +112,7 @@ static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
 
   if( len == 0 || len >= sizeof( text ) - 1 )
   {
-    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
+    CG_Printf( _("File %s is %s\n"), filename, len == 0 ? _("empty") : _("too long") );
     trap_FS_FCloseFile( f );
     return qfalse;
   }
@@ -156,7 +156,7 @@ static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
       else if( !Q_stricmp( token, "custom" ) )
         ci->footsteps = FOOTSTEP_CUSTOM;
       else
-        CG_Printf( "Bad footsteps parm in %s: %s\n", filename, token );
+        CG_Printf( _("Bad footsteps parm in %s: %s\n"), filename, token );
 
       continue;
     }
@@ -212,7 +212,7 @@ static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
       break;
     }
 
-    Com_Printf( "unknown token '%s' is %s\n", token, filename );
+    Com_Printf( _("unknown token '%s' is %s\n"), token, filename );
   }
 
   if( !ci->nonsegmented )
@@ -285,7 +285,7 @@ static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
 
     if( i != MAX_PLAYER_ANIMATIONS )
     {
-      CG_Printf( "Error parsing animation file: %s", filename );
+      CG_Printf( _("Error parsing animation file: %s"), filename );
       return qfalse;
     }
     // crouch backward animation
@@ -365,7 +365,7 @@ static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
 
     if( i != MAX_NONSEG_PLAYER_ANIMATIONS )
     {
-      CG_Printf( "Error parsing animation file: %s", filename );
+      CG_Printf( _("Error parsing animation file: %s"), filename );
       return qfalse;
     }
 
@@ -391,17 +391,17 @@ static qboolean CG_RegisterClientSkin( clientInfo_t *ci, const char *modelName, 
     Com_sprintf( filename, sizeof( filename ), "models/players/%s/lower_%s.skin", modelName, skinName );
     ci->legsSkin = trap_R_RegisterSkin( filename );
     if( !ci->legsSkin )
-      Com_Printf( "Leg skin load failure: %s\n", filename );
+      Com_Printf( _("Leg skin load failure: %s\n"), filename );
 
     Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper_%s.skin", modelName, skinName );
     ci->torsoSkin = trap_R_RegisterSkin( filename );
     if( !ci->torsoSkin )
-      Com_Printf( "Torso skin load failure: %s\n", filename );
+      Com_Printf( _("Torso skin load failure: %s\n"), filename );
 
     Com_sprintf( filename, sizeof( filename ), "models/players/%s/head_%s.skin", modelName, skinName );
     ci->headSkin = trap_R_RegisterSkin( filename );
     if( !ci->headSkin )
-      Com_Printf( "Head skin load failure: %s\n", filename );
+      Com_Printf( _("Head skin load failure: %s\n"), filename );
 
     if( !ci->legsSkin || !ci->torsoSkin || !ci->headSkin )
       return qfalse;
@@ -411,7 +411,7 @@ static qboolean CG_RegisterClientSkin( clientInfo_t *ci, const char *modelName, 
     Com_sprintf( filename, sizeof( filename ), "models/players/%s/nonseg_%s.skin", modelName, skinName );
     ci->nonSegSkin = trap_R_RegisterSkin( filename );
     if( !ci->nonSegSkin )
-      Com_Printf( "Non-segmented skin load failure: %s\n", filename );
+      Com_Printf( _("Non-segmented skin load failure: %s\n"), filename );
 
     if( !ci->nonSegSkin )
       return qfalse;
@@ -434,7 +434,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
   Com_sprintf( filename, sizeof( filename ), "models/players/%s/animation.cfg", modelName );
   if( !CG_ParseAnimationFile( filename, ci ) )
   {
-    Com_Printf( "Failed to load animation file %s\n", filename );
+    Com_Printf( _("Failed to load animation file %s\n"), filename );
     return qfalse;
   }
 
@@ -446,7 +446,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
     ci->legsModel = trap_R_RegisterModel( filename );
     if( !ci->legsModel )
     {
-      Com_Printf( "Failed to load model file %s\n", filename );
+      Com_Printf( _("Failed to load model file %s\n"), filename );
       return qfalse;
     }
 
@@ -454,7 +454,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
     ci->torsoModel = trap_R_RegisterModel( filename );
     if( !ci->torsoModel )
     {
-      Com_Printf( "Failed to load model file %s\n", filename );
+      Com_Printf( _("Failed to load model file %s\n"), filename );
       return qfalse;
     }
 
@@ -462,7 +462,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
     ci->headModel = trap_R_RegisterModel( filename );
     if( !ci->headModel )
     {
-      Com_Printf( "Failed to load model file %s\n", filename );
+      Com_Printf( _("Failed to load model file %s\n"), filename );
       return qfalse;
     }
   }
@@ -472,7 +472,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
     ci->nonSegModel = trap_R_RegisterModel( filename );
     if( !ci->nonSegModel )
     {
-      Com_Printf( "Failed to load model file %s\n", filename );
+      Com_Printf( _("Failed to load model file %s\n"), filename );
       return qfalse;
     }
   }
@@ -480,7 +480,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
   // if any skins failed to load, return failure
   if( !CG_RegisterClientSkin( ci, modelName, skinName ) )
   {
-    Com_Printf( "Failed to load skin file: %s : %s\n", modelName, skinName );
+    Com_Printf( _("Failed to load skin file: %s : %s\n"), modelName, skinName );
     return qfalse;
   }
 
@@ -503,7 +503,7 @@ static void CG_LoadClientInfo( clientInfo_t *ci )
   int         clientNum;
 
   if( !CG_RegisterClientModelname( ci, ci->modelName, ci->skinName ) )
-    CG_Error( "CG_RegisterClientModelname( %s, %s ) failed", ci->modelName, ci->skinName );
+    CG_Error( _("CG_RegisterClientModelname( %s, %s ) failed"), ci->modelName, ci->skinName );
 
   // sounds
   dir = ci->modelName;
@@ -705,18 +705,18 @@ static void CG_StatusMessages( clientInfo_t *new, clientInfo_t *old )
     return;
 
   if( strcmp( new->name, old->name ) )
-    CG_Printf( "%s" S_COLOR_WHITE " renamed to %s\n", old->name, new->name );
+    CG_Printf( _("%s" S_COLOR_WHITE " renamed to %s\n"), old->name, new->name );
 
   if( old->team != new->team )
   {
     if( new->team == TEAM_NONE )
-      CG_Printf( "%s" S_COLOR_WHITE " left the %ss\n", new->name,
-        BG_TeamName( old->team ) );
+      CG_Printf( _("%s" S_COLOR_WHITE " left the %ss\n"), new->name,
+        _(BG_TeamName( old->team )) );
     else if( old->team == TEAM_NONE )
-      CG_Printf( "%s" S_COLOR_WHITE " joined the %ss\n", new->name,
-        BG_TeamName( new->team ) );
+      CG_Printf( _("%s" S_COLOR_WHITE " joined the %ss\n"), new->name,
+        _(BG_TeamName( new->team )) );
     else
-      CG_Printf( "%s" S_COLOR_WHITE " left the %ss and joined the %ss\n",
+      CG_Printf( _("%s" S_COLOR_WHITE " left the %ss and joined the %ss\n"),
         new->name, BG_TeamName( old->team ), BG_TeamName( new->team ) );
   }
 }
@@ -842,7 +842,7 @@ static void CG_SetLerpFrameAnimation( clientInfo_t *ci, lerpFrame_t *lf, int new
   newAnimation &= ~ANIM_TOGGLEBIT;
 
   if( newAnimation < 0 || newAnimation >= MAX_PLAYER_TOTALANIMATIONS )
-    CG_Error( "Bad animation number: %i", newAnimation );
+    CG_Error( _("Bad animation number: %i"), newAnimation );
 
   anim = &ci->animations[ newAnimation ];
 
@@ -850,7 +850,7 @@ static void CG_SetLerpFrameAnimation( clientInfo_t *ci, lerpFrame_t *lf, int new
   lf->animationTime = lf->frameTime + anim->initialLerp;
 
   if( cg_debugAnim.integer )
-    CG_Printf( "Anim: %i\n", newAnimation );
+    CG_Printf( _("Anim: %i\n"), newAnimation );
 }
 
 /*
@@ -1110,7 +1110,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t srcAngles,
     // did use angles2.. now uses time2.. looks a bit funny but time2 isn't used othwise
     dir = cent->currentState.time2;
     if( dir < 0 || dir > 7 )
-      CG_Error( "Bad player movement angle" );
+      CG_Error( _("Bad player movement angle") );
   }
 
   legsAngles[ YAW ] = headAngles[ YAW ] + movementOffsets[ dir ];
@@ -1357,7 +1357,7 @@ static void CG_PlayerNonSegAngles( centity_t *cent, vec3_t srcAngles, vec3_t non
     // did use angles2.. now uses time2.. looks a bit funny but time2 isn't used othwise
     dir = cent->currentState.time2;
     if( dir < 0 || dir > 7 )
-      CG_Error( "Bad player movement angle" );
+      CG_Error( _("Bad player movement angle") );
   }
 
   // torso
@@ -1892,7 +1892,7 @@ void CG_Player( centity_t *cent )
   // multiple corpses on the level using the same clientinfo
   clientNum = es->clientNum;
   if( clientNum < 0 || clientNum >= MAX_CLIENTS )
-    CG_Error( "Bad clientNum on player entity" );
+    CG_Error( _("Bad clientNum on player entity") );
 
   ci = &cgs.clientinfo[ clientNum ];
 
@@ -2166,7 +2166,7 @@ void CG_Corpse( centity_t *cent )
   corpseNum = CG_GetCorpseNum( es->clientNum );
 
   if( corpseNum < 0 || corpseNum >= MAX_CLIENTS )
-    CG_Error( "Bad corpseNum on corpse entity: %d", corpseNum );
+    CG_Error( _("Bad corpseNum on corpse entity: %d"), corpseNum );
 
   ci = &cgs.corpseinfo[ corpseNum ];
 

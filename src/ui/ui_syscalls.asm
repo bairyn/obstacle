@@ -100,3 +100,5 @@ equ sqrt                              -107
 equ floor                             -108
 equ ceil                              -109
 
+equ trap_Gettext                      -301
+
