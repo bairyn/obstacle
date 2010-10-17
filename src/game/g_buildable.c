@@ -1741,15 +1741,17 @@ void HRepeater_Think( gentity_t *self )
   // Initialise the zone once the repeater has spawned
   if( self->spawned && ( !self->usesBuildPointZone || !level.buildPointZones[ self->buildPointZone ].active ) )
   {
+    buildPointZone_t *zone;
+
     // See if a free zone exists
-    for( i = 0; i < g_humanRepeaterMaxZones.integer; i++ )
+    for( i = 0; i < g_zoneMax.integer; i++ )
     {
       zone = &level.buildPointZones[ i ];
 
       if( !zone->active )
       {
         // Initialise the BP queue with all BP queued
-        zone->queuedBuildPoints = zone->totalBuildPoints = g_humanRepeaterBuildPoints.integer;
+        zone->queuedBuildPoints = zone->totalBuildPoints = g_zoneHumanBuildPoints.integer;
         zone->nextQueueTime = level.time;
         zone->active = qtrue;
 
@@ -2723,7 +2725,6 @@ void HTeslaGen_Think( gentity_t *self )
 {
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
 
-  self->powered = G_FindPower( self, qfalse );
   G_SuicideIfNoPower( self );
   G_IdlePowerState( self );
 
@@ -4718,9 +4719,13 @@ void G_BuildLogRevert( int id )
         break;
       }
     }
-    else
+    else if( log->fate == BF_DESTROY )
     {
-      gentity_t  *builder = G_Spawn();
+      gentity_t        *builder = G_Spawn();
+      int              value = log->powerValue;
+      team_t           team  = BG_Buildable( log->modelindex )->team;
+      gentity_t        *power;
+      buildPointZone_t *zone;
 
       builder->client = NULL;
       VectorCopy( log->origin, builder->s.pos.trBase );
@@ -4735,38 +4740,26 @@ void G_BuildLogRevert( int id )
       builder->nextthink = level.time + FRAMETIME;
       builder->suicideTime = level.time + 3000;
 
-      if( log->fate == BF_DESTROY )
+      power = G_ProvidingEntityForPoint( log->origin, team );
+      if( power && power->usesBuildPointZone )
       {
-        int value = log->powerValue;
-
-        if( BG_Buildable( log->modelindex )->team == TEAM_ALIENS )
+        zone = &level.buildPointZones[ power->buildPointZone ];
+        zone->queuedBuildPoints = MAX( 0, zone->queuedBuildPoints - value );
+      }
+      else
+      {
+        if     ( team == TEAM_ALIENS )
         {
-          level.alienBuildPointQueue =
-            MAX( 0, level.alienBuildPointQueue - value );
+          level.alienBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
+        }
+        else if( team == TEAM_HUMANS )
+        {
+          level.humanBuildPointQueue = MAX( 0, level.alienBuildPointQueue - value );
         }
         else
         {
-          if( log->powerSource == BA_H_REACTOR )
-          {
-            level.humanBuildPointQueue =
-              MAX( 0, level.humanBuildPointQueue - value );
-          }
-          else if( log->powerSource == BA_H_REPEATER )
-          {
-            gentity_t        *source;
-            buildPointZone_t *zone;
-
-            source = G_PowerEntityForPoint( log->origin );
-            if( source && source->usesBuildPointZone )
-            {
-              zone = &level.buildPointZones[ source->buildPointZone ];
-              zone->queuedBuildPoints =
-                MAX( 0, zone->queuedBuildPoints - value );
-            }
-          }
         }
       }
     }
   }
 }
-
