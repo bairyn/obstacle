@@ -489,7 +489,7 @@ void S_Init( void )
 	cvar_t		*cv;
 	qboolean	started = qfalse;
 
-	Com_Printf( "------ Initializing Sound ------\n" );
+	Com_Printf( _("------ Initializing Sound ------\n") );
 
 	s_volume = Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
 	s_musicVolume = Cvar_Get( "s_musicvolume", "0.25", CVAR_ARCHIVE );
@@ -501,7 +501,7 @@ void S_Init( void )
 
 	cv = Cvar_Get( "s_initsound", "1", 0 );
 	if( !cv->integer ) {
-		Com_Printf( "Sound disabled.\n" );
+		Com_Printf( _("Sound disabled.\n") );
 	} else {
 
 		S_CodecInit( );
@@ -527,17 +527,17 @@ void S_Init( void )
 
 		if( started ) {
 			if( !S_ValidSoundInterface( &si ) ) {
-				Com_Error( ERR_FATAL, "Sound interface invalid." );
+				Com_Error( ERR_FATAL, _("Sound interface invalid.") );
 			}
 
 			S_SoundInfo( );
-			Com_Printf( "Sound initialization successful.\n" );
+			Com_Printf( _("Sound initialization successful.\n") );
 		} else {
-			Com_Printf( "Sound initialization failed.\n" );
+			Com_Printf( _("Sound initialization failed.\n") );
 		}
 	}
 
-	Com_Printf( "--------------------------------\n");
+	Com_Printf( _("--------------------------------\n"));
 }
 
 /*

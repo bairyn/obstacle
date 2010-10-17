@@ -196,6 +196,9 @@ void Sys_Init(void)
 	Cmd_AddCommand( "in_restart", Sys_In_Restart_f );
 	Cvar_Set( "arch", OS_STRING " " ARCH_STRING );
 	Cvar_Set( "username", Sys_GetCurrentUser( ) );
+	Cvar_Set( "locale", "/locale" );
+	Cvar_Set( "localepath", "" );
+	Sys_InitGettext( );
 }
 
 /*
@@ -313,7 +316,7 @@ void Sys_Warn( char *warning, ... )
 	Q_vsnprintf (string, sizeof(string), warning, argptr);
 	va_end (argptr);
 
-	CON_Print( va( "Warning: %s", string ) );
+	CON_Print( va( _("Warning: %s"), string ) );
 }
 
 /*
@@ -342,7 +345,7 @@ void Sys_UnloadDll( void *dllHandle )
 {
 	if( !dllHandle )
 	{
-		Com_Printf("Sys_UnloadDll(NULL)\n");
+		Com_Printf(_("Sys_UnloadDll(NULL)\n"));
 		return;
 	}
 
@@ -362,16 +365,16 @@ static void* Sys_TryLibraryLoad(const char* base, const char* gamedir, const cha
 	*fqpath = 0;
 
 	fn = FS_BuildOSPath( base, gamedir, fname );
-	Com_Printf( "Sys_LoadDll(%s)... \n", fn );
+	Com_Printf( _("Sys_LoadDll(%s)... \n"), fn );
 
 	libHandle = Sys_LoadLibrary(fn);
 
 	if(!libHandle) {
-		Com_Printf( "Sys_LoadDll(%s) failed:\n\"%s\"\n", fn, Sys_LibraryError() );
+		Com_Printf( _("Sys_LoadDll(%s) failed:\n\"%s\"\n"), fn, Sys_LibraryError() );
 		return NULL;
 	}
 
-	Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", fn );
+	Com_Printf ( _("Sys_LoadDll(%s): succeeded ...\n"), fn );
 	Q_strncpyz ( fqpath , fn , MAX_QPATH ) ;
 
 	return libHandle;
@@ -412,7 +415,7 @@ void *Sys_LoadDll( const char *name, char *fqpath ,
 		libHandle = Sys_TryLibraryLoad(basepath, gamedir, fname, fqpath);
 
 	if(!libHandle) {
-		Com_Printf ( "Sys_LoadDll(%s) failed to load library\n", name );
+		Com_Printf ( _("Sys_LoadDll(%s) failed to load library\n"), name );
 		return NULL;
 	}
 
@@ -421,13 +424,13 @@ void *Sys_LoadDll( const char *name, char *fqpath ,
 
 	if ( !*entryPoint || !dllEntry )
 	{
-		Com_Printf ( "Sys_LoadDll(%s) failed to find vmMain function:\n\"%s\" !\n", name, Sys_LibraryError( ) );
+		Com_Printf ( _("Sys_LoadDll(%s) failed to find vmMain function:\n\"%s\" !\n"), name, Sys_LibraryError( ) );
 		Sys_UnloadLibrary(libHandle);
 
 		return NULL;
 	}
 
-	Com_Printf ( "Sys_LoadDll(%s) found vmMain function at %p\n", name, *entryPoint );
+	Com_Printf ( _("Sys_LoadDll(%s) found vmMain function at %p\n"), name, *entryPoint );
 	dllEntry( systemcalls );
 
 	return libHandle;
@@ -475,17 +478,17 @@ void Sys_SigHandler( int signal )
 
 	if( signalcaught )
 	{
-		fprintf( stderr, "DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n",
+		fprintf( stderr, _("DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n"),
 			signal );
 	}
 	else
 	{
 		signalcaught = qtrue;
-		fprintf( stderr, "Received signal %d, exiting...\n", signal );
+		fprintf( stderr, _("Received signal %d, exiting...\n"), signal );
 #ifndef DEDICATED
 		CL_Shutdown();
 #endif
-		SV_Shutdown( "Signal caught" );
+		SV_Shutdown( _("Signal caught") );
 	}
 
 	Sys_Exit( 0 ); // Exit with 0 to avoid recursive signals
@@ -520,7 +523,7 @@ int main( int argc, char **argv )
 	if( SDL_VERSIONNUM( ver->major, ver->minor, ver->patch ) <
 			SDL_VERSIONNUM( MINSDL_MAJOR, MINSDL_MINOR, MINSDL_PATCH ) )
 	{
-		Sys_Print( "SDL version " MINSDL_VERSION " or greater required\n" );
+		Sys_Print( _("SDL version " MINSDL_VERSION " or greater required\n") );
 		Sys_Exit( 1 );
 	}
 #endif

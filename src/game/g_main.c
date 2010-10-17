@@ -2402,3 +2402,14 @@ void G_RunFrame( int levelTime )
 
   level.frameMsec = trap_Milliseconds();
 }
+
+char *gettext ( const char *msgid )
+{
+  static char string[8][32000];
+  static int  index = 0;
+	char        *buf = string[index++ & 7];
+
+  trap_Gettext( buf, msgid, sizeof( *string ) );
+
+  return buf;
+}

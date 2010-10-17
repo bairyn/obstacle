@@ -2,7 +2,7 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2009 Darklegion Development
- 
+
 This file is part of Tremulous.
  
 Tremulous is free software; you can redistribute it
@@ -62,13 +62,13 @@ int UI_ParseInfos( char *buf, int max, char *infos[] )
 
     if( strcmp( token, "{" ) )
     {
-      Com_Printf( "Missing { in info file\n" );
+      Com_Printf( _("Missing { in info file\n") );
       break;
     }
 
     if( count == max )
     {
-      Com_Printf( "Max infos exceeded\n" );
+      Com_Printf( _("Max infos exceeded\n") );
       break;
     }
 
@@ -80,7 +80,7 @@ int UI_ParseInfos( char *buf, int max, char *infos[] )
 
       if( !token[0] )
       {
-        Com_Printf( "Unexpected end of info file\n" );
+        Com_Printf( _("Unexpected end of info file\n") );
         break;
       }
 
@@ -125,13 +125,13 @@ static void UI_LoadArenasFromFile( char *filename )
 
   if( !f )
   {
-    trap_Print( va( S_COLOR_RED "file not found: %s\n", filename ) );
+    trap_Print( va( _(S_COLOR_RED "file not found: %s\n"), filename ) );
     return;
   }
 
   if( len >= MAX_ARENAS_TEXT )
   {
-    trap_Print( va( S_COLOR_RED "file too large: %s is %i, max allowed is %i", filename, len, MAX_ARENAS_TEXT ) );
+    trap_Print( va( _(S_COLOR_RED "file too large: %s is %i, max allowed is %i"), filename, len, MAX_ARENAS_TEXT ) );
     trap_FS_FCloseFile( f );
     return;
   }
@@ -186,10 +186,10 @@ void UI_LoadArenas( void )
     UI_LoadArenasFromFile( filename );
   }
 
-  trap_Print( va( "[skipnotify]%i arenas parsed\n", ui_numArenas ) );
+  trap_Print( va( _("[skipnotify]%i arenas parsed\n"), ui_numArenas ) );
 
   if( UI_OutOfMemory() )
-    trap_Print( S_COLOR_YELLOW"WARNING: not anough memory in pool to load all arenas\n" );
+    trap_Print( _(S_COLOR_YELLOW"WARNING: not anough memory in pool to load all arenas\n") );
 
   for( n = 0; n < ui_numArenas; n++ )
   {
@@ -228,13 +228,13 @@ static void UI_LoadBotsFromFile( char *filename )
 
   if( !f )
   {
-    trap_Print( va( S_COLOR_RED "file not found: %s\n", filename ) );
+    trap_Print( va( _(S_COLOR_RED "file not found: %s\n"), filename ) );
     return;
   }
 
   if( len >= MAX_BOTS_TEXT )
   {
-    trap_Print( va( S_COLOR_RED "file too large: %s is %i, max allowed is %i", filename, len, MAX_BOTS_TEXT ) );
+    trap_Print( va( _(S_COLOR_RED "file too large: %s is %i, max allowed is %i"), filename, len, MAX_BOTS_TEXT ) );
     trap_FS_FCloseFile( f );
     return;
   }
@@ -285,7 +285,7 @@ void UI_LoadBots( void )
     UI_LoadBotsFromFile( filename );
   }
 
-  trap_Print( va( "%i bots parsed\n", ui_numBots ) );
+  trap_Print( va( _("%i bots parsed\n"), ui_numBots ) );
 }
 
 
@@ -298,7 +298,7 @@ char *UI_GetBotInfoByNumber( int num )
 {
   if( num < 0 || num >= ui_numBots )
   {
-    trap_Print( va( S_COLOR_RED "Invalid bot number: %i\n", num ) );
+    trap_Print( va( _(S_COLOR_RED "Invalid bot number: %i\n"), num ) );
     return NULL;
   }
 

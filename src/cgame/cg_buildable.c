@@ -175,7 +175,7 @@ static qboolean CG_ParseBuildableAnimationFile( const char *filename, buildable_
   if( len == 0 || len >= sizeof( text ) - 1 )
   {
     trap_FS_FCloseFile( f );
-    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
+    CG_Printf( _("File %s is %s\n"), filename, len == 0 ? "empty" : "too long" );
     return qfalse;
   }
 
@@ -231,7 +231,7 @@ static qboolean CG_ParseBuildableAnimationFile( const char *filename, buildable_
 
   if( i != MAX_BUILDABLE_ANIMATIONS )
   {
-    CG_Printf( "Error parsing animation file: %s\n", filename );
+    CG_Printf( _("Error parsing animation file: %s\n"), filename );
     return qfalse;
   }
 
@@ -266,7 +266,7 @@ static qboolean CG_ParseBuildableSoundFile( const char *filename, buildable_t bu
   if ( len == 0 || len >= sizeof( text ) - 1 )
   {
     trap_FS_FCloseFile( f );
-    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
+    CG_Printf( _("File %s is %s\n"), filename, len == 0 ? "empty" : "too long" );
     return qfalse;
   }
 
@@ -297,7 +297,7 @@ static qboolean CG_ParseBuildableSoundFile( const char *filename, buildable_t bu
 
   if( i != MAX_BUILDABLE_ANIMATIONS )
   {
-    CG_Printf( "Error parsing sound file: %s\n", filename );
+    CG_Printf( _("Error parsing sound file: %s\n"), filename );
     return qfalse;
   }
 
@@ -343,12 +343,12 @@ void CG_InitBuildables( void )
     //animation.cfg
     Com_sprintf( filename, sizeof( filename ), "models/buildables/%s/animation.cfg", buildableName );
     if ( !CG_ParseBuildableAnimationFile( filename, i ) )
-      Com_Printf( S_COLOR_YELLOW "WARNING: failed to load animation file %s\n", filename );
+      Com_Printf( _(S_COLOR_YELLOW "WARNING: failed to load animation file %s\n"), filename );
 
     //sound.cfg
     Com_sprintf( filename, sizeof( filename ), "sound/buildables/%s/sound.cfg", buildableName );
     if ( !CG_ParseBuildableSoundFile( filename, i ) )
-      Com_Printf( S_COLOR_YELLOW "WARNING: failed to load sound file %s\n", filename );
+      Com_Printf( _(S_COLOR_YELLOW "WARNING: failed to load sound file %s\n"), filename );
 
     //models
     for( j = 0; j <= 3; j++ )
@@ -405,7 +405,7 @@ static void CG_SetBuildableLerpFrameAnimation( buildable_t buildable, lerpFrame_
   lf->animationNumber = newAnimation;
 
   if( newAnimation < 0 || newAnimation >= MAX_BUILDABLE_ANIMATIONS )
-    CG_Error( "Bad animation number: %i", newAnimation );
+    CG_Error( _("Bad animation number: %i"), newAnimation );
 
   anim = &cg_buildables[ buildable ].animations[ newAnimation ];
 
@@ -417,7 +417,7 @@ static void CG_SetBuildableLerpFrameAnimation( buildable_t buildable, lerpFrame_
   lf->animationTime = lf->frameTime + anim->initialLerp;
 
   if( cg_debugAnim.integer )
-    CG_Printf( "Anim: %i\n", newAnimation );
+    CG_Printf( _("Anim: %i\n"), newAnimation );
 }
 
 /*
@@ -438,7 +438,7 @@ static void CG_RunBuildableLerpFrame( centity_t *cent )
   if( newAnimation != lf->animationNumber || !lf->animation )
   {
     if( cg_debugRandom.integer )
-      CG_Printf( "newAnimation: %d lf->animationNumber: %d lf->animation: %d\n",
+      CG_Printf( _("newAnimation: %d lf->animationNumber: %d lf->animation: %d\n"),
                  newAnimation, lf->animationNumber, lf->animation );
 
     CG_SetBuildableLerpFrameAnimation( buildable, lf, newAnimation );
@@ -447,7 +447,7 @@ static void CG_RunBuildableLerpFrame( centity_t *cent )
         cg_buildables[ buildable ].sounds[ newAnimation ].enabled )
     {
       if( cg_debugRandom.integer )
-        CG_Printf( "Sound for animation %d for a %s\n",
+        CG_Printf( _("Sound for animation %d for a %s\n"),
             newAnimation, BG_Buildable( buildable )->humanName );
 
       trap_S_StartSound( cent->lerpOrigin, cent->currentState.number, CHAN_AUTO,
@@ -820,7 +820,7 @@ void CG_BuildableStatusParse( const char *filename, buildStat_t *bs )
     }
     else
     {
-      Com_Printf("CG_BuildableStatusParse: unknown token %s in %s\n",
+      Com_Printf(_("CG_BuildableStatusParse: unknown token %s in %s\n"),
         token.string, filename );
       bs->loaded = qfalse;
       trap_Parse_FreeSource( handle );

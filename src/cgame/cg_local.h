@@ -79,6 +79,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TEAM_OVERLAY_MAXNAME_WIDTH  12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH  16
 
+#define _(String) gettext(String)
+
 typedef enum
 {
   FOOTSTEP_NORMAL,
@@ -1547,6 +1549,8 @@ extern  vmCvar_t    cg_emoticons;
 
 extern  vmCvar_t    cg_chatTeamPrefix;
 
+extern  vmCvar_t    cg_translateCenterPrint;
+
 //
 // cg_main.c
 //
@@ -2076,6 +2080,9 @@ qboolean      trap_GetEntityToken( char *buffer, int bufferSize );
 int           trap_GetDemoState( void );
 int           trap_GetDemoPos( void );
 void          trap_GetDemoName( char *buffer, int size );
+
+void          trap_Gettext ( char *buffer, const char *msgid, int bufferLength );
+char          *gettext ( const char *msgid );
 
 // cg_drawCrosshair settings
 #define CROSSHAIR_ALWAYSOFF       0

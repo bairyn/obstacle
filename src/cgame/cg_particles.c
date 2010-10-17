@@ -250,8 +250,8 @@ static particle_t *CG_SpawnNewParticle( baseParticle_t *bp, particleEjector_t *p
         case PMT_NORMAL:
           if( !ps->normalValid )
           {
-            CG_Printf( S_COLOR_RED "ERROR: a particle with velocityType "
-                "normal has no normal\n" );
+            CG_Printf( _(S_COLOR_RED "ERROR: a particle with velocityType "
+                "normal has no normal\n") );
             return NULL;
           }
 
@@ -424,7 +424,7 @@ static particleEjector_t *CG_SpawnNewParticleEjector( baseParticleEjector_t *bpe
       pe->valid = qtrue;
 
       if( cg_debugParticles.integer >= 1 )
-        CG_Printf( "PE %s created\n", ps->class->name );
+        CG_Printf( _("PE %s created\n"), ps->class->name );
 
       break;
     }
@@ -449,7 +449,7 @@ particleSystem_t *CG_SpawnNewParticleSystem( qhandle_t psHandle )
 
   if( !bps->registered )
   {
-    CG_Printf( S_COLOR_RED "ERROR: a particle system has not been registered yet\n" );
+    CG_Printf( _(S_COLOR_RED "ERROR: a particle system has not been registered yet\n") );
     return NULL;
   }
 
@@ -471,7 +471,7 @@ particleSystem_t *CG_SpawnNewParticleSystem( qhandle_t psHandle )
         CG_SpawnNewParticleEjector( bps->ejectors[ j ], ps );
 
       if( cg_debugParticles.integer >= 1 )
-        CG_Printf( "PS %s created\n", bps->name );
+        CG_Printf( _("PS %s created\n"), bps->name );
 
       break;
     }
@@ -545,7 +545,7 @@ qhandle_t CG_RegisterParticleSystem( char *name )
       }
 
       if( cg_debugParticles.integer >= 1 )
-        CG_Printf( "Registered particle system %s\n", name );
+        CG_Printf( _("Registered particle system %s\n"), name );
 
       bps->registered = qtrue;
 
@@ -554,7 +554,7 @@ qhandle_t CG_RegisterParticleSystem( char *name )
     }
   }
 
-  CG_Printf( S_COLOR_RED "ERROR: failed to register particle system %s\n", name );
+  CG_Printf( _(S_COLOR_RED "ERROR: failed to register particle system %s\n"), name );
   return 0;
 }
 
@@ -731,8 +731,8 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
     {
       if( bp->numModels > 0 )
       {
-        CG_Printf( S_COLOR_RED "ERROR: 'shader' not allowed in "
-            "conjunction with 'model'\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: 'shader' not allowed in "
+            "conjunction with 'model'\n"), token );
         break;
       }
 
@@ -761,8 +761,8 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
     {
       if( bp->numFrames > 0 )
       {
-        CG_Printf( S_COLOR_RED "ERROR: 'model' not allowed in "
-            "conjunction with 'shader'\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: 'model' not allowed in "
+            "conjunction with 'shader'\n"), token );
         break;
       }
 
@@ -1123,7 +1123,7 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
         token = COM_Parse( text_p );
         if( Q_stricmp( token, "}" ) )
         {
-          CG_Printf( S_COLOR_RED "ERROR: missing '}'\n" );
+          CG_Printf( _(S_COLOR_RED "ERROR: missing '}'\n") );
           break;
         }
       }
@@ -1245,7 +1245,7 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
         token = COM_Parse( text_p );
         if( Q_stricmp( token, "}" ) )
         {
-          CG_Printf( S_COLOR_RED "ERROR: missing '}'\n" );
+          CG_Printf( _(S_COLOR_RED "ERROR: missing '}'\n") );
           break;
         }
 
@@ -1267,19 +1267,19 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
           token = COM_Parse( text_p );
           if( Q_stricmp( token, "}" ) )
           {
-            CG_Printf( S_COLOR_RED "ERROR: missing '}'\n" );
+            CG_Printf( _(S_COLOR_RED "ERROR: missing '}'\n") );
             break;
           }
         }
         else
         {
-          CG_Printf( S_COLOR_RED "ERROR: missing '{'\n" );
+          CG_Printf( _(S_COLOR_RED "ERROR: missing '{'\n") );
           break;
         }
       }
       else
       {
-        CG_Printf( S_COLOR_RED "ERROR: missing '{'\n" );
+        CG_Printf( _(S_COLOR_RED "ERROR: missing '{'\n") );
         break;
       }
 
@@ -1381,7 +1381,7 @@ static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
       return qtrue; //reached the end of this particle
     else
     {
-      CG_Printf( S_COLOR_RED "ERROR: unknown token '%s' in particle\n", token );
+      CG_Printf( _(S_COLOR_RED "ERROR: unknown token '%s' in particle\n"), token );
       return qfalse;
     }
   }
@@ -1431,18 +1431,18 @@ static qboolean CG_ParseParticleEjector( baseParticleEjector_t *bpe, char **text
 
       if( !CG_ParseParticle( &baseParticles[ numBaseParticles ], text_p ) )
       {
-        CG_Printf( S_COLOR_RED "ERROR: failed to parse particle\n" );
+        CG_Printf( _(S_COLOR_RED "ERROR: failed to parse particle\n") );
         return qfalse;
       }
 
       if( bpe->numParticles == MAX_PARTICLES_PER_EJECTOR )
       {
-        CG_Printf( S_COLOR_RED "ERROR: ejector has > %d particles\n", MAX_PARTICLES_PER_EJECTOR );
+        CG_Printf( _(S_COLOR_RED "ERROR: ejector has > %d particles\n"), MAX_PARTICLES_PER_EJECTOR );
         return qfalse;
       }
       else if( numBaseParticles == MAX_BASEPARTICLES )
       {
-        CG_Printf( S_COLOR_RED "ERROR: maximum number of particles (%d) reached\n", MAX_BASEPARTICLES );
+        CG_Printf( _(S_COLOR_RED "ERROR: maximum number of particles (%d) reached\n"), MAX_BASEPARTICLES );
         return qfalse;
       }
       else
@@ -1519,7 +1519,7 @@ static qboolean CG_ParseParticleEjector( baseParticleEjector_t *bpe, char **text
       return qtrue; //reached the end of this particle ejector
     else
     {
-      CG_Printf( S_COLOR_RED "ERROR: unknown token '%s' in particle ejector\n", token );
+      CG_Printf( _(S_COLOR_RED "ERROR: unknown token '%s' in particle ejector\n"), token );
       return qfalse;
     }
   }
@@ -1555,7 +1555,7 @@ static qboolean CG_ParseParticleSystem( baseParticleSystem_t *bps, char **text_p
     {
       if( !CG_ParseParticleEjector( &baseParticleEjectors[ numBaseParticleEjectors ], text_p ) )
       {
-        CG_Printf( S_COLOR_RED "ERROR: failed to parse particle ejector\n" );
+        CG_Printf( _(S_COLOR_RED "ERROR: failed to parse particle ejector\n") );
         return qfalse;
       }
 
@@ -1565,18 +1565,18 @@ static qboolean CG_ParseParticleSystem( baseParticleSystem_t *bps, char **text_p
       if( bpe->totalParticles == PARTICLES_INFINITE &&
           ( bpe->eject.initial == 0.0f || bpe->eject.final == 0.0f ) )
       {
-        CG_Printf( S_COLOR_RED "ERROR: ejector with 'count infinite' potentially has zero period\n" );
+        CG_Printf( _(S_COLOR_RED "ERROR: ejector with 'count infinite' potentially has zero period\n") );
         return qfalse;
       }
 
       if( bps->numEjectors == MAX_EJECTORS_PER_SYSTEM )
       {
-        CG_Printf( S_COLOR_RED "ERROR: particle system has > %d ejectors\n", MAX_EJECTORS_PER_SYSTEM );
+        CG_Printf( _(S_COLOR_RED "ERROR: particle system has > %d ejectors\n"), MAX_EJECTORS_PER_SYSTEM );
         return qfalse;
       }
       else if( numBaseParticleEjectors == MAX_BASEPARTICLE_EJECTORS )
       {
-        CG_Printf( S_COLOR_RED "ERROR: maximum number of particle ejectors (%d) reached\n",
+        CG_Printf( _(S_COLOR_RED "ERROR: maximum number of particle ejectors (%d) reached\n"),
             MAX_BASEPARTICLE_EJECTORS );
         return qfalse;
       }
@@ -1596,13 +1596,13 @@ static qboolean CG_ParseParticleSystem( baseParticleSystem_t *bps, char **text_p
     else if( !Q_stricmp( token, "}" ) )
     {
       if( cg_debugParticles.integer >= 1 )
-        CG_Printf( "Parsed particle system %s\n", name );
+        CG_Printf( _("Parsed particle system %s\n"), name );
 
       return qtrue; //reached the end of this particle system
     }
     else
     {
-      CG_Printf( S_COLOR_RED "ERROR: unknown token '%s' in particle system %s\n", token, bps->name );
+      CG_Printf( _(S_COLOR_RED "ERROR: unknown token '%s' in particle system %s\n"), token, bps->name );
       return qfalse;
     }
   }
@@ -1636,7 +1636,7 @@ static qboolean CG_ParseParticleFile( const char *fileName )
   if( len == 0 || len >= sizeof( text ) - 1 )
   {
     trap_FS_FCloseFile( f );
-    CG_Printf( S_COLOR_RED "ERROR: particle file %s is %s\n", fileName,
+    CG_Printf( _(S_COLOR_RED "ERROR: particle file %s is %s\n"), fileName,
       len == 0 ? "empty" : "too long" );
     return qfalse;
   }
@@ -1665,7 +1665,7 @@ static qboolean CG_ParseParticleFile( const char *fileName )
         {
           if( !Q_stricmp( baseParticleSystems[ i ].name, psName ) )
           {
-            CG_Printf( S_COLOR_RED "ERROR: a particle system is already named %s\n", psName );
+            CG_Printf( _(S_COLOR_RED "ERROR: a particle system is already named %s\n"), psName );
             return qfalse;
           }
         }
@@ -1674,7 +1674,7 @@ static qboolean CG_ParseParticleFile( const char *fileName )
 
         if( !CG_ParseParticleSystem( &baseParticleSystems[ numBaseParticleSystems ], &text_p, psName ) )
         {
-          CG_Printf( S_COLOR_RED "ERROR: %s: failed to parse particle system %s\n", fileName, psName );
+          CG_Printf( _(S_COLOR_RED "ERROR: %s: failed to parse particle system %s\n"), fileName, psName );
           return qfalse;
         }
 
@@ -1683,7 +1683,7 @@ static qboolean CG_ParseParticleFile( const char *fileName )
 
         if( numBaseParticleSystems == MAX_BASEPARTICLE_SYSTEMS )
         {
-          CG_Printf( S_COLOR_RED "ERROR: maximum number of particle systems (%d) reached\n",
+          CG_Printf( _(S_COLOR_RED "ERROR: maximum number of particle systems (%d) reached\n"),
               MAX_BASEPARTICLE_SYSTEMS );
           return qfalse;
         }
@@ -1694,7 +1694,7 @@ static qboolean CG_ParseParticleFile( const char *fileName )
       }
       else
       {
-        CG_Printf( S_COLOR_RED "ERROR: unamed particle system\n" );
+        CG_Printf( _(S_COLOR_RED "ERROR: unamed particle system\n") );
         return qfalse;
       }
     }
@@ -1706,7 +1706,7 @@ static qboolean CG_ParseParticleFile( const char *fileName )
     }
     else
     {
-      CG_Printf( S_COLOR_RED "ERROR: particle system already named\n" );
+      CG_Printf( _(S_COLOR_RED "ERROR: particle system already named\n") );
       return qfalse;
     }
   }
@@ -1763,7 +1763,7 @@ void CG_LoadParticleSystems( void )
     fileLen = strlen( filePtr );
     strcpy( fileName, "scripts/" );
     strcat( fileName, filePtr );
-    CG_Printf( "...loading '%s'\n", fileName );
+    CG_Printf( _("...loading '%s'\n"), fileName );
     CG_ParseParticleFile( fileName );
   }
 
@@ -1792,7 +1792,7 @@ void CG_LoadParticleSystems( void )
       if( j == numBaseParticleSystems )
       {
         //couldn't find named particle system
-        CG_Printf( S_COLOR_YELLOW "WARNING: failed to find child %s\n", bp->childSystemName );
+        CG_Printf( _(S_COLOR_YELLOW "WARNING: failed to find child %s\n"), bp->childSystemName );
         bp->childSystemName[ 0 ] = '\0';
       }
     }
@@ -1817,7 +1817,7 @@ void CG_LoadParticleSystems( void )
       if( j == numBaseParticleSystems )
       {
         //couldn't find named particle system
-        CG_Printf( S_COLOR_YELLOW "WARNING: failed to find onDeath system %s\n", bp->onDeathSystemName );
+        CG_Printf( _(S_COLOR_YELLOW "WARNING: failed to find onDeath system %s\n"), bp->onDeathSystemName );
         bp->onDeathSystemName[ 0 ] = '\0';
       }
     }
@@ -1833,7 +1833,7 @@ void CG_SetParticleSystemNormal( particleSystem_t *ps, vec3_t normal )
 {
   if( ps == NULL || !ps->valid )
   {
-    CG_Printf( S_COLOR_YELLOW "WARNING: tried to modify a NULL particle system\n" );
+    CG_Printf( _(S_COLOR_YELLOW "WARNING: tried to modify a NULL particle system\n") );
     return;
   }
 
@@ -1863,12 +1863,12 @@ void CG_DestroyParticleSystem( particleSystem_t **ps )
 
   if( *ps == NULL || !(*ps)->valid )
   {
-    CG_Printf( S_COLOR_YELLOW "WARNING: tried to destroy a NULL particle system\n" );
+    CG_Printf( _(S_COLOR_YELLOW "WARNING: tried to destroy a NULL particle system\n") );
     return;
   }
 
   if( cg_debugParticles.integer >= 1 )
-    CG_Printf( "PS destroyed\n" );
+    CG_Printf( _("PS destroyed\n") );
 
   for( i = 0; i < MAX_PARTICLE_EJECTORS; i++ )
   {
@@ -1895,13 +1895,13 @@ qboolean CG_IsParticleSystemInfinite( particleSystem_t *ps )
 
   if( ps == NULL )
   {
-    CG_Printf( S_COLOR_YELLOW "WARNING: tried to test a NULL particle system\n" );
+    CG_Printf( _(S_COLOR_YELLOW "WARNING: tried to test a NULL particle system\n") );
     return qfalse;
   }
 
   if( !ps->valid )
   {
-    CG_Printf( S_COLOR_YELLOW "WARNING: tried to test an invalid particle system\n" );
+    CG_Printf( _(S_COLOR_YELLOW "WARNING: tried to test an invalid particle system\n") );
     return qfalse;
   }
 
@@ -1987,7 +1987,7 @@ static void CG_GarbageCollectParticleSystems( void )
     }
 
     if( cg_debugParticles.integer >= 1 && !ps->valid )
-      CG_Printf( "PS %s garbage collected\n", ps->class->name );
+      CG_Printf( _("PS %s garbage collected\n"), ps->class->name );
   }
 }
 

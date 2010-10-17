@@ -34,6 +34,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	MAX_ENT_CLUSTERS	16
 
+#define _(String) Sys_Gettext(String)
+
 #ifdef USE_VOIP
 typedef struct voipServerPacket_s
 {

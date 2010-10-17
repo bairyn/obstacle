@@ -35,6 +35,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define FALLING_THRESHOLD -900.0f //what vertical speed to start falling sound at
 
+#define _(String) gettext(String)
+
 
 // all of the locals will be zeroed before each
 // pmove, just to make damn sure we don't have

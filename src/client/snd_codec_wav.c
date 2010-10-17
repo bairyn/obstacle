@@ -68,7 +68,7 @@ static int S_ReadChunkInfo(fileHandle_t f, char *name)
 
 	len = FGetLittleLong(f);
 	if( len < 0 ) {
-		Com_Printf( S_COLOR_YELLOW "WARNING: Negative chunk length\n" );
+		Com_Printf( _(S_COLOR_YELLOW "WARNING: Negative chunk length\n") );
 		return -1;
 	}
 
@@ -142,7 +142,7 @@ static qboolean S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
 	// Scan for the format chunk
 	if((fmtlen = S_FindRIFFChunk(file, "fmt ")) < 0)
 	{
-		Com_Printf( S_COLOR_RED "ERROR: Couldn't find \"fmt\" chunk\n");
+		Com_Printf( _(S_COLOR_RED "ERROR: Couldn't find \"fmt\" chunk\n"));
 		return qfalse;
 	}
 
@@ -156,7 +156,7 @@ static qboolean S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
 
 	if( bits < 8 )
 	{
-	  Com_Printf( S_COLOR_RED "ERROR: Less than 8 bit sound is not supported\n");
+	  Com_Printf( _(S_COLOR_RED "ERROR: Less than 8 bit sound is not supported\n"));
 	  return qfalse;
 	}
 
@@ -173,7 +173,7 @@ static qboolean S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
 	// Scan for the data chunk
 	if( (info->size = S_FindRIFFChunk(file, "data")) < 0)
 	{
-		Com_Printf( S_COLOR_RED "ERROR: Couldn't find \"data\" chunk\n");
+		Com_Printf( _(S_COLOR_RED "ERROR: Couldn't find \"data\" chunk\n"));
 		return qfalse;
 	}
 	info->samples = (info->size / info->width) / info->channels;
@@ -206,7 +206,7 @@ void *S_WAV_CodecLoad(const char *filename, snd_info_t *info)
 	FS_FOpenFileRead(filename, &file, qtrue);
 	if(!file)
 	{
-		Com_Printf( S_COLOR_RED "ERROR: Could not open \"%s\"\n",
+		Com_Printf( _(S_COLOR_RED "ERROR: Could not open \"%s\"\n"),
 				filename);
 		return NULL;
 	}
@@ -215,7 +215,7 @@ void *S_WAV_CodecLoad(const char *filename, snd_info_t *info)
 	if(!S_ReadRIFFHeader(file, info))
 	{
 		FS_FCloseFile(file);
-		Com_Printf( S_COLOR_RED "ERROR: Incorrect/unsupported format in \"%s\"\n",
+		Com_Printf( _(S_COLOR_RED "ERROR: Incorrect/unsupported format in \"%s\"\n"),
 				filename);
 		return NULL;
 	}
@@ -225,7 +225,7 @@ void *S_WAV_CodecLoad(const char *filename, snd_info_t *info)
 	if(!buffer)
 	{
 		FS_FCloseFile(file);
-		Com_Printf( S_COLOR_RED "ERROR: Out of memory reading \"%s\"\n",
+		Com_Printf( _(S_COLOR_RED "ERROR: Out of memory reading \"%s\"\n"),
 				filename);
 		return NULL;
 	}

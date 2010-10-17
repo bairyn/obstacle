@@ -137,7 +137,9 @@ typedef enum
   UI_ATAN2,
   UI_SQRT,
   UI_FLOOR,
-  UI_CEIL
+  UI_CEIL,
+
+  UI_GETTEXT = 300
 }
 uiImport_t;
 

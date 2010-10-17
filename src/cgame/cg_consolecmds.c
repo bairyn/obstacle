@@ -177,7 +177,7 @@ void CG_ClientList_f( void )
     count++;
   }
 
-  Com_Printf( "Listed %2d clients\n", count );
+  Com_Printf( _("Listed %2d clients\n"), count );
 }
 
 static void CG_UIMenu_f( void )

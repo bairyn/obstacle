@@ -50,7 +50,7 @@ void CG_RegisterUpgrade( int upgradeNum )
   upgradeInfo->registered = qtrue;
 
   if( strlen( BG_Upgrade( upgradeNum )->name ) <= 0 )
-    CG_Error( "Couldn't find upgrade %i", upgradeNum );
+    CG_Error( _("Couldn't find upgrade %i"), upgradeNum );
 
   upgradeInfo->humanName = BG_Upgrade( upgradeNum )->humanName;
 
@@ -108,7 +108,7 @@ static qboolean CG_ParseWeaponAnimationFile( const char *filename, weaponInfo_t 
   if( len == 0 || len >= sizeof( text ) - 1 )
   {
     trap_FS_FCloseFile( f );
-    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
+    CG_Printf( _("File %s is %s\n"), filename, len == 0 ? _("empty") : _("too long") );
     return qfalse;
   }
 
@@ -170,7 +170,7 @@ static qboolean CG_ParseWeaponAnimationFile( const char *filename, weaponInfo_t 
 
   if( i != MAX_WEAPON_ANIMATIONS )
   {
-    CG_Printf( "Error parsing animation file: %s\n", filename );
+    CG_Printf( _("Error parsing animation file: %s\n"), filename );
     return qfalse;
   }
 
@@ -210,7 +210,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       wim->missileModel = trap_R_RegisterModel( token );
 
       if( !wim->missileModel )
-        CG_Printf( S_COLOR_RED "ERROR: missile model not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: missile model not found %s\n"), token );
 
       continue;
     }
@@ -236,7 +236,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       wim->usesSpriteMissle = qtrue;
 
       if( !wim->missileSprite )
-        CG_Printf( S_COLOR_RED "ERROR: missile sprite not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: missile sprite not found %s\n"), token );
 
       continue;
     }
@@ -295,7 +295,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       wim->missileParticleSystem = CG_RegisterParticleSystem( token );
 
       if( !wim->missileParticleSystem )
-        CG_Printf( S_COLOR_RED "ERROR: missile particle system not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: missile particle system not found %s\n"), token );
 
       continue;
     }
@@ -308,7 +308,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       wim->missileTrailSystem = CG_RegisterTrailSystem( token );
 
       if( !wim->missileTrailSystem )
-        CG_Printf( S_COLOR_RED "ERROR: missile trail system not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: missile trail system not found %s\n"), token );
 
       continue;
     }
@@ -321,7 +321,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       wim->muzzleParticleSystem = CG_RegisterParticleSystem( token );
 
       if( !wim->muzzleParticleSystem )
-        CG_Printf( S_COLOR_RED "ERROR: muzzle particle system not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: muzzle particle system not found %s\n"), token );
 
       continue;
     }
@@ -334,7 +334,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       wim->impactParticleSystem = CG_RegisterParticleSystem( token );
 
       if( !wim->impactParticleSystem )
-        CG_Printf( S_COLOR_RED "ERROR: impact particle system not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: impact particle system not found %s\n"), token );
 
       continue;
     }
@@ -359,7 +359,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       wim->impactMarkSize = size;
 
       if( !wim->impactMark )
-        CG_Printf( S_COLOR_RED "ERROR: impact mark shader not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: impact mark shader not found %s\n"), token );
 
       continue;
     }
@@ -511,7 +511,7 @@ static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p 
       return qtrue; //reached the end of this weapon section
     else
     {
-      CG_Printf( S_COLOR_RED "ERROR: unknown token '%s' in weapon section\n", token );
+      CG_Printf( _(S_COLOR_RED "ERROR: unknown token '%s' in weapon section\n"), token );
       return qfalse;
     }
   }
@@ -544,7 +544,7 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
   if( len == 0 || len >= sizeof( text ) - 1 )
   {
     trap_FS_FCloseFile( f );
-    CG_Printf( "File %s is %s\n", filename, len == 0 ? "empty" : "too long" );
+    CG_Printf( _("File %s is %s\n"), filename, len == 0 ? _("empty") : _("too long") );
     return qfalse;
   }
 
@@ -570,12 +570,12 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
     {
       if( weaponMode == WPM_NONE )
       {
-        CG_Printf( S_COLOR_RED "ERROR: weapon mode section started without a declaration\n" );
+        CG_Printf( _(S_COLOR_RED "ERROR: weapon mode section started without a declaration\n") );
         return qfalse;
       }
       else if( !CG_ParseWeaponModeSection( &wi->wim[ weaponMode ], &text_p ) )
       {
-        CG_Printf( S_COLOR_RED "ERROR: failed to parse weapon mode section\n" );
+        CG_Printf( _(S_COLOR_RED "ERROR: failed to parse weapon mode section\n") );
         return qfalse;
       }
 
@@ -610,7 +610,7 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       wi->weaponModel = trap_R_RegisterModel( token );
 
       if( !wi->weaponModel )
-        CG_Printf( S_COLOR_RED "ERROR: weapon model not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: weapon model not found %s\n"), token );
 
       strcpy( path, token );
       COM_StripExtension( path, path, MAX_QPATH );
@@ -641,8 +641,8 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
 
       if( !wi->weaponModel3rdPerson )
       {
-        CG_Printf( S_COLOR_RED "ERROR: 3rd person weapon "
-            "model not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: 3rd person weapon "
+            "model not found %s\n"), token );
       }
 
       strcpy( path, token );
@@ -676,7 +676,7 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       wi->weaponIcon = wi->ammoIcon = trap_R_RegisterShader( token );
 
       if( !wi->weaponIcon )
-        CG_Printf( S_COLOR_RED "ERROR: weapon icon not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: weapon icon not found %s\n"), token );
 
       continue;
     }
@@ -701,7 +701,7 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       wi->crossHairSize = size;
 
       if( !wi->crossHair )
-        CG_Printf( S_COLOR_RED "ERROR: weapon crosshair not found %s\n", token );
+        CG_Printf( _(S_COLOR_RED "ERROR: weapon crosshair not found %s\n"), token );
 
       continue;
     }
@@ -712,7 +712,7 @@ static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
       continue;
     }
 
-    Com_Printf( S_COLOR_RED "ERROR: unknown token '%s'\n", token );
+    Com_Printf( _(S_COLOR_RED "ERROR: unknown token '%s'\n"), token );
     return qfalse;
   }
 
@@ -743,19 +743,19 @@ void CG_RegisterWeapon( int weaponNum )
   weaponInfo->registered = qtrue;
 
   if( strlen( BG_Weapon( weaponNum )->name ) <= 0 )
-    CG_Error( "Couldn't find weapon %i", weaponNum );
+    CG_Error( _("Couldn't find weapon %i"), weaponNum );
 
   Com_sprintf( path, MAX_QPATH, "models/weapons/%s/weapon.cfg", BG_Weapon( weaponNum )->name );
 
   weaponInfo->humanName = BG_Weapon( weaponNum )->humanName;
 
   if( !CG_ParseWeaponFile( path, weaponInfo ) )
-    Com_Printf( S_COLOR_RED "ERROR: failed to parse %s\n", path );
+    Com_Printf( _(S_COLOR_RED "ERROR: failed to parse %s\n"), path );
 
   Com_sprintf( path, MAX_QPATH, "models/weapons/%s/animation.cfg", BG_Weapon( weaponNum )->name );
 
   if( !CG_ParseWeaponAnimationFile( path, weaponInfo ) )
-    Com_Printf( S_COLOR_RED "ERROR: failed to parse %s\n", path );
+    Com_Printf( _(S_COLOR_RED "ERROR: failed to parse %s\n"), path );
 
   // calc midpoint for rotation
   trap_R_ModelBounds( weaponInfo->weaponModel, mins, maxs );
@@ -810,7 +810,7 @@ static void CG_SetWeaponLerpFrameAnimation( weapon_t weapon, lerpFrame_t *lf, in
   newAnimation &= ~ANIM_TOGGLEBIT;
 
   if( newAnimation < 0 || newAnimation >= MAX_WEAPON_ANIMATIONS )
-    CG_Error( "Bad animation number: %i", newAnimation );
+    CG_Error( _("Bad animation number: %i"), newAnimation );
 
   anim = &cg_weapons[ weapon ].animations[ newAnimation ];
 
@@ -818,7 +818,7 @@ static void CG_SetWeaponLerpFrameAnimation( weapon_t weapon, lerpFrame_t *lf, in
   lf->animationTime = lf->frameTime + anim->initialLerp;
 
   if( cg_debugAnim.integer )
-    CG_Printf( "Anim: %i\n", newAnimation );
+    CG_Printf( _("Anim: %i\n"), newAnimation );
 }
 
 /*
@@ -1698,7 +1698,7 @@ void CG_FireWeapon( centity_t *cent, weaponMode_t weaponMode )
 
   if( weaponNum >= WP_NUM_WEAPONS )
   {
-    CG_Error( "CG_FireWeapon: ent->weapon >= WP_NUM_WEAPONS" );
+    CG_Error( _("CG_FireWeapon: ent->weapon >= WP_NUM_WEAPONS") );
     return;
   }
 

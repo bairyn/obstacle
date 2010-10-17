@@ -134,10 +134,10 @@ static void CG_TransitionSnapshot( void )
   int         i;
 
   if( !cg.snap )
-    CG_Error( "CG_TransitionSnapshot: NULL cg.snap" );
+    CG_Error( _("CG_TransitionSnapshot: NULL cg.snap") );
 
   if( !cg.nextSnap )
-    CG_Error( "CG_TransitionSnapshot: NULL cg.nextSnap" );
+    CG_Error( _("CG_TransitionSnapshot: NULL cg.nextSnap") );
 
   // execute any server string commands before transitioning entities
   CG_ExecuteNewServerCommands( cg.nextSnap->serverCommandSequence );
@@ -259,7 +259,7 @@ static snapshot_t *CG_ReadNextSnapshot( void )
 
   if( cg.latestSnapshotNum > cgs.processedSnapshotNum + 1000 )
   {
-    CG_Printf( "WARNING: CG_ReadNextSnapshot: way out of range, %i > %i",
+    CG_Printf( _("WARNING: CG_ReadNextSnapshot: way out of range, %i > %i"),
       cg.latestSnapshotNum, cgs.processedSnapshotNum );
   }
 
@@ -337,7 +337,7 @@ void CG_ProcessSnapshots( void )
     if( n < cg.latestSnapshotNum )
     {
       // this should never happen
-      CG_Error( "CG_ProcessSnapshots: n < cg.latestSnapshotNum" );
+      CG_Error( _("CG_ProcessSnapshots: n < cg.latestSnapshotNum") );
     }
 
     cg.latestSnapshotNum = n;
@@ -381,7 +381,7 @@ void CG_ProcessSnapshots( void )
 
       // if time went backwards, we have a level restart
       if( cg.nextSnap->serverTime < cg.snap->serverTime )
-        CG_Error( "CG_ProcessSnapshots: Server time went backwards" );
+        CG_Error( _("CG_ProcessSnapshots: Server time went backwards") );
     }
 
     // if our time is < nextFrame's, we have a nice interpolating state
@@ -394,7 +394,7 @@ void CG_ProcessSnapshots( void )
 
   // assert our valid conditions upon exiting
   if( cg.snap == NULL )
-    CG_Error( "CG_ProcessSnapshots: cg.snap == NULL" );
+    CG_Error( _("CG_ProcessSnapshots: cg.snap == NULL") );
 
   if( cg.time < cg.snap->serverTime )
   {
@@ -403,6 +403,6 @@ void CG_ProcessSnapshots( void )
   }
 
   if( cg.nextSnap != NULL && cg.nextSnap->serverTime <= cg.time )
-    CG_Error( "CG_ProcessSnapshots: cg.nextSnap->serverTime <= cg.time" );
+    CG_Error( _("CG_ProcessSnapshots: cg.nextSnap->serverTime <= cg.time") );
 }
 

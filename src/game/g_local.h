@@ -53,6 +53,8 @@ typedef struct gclient_s gclient_t;
 #define FL_NO_HUMANS      0x00004000  // spawn point just for bots
 #define FL_FORCE_GESTURE  0x00008000  // spawn point just for bots
 
+#define _(String) gettext(String)
+
 // movers are things like doors, plats, buttons, etc
 typedef enum
 {
@@ -1229,3 +1231,6 @@ void      trap_SendGameStat( const char *data );
 
 void      trap_AddCommand( const char *cmdName );
 void      trap_RemoveCommand( const char *cmdName );
+
+void      trap_Gettext ( char *buffer, const char *msgid, int bufferLength );
+char      *gettext ( const char *msgid );

@@ -478,7 +478,7 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	if ( uivm && !VM_Call( uivm, UI_IS_FULLSCREEN )) {
 		switch( cls.state ) {
 		default:
-			Com_Error( ERR_FATAL, "SCR_DrawScreenField: bad cls.state" );
+			Com_Error( ERR_FATAL, _("SCR_DrawScreenField: bad cls.state") );
 			break;
 		case CA_CINEMATIC:
 			SCR_DrawCinematic();
@@ -541,7 +541,7 @@ void SCR_UpdateScreen( void ) {
 	}
 
 	if ( ++recursive > 2 ) {
-		Com_Error( ERR_FATAL, "SCR_UpdateScreen: recursively called" );
+		Com_Error( ERR_FATAL, _("SCR_UpdateScreen: recursively called") );
 	}
 	recursive = 1;
 

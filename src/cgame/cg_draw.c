@@ -1381,13 +1381,13 @@ static void CG_DrawTeamLabel( rectDef_t *rect, team_t team, float text_x, float 
     case TEAM_ALIENS:
       t = "Aliens";
       if( cg.intermissionStarted )
-        Com_sprintf( stage, MAX_TOKEN_CHARS, "(Stage %d)", cgs.alienStage + 1 );
+        Com_sprintf( stage, MAX_TOKEN_CHARS, _("(Stage %d)"), cgs.alienStage + 1 );
       break;
 
     case TEAM_HUMANS:
       t = "Humans";
       if( cg.intermissionStarted )
-        Com_sprintf( stage, MAX_TOKEN_CHARS, "(Stage %d)", cgs.humanStage + 1 );
+        Com_sprintf( stage, MAX_TOKEN_CHARS, _("(Stage %d)"), cgs.humanStage + 1 );
       break;
 
     default:
@@ -1435,12 +1435,12 @@ static void CG_DrawStageReport( rectDef_t *rect, float text_x, float text_y,
       kills = 0;
 
     if( cgs.alienNextStageThreshold < 0 )
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d", cgs.alienStage + 1 );
+      Com_sprintf( s, MAX_TOKEN_CHARS, _("Stage %d"), cgs.alienStage + 1 );
     else if( kills == 1 )
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, 1 frag for next stage",
+      Com_sprintf( s, MAX_TOKEN_CHARS, _("Stage %d, 1 frag for next stage"),
           cgs.alienStage + 1 );
     else
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d frags for next stage",
+      Com_sprintf( s, MAX_TOKEN_CHARS, _("Stage %d, %d frags for next stage"),
           cgs.alienStage + 1, kills );
   }
   else if( cg.snap->ps.stats[ STAT_TEAM ] == TEAM_HUMANS )
@@ -1451,9 +1451,9 @@ static void CG_DrawStageReport( rectDef_t *rect, float text_x, float text_y,
       credits = 0;
 
     if( cgs.humanNextStageThreshold < 0 )
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d", cgs.humanStage + 1 );
+      Com_sprintf( s, MAX_TOKEN_CHARS, _("Stage %d"), cgs.humanStage + 1 );
     else if( credits == 1 )
-      Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, 1 credit for next stage",
+      Com_sprintf( s, MAX_TOKEN_CHARS, _("Stage %d, 1 credit for next stage"),
           cgs.humanStage + 1 );
     else
       Com_sprintf( s, MAX_TOKEN_CHARS, "Stage %d, %d credits for next stage",
@@ -2958,6 +2958,9 @@ void CG_CenterPrint( const char *str, int y, int charWidth )
   const char *wrapped;
   static int maxWidth = (int)( ( 2.0f / 3.0f ) * (float)SCREEN_WIDTH );
 
+  if( cg_translateCenterPrint.integer )
+    str = _(str);
+
   Q_ParseNewlines( newlineParsed, str, sizeof( newlineParsed ) );
 
   wrapped = Item_Text_Wrap( newlineParsed, 0.5f, maxWidth );
@@ -3195,18 +3198,18 @@ static qboolean CG_DrawQueue( void )
       break;
   }
 
-  Com_sprintf( buffer, MAX_STRING_CHARS, "You are %d%s in the spawn queue",
+  Com_sprintf( buffer, MAX_STRING_CHARS, _("You are %d%s in the spawn queue"),
                position, ordinal );
 
   w = UI_Text_Width( buffer, 0.7f, 0 );
   UI_Text_Paint( 320 - w / 2, 360, 0.7f, color, buffer, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
 
   if( cg.snap->ps.persistant[ PERS_SPAWNS ] == 0 )
-    Com_sprintf( buffer, MAX_STRING_CHARS, "There are no spawns remaining" );
+    Com_sprintf( buffer, MAX_STRING_CHARS, _("There are no spawns remaining") );
   else if( cg.snap->ps.persistant[ PERS_SPAWNS ] == 1 )
-    Com_sprintf( buffer, MAX_STRING_CHARS, "There is 1 spawn remaining" );
+    Com_sprintf( buffer, MAX_STRING_CHARS, _("There is 1 spawn remaining") );
   else
-    Com_sprintf( buffer, MAX_STRING_CHARS, "There are %d spawns remaining",
+    Com_sprintf( buffer, MAX_STRING_CHARS, _("There are %d spawns remaining"),
                  cg.snap->ps.persistant[ PERS_SPAWNS ] );
 
   w = UI_Text_Width( buffer, 0.7f, 0 );
@@ -3388,7 +3391,7 @@ static void CG_Draw2D( void )
     menu = Menus_FindByName( "default_hud" );
 
     if( !menu ) // still couldn't find it
-      CG_Error( "Default HUD could not be found" );
+      CG_Error( _("Default HUD could not be found") );
   }
 
   Menu_Update( menu );
@@ -3573,7 +3576,7 @@ void CG_DrawActive( stereoFrame_t stereoView )
       break;
     default:
       separation = 0;
-      CG_Error( "CG_DrawActive: Undefined stereoView" );
+      CG_Error( _("CG_DrawActive: Undefined stereoView") );
   }
 
   // clear around the rendered view if sized down

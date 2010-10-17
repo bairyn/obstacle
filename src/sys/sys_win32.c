@@ -57,14 +57,14 @@ char *Sys_DefaultHomePath( void )
 	{
 		if(shfolder == NULL)
 		{
-			Com_Printf("Unable to load SHFolder.dll\n");
+			Com_Printf(_("Unable to load SHFolder.dll\n"));
 			return NULL;
 		}
 
 		qSHGetFolderPath = GetProcAddress(shfolder, "SHGetFolderPathA");
 		if(qSHGetFolderPath == NULL)
 		{
-			Com_Printf("Unable to find SHGetFolderPath in SHFolder.dll\n");
+			Com_Printf(_("Unable to find SHGetFolderPath in SHFolder.dll\n"));
 			FreeLibrary(shfolder);
 			return NULL;
 		}
@@ -72,7 +72,7 @@ char *Sys_DefaultHomePath( void )
 		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_APPDATA,
 						NULL, 0, szPath ) ) )
 		{
-			Com_Printf("Unable to detect CSIDL_APPDATA\n");
+			Com_Printf(_("Unable to detect CSIDL_APPDATA\n"));
 			FreeLibrary(shfolder);
 			return NULL;
 		}
@@ -545,7 +545,7 @@ Display an error message
 */
 void Sys_ErrorDialog( const char *error )
 {
-	if( MessageBox( NULL, va( "%s. Copy console log to clipboard?", error ),
+	if( MessageBox( NULL, va( _("%s. Copy console log to clipboard?"), error ),
 			NULL, MB_YESNO|MB_ICONERROR ) == IDYES )
 	{
 		HGLOBAL memoryHandle;
@@ -632,6 +632,39 @@ void Sys_GLimpInit( void )
 
 /*
 ==============
+Sys_InitGettext
+
+Initialise gettext
+==============
+*/
+void Sys_InitGettext( void )
+{
+	char dir[ 2 * MAX_CVAR_VALUE_STRING ];
+
+	Cvar_VariableStringBuffer( "localepath", dir, sizeof( dir ) );
+	if( !*dir )
+	{
+		Cvar_VariableStringBuffer( "fs_homepath", dir, MAX_CVAR_VALUE_STRING );
+		Q_strcat( dir, sizeof( dir ), Cvar_VariableString( "locale" ) );
+	}
+
+	setlocale( LC_ALL, "" );
+	bindtextdomain( PRODUCT_NAME, dir );
+	textdomain( PRODUCT_NAME );
+}
+
+/*
+==============
+Sys_Gettext
+==============
+*/
+char *Sys_Gettext(const char *msgid)
+{
+	return gettext(msgid);
+}
+
+/*
+==============
 Sys_PlatformInit
 
 Windows specific initialisation
@@ -644,8 +677,8 @@ void Sys_PlatformInit( void )
 
 	if( SDL_VIDEODRIVER )
 	{
-		Com_Printf( "SDL_VIDEODRIVER is externally set to \"%s\", "
-				"in_mouse -1 will have no effect\n", SDL_VIDEODRIVER );
+		Com_Printf( _("SDL_VIDEODRIVER is externally set to \"%s\", "
+				"in_mouse -1 will have no effect\n"), SDL_VIDEODRIVER );
 		SDL_VIDEODRIVER_externallySet = qtrue;
 	}
 	else

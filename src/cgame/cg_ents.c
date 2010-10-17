@@ -900,7 +900,7 @@ static void CG_InterpolateEntityPosition( centity_t *cent )
   // it would be an internal error to find an entity that interpolates without
   // a snapshot ahead of the current one
   if( cg.nextSnap == NULL )
-    CG_Error( "CG_InterpoateEntityPosition: cg.nextSnap == NULL" );
+    CG_Error( _("CG_InterpoateEntityPosition: cg.nextSnap == NULL") );
 
   f = cg.frameInterpolation;
 
@@ -1009,7 +1009,7 @@ static void CG_CEntityPVSEnter( centity_t *cent )
   entityState_t *es = &cent->currentState;
 
   if( cg_debugPVS.integer )
-    CG_Printf( "Entity %d entered PVS\n", cent->currentState.number );
+    CG_Printf( _("Entity %d entered PVS\n"), cent->currentState.number );
 
   switch( es->eType )
   {
@@ -1050,7 +1050,7 @@ static void CG_CEntityPVSLeave( centity_t *cent )
   entityState_t *es = &cent->currentState;
 
   if( cg_debugPVS.integer )
-    CG_Printf( "Entity %d left PVS\n", cent->currentState.number );
+    CG_Printf( _("Entity %d left PVS\n"), cent->currentState.number );
   switch( es->eType )
   {
     case ET_LEV2_ZAP_CHAIN:
@@ -1085,7 +1085,7 @@ static void CG_AddCEntity( centity_t *cent )
   switch( cent->currentState.eType )
   {
     default:
-      CG_Error( "Bad entity type: %i\n", cent->currentState.eType );
+      CG_Error( _("Bad entity type: %i\n"), cent->currentState.eType );
       break;
 
     case ET_INVISIBLE:

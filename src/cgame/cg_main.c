@@ -219,6 +219,8 @@ vmCvar_t  cg_emoticons;
 
 vmCvar_t  cg_chatTeamPrefix;
 
+vmCvar_t  cg_translateCenterPrint;
+
 typedef struct
 {
   vmCvar_t  *vmCvar;
@@ -350,7 +352,9 @@ static cvarTable_t cvarTable[ ] =
 
   { &cg_emoticons, "cg_emoticons", "1", CVAR_LATCH|CVAR_ARCHIVE},
 
-  { &cg_chatTeamPrefix, "cg_chatTeamPrefix", "1", CVAR_ARCHIVE}
+  { &cg_chatTeamPrefix, "cg_chatTeamPrefix", "1", CVAR_ARCHIVE},
+
+  { &cg_translateCenterPrint, "cg_translateCenterPrint", "0", CVAR_ARCHIVE}
 };
 
 static int   cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
@@ -967,7 +971,7 @@ CG_ConfigString
 const char *CG_ConfigString( int index )
 {
   if( index < 0 || index >= MAX_CONFIGSTRINGS )
-    CG_Error( "CG_ConfigString: bad index: %i", index );
+    CG_Error( _("CG_ConfigString: bad index: %i"), index );
 
   return cgs.gameState.stringData + cgs.gameState.stringOffsets[ index ];
 }
@@ -1029,13 +1033,13 @@ char *CG_GetMenuBuffer( const char *filename )
 
   if( !f )
   {
-    trap_Print( va( S_COLOR_RED "menu file not found: %s, using default\n", filename ) );
+    trap_Print( va( _(S_COLOR_RED "menu file not found: %s, using default\n"), filename ) );
     return NULL;
   }
 
   if( len >= MAX_MENUFILE )
   {
-    trap_Print( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i",
+    trap_Print( va( _(S_COLOR_RED "menu file too large: %s is %i, max allowed is %i"),
                     filename, len, MAX_MENUFILE ) );
     trap_FS_FCloseFile( f );
     return NULL;
@@ -1234,12 +1238,12 @@ void CG_ParseMenu( const char *menuFile )
       break;
 
     //if ( Q_stricmp( token, "{" ) ) {
-    //  Com_Printf( "Missing { in menu file\n" );
+    //  Com_Printf( _("Missing { in menu file\n") );
     //  break;
     //}
 
     //if ( menuCount == MAX_MENUS ) {
-    //  Com_Printf( "Too many menus!\n" );
+    //  Com_Printf( _("Too many menus!\n") );
     //  break;
     //}
 
@@ -1305,16 +1309,16 @@ void CG_LoadMenus( const char *menuFile )
 
   if( !f )
   {
-    trap_Error( va( S_COLOR_YELLOW "menu file not found: %s, using default\n", menuFile ) );
+    trap_Error( va( _(S_COLOR_YELLOW "menu file not found: %s, using default\n"), menuFile ) );
     len = trap_FS_FOpenFile( "ui/hud.txt", &f, FS_READ );
 
     if( !f )
-      trap_Error( va( S_COLOR_RED "default menu file not found: ui/hud.txt, unable to continue!\n" ) );
+      trap_Error( va( _(S_COLOR_RED "default menu file not found: ui/hud.txt, unable to continue!\n") ) );
   }
 
   if( len >= MAX_MENUDEFFILE )
   {
-    trap_Error( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i",
+    trap_Error( va( _(S_COLOR_RED "menu file too large: %s is %i, max allowed is %i"),
                 menuFile, len, MAX_MENUDEFFILE ) );
     trap_FS_FCloseFile( f );
     return;
@@ -1349,7 +1353,7 @@ void CG_LoadMenus( const char *menuFile )
     }
   }
 
-  Com_Printf( "UI menu load time = %d milli seconds\n", trap_Milliseconds( ) - start );
+  Com_Printf( _("UI menu load time = %d milli seconds\n"), trap_Milliseconds( ) - start );
 }
 
 
@@ -1514,7 +1518,7 @@ static const char *CG_FeederItemText( int feederID, int index, int column, qhand
 
       case 2:
         if( cg.intermissionStarted && CG_ClientIsReady( sp->client ) )
-          return "Ready";
+          return _("Ready");
         break;
 
       case 3:
@@ -1795,7 +1799,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
   s = CG_ConfigString( CS_GAME_VERSION );
 
   if( strcmp( s, GAME_VERSION ) )
-    CG_Error( "Client/Server game mismatch: %s/%s", GAME_VERSION, s );
+    CG_Error( _("Client/Server game mismatch: %s/%s"), GAME_VERSION, s );
 
   s = CG_ConfigString( CS_LEVEL_START_TIME );
   cgs.levelStartTime = atoi( s );
@@ -1890,7 +1894,7 @@ static char *CG_VoIPString( void )
                          "%s%d", ( slen > 0 ) ? "," : "", i );
       if( slen + nlen + 1 >= sizeof( voipString ) )
       {
-        CG_Printf( S_COLOR_YELLOW "WARNING: voipString overflowed\n" );
+        CG_Printf( _(S_COLOR_YELLOW "WARNING: voipString overflowed\n") );
         break;
       }
 
@@ -1911,5 +1915,16 @@ static char *CG_VoIPString( void )
     return NULL;
 
   return voipString;
+}
+
+char *gettext ( const char *msgid )
+{
+  static char string[8][32000];
+  static int  index = 0;
+	char        *buf = string[index++ & 7];
+
+  trap_Gettext( buf, msgid, sizeof( *string ) );
+
+  return buf;
 }
 

@@ -481,3 +481,25 @@ void trap_SetPbClStatus( int status )
 {
   syscall( UI_SET_PBCLSTATUS, status );
 }
+
+void trap_Gettext( char *buffer, const char *msgid, int bufferLength )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( !( engineState & 0x02 ) )
+    syscall( UI_STRNCPY, buffer, msgid, bufferLength );
+  else
+    syscall( UI_GETTEXT, buffer, msgid, bufferLength );
+}

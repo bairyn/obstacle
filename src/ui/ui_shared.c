@@ -28,6 +28,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SCROLL_TIME_ADJUSTOFFSET  40
 #define SCROLL_TIME_FLOOR         20
 
+#define _(String) gettext(String)
+
+void trap_Gettext ( char *buffer, const char *msgid, int bufferLength );
+char *gettext ( const char *msgid );
+
 typedef struct scrollInfo_s
 {
   int nextScrollTime;
@@ -141,9 +146,9 @@ void *UI_Alloc( int size )
     outOfMemory = qtrue;
 
     if( DC->Print )
-      DC->Print( "UI_Alloc: Failure. Out of memory!\n" );
+      DC->Print( _("UI_Alloc: Failure. Out of memory!\n") );
 
-    //DC->trap_Print(S_COLOR_YELLOW"WARNING: UI Out of Memory!\n");
+    //DC->trap_Print(_(S_COLOR_YELLOW"WARNING: UI Out of Memory!\n"));
     return NULL;
   }
 
@@ -275,16 +280,16 @@ const char *String_Alloc( const char *p )
 void String_Report( void )
 {
   float f;
-  Com_Printf( "Memory/String Pool Info\n" );
-  Com_Printf( "----------------\n" );
+  Com_Printf( _("Memory/String Pool Info\n") );
+  Com_Printf( _("----------------\n") );
   f = strPoolIndex;
   f /= STRING_POOL_SIZE;
   f *= 100;
-  Com_Printf( "String Pool is %.1f%% full, %i bytes out of %i used.\n", f, strPoolIndex, STRING_POOL_SIZE );
+  Com_Printf( _("String Pool is %.1f%% full, %i bytes out of %i used.\n"), f, strPoolIndex, STRING_POOL_SIZE );
   f = allocPoint;
   f /= MEM_POOL_SIZE;
   f *= 100;
-  Com_Printf( "Memory Pool is %.1f%% full, %i bytes out of %i used.\n", f, allocPoint, MEM_POOL_SIZE );
+  Com_Printf( _("Memory Pool is %.1f%% full, %i bytes out of %i used.\n"), f, allocPoint, MEM_POOL_SIZE );
 }
 
 /*
@@ -337,7 +342,7 @@ void PC_SourceWarning( int handle, char *format, ... )
   line = 0;
   trap_Parse_SourceFileAndLine( handle, filename, &line );
 
-  Com_Printf( S_COLOR_YELLOW "WARNING: %s, line %d: %s\n", filename, line, string );
+  Com_Printf( _(S_COLOR_YELLOW "WARNING: %s, line %d: %s\n"), filename, line, string );
 }
 
 /*
@@ -360,7 +365,7 @@ void PC_SourceError( int handle, char *format, ... )
   line = 0;
   trap_Parse_SourceFileAndLine( handle, filename, &line );
 
-  Com_Printf( S_COLOR_RED "ERROR: %s, line %d: %s\n", filename, line, string );
+  Com_Printf( _(S_COLOR_RED "ERROR: %s, line %d: %s\n"), filename, line, string );
 }
 
 /*
@@ -643,7 +648,7 @@ static qboolean PC_Expression_Parse( int handle, float *f )
           break;
 
         default:
-          Com_Error( ERR_FATAL, "Unknown operator '%c' in postfix string", op );
+          Com_Error( ERR_FATAL, _("Unknown operator '%c' in postfix string"), op );
           return qfalse;
       }
 
@@ -693,7 +698,7 @@ qboolean PC_Float_Parse( int handle, float *f )
 
   if( token.type != TT_NUMBER )
   {
-    PC_SourceError( handle, "expected float but found %s\n", token.string );
+    PC_SourceError( handle, _("expected float but found %s\n"), token.string );
     return qfalse;
   }
 
@@ -802,7 +807,7 @@ qboolean PC_Int_Parse( int handle, int *i )
 
   if( token.type != TT_NUMBER )
   {
-    PC_SourceError( handle, "expected integer but found %s\n", token.string );
+    PC_SourceError( handle, _("expected integer but found %s\n"), token.string );
     return qfalse;
   }
 
@@ -891,6 +896,23 @@ qboolean PC_String_Parse( int handle, const char **out )
     return qfalse;
 
   *( out ) = String_Alloc( token.string );
+
+  return qtrue;
+}
+
+/*
+=================
+PC_String_Parse_
+=================
+*/
+qboolean PC_String_Parse_( int handle, const char **out )
+{
+  pc_token_t token;
+
+  if( !trap_Parse_ReadToken( handle, &token ) )
+    return qfalse;
+
+  *( out ) = String_Alloc( _(token.string) );
 
   return qtrue;
 }
@@ -3867,8 +3889,8 @@ qboolean Menus_ReplaceActive( menuDef_t *menu )
 
   if( menu->itemCount != active->itemCount )
   {
-    Com_Printf( S_COLOR_YELLOW
-      "WARNING: Menus_ReplaceActive: expecting %i menu items, found %i\n",
+    Com_Printf( _(S_COLOR_YELLOW
+      "WARNING: Menus_ReplaceActive: expecting %i menu items, found %i\n"),
       menu->itemCount, active->itemCount);
     return qfalse;
   }
@@ -3877,8 +3899,8 @@ qboolean Menus_ReplaceActive( menuDef_t *menu )
   {
     if( menu->items[ i ]->type != active->items[ i ]->type )
     {
-      Com_Printf( S_COLOR_YELLOW
-        "WARNING: Menus_ReplaceActive: type mismatch on item %i\n", i + 1 );
+      Com_Printf( _(S_COLOR_YELLOW
+        "WARNING: Menus_ReplaceActive: type mismatch on item %i\n"), i + 1 );
       return qfalse;
     }
   }
@@ -4844,10 +4866,10 @@ void Item_YesNo_Paint( itemDef_t *item )
   {
     Item_Text_Paint( item );
     UI_Text_Paint( item->textRect.x + item->textRect.w + offset, item->textRect.y, item->textscale,
-                   newColor, ( value != 0 ) ? "Yes" : "No", 0, 0, item->textStyle );
+                   newColor, ( value != 0 ) ? _("Yes") : _("No"), 0, 0, item->textStyle );
   }
   else
-    UI_Text_Paint( item->textRect.x, item->textRect.y, item->textscale, newColor, ( value != 0 ) ? "Yes" : "No", 0, 0, item->textStyle );
+    UI_Text_Paint( item->textRect.x, item->textRect.y, item->textscale, newColor, ( value != 0 ) ? _("Yes") : _("No"), 0, 0, item->textStyle );
 }
 
 void Item_Multi_Paint( itemDef_t *item )
@@ -6448,7 +6470,7 @@ qboolean ItemParse_focusSound( itemDef_t *item, int handle )
 // text <string>
 qboolean ItemParse_text( itemDef_t *item, int handle )
 {
-  if( !PC_String_Parse( handle, &item->text ) )
+  if( !PC_String_Parse_( handle, &item->text ) )
     return qfalse;
 
   return qtrue;
@@ -6588,7 +6610,7 @@ qboolean ItemParse_type( itemDef_t *item, int handle )
 {
   if( item->type != ITEM_TYPE_NONE )
   {
-    PC_SourceError( handle, "item already has a type" );
+    PC_SourceError( handle, _("item already has a type") );
     return qfalse;
   }
 
@@ -6597,7 +6619,7 @@ qboolean ItemParse_type( itemDef_t *item, int handle )
 
   if( item->type == ITEM_TYPE_NONE )
   {
-    PC_SourceError( handle, "type must not be none" );
+    PC_SourceError( handle, _("type must not be none") );
     return qfalse;
   }
 
@@ -6690,7 +6712,7 @@ qboolean ItemParse_columns( itemDef_t *item, int handle )
 
   if( item->typeData.list->numColumns > MAX_LB_COLUMNS )
   {
-    PC_SourceError( handle, "exceeded maximum allowed columns (%d)",
+    PC_SourceError( handle, _("exceeded maximum allowed columns (%d)"),
                     MAX_LB_COLUMNS );
     return qfalse;
   }
@@ -6750,7 +6772,7 @@ qboolean ItemParse_ownerdraw( itemDef_t *item, int handle )
 
   if( item->type != ITEM_TYPE_NONE && item->type != ITEM_TYPE_OWNERDRAW )
   {
-    PC_SourceError( handle, "ownerdraws cannot have an item type" );
+    PC_SourceError( handle, _("ownerdraws cannot have an item type") );
     return qfalse;
   }
 
@@ -7010,7 +7032,7 @@ qboolean ItemParse_maxFieldWidth( itemDef_t *item, int handle )
 
   if( item->typeData.edit->maxFieldWidth < MIN_FIELD_WIDTH )
   {
-    PC_SourceError( handle, "max field width must be at least %d",
+    PC_SourceError( handle, _("max field width must be at least %d"),
                     MIN_FIELD_WIDTH );
     return qfalse;
   }
@@ -7050,7 +7072,7 @@ qboolean ItemParse_cvarStrList( itemDef_t *item, int handle )
   {
     if( !trap_Parse_ReadToken( handle, &token ) )
     {
-      PC_SourceError( handle, "end of file inside menu item\n" );
+      PC_SourceError( handle, _("end of file inside menu item\n") );
       return qfalse;
     }
 
@@ -7073,7 +7095,7 @@ qboolean ItemParse_cvarStrList( itemDef_t *item, int handle )
 
       if( multiPtr->count >= MAX_MULTI_CVARS )
       {
-        PC_SourceError( handle, "cvar string list may not exceed %d cvars",
+        PC_SourceError( handle, _("cvar string list may not exceed %d cvars"),
                         MAX_MULTI_CVARS );
         return qfalse;
       }
@@ -7103,7 +7125,7 @@ qboolean ItemParse_cvarFloatList( itemDef_t *item, int handle )
   {
     if( !trap_Parse_ReadToken( handle, &token ) )
     {
-      PC_SourceError( handle, "end of file inside menu item\n" );
+      PC_SourceError( handle, _("end of file inside menu item\n") );
       return qfalse;
     }
 
@@ -7122,7 +7144,7 @@ qboolean ItemParse_cvarFloatList( itemDef_t *item, int handle )
 
     if( multiPtr->count >= MAX_MULTI_CVARS )
     {
-      PC_SourceError( handle, "cvar string list may not exceed %d cvars",
+      PC_SourceError( handle, _("cvar string list may not exceed %d cvars"),
                       MAX_MULTI_CVARS );
       return qfalse;
     }
@@ -7148,7 +7170,7 @@ qboolean ItemParse_addColorRange( itemDef_t *item, int handle )
     }
     else
     {
-      PC_SourceError( handle, "may not exceed %d color ranges",
+      PC_SourceError( handle, _("may not exceed %d color ranges"),
                       MAX_COLOR_RANGES );
       return qfalse;
     }
@@ -7324,7 +7346,7 @@ qboolean Item_Parse( int handle, itemDef_t *item )
   {
     if( !trap_Parse_ReadToken( handle, &token ) )
     {
-      PC_SourceError( handle, "end of file inside menu item\n" );
+      PC_SourceError( handle, _("end of file inside menu item\n") );
       return qfalse;
     }
 
@@ -7335,7 +7357,7 @@ qboolean Item_Parse( int handle, itemDef_t *item )
 
     if( !key )
     {
-      PC_SourceError( handle, "unknown menu item keyword %s", token.string );
+      PC_SourceError( handle, _("unknown menu item keyword %s"), token.string );
       continue;
     }
 
@@ -7347,18 +7369,18 @@ qboolean Item_Parse( int handle, itemDef_t *item )
       if( test != key->param )
       {
         if( test == TYPE_NONE )
-          PC_SourceError( handle, "menu item keyword %s requires "
-                          "type specification", token.string );
+          PC_SourceError( handle, _("menu item keyword %s requires "
+                          "type specification"), token.string );
         else
-          PC_SourceError( handle, "menu item keyword %s is incompatible with "
-                          "specified item type", token.string );
+          PC_SourceError( handle, _("menu item keyword %s is incompatible with "
+                          "specified item type"), token.string );
         continue;
       }
     }
 
     if( !key->func( item, handle ) )
     {
-      PC_SourceError( handle, "couldn't parse menu item keyword %s", token.string );
+      PC_SourceError( handle, _("couldn't parse menu item keyword %s"), token.string );
       return qfalse;
     }
   }
@@ -7743,7 +7765,7 @@ qboolean MenuParse_itemDef( itemDef_t *item, int handle )
   }
   else
   {
-    PC_SourceError( handle, "itemDefs per menu may not exceed %d",
+    PC_SourceError( handle, _("itemDefs per menu may not exceed %d"),
                     MAX_MENUITEMS );
     return qfalse;
   }
@@ -7823,7 +7845,7 @@ qboolean Menu_Parse( int handle, menuDef_t *menu )
 
     if( !trap_Parse_ReadToken( handle, &token ) )
     {
-      PC_SourceError( handle, "end of file inside menu\n" );
+      PC_SourceError( handle, _("end of file inside menu\n") );
       return qfalse;
     }
 
@@ -7834,13 +7856,13 @@ qboolean Menu_Parse( int handle, menuDef_t *menu )
 
     if( !key )
     {
-      PC_SourceError( handle, "unknown menu keyword %s", token.string );
+      PC_SourceError( handle, _("unknown menu keyword %s"), token.string );
       continue;
     }
 
     if( !key->func( ( itemDef_t* )menu, handle ) )
     {
-      PC_SourceError( handle, "couldn't parse menu keyword %s", token.string );
+      PC_SourceError( handle, _("couldn't parse menu keyword %s"), token.string );
       return qfalse;
     }
   }

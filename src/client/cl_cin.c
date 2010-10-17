@@ -157,7 +157,7 @@ static int CIN_HandleForVideo(void) {
 			return i;
 		}
 	}
-	Com_Error( ERR_DROP, "CIN_HandleForVideo: none free" );
+	Com_Error( ERR_DROP, _("CIN_HandleForVideo: none free") );
 	return -1;
 }
 
@@ -1004,7 +1004,7 @@ static void readQuadInfo( byte *qData )
                         cinTable[currentHandle].drawY = 256;
                 }
 		if (cinTable[currentHandle].CIN_WIDTH != 256 || cinTable[currentHandle].CIN_HEIGHT != 256) {
-			Com_Printf("HACK: approxmimating cinematic for Rage Pro or Voodoo\n");
+			Com_Printf(_("HACK: approxmimating cinematic for Rage Pro or Voodoo\n"));
 		}
 	}
 }
@@ -1271,7 +1271,7 @@ static void RoQShutdown( void ) {
 	if ( cinTable[currentHandle].status == FMV_IDLE ) {
 		return;
 	}
-	Com_DPrintf("finished cinematic\n");
+	Com_DPrintf(_("finished cinematic\n"));
 	cinTable[currentHandle].status = FMV_IDLE;
 
 	if (cinTable[currentHandle].iFile) {

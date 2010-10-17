@@ -37,6 +37,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <pwd.h>
 #include <libgen.h>
 #include <fcntl.h>
+#include <locale.h>
+#include <libintl.h>
 
 qboolean stdinIsATTY;
 
@@ -527,7 +529,7 @@ void Sys_ErrorDialog( const char *error )
 
 	/* make sure the write path for the crashlog exists... */
 	if( FS_CreatePath( ospath ) ) {
-		Com_Printf( "ERROR: couldn't create path '%s' for crash log.\n", ospath );
+		Com_Printf( _("ERROR: couldn't create path '%s' for crash log.\n"), ospath );
 		return;
 	}
 
@@ -537,14 +539,14 @@ void Sys_ErrorDialog( const char *error )
 	f = open(ospath, O_CREAT | O_TRUNC | O_WRONLY, 0640);
 	if( f == -1 )
 	{
-		Com_Printf( "ERROR: couldn't open %s\n", fileName );
+		Com_Printf( _("ERROR: couldn't open %s\n"), fileName );
 		return;
 	}
 
 	/* We're crashing, so we don't care much if write() or close() fails. */
 	while( ( size = CON_LogRead( buffer, sizeof( buffer ) ) ) > 0 ) {
 		if (write( f, buffer, size ) != size) {
-			Com_Printf( "ERROR: couldn't fully write to %s\n", fileName );
+			Com_Printf( _("ERROR: couldn't fully write to %s\n"), fileName );
 			break;
 		}
 	}
@@ -574,6 +576,46 @@ Unix specific GL implementation initialisation
 void Sys_GLimpInit( void )
 {
 	// NOP
+}
+
+/*
+==============
+Sys_InitGettext
+
+Initialise gettext
+==============
+*/
+void Sys_InitGettext( void )
+{
+	char dir[ 2 * MAX_CVAR_VALUE_STRING ];
+
+	Cvar_VariableStringBuffer( "localepath", dir, sizeof( dir ) );
+	if( !*dir )
+	{
+		Cvar_VariableStringBuffer( "fs_homepath", dir, MAX_CVAR_VALUE_STRING );
+		Q_strcat( dir, sizeof( dir ), Cvar_VariableString( "locale" ) );
+	}
+
+    errno = 0;
+
+    if (!setlocale(LC_ALL, ""))
+    {
+        fprintf(stderr, "Failed to set LC_ALL to native locale: %s\n",
+                errno ? strerror(errno) : "Unknown error");
+    }
+
+	bindtextdomain( PRODUCT_NAME, dir );
+	textdomain( PRODUCT_NAME );
+}
+
+/*
+==============
+Sys_Gettext
+==============
+*/
+char *Sys_Gettext(const char *msgid)
+{
+	return gettext(msgid);
 }
 
 /*
