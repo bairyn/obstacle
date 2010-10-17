@@ -1075,7 +1075,7 @@ Recalculate the quantity of building points available to the teams
 */
 void G_CalculateBuildPoints( void )
 {
-  int               i, j;
+  int               i;
   buildPointZone_t  *zone;
 
   // BP queue updates
