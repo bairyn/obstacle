@@ -3807,26 +3807,29 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
   if( reason != IBE_NONE )
     level.numBuildablesForRemoval = 0;
 
-  // Cannot build a reactor or an overmind within range of a domination point.
-  // Moving completely to a domination point is prevented by this.
-  if( buildable == BA_H_REACTOR || buildable == BA_A_OVERMIND )
+  if( !DOMINATION_CANBUILDNEARDP )
   {
-      for ( i = 1, tempent = g_entities + i; i < level.num_entities; i++, tempent++ )
-      {
-        if( tempent->s.eType != ET_BUILDABLE )
-          continue;
-
-        if( BG_IsDPoint( tempent->s.modelindex ) )
+    // Cannot build a reactor or an overmind within range of a domination point.
+    // Moving completely to a domination point is prevented by this.
+    if( buildable == BA_H_REACTOR || buildable == BA_A_OVERMIND )
+    {
+        for ( i = 1, tempent = g_entities + i; i < level.num_entities; i++, tempent++ )
         {
-          vec3_t dir;
-          float distance;
+          if( tempent->s.eType != ET_BUILDABLE )
+            continue;
 
-          VectorSubtract( origin, tempent->s.origin, dir );
-          distance = VectorLength( dir );
-          if( distance < DOMINATION_RANGE )
-            return IBE_NEARDP;
+          if( BG_IsDPoint( tempent->s.modelindex ) )
+          {
+            vec3_t dir;
+            float distance;
+
+            VectorSubtract( origin, tempent->s.origin, dir );
+            distance = VectorLength( dir );
+            if( distance < DOMINATION_RANGE )
+              return IBE_NEARDP;
+          }
         }
-      }
+    }
   }
 
   return reason;

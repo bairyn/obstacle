@@ -700,6 +700,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DOMINATION_FREEKILL_ALIEN           20     // amount of funds given to a player who cleared a domination point (first to walk over)
 #define DOMINATION_FREEKILL_HUMAN           10 
 #define DOMINATION_STOP_WHEN_CLEAR          qfalse // whether a team stops attacking a point when it is cleared if no players of that team are near it
+#define DOMINATION_CANBUILDNEARDP           qtrue
 
 // parameters modified by domination
 #define DC(team)          (level.dominationPoints[ team ])
