@@ -119,6 +119,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SLIDER_THUMB_HEIGHT 20.0f
 #define NUM_CROSSHAIRS      10
 
+#define MAX_GLYPH_CACHE MAX_FACE_GLYPHS
+
 typedef struct
 {
   const char *command;
@@ -327,6 +329,7 @@ typedef struct
 {
   Window window;
   const char  *font;                // font
+  const char  *dynFont;             // dynFont
   qboolean fullScreen;              // covers entire screen
   int itemCount;                    // number of items;
   int fontIndex;                    //
@@ -353,6 +356,9 @@ typedef struct
   fontInfo_t textFont;
   fontInfo_t smallFont;
   fontInfo_t bigFont;
+  face_t     dynFont;
+  face_t     smallDynFont;
+  face_t     bigDynFont;
   qhandle_t cursor;
   qhandle_t gradientBar;
   qhandle_t scrollBarArrowUp;
@@ -378,6 +384,7 @@ typedef struct
   vec4_t shadowColor;
   float shadowFadeClamp;
   qboolean fontRegistered;
+  qboolean dynFontRegistered;
   emoticon_t emoticons[ MAX_EMOTICONS ];
   int emoticonCount;
 }
@@ -406,6 +413,10 @@ typedef struct
   void ( *addRefEntityToScene ) ( const refEntity_t *re );
   void ( *renderScene ) ( const refdef_t *fd );
   void ( *registerFont ) ( const char *pFontname, int pointSize, fontInfo_t *font );
+	void ( *loadFace )( const char *fileName, int pointSize, const char *name, int maxCache, face_t *face );
+	void ( *freeFace )( face_t *face );
+	void ( *loadGlyph )( face_t *face, const char *str, int size, int img, glyphInfo_t *glyphInfo );
+	void ( *freeGlyph )( face_t *face, int img, glyphInfo_t *glyphInfo );
   void ( *ownerDrawItem ) ( float x, float y, float w, float h, float text_x,
                             float text_y, int ownerDraw, int ownerDrawFlags,
                             int align, int textalign, int textvalign,

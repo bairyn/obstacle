@@ -1880,6 +1880,88 @@ void Script_playLooped( itemDef_t *item, char **args )
   }
 }
 
+static int UI_UTF8Length( face_t *face, const char *str )
+{
+  int                 ewidth;
+  const unsigned char *s = (const unsigned char *)str;
+  qboolean            nullUTF8Bytes = DC->getCVarValue( "ui_nullUTF8Bytes" );
+
+  if( !face )
+    return 1;
+
+  if( !str )
+    return 0;
+
+  if( DC->getCVarValue( "ui_ascii" ) )
+    return 1;
+
+  if     ( 0x00 <= *s && *s <= 0x7F )
+    ewidth = 0;
+  else if( 0xC2 <= *s && *s <= 0xDF )
+    ewidth = 1;
+  else if( 0xE0 <= *s && *s <= 0xEF )
+    ewidth = 2;
+  else if( 0xF0 <= *s && *s <= 0xF4 )
+    ewidth = 3;
+  else
+    ewidth = 0;
+
+  if( nullUTF8Bytes )
+	  s += ewidth;
+  else
+    for( ; *s && ewidth > 0; s++, ewidth-- );
+
+  return s - (const unsigned char *)str + 1;
+}
+
+typedef struct
+{ qboolean    active;
+  char        str[5];
+  glyphInfo_t glyph;
+} glyphCache_t;
+
+static glyphInfo_t *UI_Glyph( fontInfo_t *font, face_t *face, const char *str )
+{
+  static      glyphCache_t glyphCache[MAX_GLYPH_CACHE] = {{0}}, *nextCache = glyphCache;
+  int         i;
+  int         width = UI_UTF8Length( face, str );
+  static      glyphInfo_t glyph;
+
+  if( !str || !*str || width <= 1 || DC->getCVarValue( "cg_noDynamicFont" ) || !face )
+    return &font->glyphs[ (int)*str ];
+
+  for( i = 0; i < MAX_GLYPH_CACHE; i++ )
+  {
+    glyphCache_t *c = &glyphCache[ i ];
+
+    if( c->active )
+    {
+      const char *s, *cs;
+
+      for( s = str, cs = c->str; *s && *cs && *s == *cs && s - str < width ; s++, cs++ );
+
+      if( !*cs && s - str == width)
+        return &c->glyph;
+    }
+  }
+
+  if( nextCache->active )
+  {
+	  DC->freeGlyph( face, nextCache - glyphCache, &nextCache->glyph );
+  }
+
+  DC->loadGlyph( face, str, width, nextCache - glyphCache, &glyph );
+
+  strncpy( nextCache->str, str, width );  // This should never cause an overflow since UI_UTF8Length never returns a width larger than 4
+  memcpy( &nextCache->glyph, &glyph, sizeof( nextCache->glyph ) );
+  nextCache->active = qtrue;
+
+  if( ++nextCache - glyphCache >= MAX_GLYPH_CACHE )
+    nextCache = glyphCache;
+
+  return &nextCache->glyph;
+}
+
 void UI_EscapeEmoticons( char *dest, const char *src, int destsize )
 {
   int len;
@@ -1982,6 +2064,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
   float       useScale;
   const char  *s = text;
   fontInfo_t  *font = &DC->Assets.textFont;
+  face_t      *face = &DC->Assets.dynFont;
   int         emoticonLen;
   qboolean    emoticonEscaped;
   float       emoticonW;
@@ -1990,9 +2073,15 @@ float UI_Text_Width( const char *text, float scale, int limit )
   float       indentWidth = 0.0f;
 
   if( scale <= DC->getCVarValue( "ui_smallFont" ) )
+  {
     font = &DC->Assets.smallFont;
+    face = &DC->Assets.smallDynFont;
+  }
   else if( scale >= DC->getCVarValue( "ui_bigFont" ) )
+  {
     font = &DC->Assets.bigFont;
+    face = &DC->Assets.bigDynFont;
+  }
 
   useScale = scale * font->glyphScale;
   emoticonW = UI_Text_Height( "[", scale, 0 ) * DC->aspectScale;
@@ -2010,7 +2099,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
 
     while( s && *s && count < len )
     {
-      glyph = &font->glyphs[( int )*s];
+      glyph = UI_Glyph( font, face, s );
 
       if( Q_IsColorString( s ) )
       {
@@ -2039,7 +2128,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
         }
       }
       out += ( glyph->xSkip * DC->aspectScale );
-      s++;
+      s += UI_UTF8Length( face, s );
       count++;
     }
   }
@@ -2055,11 +2144,18 @@ float UI_Text_Height( const char *text, float scale, int limit )
   float       useScale;
   const char  *s = text;
   fontInfo_t  *font = &DC->Assets.textFont;
+  face_t      *face = &DC->Assets.dynFont;
 
   if( scale <= DC->getCVarValue( "ui_smallFont" ) )
+  {
     font = &DC->Assets.smallFont;
+    face = &DC->Assets.smallDynFont;
+  }
   else if( scale >= DC->getCVarValue( "ui_bigFont" ) )
+  {
     font = &DC->Assets.bigFont;
+    face = &DC->Assets.bigDynFont;
+  }
 
   useScale = scale * font->glyphScale;
   max = 0;
@@ -2082,12 +2178,12 @@ float UI_Text_Height( const char *text, float scale, int limit )
       }
       else
       {
-        glyph = &font->glyphs[( int )*s];
+        glyph = UI_Glyph( font, face, s );
 
         if( max < glyph->height )
           max = glyph->height;
 
-        s++;
+        s += UI_UTF8Length( face, s );
         count++;
       }
     }
@@ -2186,27 +2282,34 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
                                    int limit, float *maxX,
                                    int cursorPos, char cursor )
 {
-  const char  *s = text;
-  int         len;
-  int         count = 0;
-  vec4_t      newColor;
-  fontInfo_t  *font = &DC->Assets.textFont;
+  const char   *s = text;
+  int          len;
+  int          count = 0;
+  vec4_t       newColor;
+  fontInfo_t   *font = &DC->Assets.textFont;
+  face_t       *face = &DC->Assets.dynFont;
+  float        useScale;
+  qhandle_t    emoticonHandle = 0;
+  float        emoticonH, emoticonW;
+  qboolean     emoticonEscaped;
+  int          emoticonLen = 0;
+  int          emoticonWidth;
+  int          cursorX = -1;
   glyphInfo_t *glyph;
-  float       useScale;
-  qhandle_t   emoticonHandle = 0;
-  float       emoticonH, emoticonW;
-  qboolean    emoticonEscaped;
-  int         emoticonLen = 0;
-  int         emoticonWidth;
-  int         cursorX = -1;
 
   if( !text )
     return;
 
   if( scale <= DC->getCVarValue( "ui_smallFont" ) )
+  {
     font = &DC->Assets.smallFont;
+    face = &DC->Assets.smallDynFont;
+  }
   else if( scale >= DC->getCVarValue( "ui_bigFont" ) )
+  {
     font = &DC->Assets.bigFont;
+    face = &DC->Assets.bigDynFont;
+  }
 
   useScale = scale * font->glyphScale;
 
@@ -2224,7 +2327,7 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
 
   while( s && *s && count < len )
   {
-    glyph = &font->glyphs[ (int)*s ];
+    glyph = UI_Glyph( font, face, s );
 
     if( maxX && UI_Text_Width( s, scale, 1 ) + x > *maxX )
     {
@@ -2310,7 +2413,7 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
       cursorX = x;
 
     x += ( glyph->xSkip * DC->aspectScale * useScale ) + gapAdjust;
-    s++;
+    s += UI_UTF8Length( face, s );
     count++;
 
   }
@@ -7431,6 +7534,22 @@ qboolean MenuParse_font( itemDef_t *item, int handle )
   return qtrue;
 }
 
+qboolean MenuParse_dynFont( itemDef_t *item, int handle )
+{
+  menuDef_t *menu = ( menuDef_t* )item;
+
+  if( !PC_String_Parse( handle, &menu->dynFont ) )
+    return qfalse;
+
+  if( !DC->Assets.dynFontRegistered )
+  {
+    DC->loadFace( menu->dynFont, 48, menu->dynFont, MAX_GLYPH_CACHE, &DC->Assets.dynFont );
+    DC->Assets.dynFontRegistered = qtrue;
+  }
+
+  return qtrue;
+}
+
 qboolean MenuParse_name( itemDef_t *item, int handle )
 {
   menuDef_t *menu = ( menuDef_t* )item;
@@ -7775,6 +7894,7 @@ qboolean MenuParse_itemDef( itemDef_t *item, int handle )
 
 keywordHash_t menuParseKeywords[] = {
   {"font", MenuParse_font},
+  {"dynfont", MenuParse_dynFont},
   {"name", MenuParse_name},
   {"fullscreen", MenuParse_fullscreen},
   {"rect", MenuParse_rect},

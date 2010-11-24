@@ -2592,18 +2592,18 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 	//
 	// see if the shader is already loaded
 	//
-	for (sh=hashTable[hash]; sh; sh=sh->next) {
-		// NOTE: if there was no shader or image available with the name strippedName
-		// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
-		// have to check all default shaders otherwise for every call to R_FindShader
-		// with that same strippedName a new default shader is created.
-		if ( (sh->lightmapIndex == lightmapIndex || sh->defaultShader) &&
-			// index by name
-			!Q_stricmp(sh->name, name)) {
-			// match found
-			return sh->index;
-		}
-	}
+  for (sh=hashTable[hash]; sh; sh=sh->next) {
+    // NOTE: if there was no shader or image available with the name strippedName
+    // then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
+    // have to check all default shaders otherwise for every call to R_FindShader
+    // with that same strippedName a new default shader is created.
+    if ( (sh->lightmapIndex == lightmapIndex || sh->defaultShader) &&
+      // index by name
+      !Q_stricmp(sh->name, name)) {
+      // match found
+      return sh->index;
+    }
+  }
 
 	// make sure the render thread is stopped, because we are probably
 	// going to have to upload an image

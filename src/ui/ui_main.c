@@ -95,6 +95,8 @@ vmCvar_t  ui_findPlayer;
 vmCvar_t  ui_serverStatusTimeOut;
 vmCvar_t  ui_textWrapCache;
 vmCvar_t  ui_developer;
+vmCvar_t  ui_ascii;
+vmCvar_t  ui_nullUTF8Bytes;
 
 vmCvar_t  ui_emoticons;
 vmCvar_t  ui_winner;
@@ -122,6 +124,8 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_serverStatusTimeOut, "ui_serverStatusTimeOut", "7000", CVAR_ARCHIVE},
   { &ui_textWrapCache, "ui_textWrapCache", "1", CVAR_ARCHIVE },
   { &ui_developer, "ui_developer", "0", CVAR_ARCHIVE | CVAR_CHEAT },
+  { &ui_ascii, "ui_ascii", "0", CVAR_ARCHIVE },
+  { &ui_nullUTF8Bytes, "ui_nullUTF8Bytes", "0", CVAR_ARCHIVE },
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
   { &ui_winner, "ui_winner", "", CVAR_ROM },
   { &ui_chatCommands, "ui_chatCommands", "1", CVAR_ARCHIVE }
@@ -1256,6 +1260,40 @@ qboolean Asset_Parse( int handle )
         return qfalse;
 
       trap_R_RegisterFont( tempStr, pointSize, &uiInfo.uiDC.Assets.bigFont );
+      continue;
+    }
+
+    if( Q_stricmp( token.string, "dynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      trap_R_LoadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &uiInfo.uiDC.Assets.dynFont );
+      uiInfo.uiDC.Assets.dynFontRegistered = qtrue;
+      continue;
+    }
+
+    if( Q_stricmp( token.string, "smallDynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      trap_R_LoadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &uiInfo.uiDC.Assets.smallDynFont );
+      continue;
+    }
+
+    if( Q_stricmp( token.string, "bigDynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      trap_R_LoadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &uiInfo.uiDC.Assets.bigDynFont );
       continue;
     }
 
@@ -4046,6 +4084,10 @@ void UI_Init( qboolean inGameLoad )
   uiInfo.uiDC.addRefEntityToScene = &trap_R_AddRefEntityToScene;
   uiInfo.uiDC.renderScene = &trap_R_RenderScene;
   uiInfo.uiDC.registerFont = &trap_R_RegisterFont;
+  uiInfo.uiDC.loadFace = &trap_R_LoadFace;
+  uiInfo.uiDC.freeFace = &trap_R_FreeFace;
+  uiInfo.uiDC.loadGlyph = &trap_R_LoadGlyph;
+  uiInfo.uiDC.freeGlyph = &trap_R_FreeGlyph;
   uiInfo.uiDC.ownerDrawItem = &UI_OwnerDraw;
   uiInfo.uiDC.getValue = &UI_GetValue;
   uiInfo.uiDC.ownerDrawVisible = &UI_OwnerDrawVisible;

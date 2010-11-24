@@ -152,6 +152,8 @@ cvar_t	*r_saveFontData;
 
 cvar_t	*r_marksOnTriangleMeshes;
 
+cvar_t	*r_reuseGlyphShaders;
+
 cvar_t	*r_maxpolys;
 int		max_polys;
 cvar_t	*r_maxpolyverts;
@@ -1243,6 +1245,10 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.UploadCinematic = RE_UploadCinematic;
 
 	re.RegisterFont = RE_RegisterFont;
+	re.LoadFace = RE_LoadFace;
+	re.FreeFace = RE_FreeFace;
+	re.LoadGlyph = RE_LoadGlyph;
+	re.FreeGlyph = RE_FreeGlyph;
 	re.RemapShader = R_RemapShader;
 	re.GetEntityToken = R_GetEntityToken;
 	re.inPVS = R_inPVS;

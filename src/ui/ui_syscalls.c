@@ -162,6 +162,86 @@ void trap_R_RegisterFont( const char *fontName, int pointSize, fontInfo_t *font 
   syscall( UI_R_REGISTERFONT, fontName, pointSize, font );
 }
 
+void trap_R_LoadFace( const char *fileName, int pointSize, const char *name, int maxCache, face_t *face )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    syscall( UI_R_LOADFACE, fileName, pointSize, name, maxCache, face );
+}
+
+void trap_R_FreeFace( face_t *face )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    syscall( UI_R_FREEFACE, face );
+}
+
+void trap_R_LoadGlyph( face_t *face, const char *str, int size, int img, glyphInfo_t *glyphInfo )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    syscall( UI_R_LOADGLYPH, face, str, size, img, glyphInfo );
+}
+
+void trap_R_FreeGlyph( face_t *face, int img, glyphInfo_t *glyphInfo )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    syscall( UI_R_FREEGLYPH, face, img, glyphInfo );
+}
+
 qhandle_t trap_R_RegisterShaderNoMip( const char *name )
 {
   return syscall( UI_R_REGISTERSHADERNOMIP, name );

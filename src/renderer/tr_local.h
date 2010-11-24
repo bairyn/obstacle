@@ -952,7 +952,7 @@ typedef struct {
 	model_t					*models[MAX_MOD_KNOWN];
 	int						numModels;
 
-	int						numImages;
+  qboolean        used_images[MAX_DRAWIMAGES];
 	image_t					*images[MAX_DRAWIMAGES];
 
 	// shader indexes from other modules will be looked up in tr.shaders[]
@@ -1219,6 +1219,7 @@ image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicm
 
 image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, qboolean mipmap,
             qboolean allowPicmip, int wrapClampMode );
+void      R_FreeImage( image_t *image );
 
 void		R_SetColorMappings( void );
 void		R_GammaCorrect( byte *buffer, int bufSize );
@@ -1710,6 +1711,10 @@ void RE_TakeVideoFrame( int width, int height,
 void R_InitFreeType( void );
 void R_DoneFreeType( void );
 void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font);
+void RE_LoadFace(const char *fileName, int pointSize, const char *name, int maxCache, face_t *face);
+void RE_FreeFace(face_t *face);
+void RE_LoadGlyph(face_t *face, const char *str, int size, int img, glyphInfo_t *glyphInfo);
+void RE_FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
 
 
 #endif //TR_LOCAL_H

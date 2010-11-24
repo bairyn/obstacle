@@ -120,4 +120,8 @@ equ testPrintInt                      -210
 equ testPrintFloat                    -211
 
 equ trap_Gettext                      -301
+equ trap_R_LoadFace                   -302
+equ trap_R_FreeFace                   -303
+equ trap_R_LoadGlyph                  -304
+equ trap_R_FreeGlyph                  -305
 

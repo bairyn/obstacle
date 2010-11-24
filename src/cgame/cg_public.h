@@ -198,7 +198,11 @@ typedef enum
   CG_TESTPRINTFLOAT,
   CG_ACOS,
 
-  CG_GETTEXT = 300
+  CG_GETTEXT = 300,
+  CG_R_LOADFACE,
+  CG_R_FREEFACE,
+  CG_R_LOADGLYPH,
+  CG_R_FREEGLYPH
 } cgameImport_t;
 
 

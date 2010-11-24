@@ -139,7 +139,11 @@ typedef enum
   UI_FLOOR,
   UI_CEIL,
 
-  UI_GETTEXT = 300
+  UI_GETTEXT = 300,
+  UI_R_LOADFACE,
+  UI_R_FREEFACE,
+  UI_R_LOADGLYPH,
+  UI_R_FREEGLYPH
 }
 uiImport_t;
 

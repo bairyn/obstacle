@@ -2041,6 +2041,10 @@ void          testPrintFloat( char *string, float f );
 
 int           trap_MemoryRemaining( void );
 void          trap_R_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font);
+void          trap_R_LoadFace(const char *fileName, int pointSize, const char *name, int maxCache, face_t *face);
+void          trap_R_FreeFace(face_t *face);
+void          trap_R_LoadGlyph(face_t *face, const char *str, int size, int img, glyphInfo_t *glyphInfo);
+void          trap_R_FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
 qboolean      trap_Key_IsDown( int keynum );
 int           trap_Key_GetCatcher( void );
 void          trap_Key_SetCatcher( int catcher );

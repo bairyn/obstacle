@@ -187,6 +187,7 @@ vmCvar_t  cg_disableBuildDialogs;
 vmCvar_t  cg_disableCommandDialogs;
 vmCvar_t  cg_disableScannerPlane;
 vmCvar_t  cg_tutorial;
+vmCvar_t  cg_noDynamicFont;
 
 vmCvar_t  cg_painBlendUpRate;
 vmCvar_t  cg_painBlendDownRate;
@@ -305,6 +306,7 @@ static cvarTable_t cvarTable[ ] =
   { &cg_disableCommandDialogs, "cg_disableCommandDialogs", "0", CVAR_ARCHIVE },
   { &cg_disableScannerPlane, "cg_disableScannerPlane", "0", CVAR_ARCHIVE },
   { &cg_tutorial, "cg_tutorial", "1", CVAR_ARCHIVE },
+  { &cg_noDynamicFont, "cg_noDynamicFont", "0", CVAR_ARCHIVE }, // TODO TODO TODO ------------------------ XXX TODO $$$$$$$$$$$$$$$$$$$$$}{{{{{{{{{{{{{{{{{{{{{{{{{{{{[{{{{{}]+{[[[[[[[[[[[[[[[[[[[[[[[[[[[[&&&&&&&&&&&&&&&&((((((((((((((({{{{}}}(=*)]!###########################################################################################################################################################################################################################++
   { &cg_hudFiles, "cg_hudFiles", "ui/hud.txt", CVAR_ARCHIVE},
   { NULL, "cg_alienConfig", "", CVAR_ARCHIVE },
   { NULL, "cg_humanConfig", "", CVAR_ARCHIVE },
@@ -1096,6 +1098,42 @@ qboolean CG_Asset_Parse( int handle )
       continue;
     }
 
+    // dynFont
+    if( Q_stricmp( token.string, "dynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      cgDC.loadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &cgDC.Assets.dynFont );
+      continue;
+    }
+
+    // smallDynFont
+    if( Q_stricmp( token.string, "smallDynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      cgDC.loadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &cgDC.Assets.smallDynFont );
+      continue;
+    }
+
+    // dynFont
+    if( Q_stricmp( token.string, "bigDynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      cgDC.loadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &cgDC.Assets.bigDynFont );
+      continue;
+    }
+
     // gradientbar
     if( Q_stricmp( token.string, "gradientbar" ) == 0 )
     {
@@ -1640,6 +1678,10 @@ void CG_LoadHudMenu( void )
   cgDC.addRefEntityToScene  = &trap_R_AddRefEntityToScene;
   cgDC.renderScene          = &trap_R_RenderScene;
   cgDC.registerFont         = &trap_R_RegisterFont;
+  cgDC.loadFace             = &trap_R_LoadFace;
+  cgDC.freeFace             = &trap_R_FreeFace;
+  cgDC.loadGlyph            = &trap_R_LoadGlyph;
+  cgDC.freeGlyph            = &trap_R_FreeGlyph;
   cgDC.ownerDrawItem        = &CG_OwnerDraw;
   cgDC.getValue             = &CG_GetValue;
   cgDC.ownerDrawVisible     = &CG_OwnerDrawVisible;

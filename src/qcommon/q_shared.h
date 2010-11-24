@@ -1330,6 +1330,17 @@ typedef struct {
   char name[MAX_QPATH];
 } fontInfo_t;
 
+#define MAX_FACE_GLYPHS 384
+
+typedef struct {
+  void *opaque;
+  void *mem;
+  void *images[MAX_FACE_GLYPHS];
+  char name[MAX_QPATH];
+  int maxCache;
+  float glyphScale;
+} face_t;
+
 #define Square(x) ((x)*(x))
 
 // real time

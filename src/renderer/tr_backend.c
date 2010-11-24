@@ -999,31 +999,33 @@ void RB_ShowImages( void ) {
 
 	start = ri.Milliseconds();
 
-	for ( i=0 ; i<tr.numImages ; i++ ) {
-		image = tr.images[i];
+	for ( i=0 ; i<MAX_DRAWIMAGES ; i++ ) {
+    if( tr.used_images[ i ] ) {
+      image = tr.images[i];
 
-		w = glConfig.vidWidth / 20;
-		h = glConfig.vidHeight / 15;
-		x = i % 20 * w;
-		y = i / 20 * h;
+      w = glConfig.vidWidth / 20;
+      h = glConfig.vidHeight / 15;
+      x = i % 20 * w;
+      y = i / 20 * h;
 
-		// show in proportional size in mode 2
-		if ( r_showImages->integer == 2 ) {
-			w *= image->uploadWidth / 512.0f;
-			h *= image->uploadHeight / 512.0f;
-		}
+      // show in proportional size in mode 2
+      if ( r_showImages->integer == 2 ) {
+        w *= image->uploadWidth / 512.0f;
+        h *= image->uploadHeight / 512.0f;
+      }
 
-		GL_Bind( image );
-		qglBegin (GL_QUADS);
-		qglTexCoord2f( 0, 0 );
-		qglVertex2f( x, y );
-		qglTexCoord2f( 1, 0 );
-		qglVertex2f( x + w, y );
-		qglTexCoord2f( 1, 1 );
-		qglVertex2f( x + w, y + h );
-		qglTexCoord2f( 0, 1 );
-		qglVertex2f( x, y + h );
-		qglEnd();
+      GL_Bind( image );
+      qglBegin (GL_QUADS);
+      qglTexCoord2f( 0, 0 );
+      qglVertex2f( x, y );
+      qglTexCoord2f( 1, 0 );
+      qglVertex2f( x + w, y );
+      qglTexCoord2f( 1, 1 );
+      qglVertex2f( x + w, y + h );
+      qglTexCoord2f( 0, 1 );
+      qglVertex2f( x, y + h );
+      qglEnd();
+    }
 	}
 
 	qglFinish();
