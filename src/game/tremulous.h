@@ -682,10 +682,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * Domination
  */
 
+
 #define DOMINATION_HEALTH                 100    // health scale of a domination point
 #define DOMINATION_THINK                  100    // msec between player presence checks
+#define DOMINATION_MANYPOINTS             5
 
-// settings specific to the value of the instant domination setting
+#define DC(team)          (level.dominationPoints[ team ])
+#define DT                (level.dominationPoints[ TEAM_NONE ] +\
+                           level.dominationPoints[ TEAM_ALIENS ] +\
+                           level.dominationPoints[ TEAM_HUMANS ])
+#define DR(team)          (((float) DC(team)) / ((float) DT))
+#define DLERP(team, f, t) (DT == 0 ? 1.0f : ((f) - (DR(team) * ((f) - (t)))))
+#define DRERP(team, f, t) (DT == 0 ? 1.0f : (DR(team) <= 0.5f ? DLERP(team, (f), 2.0f - (f)) : DLERP(team, 2.0f - (t), (t))))
+#define DOMINATION_VAL(f, m) (DT > DOMINATION_MANYPOINTS ? m : f)
+
+// settings depending on how many domination points points there are
 
 #define DOMINATION_RANGE                    200.0f // how close a player needs to be to attack a domination point
 #define DOMINATION_RANGE_SQRT               14.142135623730951f  // square root of the range (used in falloff calculation)
@@ -700,16 +711,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DOMINATION_FREEKILL_ALIEN           20     // amount of funds given to a player who cleared a domination point (first to walk over)
 #define DOMINATION_FREEKILL_HUMAN           10 
 #define DOMINATION_STOP_WHEN_CLEAR          qfalse // whether a team stops attacking a point when it is cleared if no players of that team are near it
-#define DOMINATION_CANBUILDNEARDP           qtrue
+#define DOMINATION_CANBUILDNEARDP           DOMINATION_VAL(qfalse, qtrue)
 
 // parameters modified by domination
-#define DC(team)          (level.dominationPoints[ team ])
-#define DT                (level.dominationPoints[ TEAM_NONE ] +\
-                           level.dominationPoints[ TEAM_ALIENS ] +\
-                           level.dominationPoints[ TEAM_HUMANS ])
-#define DR(team)          (((float) DC(team)) / ((float) DT))
-#define DLERP(team, f, t) (DT == 0 ? 1.0f : ((f) - (DR(team) * ((f) - (t)))))
-#define DRERP(team, f, t) (DT == 0 ? 1.0f : (DR(team) <= 0.5f ? DLERP(team, (f), 2.0f - (f)) : DLERP(team, 2.0f - (t), (t))))
 
 #define DOMINATION_SCALE_BP(team)              (DRERP(team, 0.8f, 1.5f))
 #define DOMINATION_SCALE_BPQUEUE_PERIOD(team)  (DRERP(team, 2.0f, 0.5f))
