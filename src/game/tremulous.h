@@ -717,5 +717,5 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define DOMINATION_SCALE_BP(team)              (DRERP(team, 0.8f, 1.5f))
 #define DOMINATION_SCALE_BPQUEUE_PERIOD(team)  (DRERP(team, 2.0f, 0.5f))
-#define DOMINATION_SCALE_FREEFUND_PERIOD(team) (DRERP(team, 1.6f, 0.25f))
+#define DOMINATION_SCALE_FREEFUND_PERIOD(team) (DRERP(team, 3.0f, 0.35f))
 
