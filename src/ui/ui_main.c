@@ -96,7 +96,6 @@ vmCvar_t  ui_serverStatusTimeOut;
 vmCvar_t  ui_textWrapCache;
 vmCvar_t  ui_developer;
 vmCvar_t  ui_ascii;
-vmCvar_t  ui_nullUTF8Bytes;
 
 vmCvar_t  ui_emoticons;
 vmCvar_t  ui_winner;
@@ -125,7 +124,6 @@ static cvarTable_t    cvarTable[ ] =
   { &ui_textWrapCache, "ui_textWrapCache", "1", CVAR_ARCHIVE },
   { &ui_developer, "ui_developer", "0", CVAR_ARCHIVE | CVAR_CHEAT },
   { &ui_ascii, "ui_ascii", "0", CVAR_ARCHIVE },
-  { &ui_nullUTF8Bytes, "ui_nullUTF8Bytes", "0", CVAR_ARCHIVE },
   { &ui_emoticons, "cg_emoticons", "1", CVAR_LATCH | CVAR_ARCHIVE },
   { &ui_winner, "ui_winner", "", CVAR_ROM },
   { &ui_chatCommands, "ui_chatCommands", "1", CVAR_ARCHIVE }
@@ -143,7 +141,7 @@ This must be the very first function compiled into the .qvm file
 */
 void UI_Init( qboolean );
 void UI_Shutdown( void );
-void UI_KeyEvent( int key, qboolean down );
+void UI_KeyEvent( int key, int state );
 void UI_MouseEvent( int dx, int dy );
 int UI_MousePosition( void );
 void UI_SetMousePosition( int x, int y );
@@ -1270,7 +1268,7 @@ qboolean Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      trap_R_LoadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &uiInfo.uiDC.Assets.dynFont );
+      trap_R_LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.dynFont );
       uiInfo.uiDC.Assets.dynFontRegistered = qtrue;
       continue;
     }
@@ -1282,7 +1280,7 @@ qboolean Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      trap_R_LoadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &uiInfo.uiDC.Assets.smallDynFont );
+      trap_R_LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.smallDynFont );
       continue;
     }
 
@@ -1293,7 +1291,7 @@ qboolean Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      trap_R_LoadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &uiInfo.uiDC.Assets.bigDynFont );
+      trap_R_LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.bigDynFont );
       continue;
     }
 
@@ -2201,7 +2199,7 @@ static qboolean UI_NetSource_HandleKey( int key )
   return qfalse;
 }
 
-static qboolean UI_OwnerDrawHandleKey( int ownerDraw, int key )
+static qboolean UI_OwnerDrawHandleKey( int ownerDraw, int key, int state )
 {
   switch( ownerDraw )
   {
@@ -4108,6 +4106,7 @@ void UI_Init( qboolean inGameLoad )
   uiInfo.uiDC.freeFace = &trap_R_FreeFace;
   uiInfo.uiDC.loadGlyph = &trap_R_LoadGlyph;
   uiInfo.uiDC.freeGlyph = &trap_R_FreeGlyph;
+  uiInfo.uiDC.glyph = &trap_R_Glyph;
   uiInfo.uiDC.ownerDrawItem = &UI_OwnerDraw;
   uiInfo.uiDC.getValue = &UI_GetValue;
   uiInfo.uiDC.ownerDrawVisible = &UI_OwnerDrawVisible;
@@ -4177,18 +4176,32 @@ void UI_Init( qboolean inGameLoad )
 UI_KeyEvent
 =================
 */
-void UI_KeyEvent( int key, qboolean down )
+void UI_KeyEvent( int key, int state )
 {
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+
+  if( sup )
+  {
+    qboolean bit = ( state & (1 << KEYEVSTATE_BIT) ) >> KEYEVSTATE_BIT;
+
+    if( bit )
+      key |= bit << (K_CHAR_BIT - 1);
+    else
+      key &= ~(bit << (K_CHAR_BIT - 1));
+  }
+
   if( Menu_Count() > 0 )
   {
     menuDef_t *menu = Menu_GetFocused();
+    qboolean sup = state & (1 << KEYEVSTATE_SUP);
+    qboolean down = !sup ? state : state & (1 << KEYEVSTATE_DOWN);
 
     if( menu )
     {
       if( key == K_ESCAPE && down && !Menus_AnyFullScreenVisible() )
         Menus_CloseAll( );
       else
-        Menu_HandleKey( menu, key, down );
+        Menu_HandleKey( menu, key, state );
     }
     else
     {

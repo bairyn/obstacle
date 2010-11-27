@@ -2124,7 +2124,7 @@ Returns a freshly allocated shader with all the needed info
 from the current global working shader
 =========================
 */
-static shader_t *FinishShader( void ) {
+static shader_t *FinishShader( shader_t *sh ) {
 	int stage;
 	qboolean		hasLightmapStage;
 	qboolean		vertexLightmap;
@@ -2303,7 +2303,10 @@ static shader_t *FinishShader( void ) {
 	// determine which stage iterator function is appropriate
 	ComputeStageIteratorFunc();
 
-	return GeneratePermanentShader();
+  if( sh )
+    return sh;
+  else
+    return GeneratePermanentShader();
 }
 
 //========================================================================================
@@ -2505,7 +2508,7 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 			// had errors, so use default shader
 			shader.defaultShader = qtrue;
 		}
-		sh = FinishShader();
+		sh = FinishShader( NULL );
 		return sh;
 	}
 
@@ -2518,7 +2521,7 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 	if ( !image ) {
 		ri.Printf( PRINT_DEVELOPER, "Couldn't find image file for shader %s\n", name );
 		shader.defaultShader = qtrue;
-		return FinishShader();
+		return FinishShader( NULL );
 	}
 
 	//
@@ -2572,10 +2575,19 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	}
 
-	return FinishShader();
+	return FinishShader( NULL );
 }
 
 
+/*
+==================
+RE_RegisterShaderFromImage
+
+Registers a mutable shader from an image.  If a shader
+already exists with the same name, it will 
+be overwritten with the new image.
+==================
+*/
 qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_t *image, qboolean mipRawImage) {
 	int			i, hash;
 	shader_t	*sh;
@@ -2599,11 +2611,14 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
     // with that same strippedName a new default shader is created.
     if ( (sh->lightmapIndex == lightmapIndex || sh->defaultShader) &&
       // index by name
-      !Q_stricmp(sh->name, name)) {
+      Q_stricmp(sh->name, name) == 0) {
       // match found
-      return sh->index;
+      break;
     }
   }
+
+  if( Q_stricmp(sh->name, name) != 0 )
+    sh = NULL;
 
 	// make sure the render thread is stopped, because we are probably
 	// going to have to upload an image
@@ -2620,7 +2635,7 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 		stages[i].bundle[0].texMods = texMods[i];
 	}
 
-	// FIXME: set these "need" values apropriately
+	// FIXME: set these "need" values appropriately
 	shader.needsNormal = qtrue;
 	shader.needsST1 = qtrue;
 	shader.needsST2 = qtrue;
@@ -2677,7 +2692,7 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	}
 
-	sh = FinishShader();
+	sh = FinishShader(sh);
   return sh->index; 
 }
 
@@ -3028,12 +3043,12 @@ static void CreateInternalShaders( void ) {
 	stages[0].bundle[0].image[0] = tr.defaultImage;
 	stages[0].active = qtrue;
 	stages[0].stateBits = GLS_DEFAULT;
-	tr.defaultShader = FinishShader();
+	tr.defaultShader = FinishShader( NULL );
 
 	// shadow shader is just a marker
 	Q_strncpyz( shader.name, "<stencil shadow>", sizeof( shader.name ) );
 	shader.sort = SS_STENCIL_SHADOW;
-	tr.shadowShader = FinishShader();
+	tr.shadowShader = FinishShader( NULL );
 }
 
 static void CreateExternalShaders( void ) {

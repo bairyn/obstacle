@@ -143,7 +143,8 @@ typedef enum
   UI_R_LOADFACE,
   UI_R_FREEFACE,
   UI_R_LOADGLYPH,
-  UI_R_FREEGLYPH
+  UI_R_FREEGLYPH,
+  UI_R_GLYPH
 }
 uiImport_t;
 
@@ -175,7 +176,7 @@ typedef enum
   //  void  UI_Shutdown( void );
 
   UI_KEY_EVENT,
-  //  void  UI_KeyEvent( int key );
+  //  void  UI_KeyEvent( const char *key );
 
   UI_MOUSE_EVENT,
   //  void  UI_MouseEvent( int dx, int dy );

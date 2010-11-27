@@ -1046,25 +1046,29 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		re.RemapShader( VMA(1), VMA(2), VMA(3) );
 		return 0;
 
-	case UI_GETTEXT:
-		strncpy( VMA(1), _(VMA(2)), args[3] );
-		return 0;
+  case UI_GETTEXT:
+    strncpy( VMA(1), _(VMA(2)), args[3] );
+    return 0;
 
-	case UI_R_LOADFACE:
-		re.LoadFace( VMA(1), args[2], VMA(3), args[4], VMA(5) );
-		return 0;
+  case UI_R_LOADFACE:
+    re.LoadFace( VMA(1), args[2], VMA(3), VMA(4) );
+    return 0;
 
-	case UI_R_FREEFACE:
-		re.FreeFace( VMA(1) );
-		return 0;
+  case UI_R_FREEFACE:
+    re.FreeFace( VMA(1) );
+    return 0;
 
   case UI_R_LOADGLYPH:
-    re.LoadGlyph( VMA(1), VMA(2), args[3], args[4], VMA(5) );
+    re.LoadGlyph( VMA(1), VMA(2), args[3], VMA(4) );
     return 0;
 
   case UI_R_FREEGLYPH:
     re.FreeGlyph( VMA(1), args[2], VMA(3) );
     return 0;
+
+  case UI_R_GLYPH:
+    re.Glyph( VMA(1), VMA(2), VMA(3), VMA(4) );
+    break;
 
 	default:
 		Com_Error( ERR_DROP, _("Bad UI system trap: %ld"), (long int) args[0] );

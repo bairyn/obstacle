@@ -107,6 +107,7 @@ cvar_t  *cl_consoleHeight;
 cvar_t  *cl_consoleFont;
 cvar_t  *cl_consoleFontSize;
 cvar_t  *cl_consoleFontKerning;
+cvar_t  *cl_consoleDynFont;
 
 
 clientActive_t		cl;
@@ -3050,7 +3051,7 @@ void CL_InitRenderer( void ) {
 	// load character sets
 	cls.charSetShader = re.RegisterShader( "gfx/2d/bigchars" );
 
-    cls.useLegacyConsoleFont = qtrue;
+    cls.useLegacyConsoleFace = cls.useLegacyConsoleFont = qtrue;
 
 #ifdef BUILD_FREETYPE
 
@@ -3065,6 +3066,16 @@ void CL_InitRenderer( void ) {
       }
       FS_FCloseFile( f );
 	}
+
+  if( *cl_consoleDynFont->string )
+  {
+    if( FS_FOpenFileRead( cl_consoleDynFont->string, &f, FS_READ ) >= 0 )
+    {
+        re.LoadFace( cl_consoleDynFont->string, cl_consoleFontSize->integer, cl_consoleDynFont->string, &cls.consoleFace );
+        cls.useLegacyConsoleFace = qfalse;
+    }
+    FS_FCloseFile( f );
+  }
 
 #endif
 
@@ -3442,9 +3453,10 @@ void CL_Init( void ) {
 
 	cl_consoleColor = Cvar_Get ("cl_consoleColor", "0.0 0.0 0.0 1.0", CVAR_ARCHIVE);
 	cl_consoleHeight = Cvar_Get ("cl_consoleHeight", "50", CVAR_ARCHIVE);
-	cl_consoleFont = Cvar_Get ("cl_consoleFont", "", CVAR_ARCHIVE | CVAR_LATCH);
+	cl_consoleFont = Cvar_Get ("cl_consoleFont", DEFAULT_CONSOLE_FONT, CVAR_ARCHIVE | CVAR_LATCH);
 	cl_consoleFontSize = Cvar_Get ("cl_consoleFontSize", "16", CVAR_ARCHIVE | CVAR_LATCH);
 	cl_consoleFontKerning = Cvar_Get ("cl_consoleFontKerning", "0", CVAR_ARCHIVE);
+	cl_consoleDynFont = Cvar_Get ("cl_consoleDynFont", DEFAULT_CONSOLE_FONT, CVAR_ARCHIVE | CVAR_LATCH);
 
 	// userinfo
 	Cvar_Get ("name", Sys_GetCurrentUser( ), CVAR_USERINFO | CVAR_ARCHIVE );

@@ -802,6 +802,16 @@ int Q_CountChar(const char *string, char tocount);
 
 //=============================================
 
+int Q_UTF8Width( const char *str );
+int Q_UTF8Strlen( const char *str );
+qboolean Q_UTF8ContByte( char c );
+unsigned long Q_UTF8CodePoint( const char *str );
+char *Q_UTF8Encode( unsigned long codepoint );
+int Q_UTF8Store( const char *s );
+char *Q_UTF8Unstore( int e );
+
+//=============================================
+
 // 64-bit integers for global rankings interface
 // implemented as a struct for qvm compatibility
 typedef struct
@@ -1009,6 +1019,11 @@ typedef struct {
 #define KEYCATCH_CONSOLE		0x0001
 #define	KEYCATCH_UI					0x0002
 #define	KEYCATCH_CGAME			0x0008
+
+#define KEYEVSTATE_DOWN 0
+#define KEYEVSTATE_CHAR 1
+#define KEYEVSTATE_BIT  2
+#define KEYEVSTATE_SUP  3
 
 
 // sound channels
@@ -1337,7 +1352,6 @@ typedef struct {
   void *mem;
   void *images[MAX_FACE_GLYPHS];
   char name[MAX_QPATH];
-  int maxCache;
   float glyphScale;
 } face_t;
 

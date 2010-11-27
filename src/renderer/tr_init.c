@@ -1159,13 +1159,13 @@ void RE_Shutdown( qboolean destroyWindow ) {
 	ri.Cmd_RemoveCommand( "shaderstate" );
 
 
+	R_DoneFreeType();
+
 	if ( tr.registered ) {
 		R_SyncRenderThread();
 		R_ShutdownCommandBuffers();
 		R_DeleteTextures();
 	}
-
-	R_DoneFreeType();
 
 	// shut down platform specific OpenGL stuff
 	if ( destroyWindow ) {
@@ -1249,6 +1249,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.FreeFace = RE_FreeFace;
 	re.LoadGlyph = RE_LoadGlyph;
 	re.FreeGlyph = RE_FreeGlyph;
+  re.Glyph = RE_Glyph;
 	re.RemapShader = R_RemapShader;
 	re.GetEntityToken = R_GetEntityToken;
 	re.inPVS = R_inPVS;

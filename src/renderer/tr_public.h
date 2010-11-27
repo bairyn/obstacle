@@ -96,10 +96,11 @@ typedef struct {
 	void    (*A3D_RenderGeometry) (void *pVoidA3D, void *pVoidGeom, void *pVoidMat, void *pVoidGeomStatus);
 #endif
 	void	(*RegisterFont)(const char *fontName, int pointSize, fontInfo_t *font);
-	void  	(*LoadFace)(const char *fileName, int pointSize, const char *name, int maxCache, face_t *face);
+	void	(*LoadFace)(const char *fileName, int pointSize, const char *name, face_t *face);
 	void	(*FreeFace)(face_t *face);
-	void	(*LoadGlyph)(face_t *face, const char *str, int size, int img, glyphInfo_t *glyphInfo);
+	void	(*LoadGlyph)(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
 	void	(*FreeGlyph)(face_t *face, int img, glyphInfo_t *glyphInfo);
+	void	(*Glyph)( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph );
 	void	(*RemapShader)(const char *oldShader, const char *newShader, const char *offsetTime);
 	qboolean (*GetEntityToken)( char *buffer, int size );
 	qboolean (*inPVS)( const vec3_t p1, const vec3_t p2 );

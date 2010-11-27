@@ -187,7 +187,6 @@ vmCvar_t  cg_disableBuildDialogs;
 vmCvar_t  cg_disableCommandDialogs;
 vmCvar_t  cg_disableScannerPlane;
 vmCvar_t  cg_tutorial;
-vmCvar_t  cg_noDynamicFont;
 
 vmCvar_t  cg_painBlendUpRate;
 vmCvar_t  cg_painBlendDownRate;
@@ -306,7 +305,6 @@ static cvarTable_t cvarTable[ ] =
   { &cg_disableCommandDialogs, "cg_disableCommandDialogs", "0", CVAR_ARCHIVE },
   { &cg_disableScannerPlane, "cg_disableScannerPlane", "0", CVAR_ARCHIVE },
   { &cg_tutorial, "cg_tutorial", "1", CVAR_ARCHIVE },
-  { &cg_noDynamicFont, "cg_noDynamicFont", "0", CVAR_ARCHIVE }, // TODO TODO TODO ------------------------ XXX TODO $$$$$$$$$$$$$$$$$$$$$}{{{{{{{{{{{{{{{{{{{{{{{{{{{{[{{{{{}]+{[[[[[[[[[[[[[[[[[[[[[[[[[[[[&&&&&&&&&&&&&&&&((((((((((((((({{{{}}}(=*)]!###########################################################################################################################################################################################################################++
   { &cg_hudFiles, "cg_hudFiles", "ui/hud.txt", CVAR_ARCHIVE},
   { NULL, "cg_alienConfig", "", CVAR_ARCHIVE },
   { NULL, "cg_humanConfig", "", CVAR_ARCHIVE },
@@ -1106,7 +1104,7 @@ qboolean CG_Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      cgDC.loadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &cgDC.Assets.dynFont );
+      cgDC.loadFace( tempStr, pointSize, tempStr, &cgDC.Assets.dynFont );
       continue;
     }
 
@@ -1118,7 +1116,7 @@ qboolean CG_Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      cgDC.loadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &cgDC.Assets.smallDynFont );
+      cgDC.loadFace( tempStr, pointSize, tempStr, &cgDC.Assets.smallDynFont );
       continue;
     }
 
@@ -1130,7 +1128,7 @@ qboolean CG_Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      cgDC.loadFace( tempStr, pointSize, tempStr, MAX_GLYPH_CACHE, &cgDC.Assets.bigDynFont );
+      cgDC.loadFace( tempStr, pointSize, tempStr, &cgDC.Assets.bigDynFont );
       continue;
     }
 
@@ -1385,7 +1383,7 @@ void CG_LoadMenus( const char *menuFile )
 
 
 
-static qboolean CG_OwnerDrawHandleKey( int ownerDraw, int key )
+static qboolean CG_OwnerDrawHandleKey( int ownerDraw, int key, int state )
 {
   return qfalse;
 }
@@ -1682,6 +1680,7 @@ void CG_LoadHudMenu( void )
   cgDC.freeFace             = &trap_R_FreeFace;
   cgDC.loadGlyph            = &trap_R_LoadGlyph;
   cgDC.freeGlyph            = &trap_R_FreeGlyph;
+  cgDC.glyph                = &trap_R_Glyph;
   cgDC.ownerDrawItem        = &CG_OwnerDraw;
   cgDC.getValue             = &CG_GetValue;
   cgDC.ownerDrawVisible     = &CG_OwnerDrawVisible;

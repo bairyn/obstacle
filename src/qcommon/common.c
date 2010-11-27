@@ -2230,7 +2230,7 @@ int Com_EventLoop( void ) {
 			CL_KeyEvent( ev.evValue, ev.evValue2, ev.evTime );
 			break;
 		case SE_CHAR:
-			CL_CharEvent( ev.evValue );
+			CL_CharEvent( (const char *) ev.evPtr );
 			break;
 		case SE_MOUSE:
 			CL_MouseEvent( ev.evValue, ev.evValue2, ev.evTime );

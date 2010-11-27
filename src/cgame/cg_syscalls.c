@@ -330,7 +330,7 @@ void trap_R_RegisterFont( const char *fontName, int pointSize, fontInfo_t *font 
   syscall(CG_R_REGISTERFONT, fontName, pointSize, font );
 }
 
-void trap_R_LoadFace( const char *fileName, int pointSize, const char *name, int maxCache, face_t *face )
+void trap_R_LoadFace( const char *fileName, int pointSize, const char *name, face_t *face )
 {
   static int engineState = 0;
 
@@ -347,7 +347,7 @@ void trap_R_LoadFace( const char *fileName, int pointSize, const char *name, int
   }
 
   if( engineState & 0x02 )
-    syscall( CG_R_LOADFACE, fileName, pointSize, name, maxCache, face );
+    syscall( CG_R_LOADFACE, fileName, pointSize, name, face );
 }
 
 void trap_R_FreeFace( face_t *face )
@@ -370,7 +370,7 @@ void trap_R_FreeFace( face_t *face )
     syscall( CG_R_FREEFACE, face );
 }
 
-void trap_R_LoadGlyph( face_t *face, const char *str, int size, int img, glyphInfo_t *glyphInfo )
+void trap_R_LoadGlyph( face_t *face, const char *str, int img, glyphInfo_t *glyphInfo )
 {
   static int engineState = 0;
 
@@ -387,7 +387,7 @@ void trap_R_LoadGlyph( face_t *face, const char *str, int size, int img, glyphIn
   }
 
   if( engineState & 0x02 )
-    syscall( CG_R_LOADGLYPH, face, str, size, img, glyphInfo );
+    syscall( CG_R_LOADGLYPH, face, str, img, glyphInfo );
 }
 
 void trap_R_FreeGlyph( face_t *face, int img, glyphInfo_t *glyphInfo )
@@ -408,6 +408,26 @@ void trap_R_FreeGlyph( face_t *face, int img, glyphInfo_t *glyphInfo )
 
   if( engineState & 0x02 )
     syscall( CG_R_FREEGLYPH, face, img, glyphInfo );
+}
+
+void trap_R_Glyph( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    syscall( CG_R_GLYPH, font, face, str, glyph );
 }
 
 void  trap_R_ClearScene( void )

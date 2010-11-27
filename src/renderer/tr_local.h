@@ -1711,10 +1711,11 @@ void RE_TakeVideoFrame( int width, int height,
 void R_InitFreeType( void );
 void R_DoneFreeType( void );
 void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font);
-void RE_LoadFace(const char *fileName, int pointSize, const char *name, int maxCache, face_t *face);
+void RE_LoadFace(const char *fileName, int pointSize, const char *name, face_t *face);
 void RE_FreeFace(face_t *face);
-void RE_LoadGlyph(face_t *face, const char *str, int size, int img, glyphInfo_t *glyphInfo);
+void RE_LoadGlyph(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
 void RE_FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
+void RE_Glyph(fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph);
 
 
 #endif //TR_LOCAL_H

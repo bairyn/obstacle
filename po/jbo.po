@@ -3270,7 +3270,7 @@ msgstr ""
 
 #: ../assets/ui/ingame_leave.menu:114 ../assets/ui/ingame_leave.menu:171
 msgid "Yes"
-msgstr ""
+msgstr "éñ"
 
 #: ../assets/ui/ingame_leave.menu:134 ../assets/ui/ingame_leave.menu:191
 msgid "No"
@@ -3792,7 +3792,7 @@ msgstr ""
 
 #: ../assets/ui/main.menu:59
 msgid "Play"
-msgstr ""
+msgstr "PL¿∞ououou"
 
 #: ../assets/ui/main.menu:78
 msgid "News"

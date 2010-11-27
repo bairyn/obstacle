@@ -90,7 +90,7 @@ static ID_INLINE qboolean Item_IsListBox( itemDef_t *item );
 static void Item_ListBox_SetStartPos( itemDef_t *item, int startPos );
 void Menu_SetupKeywordHash( void );
 int BindingIDFromName( const char *name );
-qboolean Item_Bind_HandleKey( itemDef_t *item, int key, qboolean down );
+qboolean Item_Bind_HandleKey( itemDef_t *item, int key, int state );
 itemDef_t *Menu_SetPrevCursorItem( menuDef_t *menu );
 itemDef_t *Menu_SetNextCursorItem( menuDef_t *menu );
 static qboolean Menu_OverActiveItem( menuDef_t *menu, float x, float y );
@@ -1880,86 +1880,28 @@ void Script_playLooped( itemDef_t *item, char **args )
   }
 }
 
-static int UI_UTF8Length( face_t *face, const char *str )
+static int UI_UTF8Width( face_t *face, const char *str )
 {
-  int                 ewidth;
-  const unsigned char *s = (const unsigned char *)str;
-  qboolean            nullUTF8Bytes = DC->getCVarValue( "ui_nullUTF8Bytes" );
+  if( DC->getCVarValue( "ui_ascii" ) )
+    return 1;
 
   if( !face )
     return 1;
 
-  if( !str )
-    return 0;
-
-  if( DC->getCVarValue( "ui_ascii" ) )
-    return 1;
-
-  if     ( 0x00 <= *s && *s <= 0x7F )
-    ewidth = 0;
-  else if( 0xC2 <= *s && *s <= 0xDF )
-    ewidth = 1;
-  else if( 0xE0 <= *s && *s <= 0xEF )
-    ewidth = 2;
-  else if( 0xF0 <= *s && *s <= 0xF4 )
-    ewidth = 3;
-  else
-    ewidth = 0;
-
-  if( nullUTF8Bytes )
-	  s += ewidth;
-  else
-    for( ; *s && ewidth > 0; s++, ewidth-- );
-
-  return s - (const unsigned char *)str + 1;
+  return Q_UTF8Width( str );
 }
 
-typedef struct
-{ qboolean    active;
-  char        str[5];
-  glyphInfo_t glyph;
-} glyphCache_t;
-
-static glyphInfo_t *UI_Glyph( fontInfo_t *font, face_t *face, const char *str )
+glyphInfo_t *UI_Glyph( fontInfo_t *font, face_t *face, const char *str )
 {
-  static      glyphCache_t glyphCache[MAX_GLYPH_CACHE] = {{0}}, *nextCache = glyphCache;
-  int         i;
-  int         width = UI_UTF8Length( face, str );
-  static      glyphInfo_t glyph;
+  static glyphInfo_t glyphs[8];
+  static int index = 0;
+  glyphInfo_t *glyph = &glyphs[index++ & 7];
 
-  if( !str || !*str || width <= 1 || DC->getCVarValue( "cg_noDynamicFont" ) || !face )
+  if( !str || !*str || !face || UI_UTF8Width( face, str ) <= 1 )
     return &font->glyphs[ (int)*str ];
 
-  for( i = 0; i < MAX_GLYPH_CACHE; i++ )
-  {
-    glyphCache_t *c = &glyphCache[ i ];
-
-    if( c->active )
-    {
-      const char *s, *cs;
-
-      for( s = str, cs = c->str; *s && *cs && *s == *cs && s - str < width ; s++, cs++ );
-
-      if( !*cs && s - str == width)
-        return &c->glyph;
-    }
-  }
-
-  if( nextCache->active )
-  {
-	  DC->freeGlyph( face, nextCache - glyphCache, &nextCache->glyph );
-  }
-
-  DC->loadGlyph( face, str, width, nextCache - glyphCache, &glyph );
-
-  strncpy( nextCache->str, str, width );  // This should never cause an overflow since UI_UTF8Length never returns a width larger than 4
-  memcpy( &nextCache->glyph, &glyph, sizeof( nextCache->glyph ) );
-  nextCache->active = qtrue;
-
-  if( ++nextCache - glyphCache >= MAX_GLYPH_CACHE )
-    nextCache = glyphCache;
-
-  return &nextCache->glyph;
+  DC->glyph( font, face, str, glyph );
+  return glyph;
 }
 
 void UI_EscapeEmoticons( char *dest, const char *src, int destsize )
@@ -2128,7 +2070,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
         }
       }
       out += ( glyph->xSkip * DC->aspectScale );
-      s += UI_UTF8Length( face, s );
+      s += UI_UTF8Width( face, s );
       count++;
     }
   }
@@ -2183,7 +2125,7 @@ float UI_Text_Height( const char *text, float scale, int limit )
         if( max < glyph->height )
           max = glyph->height;
 
-        s += UI_UTF8Length( face, s );
+        s += UI_UTF8Width( face, s );
         count++;
       }
     }
@@ -2325,7 +2267,7 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
 
   x += UI_Parse_Indent( &s );
 
-  while( s && *s && count < len )
+  while( s && *s && s - text < len )
   {
     glyph = UI_Glyph( font, face, s );
 
@@ -2413,8 +2355,8 @@ static void UI_Text_Paint_Generic( float x, float y, float scale, float gapAdjus
       cursorX = x;
 
     x += ( glyph->xSkip * DC->aspectScale * useScale ) + gapAdjust;
-    s += UI_UTF8Length( face, s );
-    count++;
+    count += UI_UTF8Width( face, s );
+    s += UI_UTF8Width( face, s );
 
   }
 
@@ -2991,26 +2933,29 @@ void Item_SetMouseOver( itemDef_t *item, qboolean focus )
 }
 
 
-qboolean Item_OwnerDraw_HandleKey( itemDef_t *item, int key )
+qboolean Item_OwnerDraw_HandleKey( itemDef_t *item, int key, int state )
 {
   if( item && DC->ownerDrawHandleKey )
-    return DC->ownerDrawHandleKey( item->window.ownerDraw, key );
+    return DC->ownerDrawHandleKey( item->window.ownerDraw, key, state );
 
   return qfalse;
 }
 
-qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboolean force )
+qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, int state, qboolean force )
 {
   listBoxDef_t *listPtr = item->typeData.list;
   int count = DC->feederCount( item->feederID );
   int viewmax;
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
 
   if( force || ( Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) &&
       item->window.flags & WINDOW_HASFOCUS ) )
   {
     viewmax = Item_ListBox_NumItemsForItemHeight( item );
 
-    switch( key )
+    switch( first )
     {
       case K_MOUSE1:
       case K_MOUSE2:
@@ -3129,14 +3074,18 @@ qboolean Item_ListBox_HandleKey( itemDef_t *item, int key, qboolean down, qboole
   return qfalse;
 }
 
-qboolean Item_ComboBox_HandleKey( itemDef_t *item, int key, qboolean down, qboolean force )
+qboolean Item_ComboBox_HandleKey( itemDef_t *item, int key, int state, qboolean force )
 {
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
+
   if( g_comboBoxItem != NULL )
   {
     qboolean result;
 
     qboolean cast = Item_ComboBox_MaybeCastToListBox( item );
-    result = Item_ListBox_HandleKey( item, key, down, force );
+    result = Item_ListBox_HandleKey( item, first, state, force );
     Item_ComboBox_MaybeUnCastFromListBox( item, cast );
 
     if( !result )
@@ -3149,7 +3098,7 @@ qboolean Item_ComboBox_HandleKey( itemDef_t *item, int key, qboolean down, qbool
     if( force || ( Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) &&
         item->window.flags & WINDOW_HASFOCUS ) )
     {
-      if( key == K_MOUSE1 || key == K_MOUSE2 )
+      if( first == K_MOUSE1 || first == K_MOUSE2 )
       {
         g_comboBoxItem = item;
 
@@ -3161,12 +3110,16 @@ qboolean Item_ComboBox_HandleKey( itemDef_t *item, int key, qboolean down, qbool
   return qfalse;
 }
 
-qboolean Item_YesNo_HandleKey( itemDef_t *item, int key )
+qboolean Item_YesNo_HandleKey( itemDef_t *item, int key, int state )
 {
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
+
   if( Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) &&
       item->window.flags & WINDOW_HASFOCUS && item->cvar )
   {
-    if( key == K_MOUSE1 || key == K_ENTER || key == K_MOUSE2 || key == K_MOUSE3 )
+    if( first == K_MOUSE1 || first == K_ENTER || first == K_MOUSE2 || first == K_MOUSE3 )
     {
       DC->setCVar( item->cvar, va( "%i", !DC->getCVarValue( item->cvar ) ) );
       return qtrue;
@@ -3249,18 +3202,21 @@ const char *Item_Multi_Setting( itemDef_t *item )
   return "";
 }
 
-qboolean Item_Cycle_HandleKey( itemDef_t *item, int key )
+qboolean Item_Cycle_HandleKey( itemDef_t *item, int key, int state )
 {
   cycleDef_t *cyclePtr = item->typeData.cycle;
   qboolean mouseOver = Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory );
   int count = DC->feederCount( item->feederID );
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
 
   if( cyclePtr )
   {
     if( item->window.flags & WINDOW_HASFOCUS )
     {
-      if( ( mouseOver && key == K_MOUSE1 ) ||
-          key == K_ENTER || key == K_RIGHTARROW || key == K_DOWNARROW )
+      if( ( mouseOver && first == K_MOUSE1 ) ||
+          key == K_ENTER || first == K_RIGHTARROW || first == K_DOWNARROW )
       {
         if( count > 0 )
           cyclePtr->cursorPos = ( cyclePtr->cursorPos + 1 ) % count;
@@ -3269,8 +3225,8 @@ qboolean Item_Cycle_HandleKey( itemDef_t *item, int key )
 
         return qtrue;
       }
-      else if( ( mouseOver && key == K_MOUSE2 ) ||
-               key == K_LEFTARROW || key == K_UPARROW )
+      else if( ( mouseOver && first == K_MOUSE2 ) ||
+               first == K_LEFTARROW || first == K_UPARROW )
       {
         if( count > 0 )
           cyclePtr->cursorPos = ( count + cyclePtr->cursorPos - 1 ) % count;
@@ -3285,11 +3241,14 @@ qboolean Item_Cycle_HandleKey( itemDef_t *item, int key )
   return qfalse;
 }
 
-qboolean Item_Multi_HandleKey( itemDef_t *item, int key )
+qboolean Item_Multi_HandleKey( itemDef_t *item, int key, int state )
 {
   qboolean mouseOver = Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory );
   int max = Item_Multi_CountSettings( item );
   qboolean changed = qfalse;
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
 
   if( item->typeData.multi )
   {
@@ -3297,14 +3256,14 @@ qboolean Item_Multi_HandleKey( itemDef_t *item, int key )
     {
       int current;
 
-      if( ( mouseOver && key == K_MOUSE1 ) ||
-          key == K_ENTER || key == K_RIGHTARROW || key == K_DOWNARROW )
+      if( ( mouseOver && first == K_MOUSE1 ) ||
+          first == K_ENTER || first == K_RIGHTARROW || first == K_DOWNARROW )
       {
         current = ( Item_Multi_FindCvarByValue( item ) + 1 ) % max;
         changed = qtrue;
       }
-      else if( ( mouseOver && key == K_MOUSE2 ) ||
-               key == K_LEFTARROW || key == K_UPARROW )
+      else if( ( mouseOver && first == K_MOUSE2 ) ||
+               first == K_LEFTARROW || first == K_UPARROW )
       {
         current = ( Item_Multi_FindCvarByValue( item ) + max - 1 ) % max;
         changed = qtrue;
@@ -3368,13 +3327,18 @@ static void Item_TextField_CalcPaintOffset( itemDef_t *item, char *buff )
   }
 }
 
-qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
+qboolean Item_TextField_HandleKey( itemDef_t *item, int key, int state )
 {
   char buff[1024];
   int len;
+  face_t *face = &DC->Assets.dynFont;
   itemDef_t *newItem = NULL;
   editFieldDef_t *editPtr = item->typeData.edit;
   qboolean releaseFocus = qtrue;
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
+  int width;
 
   if( item->cvar )
   {
@@ -3388,27 +3352,31 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
     if( editPtr->maxChars && len > editPtr->maxChars )
       len = editPtr->maxChars;
 
-    if( key & K_CHAR_FLAG )
-    {
-      key &= ~K_CHAR_FLAG;
+    width = UI_UTF8Width( face, buff + item->cursorPos );
 
-      if( key == 'h' - 'a' + 1 )
+    if( isChar )
+    {
+      const char *s;
+
+      if( !sup )
+        key &= ~(1 << (K_CHAR_BIT - 1) );
+
+      s = Q_UTF8Unstore( key );
+
+      if( first == 'h' - 'a' + 1 )
       {
         // ctrl-h is backspace
 
-        if( item->cursorPos > 0 )
+        while( item->cursorPos > 0 )
         {
+          qboolean isContinue = Q_UTF8ContByte( buff[ item->cursorPos - 1 ] );
           memmove( &buff[item->cursorPos - 1], &buff[item->cursorPos], len + 1 - item->cursorPos );
           item->cursorPos--;
+          if( !isContinue )
+            break;
         }
 
         DC->setCVar( item->cvar, buff );
-      }
-      else if( key < 32 || !item->cvar )
-      {
-        // Ignore any non printable chars
-        releaseFocus = qfalse;
-        goto exit;
       }
       else if( item->type == ITEM_TYPE_NUMERICFIELD && ( key < '0' || key > '9' ) )
       {
@@ -3418,6 +3386,14 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
       }
       else
       {
+        width = UI_UTF8Width( face, s );
+
+        if( len + width > MAX_EDITFIELD - 1 )
+        {
+          // Reached maximum field length
+          releaseFocus = qfalse;
+          goto exit;
+        }
         if( !DC->getOverstrikeMode() )
         {
           if( ( len == MAX_EDITFIELD - 1 ) || ( editPtr->maxChars && len >= editPtr->maxChars ) )
@@ -3427,7 +3403,7 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
             goto exit;
           }
 
-          memmove( &buff[item->cursorPos + 1], &buff[item->cursorPos], len + 1 - item->cursorPos );
+          memmove( &buff[item->cursorPos + width], &buff[item->cursorPos], len + 1 - item->cursorPos );
         }
         else
         {
@@ -3439,23 +3415,23 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
           }
         }
 
-        buff[ item->cursorPos ] = key;
+        Com_Memcpy( buff + item->cursorPos, s, width );
 
         DC->setCVar( item->cvar, buff );
 
-        if( item->cursorPos < len + 1 )
-          item->cursorPos++;
+        if( item->cursorPos < len + width )
+          item->cursorPos += width;
       }
     }
     else
     {
-      switch( key )
+      switch( first )
       {
         case K_DEL:
         case K_KP_DEL:
-          if( item->cursorPos < len )
+          if( item->cursorPos + width <= len )
           {
-            memmove( buff + item->cursorPos, buff + item->cursorPos + 1, len - item->cursorPos );
+            memmove( buff + item->cursorPos, buff + item->cursorPos + width, len - item->cursorPos );
             DC->setCVar( item->cvar, buff );
           }
 
@@ -3463,15 +3439,19 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
 
         case K_RIGHTARROW:
         case K_KP_RIGHTARROW:
-          if( item->cursorPos < len )
-            item->cursorPos++;
+          if( item->cursorPos + width <= len )
+            item->cursorPos += width;
 
           break;
 
         case K_LEFTARROW:
         case K_KP_LEFTARROW:
-          if( item->cursorPos > 0 )
+          while( item->cursorPos > 0 )
+          {
             item->cursorPos--;
+            if( !Q_UTF8ContByte( buff[ item->cursorPos ] ) )
+              break;
+          }
 
           break;
 
@@ -3484,6 +3464,11 @@ qboolean Item_TextField_HandleKey( itemDef_t *item, int key )
         case K_END:
         case K_KP_END:
           item->cursorPos = len;
+
+          while( item->cursorPos > 0 && Q_UTF8ContByte( buff[ item->cursorPos ] ) )
+          {
+            item->cursorPos--;
+          }
 
           break;
 
@@ -3551,7 +3536,7 @@ static void _Scroll_ListBox_AutoFunc( scrollInfo_t *si )
     // need to scroll which is done by simulating a click to the item
     // this is done a bit sideways as the autoscroll "knows" that the item is a listbox
     // so it calls it directly
-    Item_ListBox_HandleKey( si->item, si->scrollKey, qtrue, qfalse );
+    Item_ListBox_HandleKey( si->item, si->scrollKey, (qtrue << KEYEVSTATE_DOWN) | (qtrue << KEYEVSTATE_SUP), qfalse );
 
     si->nextScrollTime = DC->realTime + si->adjustValue;
   }
@@ -3603,7 +3588,7 @@ static void _Scroll_ListBox_ThumbFunc( scrollInfo_t *si )
     // need to scroll which is done by simulating a click to the item
     // this is done a bit sideways as the autoscroll "knows" that the item is a listbox
     // so it calls it directly
-    Item_ListBox_HandleKey( si->item, si->scrollKey, qtrue, qfalse );
+    Item_ListBox_HandleKey( si->item, si->scrollKey, (qtrue << KEYEVSTATE_DOWN) | (qtrue << KEYEVSTATE_SUP), qfalse );
 
     si->nextScrollTime = DC->realTime + si->adjustValue;
   }
@@ -3715,15 +3700,18 @@ void Item_StopCapture( itemDef_t *item )
 {
 }
 
-qboolean Item_Slider_HandleKey( itemDef_t *item, int key, qboolean down )
+qboolean Item_Slider_HandleKey( itemDef_t *item, int key, int state )
 {
   float x, value, width;
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
 
   if( item->window.flags & WINDOW_HASFOCUS && item->cvar &&
       Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) )
   {
-    if( item->typeData.edit && ( key == K_ENTER ||
-        key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3 ) )
+    if( item->typeData.edit && ( first == K_ENTER ||
+        first == K_MOUSE1 || first == K_MOUSE2 || first == K_MOUSE3 ) )
     {
       rectDef_t testRect;
       width = SLIDER_WIDTH;
@@ -3753,8 +3741,11 @@ qboolean Item_Slider_HandleKey( itemDef_t *item, int key, qboolean down )
 }
 
 
-qboolean Item_HandleKey( itemDef_t *item, int key, qboolean down )
+qboolean Item_HandleKey( itemDef_t *item, int key, int state )
 {
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean down = !sup ? state : state & (1 << KEYEVSTATE_DOWN);
+
   if( itemCapture )
   {
     Item_StopCapture( itemCapture );
@@ -3786,28 +3777,28 @@ qboolean Item_HandleKey( itemDef_t *item, int key, qboolean down )
       return qfalse;
 
     case ITEM_TYPE_CYCLE:
-      return Item_Cycle_HandleKey( item, key );
+      return Item_Cycle_HandleKey( item, key, state );
 
     case ITEM_TYPE_LISTBOX:
-      return Item_ListBox_HandleKey( item, key, down, qfalse );
+      return Item_ListBox_HandleKey( item, key, state, qfalse );
 
     case ITEM_TYPE_COMBOBOX:
-      return Item_ComboBox_HandleKey( item, key, down, qfalse );
+      return Item_ComboBox_HandleKey( item, key, state, qfalse );
 
     case ITEM_TYPE_YESNO:
-      return Item_YesNo_HandleKey( item, key );
+      return Item_YesNo_HandleKey( item, key, state );
 
     case ITEM_TYPE_MULTI:
-      return Item_Multi_HandleKey( item, key );
+      return Item_Multi_HandleKey( item, key, state );
 
     case ITEM_TYPE_OWNERDRAW:
-      return Item_OwnerDraw_HandleKey( item, key );
+      return Item_OwnerDraw_HandleKey( item, key, state );
 
     case ITEM_TYPE_BIND:
-      return Item_Bind_HandleKey( item, key, down );
+      return Item_Bind_HandleKey( item, key, state );
 
     case ITEM_TYPE_SLIDER:
-      return Item_Slider_HandleKey( item, key, down );
+      return Item_Slider_HandleKey( item, key, state );
 
     default:
       return qfalse;
@@ -4057,8 +4048,11 @@ int Display_VisibleMenuCount( void )
   return count;
 }
 
-void Menus_HandleOOBClick( menuDef_t *menu, int key, qboolean down )
+void Menus_HandleOOBClick( menuDef_t *menu, int key, int state )
 {
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean down = !sup ? state : state & (1 << KEYEVSTATE_DOWN);
+
   if( menu )
   {
     int i;
@@ -4076,7 +4070,7 @@ void Menus_HandleOOBClick( menuDef_t *menu, int key, qboolean down )
         Menus_Close( menu );
         Menus_Activate( &Menus[i] );
         Menu_HandleMouseMove( &Menus[i], DC->cursorx, DC->cursory );
-        Menu_HandleKey( &Menus[i], key, down );
+        Menu_HandleKey( &Menus[i], key, state );
       }
     }
 
@@ -4106,24 +4100,28 @@ static rectDef_t *Item_CorrectedTextRect( itemDef_t *item )
   return &rect;
 }
 
-void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
+void Menu_HandleKey( menuDef_t *menu, int key, int state )
 {
   int i;
   itemDef_t *item = NULL;
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean down = !sup ? state : state & (1 << KEYEVSTATE_DOWN);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
   qboolean inHandler = qfalse;
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
 
   inHandler = qtrue;
 
   if( g_waitingForKey && down )
   {
-    Item_Bind_HandleKey( g_bindItem, key, down );
+    Item_Bind_HandleKey( g_bindItem, key, state );
     inHandler = qfalse;
     return;
   }
 
   if( g_editingField && down )
   {
-    if( !Item_TextField_HandleKey( g_editItem, key ) )
+    if( !Item_TextField_HandleKey( g_editItem, key, state ) )
     {
       g_editingField = qfalse;
       Item_RunScript( g_editItem, g_editItem->onTextEntry );
@@ -4152,7 +4150,7 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
     if( !inHandleKey && ( key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3 ) )
     {
       inHandleKey = qtrue;
-      Menus_HandleOOBClick( menu, key, down );
+      Menus_HandleOOBClick( menu, key, state );
       inHandleKey = qfalse;
       inHandler = qfalse;
       return;
@@ -4173,7 +4171,7 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
 
   if( item != NULL )
   {
-    if( Item_HandleKey( item, key, down ) )
+    if( Item_HandleKey( item, key, state ) )
     {
       Item_Action( item );
       inHandler = qfalse;
@@ -4188,7 +4186,7 @@ void Menu_HandleKey( menuDef_t *menu, int key, qboolean down )
   }
 
   // default handling
-  switch( key )
+  switch( first )
   {
     case K_F12:
       if( DC->getCVarValue( "developer" ) )
@@ -5345,14 +5343,18 @@ qboolean Display_KeyBindPending( void )
   return g_waitingForKey;
 }
 
-qboolean Item_Bind_HandleKey( itemDef_t *item, int key, qboolean down )
+qboolean Item_Bind_HandleKey( itemDef_t *item, int key, int state )
 {
   int     id;
   int     i;
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean down = !sup ? state : state & (1 << KEYEVSTATE_DOWN);
+  qboolean isChar = !sup ? key & (1 << (K_CHAR_BIT - 1)) : state & (1 << KEYEVSTATE_CHAR);
+  int first = (!isChar || !sup) ? key : *Q_UTF8Unstore( key );
 
   if( Rect_ContainsPoint( &item->window.rect, DC->cursorx, DC->cursory ) && !g_waitingForKey )
   {
-    if( down && ( key == K_MOUSE1 || key == K_ENTER ) )
+    if( down && ( first == K_MOUSE1 || first == K_ENTER ) )
     {
       g_waitingForKey = qtrue;
       g_bindItem = item;
@@ -5365,10 +5367,10 @@ qboolean Item_Bind_HandleKey( itemDef_t *item, int key, qboolean down )
     if( !g_waitingForKey || g_bindItem == NULL )
       return qtrue;
 
-    if( key & K_CHAR_FLAG )
+    if( isChar )
       return qtrue;
 
-    switch( key )
+    switch( first )
     {
       case K_ESCAPE:
         g_waitingForKey = qfalse;
@@ -5393,14 +5395,14 @@ qboolean Item_Bind_HandleKey( itemDef_t *item, int key, qboolean down )
     }
   }
 
-  if( key != -1 )
+  if( first != -1 )
   {
     for( i = 0; i < g_bindCount; i++ )
     {
-      if( g_bindings[i].bind2 == key )
+      if( g_bindings[i].bind2 == first )
         g_bindings[i].bind2 = -1;
 
-      if( g_bindings[i].bind1 == key )
+      if( g_bindings[i].bind1 == first )
       {
         g_bindings[i].bind1 = g_bindings[i].bind2;
         g_bindings[i].bind2 = -1;
@@ -5413,7 +5415,7 @@ qboolean Item_Bind_HandleKey( itemDef_t *item, int key, qboolean down )
 
   if( id != -1 )
   {
-    if( key == -1 )
+    if( first == -1 )
     {
       if( g_bindings[id].bind1 != -1 )
       {
@@ -5428,14 +5430,14 @@ qboolean Item_Bind_HandleKey( itemDef_t *item, int key, qboolean down )
       }
     }
     else if( g_bindings[id].bind1 == -1 )
-      g_bindings[id].bind1 = key;
-    else if( g_bindings[id].bind1 != key && g_bindings[id].bind2 == -1 )
-      g_bindings[id].bind2 = key;
+      g_bindings[id].bind1 = first;
+    else if( g_bindings[id].bind1 != first && g_bindings[id].bind2 == -1 )
+      g_bindings[id].bind2 = first;
     else
     {
       DC->setBinding( g_bindings[id].bind1, "" );
       DC->setBinding( g_bindings[id].bind2, "" );
-      g_bindings[id].bind1 = key;
+      g_bindings[id].bind1 = first;
       g_bindings[id].bind2 = -1;
     }
   }
@@ -6129,8 +6131,11 @@ menuDef_t *Menu_GetFocused( void )
   return NULL;
 }
 
-void Menu_ScrollFeeder( menuDef_t *menu, int feeder, qboolean down )
+void Menu_ScrollFeeder( menuDef_t *menu, int feeder, int state )
 {
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean down = !sup ? state : state & (1 << KEYEVSTATE_DOWN);
+
   if( menu )
   {
     int i;
@@ -6142,7 +6147,7 @@ void Menu_ScrollFeeder( menuDef_t *menu, int feeder, qboolean down )
       if( item->feederID == feeder )
       {
         qboolean cast = Item_ComboBox_MaybeCastToListBox( item );
-        Item_ListBox_HandleKey( item, down ? K_DOWNARROW : K_UPARROW, qtrue, qtrue );
+        Item_ListBox_HandleKey( item, down ? K_DOWNARROW : K_UPARROW, state | (qtrue << KEYEVSTATE_DOWN), qtrue );
         Item_ComboBox_MaybeUnCastFromListBox( item, cast );
 
         return;
@@ -7543,7 +7548,7 @@ qboolean MenuParse_dynFont( itemDef_t *item, int handle )
 
   if( !DC->Assets.dynFontRegistered )
   {
-    DC->loadFace( menu->dynFont, 48, menu->dynFont, MAX_GLYPH_CACHE, &DC->Assets.dynFont );
+    DC->loadFace( menu->dynFont, 48, menu->dynFont, &DC->Assets.dynFont );
     DC->Assets.dynFontRegistered = qtrue;
   }
 
@@ -8127,7 +8132,7 @@ int Display_CursorType( int x, int y )
 }
 
 
-void Display_HandleKey( int key, qboolean down, int x, int y )
+void Display_HandleKey( int key, int state, int x, int y )
 {
   menuDef_t *menu = Display_CaptureItem( x, y );
 
@@ -8135,7 +8140,7 @@ void Display_HandleKey( int key, qboolean down, int x, int y )
     menu = Menu_GetFocused();
 
   if( menu )
-    Menu_HandleKey( menu, key, down );
+    Menu_HandleKey( menu, key, state );
 }
 
 static void Window_CacheContents( windowDef_t *window )

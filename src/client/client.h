@@ -44,6 +44,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define QKEY_FILE "qkey"
 #define QKEY_SIZE 2048
 
+#define DEFAULT_CONSOLE_FONT "ttf/DejaVuSans-Bold.ttf"
+
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
 
 #define _(String) Sys_Gettext(String)
@@ -356,7 +358,9 @@ typedef struct {
 	qhandle_t	consoleShader;
 
     qboolean useLegacyConsoleFont;
+    qboolean useLegacyConsoleFace;
     fontInfo_t  consoleFont; 
+    face_t      consoleFace;
 } clientStatic_t;
 
 extern	clientStatic_t		cls;
@@ -580,9 +584,9 @@ void	SCR_DrawNamedPic( float x, float y, float width, float height, const char *
 void	SCR_DrawBigString( int x, int y, const char *s, float alpha, qboolean noColorEscape );			// draws a string with embedded color control characters with fade
 void	SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color, qboolean noColorEscape );	// ignores embedded color control characters
 void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor, qboolean noColorEscape );
-void	SCR_DrawSmallChar( int x, int y, int ch );
-void    SCR_DrawConsoleFontChar( float x, float y, int ch );
-float   SCR_ConsoleFontCharWidth( int ch );
+void	SCR_DrawSmallChar( int x, int y, const char *s );
+void    SCR_DrawConsoleFontChar( float x, float y, const char *s );
+float   SCR_ConsoleFontCharWidth( const char *s );
 float   SCR_ConsoleFontCharHeight ( void );
 float   SCR_ConsoleFontStringWidth( const char *s, int len );
 
