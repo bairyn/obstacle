@@ -327,6 +327,7 @@ typedef struct
 {
   Window window;
   const char  *font;                // font
+  const char  *dynFont;             // dynFont
   qboolean fullScreen;              // covers entire screen
   int itemCount;                    // number of items;
   int fontIndex;                    //
@@ -353,6 +354,9 @@ typedef struct
   fontInfo_t textFont;
   fontInfo_t smallFont;
   fontInfo_t bigFont;
+  face_t     dynFont;
+  face_t     smallDynFont;
+  face_t     bigDynFont;
   qhandle_t cursor;
   qhandle_t gradientBar;
   qhandle_t scrollBarArrowUp;
@@ -378,6 +382,7 @@ typedef struct
   vec4_t shadowColor;
   float shadowFadeClamp;
   qboolean fontRegistered;
+  qboolean dynFontRegistered;
   emoticon_t emoticons[ MAX_EMOTICONS ];
   int emoticonCount;
 }
@@ -406,6 +411,11 @@ typedef struct
   void ( *addRefEntityToScene ) ( const refEntity_t *re );
   void ( *renderScene ) ( const refdef_t *fd );
   void ( *registerFont ) ( const char *pFontname, int pointSize, fontInfo_t *font );
+  void ( *loadFace )( const char *fileName, int pointSize, const char *name, face_t *face );
+  void ( *freeFace )( face_t *face );
+	void ( *loadGlyph )( face_t *face, const char *str, int img, glyphInfo_t *glyphInfo );
+	void ( *freeGlyph )( face_t *face, int img, glyphInfo_t *glyphInfo );
+	void ( *glyph )( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph );
   void ( *ownerDrawItem ) ( float x, float y, float w, float h, float text_x,
                             float text_y, int ownerDraw, int ownerDrawFlags,
                             int align, int textalign, int textvalign,
@@ -421,7 +431,7 @@ typedef struct
   void ( *setOverstrikeMode )( qboolean b );
   qboolean ( *getOverstrikeMode )( void );
   void ( *startLocalSound )( sfxHandle_t sfx, int channelNum );
-  qboolean ( *ownerDrawHandleKey )( int ownerDraw, int key );
+  qboolean ( *ownerDrawHandleKey )( int ownerDraw, int key, int state );
   int ( *feederCount )( int feederID );
   const char *( *feederItemText )( int feederID, int index, int column, qhandle_t *handle );
   qhandle_t ( *feederItemImage )( int feederID, int index );
@@ -473,9 +483,9 @@ void Menu_Init( menuDef_t *menu );
 void Item_Init( itemDef_t *item );
 void Menu_PostParse( menuDef_t *menu );
 menuDef_t *Menu_GetFocused( void );
-void Menu_HandleKey( menuDef_t *menu, int key, qboolean down );
+void Menu_HandleKey( menuDef_t *menu, int key, int state );
 void Menu_HandleMouseMove( menuDef_t *menu, float x, float y );
-void Menu_ScrollFeeder( menuDef_t *menu, int feeder, qboolean down );
+void Menu_ScrollFeeder( menuDef_t *menu, int feeder, int state );
 qboolean Float_Parse( char **p, float *f );
 qboolean Color_Parse( char **p, vec4_t *c );
 qboolean Int_Parse( char **p, int *i );
@@ -506,7 +516,7 @@ int Display_CursorType( int x, int y );
 qboolean Display_KeyBindPending( void );
 menuDef_t *Menus_FindByName( const char *p );
 void Menus_CloseByName( const char *p );
-void Display_HandleKey( int key, qboolean down, int x, int y );
+void Display_HandleKey( int key, int state, int x, int y );
 void LerpColor( vec4_t a, vec4_t b, vec4_t c, float t );
 void Menus_CloseAll( void );
 void Menu_Update( menuDef_t *menu );
@@ -528,6 +538,8 @@ void Controls_SetConfig( qboolean restart );
 void Controls_SetDefaults( void );
 
 void trap_R_SetClipRegion( const float *region );
+
+glyphInfo_t *UI_Glyph( fontInfo_t *font, face_t *face, const char *str );
 
 //for cg_draw.c
 void Item_Text_Wrapped_Paint( itemDef_t *item );

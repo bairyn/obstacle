@@ -46,6 +46,9 @@
     font "fonts/font" 26        // font
     smallFont "fonts/smallfont" 20      // font
     bigFont "fonts/bigfont" 34      // font
+    dynFont "ttf/DejaVuSans-Bold.ttf" 26        // font
+    smallDynFont "ttf/DejaVuSans-Bold.ttf" 20      // font
+    bigDynFont "ttf/DejaVuSans-Bold.ttf" 34      // font
   }
 
   menuDef

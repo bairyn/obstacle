@@ -112,13 +112,15 @@ void GL_TextureMode( const char *string ) {
 	gl_filter_max = modes[i].maximize;
 
 	// change all the existing mipmap texture objects
-	for ( i = 0 ; i < tr.numImages ; i++ ) {
-		glt = tr.images[ i ];
-		if ( glt->mipmap ) {
-			GL_Bind (glt);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-		}
+	for ( i = 0 ; i < MAX_DRAWIMAGES ; i++ ) {
+    if( tr.used_images[ i ] ) {
+      glt = tr.images[ i ];
+      if ( glt->mipmap ) {
+        GL_Bind (glt);
+        qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+        qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+      }
+    }
 	}
 }
 
@@ -132,10 +134,12 @@ int R_SumOfUsedImages( void ) {
 	int i;
 
 	total = 0;
-	for ( i = 0; i < tr.numImages; i++ ) {
-		if ( tr.images[i]->frameUsed == tr.frameCount ) {
-			total += tr.images[i]->uploadWidth * tr.images[i]->uploadHeight;
-		}
+	for ( i = 0; i < MAX_DRAWIMAGES; i++ ) {
+    if( tr.used_images[ i ] ) {
+      if ( tr.images[i]->frameUsed == tr.frameCount ) {
+        total += tr.images[i]->uploadWidth * tr.images[i]->uploadHeight;
+      }
+    }
 	}
 
 	return total;
@@ -153,66 +157,71 @@ void R_ImageList_f( void ) {
 	const char *yesno[] = {
 		"no ", "yes"
 	};
+  int   c = 0;
 
 	ri.Printf (PRINT_ALL, "\n      -w-- -h-- -mm- -TMU- -if-- wrap --name-------\n");
 	texels = 0;
 
-	for ( i = 0 ; i < tr.numImages ; i++ ) {
-		image = tr.images[ i ];
+	for ( i = 0 ; i < MAX_DRAWIMAGES ; i++ ) {
+    if( tr.used_images[ i ] ) {
+      image = tr.images[ i ];
 
-		texels += image->uploadWidth*image->uploadHeight;
-		ri.Printf (PRINT_ALL,  "%4i: %4i %4i  %s   %d   ",
-			i, image->uploadWidth, image->uploadHeight, yesno[image->mipmap], image->TMU );
-		switch ( image->internalFormat ) {
-		case 1:
-			ri.Printf( PRINT_ALL, "I    " );
-			break;
-		case 2:
-			ri.Printf( PRINT_ALL, "IA   " );
-			break;
-		case 3:
-			ri.Printf( PRINT_ALL, "RGB  " );
-			break;
-		case 4:
-			ri.Printf( PRINT_ALL, "RGBA " );
-			break;
-		case GL_RGBA8:
-			ri.Printf( PRINT_ALL, "RGBA8" );
-			break;
-		case GL_RGB8:
-			ri.Printf( PRINT_ALL, "RGB8" );
-			break;
-		case GL_RGB4_S3TC:
-		case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-			ri.Printf( PRINT_ALL, "S3TC " );
-			break;
-		case GL_RGBA4:
-			ri.Printf( PRINT_ALL, "RGBA4" );
-			break;
-		case GL_RGB5:
-			ri.Printf( PRINT_ALL, "RGB5 " );
-			break;
-		default:
-			ri.Printf( PRINT_ALL, "???? " );
-		}
+      c++;
 
-		switch ( image->wrapClampMode ) {
-		case GL_REPEAT:
-			ri.Printf( PRINT_ALL, "rept " );
-			break;
-		case GL_CLAMP_TO_EDGE:
-			ri.Printf( PRINT_ALL, "clmp " );
-			break;
-		default:
-			ri.Printf( PRINT_ALL, "%4i ", image->wrapClampMode );
-			break;
-		}
-		
-		ri.Printf( PRINT_ALL, " %s\n", image->imgName );
+      texels += image->uploadWidth*image->uploadHeight;
+      ri.Printf (PRINT_ALL,  "%4i: %4i %4i  %s   %d   ",
+        i, image->uploadWidth, image->uploadHeight, yesno[image->mipmap], image->TMU );
+      switch ( image->internalFormat ) {
+      case 1:
+        ri.Printf( PRINT_ALL, "I    " );
+        break;
+      case 2:
+        ri.Printf( PRINT_ALL, "IA   " );
+        break;
+      case 3:
+        ri.Printf( PRINT_ALL, "RGB  " );
+        break;
+      case 4:
+        ri.Printf( PRINT_ALL, "RGBA " );
+        break;
+      case GL_RGBA8:
+        ri.Printf( PRINT_ALL, "RGBA8" );
+        break;
+      case GL_RGB8:
+        ri.Printf( PRINT_ALL, "RGB8" );
+        break;
+      case GL_RGB4_S3TC:
+      case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+        ri.Printf( PRINT_ALL, "S3TC " );
+        break;
+      case GL_RGBA4:
+        ri.Printf( PRINT_ALL, "RGBA4" );
+        break;
+      case GL_RGB5:
+        ri.Printf( PRINT_ALL, "RGB5 " );
+        break;
+      default:
+        ri.Printf( PRINT_ALL, "???? " );
+      }
+
+      switch ( image->wrapClampMode ) {
+      case GL_REPEAT:
+        ri.Printf( PRINT_ALL, "rept " );
+        break;
+      case GL_CLAMP_TO_EDGE:
+        ri.Printf( PRINT_ALL, "clmp " );
+        break;
+      default:
+        ri.Printf( PRINT_ALL, "%4i ", image->wrapClampMode );
+        break;
+      }
+      
+      ri.Printf( PRINT_ALL, " %s\n", image->imgName );
+    }
 	}
 	ri.Printf (PRINT_ALL, " ---------\n");
 	ri.Printf (PRINT_ALL, " %i total texels (not including mipmaps)\n", texels);
-	ri.Printf (PRINT_ALL, " %i total images\n\n", tr.numImages );
+	ri.Printf (PRINT_ALL, " %i total images\n\n", c );
 }
 
 //=======================================================================
@@ -755,9 +764,10 @@ This is the only way any image_t are created
 */
 image_t *R_CreateImage( const char *name, const byte *pic, int width, int height, 
 					   qboolean mipmap, qboolean allowPicmip, int glWrapClampMode ) {
-	image_t		*image;
+	image_t		*image = NULL;
 	qboolean	isLightmap = qfalse;
 	long		hash;
+  int     i;
 
 	if (strlen(name) >= MAX_QPATH ) {
 		ri.Error (ERR_DROP, "R_CreateImage: \"%s\" is too long\n", name);
@@ -766,13 +776,20 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 		isLightmap = qtrue;
 	}
 
-	if ( tr.numImages == MAX_DRAWIMAGES ) {
-		ri.Error( ERR_DROP, "R_CreateImage: MAX_DRAWIMAGES hit\n");
+	for ( i=0; i<MAX_DRAWIMAGES ; i++ ) {
+    if( !tr.used_images[ i ] ) {
+      image = tr.images[ i ] = Z_Malloc( sizeof( image_t ) );
+      tr.used_images[ i ] = qtrue;
+
+      break;
+    }
+  }
+
+	if ( !image ) {
+		ri.Error( ERR_DROP, "R_CreateImage: no room for image (MAX_DRAWIMAGES is %d)\n", MAX_DRAWIMAGES);
 	}
 
-	image = tr.images[tr.numImages] = ri.Hunk_Alloc( sizeof( image_t ), h_low );
-	image->texnum = 1024 + tr.numImages;
-	tr.numImages++;
+	image->texnum = 1024 + i;
 
 	image->mipmap = mipmap;
 	image->allowPicmip = allowPicmip;
@@ -818,6 +835,22 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 	hashTable[hash] = image;
 
 	return image;
+}
+
+void R_FreeImage( image_t *image )
+{
+  int     i;
+
+	for ( i=0; i<MAX_DRAWIMAGES ; i++ ) {
+    if( tr.used_images[ i ] && tr.images[ i ] == image ) {
+      tr.used_images[ i ] = qfalse;
+      Z_Free( image );
+
+      return;
+    }
+  }
+
+  ri.Printf( PRINT_ALL, "R_FreeImage: image not found\n" );
 }
 
 //===================================================================
@@ -1288,12 +1321,12 @@ R_DeleteTextures
 void R_DeleteTextures( void ) {
 	int		i;
 
-	for ( i=0; i<tr.numImages ; i++ ) {
-		qglDeleteTextures( 1, &tr.images[i]->texnum );
+	for ( i=0; i<MAX_DRAWIMAGES ; i++ ) {
+    if( tr.used_images[ i ] ) {
+      qglDeleteTextures( 1, &tr.images[i]->texnum );
+    }
 	}
 	Com_Memset( tr.images, 0, sizeof( tr.images ) );
-
-	tr.numImages = 0;
 
 	Com_Memset( glState.currenttextures, 0, sizeof( glState.currenttextures ) );
 	if ( qglActiveTextureARB ) {

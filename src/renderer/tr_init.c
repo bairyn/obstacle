@@ -152,6 +152,8 @@ cvar_t	*r_saveFontData;
 
 cvar_t	*r_marksOnTriangleMeshes;
 
+cvar_t	*r_reuseGlyphShaders;
+
 cvar_t	*r_maxpolys;
 int		max_polys;
 cvar_t	*r_maxpolyverts;
@@ -1157,13 +1159,13 @@ void RE_Shutdown( qboolean destroyWindow ) {
 	ri.Cmd_RemoveCommand( "shaderstate" );
 
 
+	R_DoneFreeType();
+
 	if ( tr.registered ) {
 		R_SyncRenderThread();
 		R_ShutdownCommandBuffers();
 		R_DeleteTextures();
 	}
-
-	R_DoneFreeType();
 
 	// shut down platform specific OpenGL stuff
 	if ( destroyWindow ) {
@@ -1243,6 +1245,11 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.UploadCinematic = RE_UploadCinematic;
 
 	re.RegisterFont = RE_RegisterFont;
+	re.LoadFace = RE_LoadFace;
+	re.FreeFace = RE_FreeFace;
+	re.LoadGlyph = RE_LoadGlyph;
+	re.FreeGlyph = RE_FreeGlyph;
+  re.Glyph = RE_Glyph;
 	re.RemapShader = R_RemapShader;
 	re.GetEntityToken = R_GetEntityToken;
 	re.inPVS = R_inPVS;

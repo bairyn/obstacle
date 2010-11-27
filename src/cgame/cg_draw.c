@@ -2865,8 +2865,21 @@ void CG_EventHandling( int type )
 
 
 
-void CG_KeyEvent( int key, qboolean down )
+void CG_KeyEvent( int key, int state )
 {
+  qboolean sup = state & (1 << KEYEVSTATE_SUP);
+  qboolean down = !sup ? state : state & (1 << KEYEVSTATE_DOWN);
+
+  if( sup )
+  {
+    qboolean bit = ( state & (1 << KEYEVSTATE_BIT) ) >> KEYEVSTATE_BIT;
+
+    if( bit )
+      key |= bit << (K_CHAR_BIT - 1);
+    else
+      key &= ~(bit << (K_CHAR_BIT - 1));
+  }
+
   if( !down )
     return;
 
@@ -2879,7 +2892,7 @@ void CG_KeyEvent( int key, qboolean down )
     return;
   }
 
-  Display_HandleKey( key, down, cgs.cursorX, cgs.cursorY );
+  Display_HandleKey( key, state, cgs.cursorX, cgs.cursorY );
 
   if( cgs.capturedItem )
     cgs.capturedItem = NULL;

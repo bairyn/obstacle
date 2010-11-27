@@ -482,8 +482,8 @@ will point into this temporary buffer.
 // NOTE TTimo define that to track tokenization issues
 //#define TKN_DBG
 static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
-	const char	*text;
-	char	*textOut;
+	const unsigned char *text;
+	unsigned char *textOut;
 
 #ifdef TKN_DBG
   // FIXME TTimo blunt hook to try to find the tokenization of userinfo
@@ -500,8 +500,8 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 	
 	Q_strncpyz( cmd.cmd, text_in, sizeof(cmd.cmd) );
 
-	text = text_in;
-	textOut = cmd.tokenized;
+	text = (const unsigned char *) text_in;
+	textOut = (unsigned char *) cmd.tokenized;
 
 	while ( 1 ) {
 		if ( cmd.argc == MAX_STRING_TOKENS ) {
@@ -539,7 +539,7 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 		// handle quoted strings
     // NOTE TTimo this doesn't handle \" escaping
 		if ( !ignoreQuotes && *text == '"' ) {
-			cmd.argv[cmd.argc] = textOut;
+			cmd.argv[cmd.argc] = (char *) textOut;
 			cmd.argc++;
 			text++;
 			while ( *text && *text != '"' ) {
@@ -554,7 +554,7 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 		}
 
 		// regular token
-		cmd.argv[cmd.argc] = textOut;
+		cmd.argv[cmd.argc] = (char *) textOut;
 		cmd.argc++;
 
 		// skip until whitespace, quote, or command

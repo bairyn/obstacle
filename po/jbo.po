@@ -1,0 +1,4263 @@
+# Lojban translation for Tremulous.
+# Copyright (C) 2010 Byron James Johnson
+# This file is distributed under the same license as the Tremulous package.
+# Byron James Johnson <krabbykrap@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Tremulous 1.2\n"
+"Report-Msgid-Bugs-To: krabbykrap@gmail.com\n"
+"POT-Creation-Date: 2010-10-16 01:18+0000\n"
+"PO-Revision-Date: 2010-10-16 01:18+000\n"
+"Last-Translator: Byron James Johnson <krabbykrap@gmail.com>\n"
+"Language-Team: Lojban\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/cgame/cg_attachment.c:93 src/cgame/cg_attachment.c:156
+#: src/cgame/cg_attachment.c:204
+msgid "ERROR: Invalid attachmentType_t in attachment\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:178 src/cgame/cg_buildable.c:269
+#: src/cgame/cg_players.c:115 src/cgame/cg_weapons.c:111
+#: src/cgame/cg_weapons.c:547
+#, possible-c-format
+msgid "File %s is %s\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:234 src/cgame/cg_weapons.c:173
+#, possible-c-format
+msgid "Error parsing animation file: %s\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:300
+#, possible-c-format
+msgid "Error parsing sound file: %s\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:346
+#, possible-c-format
+msgid "WARNING: failed to load animation file %s\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:351
+#, possible-c-format
+msgid "WARNING: failed to load sound file %s\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:408 src/cgame/cg_players.c:845
+#: src/cgame/cg_weapons.c:813
+#, possible-c-format
+msgid "Bad animation number: %i"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:420 src/cgame/cg_players.c:853
+#: src/cgame/cg_weapons.c:821
+#, possible-c-format
+msgid "Anim: %i\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:441
+#, possible-c-format
+msgid "newAnimation: %d lf->animationNumber: %d lf->animation: %d\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:450
+#, possible-c-format
+msgid "Sound for animation %d for a %s\n"
+msgstr ""
+
+#: src/cgame/cg_buildable.c:823
+#, possible-c-format
+msgid "CG_BuildableStatusParse: unknown token %s in %s\n"
+msgstr ""
+
+#: src/cgame/cg_consolecmds.c:180
+#, possible-c-format
+msgid "Listed %2d clients\n"
+msgstr ""
+
+#: src/cgame/cg_draw.c:1384 src/cgame/cg_draw.c:1390
+#, possible-c-format
+msgid "(Stage %d)"
+msgstr ""
+
+#: src/cgame/cg_draw.c:1438 src/cgame/cg_draw.c:1454
+#, possible-c-format
+msgid "Stage %d"
+msgstr ""
+
+#: src/cgame/cg_draw.c:1440
+#, possible-c-format
+msgid "Stage %d, 1 frag for next stage"
+msgstr ""
+
+#: src/cgame/cg_draw.c:1443
+#, possible-c-format
+msgid "Stage %d, %d frags for next stage"
+msgstr ""
+
+#: src/cgame/cg_draw.c:1456
+#, possible-c-format
+msgid "Stage %d, 1 credit for next stage"
+msgstr ""
+
+#: src/cgame/cg_draw.c:3201
+#, possible-c-format
+msgid "You are %d%s in the spawn queue"
+msgstr ""
+
+#: src/cgame/cg_draw.c:3208
+msgid "There are no spawns remaining"
+msgstr ""
+
+#: src/cgame/cg_draw.c:3210
+msgid "There is 1 spawn remaining"
+msgstr ""
+
+#: src/cgame/cg_draw.c:3212
+#, possible-c-format
+msgid "There are %d spawns remaining"
+msgstr ""
+
+#: src/cgame/cg_draw.c:3295
+msgid "Default HUD could not be found"
+msgstr ""
+
+#: src/cgame/cg_draw.c:3479
+msgid "CG_DrawActive: Undefined stereoView"
+msgstr ""
+
+#: src/cgame/cg_ents.c:903
+msgid "CG_InterpoateEntityPosition: cg.nextSnap == NULL"
+msgstr ""
+
+#: src/cgame/cg_ents.c:1012
+#, possible-c-format
+msgid "Entity %d entered PVS\n"
+msgstr ""
+
+#: src/cgame/cg_ents.c:1053
+#, possible-c-format
+msgid "Entity %d left PVS\n"
+msgstr ""
+
+#: src/cgame/cg_ents.c:1088
+#, possible-c-format
+msgid "Bad entity type: %i\n"
+msgstr ""
+
+#: src/cgame/cg_event.c:54
+msgid "CG_Obituary: target out of range"
+msgstr ""
+
+#: src/cgame/cg_event.c:199 src/cgame/cg_event.c:364
+#: src/cgame/cg_players.c:708 src/cgame/cg_players.c:713
+#: src/cgame/cg_players.c:716 src/cgame/cg_players.c:719
+#, possible-c-format
+msgid "%s"
+msgstr ""
+
+#: src/cgame/cg_event.c:222
+msgid "was sawn by"
+msgstr ""
+
+#: src/cgame/cg_event.c:225
+msgid "was blasted by"
+msgstr ""
+
+#: src/cgame/cg_event.c:228
+msgid "was machinegunned by"
+msgstr ""
+
+#: src/cgame/cg_event.c:231
+msgid "was chaingunned by"
+msgstr ""
+
+#: src/cgame/cg_event.c:234
+msgid "was gunned down by"
+msgstr ""
+
+#: src/cgame/cg_event.c:237
+msgid "was pulse rifled by"
+msgstr ""
+
+#: src/cgame/cg_event.c:240
+msgid "was mass driven by"
+msgstr ""
+
+#: src/cgame/cg_event.c:243
+msgid "was lasgunned by"
+msgstr ""
+
+#: src/cgame/cg_event.c:246
+msgid "was grilled by"
+msgstr ""
+
+#: src/cgame/cg_event.c:247 src/cgame/cg_event.c:251
+msgid "'s flamer"
+msgstr ""
+
+#: src/cgame/cg_event.c:250
+msgid "was toasted by"
+msgstr ""
+
+#: src/cgame/cg_event.c:254
+msgid "felt the full force of"
+msgstr ""
+
+#: src/cgame/cg_event.c:255 src/cgame/cg_event.c:259
+msgid "'s lucifer cannon"
+msgstr ""
+
+#: src/cgame/cg_event.c:258
+msgid "was caught in the fallout of"
+msgstr ""
+
+#: src/cgame/cg_event.c:262
+msgid "couldn't escape"
+msgstr ""
+
+#: src/cgame/cg_event.c:263
+msgid "'s grenade"
+msgstr ""
+
+#: src/cgame/cg_event.c:267
+msgid "should leave"
+msgstr ""
+
+#: src/cgame/cg_event.c:268
+msgid "'s buildings alone"
+msgstr ""
+
+#: src/cgame/cg_event.c:271
+msgid "was bitten by"
+msgstr ""
+
+#: src/cgame/cg_event.c:274
+msgid "was swiped by"
+msgstr ""
+
+#: src/cgame/cg_event.c:275 src/cgame/cg_event.c:281 src/cgame/cg_event.c:287
+#: src/cgame/cg_event.c:293 src/cgame/cg_event.c:299 src/cgame/cg_event.c:305
+#: src/cgame/cg_event.c:311 src/cgame/cg_event.c:317 src/cgame/cg_event.c:332
+#, possible-c-format
+msgid "'s %s"
+msgstr ""
+
+#: src/cgame/cg_event.c:280
+msgid "was clawed by"
+msgstr ""
+
+#: src/cgame/cg_event.c:286
+msgid "was zapped by"
+msgstr ""
+
+#: src/cgame/cg_event.c:292
+msgid "was chomped by"
+msgstr ""
+
+#: src/cgame/cg_event.c:298
+msgid "was pounced upon by"
+msgstr ""
+
+#: src/cgame/cg_event.c:304
+msgid "was sniped by"
+msgstr ""
+
+#: src/cgame/cg_event.c:310
+msgid "was mauled by"
+msgstr ""
+
+#: src/cgame/cg_event.c:316
+msgid "should have gotten out of the way of"
+msgstr ""
+
+#: src/cgame/cg_event.c:322
+msgid "was crushed under"
+msgstr ""
+
+#: src/cgame/cg_event.c:323
+msgid "'s weight"
+msgstr ""
+
+#: src/cgame/cg_event.c:327
+msgid "should have used a medkit against"
+msgstr ""
+
+#: src/cgame/cg_event.c:328
+msgid "'s poison"
+msgstr ""
+
+#: src/cgame/cg_event.c:331
+msgid "was gassed by"
+msgstr ""
+
+#: src/cgame/cg_event.c:339
+msgid "tried to invade"
+msgstr ""
+
+#: src/cgame/cg_event.c:340
+msgid "'s personal space"
+msgstr ""
+
+#: src/cgame/cg_event.c:343
+msgid "was killed by"
+msgstr ""
+
+#: src/cgame/cg_event.c:351
+msgid "TEAMMATE "
+msgstr ""
+
+#: src/cgame/cg_event.c:355
+msgid "You killed "
+msgstr ""
+
+#: src/cgame/cg_event.c:484
+#, possible-c-format
+msgid "ent:%3i  event:%3i %s\n"
+msgstr ""
+
+#: src/cgame/cg_event.c:904
+msgid "The Overmind is under attack!"
+msgstr ""
+
+#: src/cgame/cg_event.c:912
+msgid "The Overmind is dying!"
+msgstr ""
+
+#: src/cgame/cg_event.c:920
+msgid "Our base is under attack!"
+msgstr ""
+
+#: src/cgame/cg_event.c:932
+msgid "The Overmind needs spawns!"
+msgstr ""
+
+#: src/cgame/cg_event.c:992
+#, possible-c-format
+msgid "Unknown event: %i"
+msgstr ""
+
+#: src/cgame/cg_main.c:963
+#, possible-c-format
+msgid "CG_ConfigString: bad index: %i"
+msgstr ""
+
+#: src/cgame/cg_main.c:1025 src/cgame/cg_main.c:1301
+#, possible-c-format
+msgid "menu file not found: %s, using default\n"
+msgstr ""
+
+#: src/cgame/cg_main.c:1031 src/cgame/cg_main.c:1310
+#, possible-c-format
+msgid "menu file too large: %s is %i, max allowed is %i"
+msgstr ""
+
+#: src/cgame/cg_main.c:1305
+msgid "default menu file not found: ui/hud.txt, unable to continue!\n"
+msgstr ""
+
+#: src/cgame/cg_main.c:1345
+#, possible-c-format
+msgid "UI menu load time = %d milli seconds\n"
+msgstr ""
+
+#: src/cgame/cg_main.c:1510
+msgid "Ready"
+msgstr ""
+
+#: src/cgame/cg_main.c:1791
+#, possible-c-format
+msgid "Client/Server game mismatch: %s/%s"
+msgstr ""
+
+#: src/cgame/cg_main.c:1886
+msgid "WARNING: voipString overflowed\n"
+msgstr ""
+
+#: src/cgame/cg_marks.c:73
+msgid "CG_FreeLocalEntity: not active"
+msgstr ""
+
+#: src/cgame/cg_marks.c:153
+msgid "CG_ImpactMark called with <= 0 radius"
+msgstr ""
+
+#: src/cgame/cg_particles.c:253
+msgid "ERROR: a particle with velocityType normal has no normal\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:427
+#, possible-c-format
+msgid "PE %s created\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:452
+msgid "ERROR: a particle system has not been registered yet\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:474
+#, possible-c-format
+msgid "PS %s created\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:548
+#, possible-c-format
+msgid "Registered particle system %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:557
+#, possible-c-format
+msgid "ERROR: failed to register particle system %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:734
+msgid "ERROR: 'shader' not allowed in conjunction with 'model'\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:764
+msgid "ERROR: 'model' not allowed in conjunction with 'shader'\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1126 src/cgame/cg_particles.c:1248
+#: src/cgame/cg_particles.c:1270 src/cgame/cg_trails.c:769
+#: src/cgame/cg_trails.c:791
+msgid "ERROR: missing '}'\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1276 src/cgame/cg_particles.c:1282
+#: src/cgame/cg_trails.c:797 src/cgame/cg_trails.c:803
+msgid "ERROR: missing '{'\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1384
+#, possible-c-format
+msgid "ERROR: unknown token '%s' in particle\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1434
+msgid "ERROR: failed to parse particle\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1440
+#, possible-c-format
+msgid "ERROR: ejector has > %d particles\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1445
+#, possible-c-format
+msgid "ERROR: maximum number of particles (%d) reached\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1522
+#, possible-c-format
+msgid "ERROR: unknown token '%s' in particle ejector\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1558
+msgid "ERROR: failed to parse particle ejector\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1568
+msgid "ERROR: ejector with 'count infinite' potentially has zero period\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1574
+#, possible-c-format
+msgid "ERROR: particle system has > %d ejectors\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1579
+#, possible-c-format
+msgid "ERROR: maximum number of particle ejectors (%d) reached\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1599
+#, possible-c-format
+msgid "Parsed particle system %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1605
+#, possible-c-format
+msgid "ERROR: unknown token '%s' in particle system %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1639
+#, possible-c-format
+msgid "ERROR: particle file %s is %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1668
+#, possible-c-format
+msgid "ERROR: a particle system is already named %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1677
+#, possible-c-format
+msgid "ERROR: %s: failed to parse particle system %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1686
+#, possible-c-format
+msgid "ERROR: maximum number of particle systems (%d) reached\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1697
+msgid "ERROR: unamed particle system\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1709
+msgid "ERROR: particle system already named\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1766 src/cgame/cg_trails.c:1184
+#, possible-c-format
+msgid "...loading '%s'\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1795
+#, possible-c-format
+msgid "WARNING: failed to find child %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1820
+#, possible-c-format
+msgid "WARNING: failed to find onDeath system %s\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1836
+msgid "WARNING: tried to modify a NULL particle system\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1866
+msgid "WARNING: tried to destroy a NULL particle system\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1871
+msgid "PS destroyed\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1898
+msgid "WARNING: tried to test a NULL particle system\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1904
+msgid "WARNING: tried to test an invalid particle system\n"
+msgstr ""
+
+#: src/cgame/cg_particles.c:1990
+#, possible-c-format
+msgid "PS %s garbage collected\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:72
+#, possible-c-format
+msgid "Unknown custom sound: %s"
+msgstr ""
+
+#: src/cgame/cg_players.c:115 src/cgame/cg_trails.c:1067
+#: src/cgame/cg_weapons.c:111 src/cgame/cg_weapons.c:547
+msgid "empty"
+msgstr ""
+
+#: src/cgame/cg_players.c:115 src/cgame/cg_trails.c:1067
+#: src/cgame/cg_weapons.c:111 src/cgame/cg_weapons.c:547
+msgid "too long"
+msgstr ""
+
+#: src/cgame/cg_players.c:159
+#, possible-c-format
+msgid "Bad footsteps parm in %s: %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:215
+#, possible-c-format
+msgid "unknown token '%s' is %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:288 src/cgame/cg_players.c:368
+#, possible-c-format
+msgid "Error parsing animation file: %s"
+msgstr ""
+
+#: src/cgame/cg_players.c:394
+#, possible-c-format
+msgid "Leg skin load failure: %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:399
+#, possible-c-format
+msgid "Torso skin load failure: %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:404
+#, possible-c-format
+msgid "Head skin load failure: %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:414
+#, possible-c-format
+msgid "Non-segmented skin load failure: %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:437
+#, possible-c-format
+msgid "Failed to load animation file %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:449 src/cgame/cg_players.c:457
+#: src/cgame/cg_players.c:465 src/cgame/cg_players.c:475
+#, possible-c-format
+msgid "Failed to load model file %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:483
+#, possible-c-format
+msgid "Failed to load skin file: %s : %s\n"
+msgstr ""
+
+#: src/cgame/cg_players.c:506
+#, possible-c-format
+msgid "CG_RegisterClientModelname( %s, %s ) failed"
+msgstr ""
+
+#: src/cgame/cg_players.c:1113 src/cgame/cg_players.c:1360
+msgid "Bad player movement angle"
+msgstr ""
+
+#: src/cgame/cg_players.c:1895
+msgid "Bad clientNum on player entity"
+msgstr ""
+
+#: src/cgame/cg_players.c:2169
+#, possible-c-format
+msgid "Bad corpseNum on corpse entity: %d"
+msgstr ""
+
+#: src/cgame/cg_playerstate.c:235
+msgid "WARNING: changed predicted event\n"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:94
+#, possible-c-format
+msgid "[skipnotify]CG_ParseTeamInfo: bad client number: %d\n"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:238
+msgid "We have evolved!"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:252
+msgid "Reinforcements have arrived!"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:473
+msgid "Unknown item"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:478
+msgid ""
+"The alien team has too many players. Please wait until slots become "
+"available or join the human team."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:480
+msgid "The alien team has too many players"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:485
+msgid ""
+"The human team has too many players. Please wait until slots become "
+"available or join the alien team."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:487
+msgid "The human team has too many players"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:492
+msgid "The alien team is locked. You cannot join the aliens at this time."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:494
+msgid "The alien team is locked"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:499
+msgid "The human team is locked. You cannot join the humans at this time."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:501
+msgid "The human team is locked"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:506
+msgid ""
+"The maximum number of playing clients has been reached. Please wait until "
+"slots become available."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:508
+msgid "No free player slots"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:513
+msgid "You must wait until the warmup time is finished before joining a team. "
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:515
+msgid "You cannot join a team during warmup."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:520
+msgid "You cannot leave the Alien team until your build timer has expired."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:522 src/cgame/cg_servercmds.c:529
+msgid "You cannot change teams until your build timer expires"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:527
+msgid "You cannot leave the Human team until your build timer has expired."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:541
+msgid "Cheats are not enabled on this server"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:546
+msgid ""
+"Cheats are not enabled on this server, so you may not use this command while "
+"on a team"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:554
+msgid "Join a team first"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:561
+msgid "You can only use this command when spectating"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:567
+msgid "Must be alien to use this command"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:573
+msgid "Must be human to use this command"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:579
+msgid "Must be living to use this command"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:587
+msgid ""
+"There is no room to build here. Move until the structure turns translucent "
+"green, indicating a valid build location."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:589
+msgid "There is no room to build here"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:594
+msgid ""
+"Cannot build on this surface. The surface is too steep or unsuitable for "
+"building. Please choose another site for this structure."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:597
+msgid "Cannot build on this surface"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:603
+msgid "You cannot build that structure"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:609
+msgid ""
+"This action would remove your team's last spawn point, which often quickly "
+"results in a loss. Try building more spawns."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:612
+msgid "You may not deconstruct the last spawn"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:616
+msgid ""
+"Neither team has prevailed after a certain time and the game has entered "
+"Sudden Death. During Sudden Death building is not allowed."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:619
+msgid "Cannot build during Sudden Death"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:624
+msgid ""
+"Your teammates have lost faith in your ability to build for the team. You "
+"will not be allowed to build until your team votes to reinstate your "
+"building rights."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:627
+msgid "Your building rights have been revoked"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:632
+msgid ""
+"Your team has decided to admit defeat and concede the game:traitors and "
+"cowards are not allowed to build."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:635
+msgid "Building is denied to traitorous cowards"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:642
+msgid ""
+"There is no power remaining. Free up power by marking existing buildable "
+"objects."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:645
+msgid ""
+"There is no power remaining. Free up power by deconstructing existing "
+"buildable objects."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:647
+msgid "There is no power remaining"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:652
+msgid ""
+"This buildable is not powered. Build a Reactor and/or Repeater in order to "
+"power it."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:654
+msgid "This buildable is not powered"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:659
+msgid ""
+"There can only be one Reactor. Deconstruct the existing one if you wish to "
+"move it."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:661
+msgid "There can only be one Reactor"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:666
+msgid ""
+"There is no power here. If available, a Repeater may be used to transmit "
+"power to this location."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:668
+msgid "There is no power here"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:673
+msgid ""
+"There is no Defense Computer. A Defense Computer is needed to build this."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:675
+msgid "There is no Defense Computer"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:680
+msgid "This area already has power. A Repeater is not required here."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:681
+msgid "This area already has power"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:686
+msgid ""
+"You have no room to carry this. Please sell any conflicting upgrades before "
+"purchasing this item."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:688
+msgid "You have no room to carry this"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:693
+msgid ""
+"Insufficient funds. You do not have enough credits to perform this action."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:695
+msgid "Insufficient funds"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:700
+msgid ""
+"You already hold this item. It is not possible to carry multiple items of "
+"the same type."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:702
+msgid "You already hold this item"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:707
+msgid ""
+"You must be near a powered Armoury in order to purchase weapons, upgrades or "
+"ammunition."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:709
+msgid "You must be near a powered Armoury"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:714
+msgid ""
+"You must be near a Reactor or a powered Armoury or Repeater in order to "
+"purchase energy ammunition."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:716
+msgid "You must be near a Reactor or a powered Armoury or Repeater"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:721
+msgid ""
+"There is not enough room here to put on a Battle Suit. Make sure you have "
+"enough head room to climb in."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:723
+msgid "Not enough room here to put on a Battle Suit"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:728
+msgid ""
+"There is not enough room here to take off your Battle Suit. Make sure you "
+"have enough head room to climb out."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:730
+msgid "Not enough room here to take off your Battle Suit"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:735
+msgid ""
+"You are not allowed to buy or sell weapons until your build timer has "
+"expired."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:737
+msgid "You can not buy or sell weapons until your build timer expires"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:743
+msgid "You must be dead to use the class command"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:748
+msgid "Unknown starting item"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:755
+msgid ""
+"There is no creep here. You must build near existing Eggs or the Overmind. "
+"Alien structures will not support themselves."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:757
+msgid "There is no creep here"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:762
+msgid ""
+"There is no Overmind. An Overmind must be built to control the structure you "
+"tried to place."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:764 src/cgame/cg_servercmds.c:799
+msgid "There is no Overmind"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:769
+msgid ""
+"There can only be one Overmind. Deconstruct the existing one if you wish to "
+"move it."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:771
+msgid "There can only be one Overmind"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:776
+msgid ""
+"The Overmind cannot control any more structures. Deconstruct existing "
+"structures to build more."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:778
+msgid "The Overmind cannot control any more structures"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:783
+msgid ""
+"There is no room to evolve here. Move away from walls or other nearby "
+"objects and try again."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:785
+msgid "There is no room to evolve here"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:790
+msgid ""
+"This location is too close to the enemy to evolve. Move away from the "
+"enemy's presence and try again."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:792
+msgid "This location is too close to the enemy to evolve"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:797
+msgid ""
+"There is no Overmind. An Overmind must be built to allow you to upgrade."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:804
+msgid "You cannot evolve until your build timer has expired."
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:805
+msgid "You cannot evolve until your build timer expires"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:819
+#, possible-c-format
+msgid "You cannot evolve into a %s"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:825
+msgid "You cannot evolve while wallwalking"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:830
+msgid "Unknown class"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:835
+#, possible-c-format
+msgid "You cannot spawn as a %s"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:841
+#, possible-c-format
+msgid "The %s is not allowed"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:847
+#, possible-c-format
+msgid "The %s is not allowed at Stage %d"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:854
+#, possible-c-format
+msgid "cgame: debug: no such menu %d\n"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:986
+#, possible-c-format
+msgid "%sPrivate message from: "
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:1032
+#, possible-c-format
+msgid "[skipnotify]WARNING: could not find voice \"%s\"\n"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:1038
+#, possible-c-format
+msgid "[skipnotify]WARNING: could not find command %d in voice \"%s\"\n"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:1045
+#, possible-c-format
+msgid ""
+"[skipnotify]WARNING: could not find track %d for command %d in voice \"%s\"\n"
+msgstr ""
+
+#: src/cgame/cg_servercmds.c:1295
+#, possible-c-format
+msgid "Unknown client game command: %s\n"
+msgstr ""
+
+#: src/cgame/cg_snapshot.c:137
+msgid "CG_TransitionSnapshot: NULL cg.snap"
+msgstr ""
+
+#: src/cgame/cg_snapshot.c:140
+msgid "CG_TransitionSnapshot: NULL cg.nextSnap"
+msgstr ""
+
+#: src/cgame/cg_snapshot.c:262
+#, possible-c-format
+msgid "WARNING: CG_ReadNextSnapshot: way out of range, %i > %i"
+msgstr ""
+
+#: src/cgame/cg_snapshot.c:340
+msgid "CG_ProcessSnapshots: n < cg.latestSnapshotNum"
+msgstr ""
+
+#: src/cgame/cg_snapshot.c:384
+msgid "CG_ProcessSnapshots: Server time went backwards"
+msgstr ""
+
+#: src/cgame/cg_snapshot.c:397
+msgid "CG_ProcessSnapshots: cg.snap == NULL"
+msgstr ""
+
+#: src/cgame/cg_snapshot.c:406
+msgid "CG_ProcessSnapshots: cg.nextSnap->serverTime <= cg.time"
+msgstr ""
+
+#: src/cgame/cg_trails.c:715
+msgid "WARNING: too many segments in trail beam\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:873
+#, possible-c-format
+msgid "ERROR: unknown textureType clamp \"%s\"\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:885
+#, possible-c-format
+msgid "ERROR: unknown textureType \"%s\"\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:901
+msgid "ERROR: too many jitters\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:931
+#, possible-c-format
+msgid "ERROR: unknown token '%s' in trail beam\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:986
+msgid "ERROR: failed to parse trail beam\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:992
+#, possible-c-format
+msgid "ERROR: trail system has > %d beams\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:997
+#, possible-c-format
+msgid "ERROR: maximum number of trail beams (%d) reached\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1026
+#, possible-c-format
+msgid "Parsed trail system %s\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1032
+#, possible-c-format
+msgid "ERROR: unknown token '%s' in trail system %s\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1066
+#, possible-c-format
+msgid "ERROR: trail file %s is %s\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1095
+#, possible-c-format
+msgid "ERROR: a trail system is already named %s\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1104
+#, possible-c-format
+msgid "ERROR: %s: failed to parse trail system %s\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1113
+#, possible-c-format
+msgid "ERROR: maximum number of trail systems (%d) reached\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1124
+msgid "ERROR: unamed trail system\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1136
+msgid "ERROR: trail system already named\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1220
+#, possible-c-format
+msgid "Registered trail system %s\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1229
+#, possible-c-format
+msgid "ERROR: failed to register trail system %s\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1263
+#, possible-c-format
+msgid "TB %s created\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1270
+msgid "MAX_TRAIL_BEAMS\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1291
+msgid "ERROR: a trail system has not been registered yet\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1314
+#, possible-c-format
+msgid "TS %s created\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1321
+msgid "MAX_TRAIL_SYSTEMS\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1435
+#, possible-c-format
+msgid "TS %s expired (born %d, lives %d, now %d)\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1441
+#, possible-c-format
+msgid "TS %s garbage collected\n"
+msgstr ""
+
+#: src/cgame/cg_trails.c:1482
+#, possible-c-format
+msgid "TS: %d  TB: %d\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:117
+msgid " or "
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:124
+#, possible-c-format
+msgid "^K^E^Y^7%s or %s"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:128
+#, possible-c-format
+msgid "^K^E^Y^7%s"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:133
+#, possible-c-format
+msgid "\"%s\" (unbound)"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:191 src/cgame/cg_tutorial.c:367
+#, possible-c-format
+msgid "Press %s to place the %s\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:196 src/cgame/cg_tutorial.c:372
+#, possible-c-format
+msgid "Press %s to cancel placing the %s\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:203 src/cgame/cg_tutorial.c:379
+#, possible-c-format
+msgid "Press %s to build a structure\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:214 src/cgame/cg_tutorial.c:390
+#, possible-c-format
+msgid "Press %s to unmark this structure\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:220 src/cgame/cg_tutorial.c:396
+#, possible-c-format
+msgid "Press %s to mark this structure\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:227 src/cgame/cg_tutorial.c:403
+#, possible-c-format
+msgid "Press %s to destroy this structure\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:235 src/cgame/cg_tutorial.c:277
+#: src/cgame/cg_tutorial.c:346
+#, possible-c-format
+msgid "Press %s to swipe\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:242 src/cgame/cg_tutorial.c:329
+#, possible-c-format
+msgid "Press %s to launch a projectile\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:246 src/cgame/cg_tutorial.c:262
+#: src/cgame/cg_tutorial.c:288
+#, possible-c-format
+msgid "Press %s to walk on walls\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:259
+msgid "Touch humans to damage them\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:274
+msgid "Touch humans to grab them\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:283
+#, possible-c-format
+msgid "Press %s to spray poisonous gas\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:300 src/cgame/cg_tutorial.c:323
+#, possible-c-format
+msgid "Press %s to bite\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:306
+#, possible-c-format
+msgid "Press %s to invoke an electrical attack\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:311
+#, possible-c-format
+msgid "Hold down %s then touch a wall to wall jump\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:334
+#, possible-c-format
+msgid "Hold down and release %s to pounce\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:350
+#, possible-c-format
+msgid "Hold down and release %s to trample\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:437
+#, possible-c-format
+msgid "Find an Armoury and press %s for more ammo\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:446
+#, possible-c-format
+msgid "Find a Reactor or Repeater and press %s for more ammo\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:466 src/cgame/cg_tutorial.c:473
+#: src/cgame/cg_tutorial.c:495
+#, possible-c-format
+msgid "Press %s to fire the %s\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:478
+#, possible-c-format
+msgid "Hold %s to zoom\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:484
+#, possible-c-format
+msgid "Hold %s to activate the %s\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:491
+#, possible-c-format
+msgid "Hold and release %s to fire a charged shot\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:510
+#, possible-c-format
+msgid "Press %s and "
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:513
+#, possible-c-format
+msgid "%s to select an upgrade\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:520
+#, possible-c-format
+msgid "Press %s to use the %s\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:529
+#, possible-c-format
+msgid "Press %s to use your %s\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:537
+msgid "You are blacking out. Stop sprinting to recover stamina.\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:542
+msgid "Your stamina is low. Stop sprinting to recover.\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:548
+#, possible-c-format
+msgid "Press %s to use this structure\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:553
+#, possible-c-format
+msgid "Press %s and any direction to sprint\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:557
+#, possible-c-format
+msgid "Press %s and back or strafe to dodge\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:572
+#, possible-c-format
+msgid "Press %s to leave spawn queue\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:576
+#, possible-c-format
+msgid "Press %s to spawn\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:582
+#, possible-c-format
+msgid "Press %s to join a team\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:590
+#, possible-c-format
+msgid "Press %s to switch to chase-cam spectator mode\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:594
+#, possible-c-format
+msgid "Press %s to return to free spectator mode\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:598
+#, possible-c-format
+msgid "Press %s or "
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:601
+#, possible-c-format
+msgid "%s to change player\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:607
+#, possible-c-format
+msgid "Press %s to follow a player\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:684
+#, possible-c-format
+msgid "Press %s to evolve\n"
+msgstr ""
+
+#: src/cgame/cg_tutorial.c:690
+msgid "Press ESC for the menu"
+msgstr ""
+
+#: src/cgame/cg_view.c:101 src/cgame/cg_view.c:180
+msgid "Can't register model\n"
+msgstr ""
+
+#: src/cgame/cg_view.c:1500
+#, possible-c-format
+msgid "cg.clientFrame:%i\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:53
+#, possible-c-format
+msgid "Couldn't find upgrade %i"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:213
+#, possible-c-format
+msgid "ERROR: missile model not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:239
+#, possible-c-format
+msgid "ERROR: missile sprite not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:298
+#, possible-c-format
+msgid "ERROR: missile particle system not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:311
+#, possible-c-format
+msgid "ERROR: missile trail system not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:324
+#, possible-c-format
+msgid "ERROR: muzzle particle system not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:337
+#, possible-c-format
+msgid "ERROR: impact particle system not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:362
+#, possible-c-format
+msgid "ERROR: impact mark shader not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:514
+#, possible-c-format
+msgid "ERROR: unknown token '%s' in weapon section\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:573
+msgid "ERROR: weapon mode section started without a declaration\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:578
+msgid "ERROR: failed to parse weapon mode section\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:613
+#, possible-c-format
+msgid "ERROR: weapon model not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:644
+#, possible-c-format
+msgid "ERROR: 3rd person weapon model not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:679
+#, possible-c-format
+msgid "ERROR: weapon icon not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:704
+#, possible-c-format
+msgid "ERROR: weapon crosshair not found %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:715
+#, possible-c-format
+msgid "ERROR: unknown token '%s'\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:746
+#, possible-c-format
+msgid "Couldn't find weapon %i"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:753 src/cgame/cg_weapons.c:758
+#, possible-c-format
+msgid "ERROR: failed to parse %s\n"
+msgstr ""
+
+#: src/cgame/cg_weapons.c:1701
+msgid "CG_FireWeapon: ent->weapon >= WP_NUM_WEAPONS"
+msgstr ""
+
+#: src/client/cl_avi.c:85
+msgid "Failed to write avi file\n"
+msgstr ""
+
+#: src/client/cl_avi.c:145
+msgid "ERROR: Top of chunkstack breached\n"
+msgstr ""
+
+#: src/client/cl_avi.c:165
+msgid "ERROR: Bottom of chunkstack breached\n"
+msgstr ""
+
+#: src/client/cl_avi.c:387
+#, possible-c-format
+msgid ""
+"WARNING: cl_aviFrameRate is not a divisor of the audio rate, suggest %d\n"
+msgstr ""
+
+#: src/client/cl_avi.c:399
+#, possible-c-format
+msgid "WARNING: Audio format of %d bit/%d channels not supported"
+msgstr ""
+
+#: src/client/cl_avi.c:409
+msgid ""
+"WARNING: Audio capture is not supported with OpenAL. Set s_useOpenAL to 0 "
+"for audio capture\n"
+msgstr ""
+
+#: src/client/cl_avi.c:531
+msgid "WARNING: Audio capture buffer overflow -- truncating\n"
+msgstr ""
+
+#: src/client/cl_avi.c:658
+#, possible-c-format
+msgid "Wrote %d:%d frames to %s\n"
+msgstr ""
+
+#: src/client/cl_cgame.c:151
+#, possible-c-format
+msgid "CL_GetSnapshot: truncated %i entities to %i\n"
+msgstr ""
+
+#: src/client/cl_cgame.c:239 src/client/cl_parse.c:494
+msgid "MAX_GAMESTATE_CHARS exceeded"
+msgstr ""
+
+#: src/client/cl_cgame.c:275
+msgid "CL_GetServerCommand: a reliable command was cycled out"
+msgstr ""
+
+#: src/client/cl_cgame.c:280
+msgid "CL_GetServerCommand: requested a command not received"
+msgstr ""
+
+#: src/client/cl_cgame.c:298
+#, possible-c-format
+msgid "Server disconnected - %s"
+msgstr ""
+
+#: src/client/cl_cgame.c:300
+msgid "Server disconnected\n"
+msgstr ""
+
+#: src/client/cl_cgame.c:311 src/client/cl_cgame.c:320
+msgid "bcs exceeded BIG_INFO_STRING"
+msgstr ""
+
+#: src/client/cl_cgame.c:746
+#, possible-c-format
+msgid "Bad cgame system trap: %ld"
+msgstr ""
+
+#: src/client/cl_cgame.c:785
+msgid "VM_Create on cgame failed"
+msgstr ""
+
+#: src/client/cl_cgame.c:804
+#, possible-c-format
+msgid "CL_InitCGame: %5.2f seconds\n"
+msgstr ""
+
+#: src/client/cl_cgame.c:970
+#, possible-c-format
+msgid "Mumble: Linking to Mumble application %s\n"
+msgstr ""
+
+#: src/client/cl_cin.c:160
+msgid "CIN_HandleForVideo: none free"
+msgstr ""
+
+#: src/client/cl_cin.c:1007
+msgid "HACK: approxmimating cinematic for Rage Pro or Voodoo\n"
+msgstr ""
+
+#: src/client/cl_cin.c:1274
+msgid "finished cinematic\n"
+msgstr ""
+
+#: src/client/cl_console.c:115
+msgid "usage: condump <filename>\n"
+msgstr ""
+
+#: src/client/cl_console.c:119
+#, possible-c-format
+msgid "Dumped console text to %s.\n"
+msgstr ""
+
+#: src/client/cl_console.c:124 src/client/cl_main.c:698
+msgid "ERROR: couldn't open.\n"
+msgstr ""
+
+#: src/client/cl_curl.c:73
+#, possible-c-format
+msgid "Can't load symbol %s\n"
+msgstr ""
+
+#: src/client/cl_curl.c:79
+#, possible-c-format
+msgid "Loaded symbol %s (0x%p)\n"
+msgstr ""
+
+#: src/client/cl_curl.c:97
+#, possible-c-format
+msgid "Loading \"%s\"..."
+msgstr ""
+
+#: src/client/cl_curl.c:149
+msgid "FAIL One or more symbols not found\n"
+msgstr ""
+
+#: src/client/cl_curl.c:152
+msgid "OK\n"
+msgstr ""
+
+#: src/client/cl_curl.c:232
+#, possible-c-format
+msgid "URL: %s\n"
+msgstr ""
+
+#: src/client/cl_curl.c:260
+#, possible-c-format
+msgid "CL_cURL_BeginDownload: failed to open %s for writing\n"
+msgstr ""
+
+#: src/client/cl_curl.c:287
+msgid "CL_cURL_BeginDownload: qcurl_multi_init() failed\n"
+msgstr ""
+
+#: src/client/cl_curl.c:332
+#, possible-c-format
+msgid "Download Error: %s Code: %ld URL: %s"
+msgstr ""
+
+#: src/client/cl_input.c:97
+msgid "Three keys down for a button!\n"
+msgstr ""
+
+#: src/client/cl_input.c:392
+#, possible-c-format
+msgid "CL_JoystickEvent: bad axis %i"
+msgstr ""
+
+#: src/client/cl_keys.c:888
+msgid "unbind <key> : remove commands from a key\n"
+msgstr ""
+
+#: src/client/cl_keys.c:895 src/client/cl_keys.c:937
+#, possible-c-format
+msgid "\"%s\" isn't a valid key\n"
+msgstr ""
+
+#: src/client/cl_keys.c:931
+msgid "bind <key> [command] : attach a command to a key\n"
+msgstr ""
+
+#: src/client/cl_keys.c:946
+#, possible-c-format
+msgid "\"%s\" is not bound\n"
+msgstr ""
+
+#: src/client/cl_keys.c:1373 src/client/cl_keys.c:1420
+#, possible-c-format
+msgid "Couldn't read %s.\n"
+msgstr ""
+
+#: src/client/cl_keys.c:1401
+msgid "WARNING: probable corrupt history\n"
+msgstr ""
+
+#: src/client/cl_keys.c:1473 src/client/cl_keys.c:1478
+#, possible-c-format
+msgid "Couldn't write %s.\n"
+msgstr ""
+
+#: src/client/cl_main.c:202 src/client/cl_main.c:301
+msgid "VoIP: invalid player ID#\n"
+msgstr ""
+
+#: src/client/cl_main.c:214
+#, possible-c-format
+msgid "VoIP: player #%d gain now set to %f\n"
+msgstr ""
+
+#: src/client/cl_main.c:258
+#, possible-c-format
+msgid "WARNING: VoIP target %d is not a valid client number\n"
+msgstr ""
+
+#: src/client/cl_main.c:284
+#, possible-c-format
+msgid "VoIP: command ignored: %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:298
+#, possible-c-format
+msgid "VoIP: current gain for player #%d is %f\n"
+msgstr ""
+
+#: src/client/cl_main.c:304
+msgid "usage: voip gain <playerID#> [value]\n"
+msgstr ""
+
+#: src/client/cl_main.c:307
+msgid "VoIP: muting incoming voice\n"
+msgstr ""
+
+#: src/client/cl_main.c:311
+msgid "VoIP: unmuting incoming voice\n"
+msgstr ""
+
+#: src/client/cl_main.c:315
+msgid ""
+"usage: voip [un]ignore <playerID#>\n"
+"       voip [un]muteall\n"
+"       voip gain <playerID#> [value]\n"
+msgstr ""
+
+#: src/client/cl_main.c:474
+#, possible-c-format
+msgid "VoIP: Send %d frames, %d bytes, %f power\n"
+msgstr ""
+
+#: src/client/cl_main.c:529
+msgid "Client command overflow"
+msgstr ""
+
+#: src/client/cl_main.c:596
+msgid "Not recording a demo.\n"
+msgstr ""
+
+#: src/client/cl_main.c:608
+msgid "Stopped demo.\n"
+msgstr ""
+
+#: src/client/cl_main.c:661
+msgid "Already recording.\n"
+msgstr ""
+
+#: src/client/cl_main.c:667
+msgid "You must be in a level to record.\n"
+msgstr ""
+
+#: src/client/cl_main.c:673
+msgid ""
+"WARNING: You should set 'g_synchronousClients 1' for smoother demo "
+"recording\n"
+msgstr ""
+
+#: src/client/cl_main.c:695
+#, possible-c-format
+msgid "recording to %s.\n"
+msgstr ""
+
+#: src/client/cl_main.c:863
+#, possible-c-format
+msgid "Couldn't open %s for writing\n"
+msgstr ""
+
+#: src/client/cl_main.c:917
+msgid "Demo file was truncated.\n"
+msgstr ""
+
+#: src/client/cl_main.c:1015
+#, possible-c-format
+msgid "Protocol %d not supported for demos\n"
+msgstr ""
+
+#: src/client/cl_main.c:1025
+#, possible-c-format
+msgid "couldn't open %s"
+msgstr ""
+
+#: src/client/cl_main.c:1302
+msgid "Mumble: Unlinking from Mumble application\n"
+msgstr ""
+
+#: src/client/cl_main.c:1402
+#, possible-c-format
+msgid "Unknown command \"%s"
+msgstr ""
+
+#: src/client/cl_main.c:1425
+#, possible-c-format
+msgid "Resolving %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:1431
+msgid "Couldn't resolve master address\n"
+msgstr ""
+
+#: src/client/cl_main.c:1440 src/client/cl_main.c:1573
+#, possible-c-format
+msgid "%s resolved to %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:1470 src/client/cl_main.c:1818
+msgid "Not connected to a server.\n"
+msgstr ""
+
+#: src/client/cl_main.c:1489
+msgid "Disconnected from server"
+msgstr ""
+
+#: src/client/cl_main.c:1502
+msgid "Can't reconnect to localhost.\n"
+msgstr ""
+
+#: src/client/cl_main.c:1535 src/client/cl_main.c:4193
+#: src/client/cl_main.c:4359
+msgid "warning: only -4 or -6 as address type understood.\n"
+msgstr ""
+
+#: src/client/cl_main.c:1563
+msgid "Bad server address\n"
+msgstr ""
+
+#: src/client/cl_main.c:1632
+msgid ""
+"You must set 'rconpassword' before\n"
+"issuing an rcon command.\n"
+msgstr ""
+
+#: src/client/cl_main.c:1655
+msgid ""
+"You must either be connected,\n"
+"or set the 'rconAddress' cvar\n"
+"to issue rcon commands\n"
+msgstr ""
+
+#: src/client/cl_main.c:1796
+#, possible-c-format
+msgid "Opened PK3 Names: %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:1805
+#, possible-c-format
+msgid "Referenced PK3 Names: %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:1837
+msgid "--------- Client Information ---------\n"
+msgstr ""
+
+#: src/client/cl_main.c:1838
+#, possible-c-format
+msgid "state: %i\n"
+msgstr ""
+
+#: src/client/cl_main.c:1839
+#, possible-c-format
+msgid "Server: %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:1840
+msgid "User info settings:\n"
+msgstr ""
+
+#: src/client/cl_main.c:1842
+msgid "--------------------------------------\n"
+msgstr ""
+
+#: src/client/cl_main.c:1856
+msgid "Downloads complete\n"
+msgstr ""
+
+#: src/client/cl_main.c:1934
+#, possible-c-format
+msgid ""
+"***** CL_BeginDownload *****\n"
+"Localname: %s\n"
+"Remotename: %s\n"
+"****************************\n"
+msgstr ""
+
+#: src/client/cl_main.c:1978
+#, possible-c-format
+msgid "Incorrect checksum for file: %s"
+msgstr ""
+
+#: src/client/cl_main.c:2096
+#, possible-c-format
+msgid "Trying CURL download: %s; %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:2098
+#, possible-c-format
+msgid ""
+"WARNING: server does not allow download redirection (sv_allowDownload is "
+"%d)\n"
+msgstr ""
+
+#: src/client/cl_main.c:2104
+msgid ""
+"WARNING: server allows download redirection, but does not have sv_dlURL set\n"
+msgstr ""
+
+#: src/client/cl_main.c:2109
+msgid "WARNING: could not load cURL library\n"
+msgstr ""
+
+#: src/client/cl_main.c:2119
+#, possible-c-format
+msgid ""
+"WARNING: server allows download redirection, but it disabled by client "
+"configuration (cl_allowDownload is %d)\n"
+msgstr ""
+
+#: src/client/cl_main.c:2126
+#, possible-c-format
+msgid "Trying UDP download: %s; %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:2132
+#, possible-c-format
+msgid ""
+"Automatic downloads are disabled on your client (cl_allowDownload is %d). "
+"You can enable automatic downloads in the Options menu."
+msgstr ""
+
+#: src/client/cl_main.c:2140
+msgid "WARNING: UDP downloads are disabled.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2169
+#, possible-c-format
+msgid "Need paks: %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:2283 src/client/cl_main.c:2284
+msgid "Server disconnected for unknown reason\n"
+msgstr ""
+
+#: src/client/cl_main.c:2300
+msgid "MOTD packet from unexpected source\n"
+msgstr ""
+
+#: src/client/cl_main.c:2311
+#, possible-c-format
+msgid "MOTD packet mismatched challenge: '%s' != '%s'\n"
+msgstr ""
+
+#: src/client/cl_main.c:2377
+msgid "Master changed its mind about packet count!\n"
+msgstr ""
+
+#: src/client/cl_main.c:2410
+msgid "Warning: CL_GSRFeaturedLabel: overflow\n"
+msgstr ""
+
+#: src/client/cl_main.c:2470
+#, possible-c-format
+msgid "CL_ServersResponsePacket: received packet %d again, ignoring\n"
+msgstr ""
+
+#: src/client/cl_main.c:2477
+#, possible-c-format
+msgid "CL_ServersResponsePacket: packet %d of %d\n"
+msgstr ""
+
+#: src/client/cl_main.c:2561
+#, possible-c-format
+msgid "%d servers parsed (total %d)\n"
+msgstr ""
+
+#: src/client/cl_main.c:2591
+msgid "Unwanted challenge response received.  Ignored.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2605
+msgid "Challenge response received from unexpected source. Ignored.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2626
+msgid "Dup connect received.  Ignored.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2630
+msgid "connectResponse packet while not connecting. Ignored.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2634
+msgid "connectResponse from wrong address. Ignored.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2699
+msgid "Unknown connectionless packet command.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2725
+#, possible-c-format
+msgid "%s: Runt packet\n"
+msgstr ""
+
+#: src/client/cl_main.c:2733
+#, possible-c-format
+msgid "%s:sequenced packet without connection\n"
+msgstr ""
+
+#: src/client/cl_main.c:2777
+msgid ""
+"\n"
+"Server connection timed out.\n"
+msgstr ""
+
+#: src/client/cl_main.c:2843
+#, possible-c-format
+msgid "Download prompt returned %d\n"
+msgstr ""
+
+#: src/client/cl_main.c:2853
+msgid "WARNING: UI VM does not support download prompt\n"
+msgstr ""
+
+#: src/client/cl_main.c:3117
+msgid "----- Initializing Renderer ----\n"
+msgstr ""
+
+#: src/client/cl_main.c:3162
+msgid "-------------------------------\n"
+msgstr ""
+
+#: src/client/cl_main.c:3165
+msgid "Couldn't initialize refresh"
+msgstr ""
+
+#: src/client/cl_main.c:3188
+#, possible-c-format
+msgid "model is set to %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:3211
+msgid "The video command can only be used when playing back demos\n"
+msgstr ""
+
+#: src/client/cl_main.c:3246
+msgid "ERROR: no free file names to create video\n"
+msgstr ""
+
+#: src/client/cl_main.c:3281
+msgid "QKEY found.\n"
+msgstr ""
+
+#: src/client/cl_main.c:3286
+#, possible-c-format
+msgid "QKEY file size != %d, regenerating\n"
+msgstr ""
+
+#: src/client/cl_main.c:3290
+msgid "QKEY building random string\n"
+msgstr ""
+
+#: src/client/cl_main.c:3295
+#, possible-c-format
+msgid "QKEY could not open %s for write\n"
+msgstr ""
+
+#: src/client/cl_main.c:3301
+msgid "QKEY generated\n"
+msgstr ""
+
+#: src/client/cl_main.c:3311
+msgid "----- Client Initialization -----\n"
+msgstr ""
+
+#: src/client/cl_main.c:3446
+msgid "Your network rate is too slow for VoIP.\n"
+msgstr ""
+
+#: src/client/cl_main.c:3447
+msgid ""
+"Set 'Data Rate' to 'LAN/Cable/xDSL' in 'Setup/System/Network' and restart.\n"
+msgstr ""
+
+#: src/client/cl_main.c:3448
+msgid "Until then, VoIP is disabled.\n"
+msgstr ""
+
+#: src/client/cl_main.c:3499
+msgid "----- Client Initialization Complete -----\n"
+msgstr ""
+
+#: src/client/cl_main.c:3516
+msgid "----- CL_Shutdown -----\n"
+msgstr ""
+
+#: src/client/cl_main.c:3519
+msgid "WARNING: Recursive shutdown\n"
+msgstr ""
+
+#: src/client/cl_main.c:3559
+msgid "-----------------------\n"
+msgstr ""
+
+#: src/client/cl_main.c:3619
+#, possible-c-format
+msgid "Different protocol info packet: %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:3630
+#, possible-c-format
+msgid "ping time %dms from %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:3675
+msgid "MAX_OTHER_SERVERS hit, dropping infoResponse\n"
+msgstr ""
+
+#: src/client/cl_main.c:3830
+msgid "Server settings:\n"
+msgstr ""
+
+#: src/client/cl_main.c:3861
+msgid ""
+"\n"
+"Players:\n"
+msgstr ""
+
+#: src/client/cl_main.c:3862
+msgid "num: score: ping: name:\n"
+msgstr ""
+
+#: src/client/cl_main.c:3903
+msgid "Scanning for servers on the local network...\n"
+msgstr ""
+
+#: src/client/cl_main.c:3949
+msgid "usage: globalservers <master# 0-4> <protocol> [keywords]\n"
+msgstr ""
+
+#: src/client/cl_main.c:3958
+msgid "CL_GlobalServers_f: Error: No master server address given.\n"
+msgstr ""
+
+#: src/client/cl_main.c:3969
+#, possible-c-format
+msgid "CL_GlobalServers_f: Error: could not resolve address of master %s\n"
+msgstr ""
+
+#: src/client/cl_main.c:3975
+#, possible-c-format
+msgid "Requesting servers from master %s...\n"
+msgstr ""
+
+#: src/client/cl_parse.c:124
+msgid "CL_ParsePacketEntities: end of message"
+msgstr ""
+
+#: src/client/cl_parse.c:252
+msgid "Delta from invalid frame (not supposed to happen!).\n"
+msgstr ""
+
+#: src/client/cl_parse.c:256
+msgid "Delta frame too old.\n"
+msgstr ""
+
+#: src/client/cl_parse.c:258
+msgid "Delta parseEntitiesNum too old.\n"
+msgstr ""
+
+#: src/client/cl_parse.c:269
+#, possible-c-format
+msgid "CL_ParseSnapshot: Invalid size %d for areamask."
+msgstr ""
+
+#: src/client/cl_parse.c:404
+#, possible-c-format
+msgid "WARNING: Server sent invalid fs_game value %s\n"
+msgstr ""
+
+#: src/client/cl_parse.c:418
+#, possible-c-format
+msgid "WARNING: server is not allowed to set %s=%s\n"
+msgstr ""
+
+#: src/client/cl_parse.c:488
+msgid "configstring > MAX_CONFIGSTRINGS"
+msgstr ""
+
+#: src/client/cl_parse.c:504
+#, possible-c-format
+msgid "Baseline number out of range: %i"
+msgstr ""
+
+#: src/client/cl_parse.c:510
+msgid "CL_ParseGamestate: bad command byte"
+msgstr ""
+
+#: src/client/cl_parse.c:555
+msgid "Server sending download, but no download was requested\n"
+msgstr ""
+
+#: src/client/cl_parse.c:580
+#, possible-c-format
+msgid "CL_ParseDownload: Invalid size %d for download chunk."
+msgstr ""
+
+#: src/client/cl_parse.c:587
+#, possible-c-format
+msgid "CL_ParseDownload: Expected block %d, got %d\n"
+msgstr ""
+
+#: src/client/cl_parse.c:597
+#, possible-c-format
+msgid "Could not create %s\n"
+msgstr ""
+
+#: src/client/cl_parse.c:676
+#, possible-c-format
+msgid "VoIP: %d-byte packet from client %d\n"
+msgstr ""
+
+#: src/client/cl_parse.c:714
+msgid "VoIP: packet accepted!\n"
+msgstr ""
+
+#: src/client/cl_parse.c:718
+#, possible-c-format
+msgid "VoIP: new generation %d!\n"
+msgstr ""
+
+#: src/client/cl_parse.c:724
+#, possible-c-format
+msgid "VoIP: misordered sequence! %d < %d!\n"
+msgstr ""
+
+#: src/client/cl_parse.c:731
+#, possible-c-format
+msgid "VoIP: Dropped way too many (%d) frames from client #%d\n"
+msgstr ""
+
+#: src/client/cl_parse.c:738
+#, possible-c-format
+msgid "VoIP: Dropped %d frames from client #%d\n"
+msgstr ""
+
+#: src/client/cl_parse.c:752
+msgid "VoIP: Short packet!\n"
+msgstr ""
+
+#: src/client/cl_parse.c:759 src/client/cl_parse.c:782
+#, possible-c-format
+msgid "VoIP: playback %d bytes, %d samples, %d frames\n"
+msgstr ""
+
+#: src/client/cl_parse.c:833
+msgid "------------------\n"
+msgstr ""
+
+#: src/client/cl_parse.c:850
+msgid "CL_ParseServerMessage: read past end of server message"
+msgstr ""
+
+#: src/client/cl_parse.c:885
+msgid "CL_ParseServerMessage: Illegible server message\n"
+msgstr ""
+
+#: src/client/cl_scrn.c:481
+msgid "SCR_DrawScreenField: bad cls.state"
+msgstr ""
+
+#: src/client/cl_scrn.c:544
+msgid "SCR_UpdateScreen: recursively called"
+msgstr ""
+
+#: src/client/cl_ui.c:99
+msgid "^1Error: Could not load cURL library"
+msgstr ""
+
+#: src/client/cl_ui.c:763
+#, possible-c-format
+msgid "turning EXEC_NOW '%.11s' into EXEC_INSERT\n"
+msgstr ""
+
+#: src/client/cl_ui.c:1050
+#, possible-c-format
+msgid "Bad UI system trap: %ld"
+msgstr ""
+
+#: src/client/cl_ui.c:1094
+msgid "Failed to find a valid UI vm. The following paths were searched:\n"
+msgstr ""
+
+#: src/client/cl_ui.c:1096
+msgid "VM_Create on UI failed"
+msgstr ""
+
+#: src/client/cl_ui.c:1106
+#, possible-c-format
+msgid "User Interface is version %d, expected %d"
+msgstr ""
+
+#: src/client/qal.c:129
+#, possible-c-format
+msgid " Can't load symbol %s\n"
+msgstr ""
+
+#: src/client/qal.c:135
+#, possible-c-format
+msgid " Loaded symbol %s (%p)\n"
+msgstr ""
+
+#: src/client/qal.c:150
+#, possible-c-format
+msgid "Loading \"%s\"...\n"
+msgstr ""
+
+#: src/client/qal.c:249
+msgid " One or more symbols not found\n"
+msgstr ""
+
+#: src/client/snd_codec.c:148 src/client/snd_codec.c:171
+#, possible-c-format
+msgid "Unknown extension for %s\n"
+msgstr ""
+
+#: src/client/snd_codec.c:209
+#, possible-c-format
+msgid "Can't read sound file %s\n"
+msgstr ""
+
+#: src/client/snd_codec_wav.c:71
+msgid "WARNING: Negative chunk length\n"
+msgstr ""
+
+#: src/client/snd_codec_wav.c:145
+msgid "ERROR: Couldn't find \"fmt\" chunk\n"
+msgstr ""
+
+#: src/client/snd_codec_wav.c:159
+msgid "ERROR: Less than 8 bit sound is not supported\n"
+msgstr ""
+
+#: src/client/snd_codec_wav.c:176
+msgid "ERROR: Couldn't find \"data\" chunk\n"
+msgstr ""
+
+#: src/client/snd_codec_wav.c:209
+#, possible-c-format
+msgid "ERROR: Could not open \"%s\"\n"
+msgstr ""
+
+#: src/client/snd_codec_wav.c:218
+#, possible-c-format
+msgid "ERROR: Incorrect/unsupported format in \"%s\"\n"
+msgstr ""
+
+#: src/client/snd_codec_wav.c:228
+#, possible-c-format
+msgid "ERROR: Out of memory reading \"%s\"\n"
+msgstr ""
+
+#: src/client/snd_dma.c:99
+msgid "----- Sound Info -----\n"
+msgstr ""
+
+#: src/client/snd_dma.c:101
+msgid "sound system not started\n"
+msgstr ""
+
+#: src/client/snd_dma.c:103
+#, possible-c-format
+msgid "%5d stereo\n"
+msgstr ""
+
+#: src/client/snd_dma.c:104
+#, possible-c-format
+msgid "%5d samples\n"
+msgstr ""
+
+#: src/client/snd_dma.c:105
+#, possible-c-format
+msgid "%5d samplebits\n"
+msgstr ""
+
+#: src/client/snd_dma.c:106
+#, possible-c-format
+msgid "%5d submission_chunk\n"
+msgstr ""
+
+#: src/client/snd_dma.c:107
+#, possible-c-format
+msgid "%5d speed\n"
+msgstr ""
+
+#: src/client/snd_dma.c:108
+#, possible-c-format
+msgid "%p dma buffer\n"
+msgstr ""
+
+#: src/client/snd_dma.c:110
+#, possible-c-format
+msgid "Background file: %s\n"
+msgstr ""
+
+#: src/client/snd_dma.c:112
+msgid "No background file.\n"
+msgstr ""
+
+#: src/client/snd_dma.c:116
+msgid "----------------------\n"
+msgstr ""
+
+#: src/client/snd_dma.c:180
+#, possible-c-format
+msgid "Total resident: %i\n"
+msgstr ""
+
+#: src/client/snd_dma.c:217
+msgid "Channel memory manager started\n"
+msgstr ""
+
+#: src/client/snd_dma.c:263
+msgid "S_FindName: NULL\n"
+msgstr ""
+
+#: src/client/snd_dma.c:266
+msgid "S_FindName: empty name\n"
+msgstr ""
+
+#: src/client/snd_dma.c:270
+#, possible-c-format
+msgid "Sound name too long: %s"
+msgstr ""
+
+#: src/client/snd_dma.c:293
+msgid "S_FindName: out of sfx_t"
+msgstr ""
+
+#: src/client/snd_dma.c:357
+msgid "Sound name exceeds MAX_QPATH\n"
+msgstr ""
+
+#: src/client/snd_dma.c:364 src/client/snd_dma.c:376
+#, possible-c-format
+msgid "WARNING: could not find %s - using default\n"
+msgstr ""
+
+#: src/client/snd_dma.c:390
+#, possible-c-format
+msgid "S_Base_SoundDuration: handle %i out of range\n"
+msgstr ""
+
+#: src/client/snd_dma.c:512
+#, possible-c-format
+msgid "S_StartSound: bad entitynum %i"
+msgstr ""
+
+#: src/client/snd_dma.c:516
+#, possible-c-format
+msgid "S_StartSound: handle %i out of range\n"
+msgstr ""
+
+#: src/client/snd_dma.c:591
+msgid "dropping sound\n"
+msgstr ""
+
+#: src/client/snd_dma.c:629
+#, possible-c-format
+msgid "S_StartLocalSound: handle %i out of range\n"
+msgstr ""
+
+#: src/client/snd_dma.c:734
+#, possible-c-format
+msgid "S_AddLoopingSound: handle %i out of range\n"
+msgstr ""
+
+#: src/client/snd_dma.c:745 src/client/snd_dma.c:808
+#, possible-c-format
+msgid "%s has length 0"
+msgstr ""
+
+#: src/client/snd_dma.c:797
+#, possible-c-format
+msgid "S_AddRealLoopingSound: handle %i out of range\n"
+msgstr ""
+
+#: src/client/snd_dma.c:958
+#, possible-c-format
+msgid "S_Base_RawSamples: resetting minimum: %i < %i\n"
+msgstr ""
+
+#: src/client/snd_dma.c:1036
+#, possible-c-format
+msgid "S_Base_RawSamples: overflowed %i > %i\n"
+msgstr ""
+
+#: src/client/snd_dma.c:1051 src/client/snd_openal.c:1127
+#, possible-c-format
+msgid "S_UpdateEntityPosition: bad entitynum %i"
+msgstr ""
+
+#: src/client/snd_dma.c:1172
+#, possible-c-format
+msgid "----(%i)---- painted: %i\n"
+msgstr ""
+
+#: src/client/snd_dma.c:1219
+msgid "S_Update_ : overflow\n"
+msgstr ""
+
+#: src/client/snd_dma.c:1328
+#, possible-c-format
+msgid "S_StartBackgroundTrack( %s, %s )\n"
+msgstr ""
+
+#: src/client/snd_dma.c:1353
+#, possible-c-format
+msgid "WARNING: couldn't open music file %s\n"
+msgstr ""
+
+#: src/client/snd_dma.c:1358
+#, possible-c-format
+msgid "WARNING: music file %s is not 22k stereo\n"
+msgstr ""
+
+#: src/client/snd_dma.c:1464
+#, possible-c-format
+msgid "S_FreeOldestSound: freeing sound %s\n"
+msgstr ""
+
+#: src/client/snd_main.c:492
+msgid "------ Initializing Sound ------\n"
+msgstr ""
+
+#: src/client/snd_main.c:504
+msgid "Sound disabled.\n"
+msgstr ""
+
+#: src/client/snd_main.c:530
+msgid "Sound interface invalid."
+msgstr ""
+
+#: src/client/snd_main.c:534
+msgid "Sound initialization successful.\n"
+msgstr ""
+
+#: src/client/snd_main.c:536
+msgid "Sound initialization failed.\n"
+msgstr ""
+
+#: src/client/snd_main.c:540
+msgid "--------------------------------\n"
+msgstr ""
+
+#: src/client/snd_mem.c:101
+msgid "Sound memory manager started\n"
+msgstr ""
+
+#: src/client/snd_mem.c:221
+#, possible-c-format
+msgid "WARNING: %s is a 8 bit wav file\n"
+msgstr ""
+
+#: src/client/snd_mem.c:225
+#, possible-c-format
+msgid "WARNING: %s is not a 22kHz wav file\n"
+msgstr ""
+
+#: src/client/snd_mem.c:269
+#, possible-c-format
+msgid "%d bytes free sound buffer memory, %d total used\n"
+msgstr ""
+
+#: src/client/snd_openal.c:86
+msgid "No error"
+msgstr ""
+
+#: src/client/snd_openal.c:88
+msgid "Invalid name"
+msgstr ""
+
+#: src/client/snd_openal.c:90
+msgid "Invalid enumerator"
+msgstr ""
+
+#: src/client/snd_openal.c:92
+msgid "Invalid value"
+msgstr ""
+
+#: src/client/snd_openal.c:94
+msgid "Invalid operation"
+msgstr ""
+
+#: src/client/snd_openal.c:96
+msgid "Out of memory"
+msgstr ""
+
+#: src/client/snd_openal.c:98
+msgid "Unknown error"
+msgstr ""
+
+#: src/client/snd_openal.c:115
+#, possible-c-format
+msgid "WARNING: unhandled AL error: %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:174
+msgid "S_AL_BufferFindFree: No free sound handles"
+msgstr ""
+
+#: src/client/snd_openal.c:226
+#, possible-c-format
+msgid "Can't load default sound effect %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:228
+#, possible-c-format
+msgid "WARNING: Using default sound for %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:252
+#, possible-c-format
+msgid "ERROR: Can't delete sound buffer for %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:340
+#, possible-c-format
+msgid "ERROR: Can't create a sound buffer for %s - %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:365
+#, possible-c-format
+msgid "ERROR: Out of memory loading %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:379
+#, possible-c-format
+msgid "ERROR: Can't fill sound buffer for %s - %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:488
+#, possible-c-format
+msgid "ERROR: S_AL_SoundDuration: handle %i out of range\n"
+msgstr ""
+
+#: src/client/snd_openal.c:573
+#, possible-c-format
+msgid ""
+"WARNING: vector with one or more NaN components being passed to OpenAL at %s:"
+"%d -- zeroing\n"
+msgstr ""
+
+#: src/client/snd_openal.c:702
+#, possible-c-format
+msgid "Allocated %d sources.\n"
+msgstr ""
+
+#: src/client/snd_openal.c:727
+#, possible-c-format
+msgid "WARNING: Source %d is locked\n"
+msgstr ""
+
+#: src/client/snd_openal.c:813
+#, possible-c-format
+msgid "WARNING: Could not get time offset for alSource %d: %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:1141
+#, possible-c-format
+msgid "ERROR: S_AL_CheckInput: bad entitynum %i"
+msgstr ""
+
+#: src/client/snd_openal.c:1145
+#, possible-c-format
+msgid "ERROR: S_AL_CheckInput: handle %i out of range\n"
+msgstr ""
+
+#: src/client/snd_openal.c:1284
+#, possible-c-format
+msgid "WARNING: Failed to allocate source for loop sfx %d on entity %d\n"
+msgstr ""
+
+#: src/client/snd_openal.c:1487
+#, possible-c-format
+msgid "WARNING: Cannot get sample offset from source %d: %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:1687
+msgid "ERROR: Can't allocate streaming streamSource\n"
+msgstr ""
+
+#: src/client/snd_openal.c:1951
+#, possible-c-format
+msgid "ERROR: while buffering data for music stream - %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2059
+msgid "Restarted OpenAL music\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2283
+msgid "OpenAL info:\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2284
+#, possible-c-format
+msgid "  Vendor:     %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2285
+#, possible-c-format
+msgid "  Version:    %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2286
+#, possible-c-format
+msgid "  Renderer:   %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2287
+#, possible-c-format
+msgid "  AL Extensions: %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2288
+#, possible-c-format
+msgid "  ALC Extensions: %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2291
+#, possible-c-format
+msgid "  Device:     %s\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2292
+#, possible-c-format
+msgid ""
+"Available Devices:\n"
+"%s"
+msgstr ""
+
+#: src/client/snd_openal.c:2320
+msgid "OpenAL capture device closed.\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2374
+#, possible-c-format
+msgid "Failed to load library: \"%s\".\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2418
+#, possible-c-format
+msgid "Failed to open OpenAL device '%s', trying default.\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2425
+msgid "Failed to open OpenAL device.\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2435
+msgid "Failed to create OpenAL context.\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2456
+msgid ""
+"OpenAL capture support disabled by user ('+set s_alCapture 1' to enable)\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2461
+msgid "OpenAL capture support disabled for Mumble support\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2477
+msgid "No ALC_EXT_capture support, can't record audio.\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2485
+#, possible-c-format
+msgid "OpenAL default capture device is '%s'\n"
+msgstr ""
+
+#: src/client/snd_openal.c:2488
+#, possible-c-format
+msgid "OpenAL capture device %s.\n"
+msgstr ""
+
+#: src/sys/con_tty.c:288
+msgid "tty console mode disabled\n"
+msgstr ""
+
+#: src/sys/con_tty.c:419
+#, possible-c-format
+msgid "droping ISCTL sequence: %d, TTY_erase: %d\n"
+msgstr ""
+
+#: src/sys/sys_main.c:318
+#, possible-c-format
+msgid "Warning: %s"
+msgstr ""
+
+#: src/sys/sys_main.c:347
+msgid "Sys_UnloadDll(NULL)\n"
+msgstr ""
+
+#: src/sys/sys_main.c:367
+#, possible-c-format
+msgid "Sys_LoadDll(%s)... \n"
+msgstr ""
+
+#: src/sys/sys_main.c:372
+#, possible-c-format
+msgid ""
+"Sys_LoadDll(%s) failed:\n"
+"\"%s\"\n"
+msgstr ""
+
+#: src/sys/sys_main.c:376
+#, possible-c-format
+msgid "Sys_LoadDll(%s): succeeded ...\n"
+msgstr ""
+
+#: src/sys/sys_main.c:417
+#, possible-c-format
+msgid "Sys_LoadDll(%s) failed to load library\n"
+msgstr ""
+
+#: src/sys/sys_main.c:426
+#, possible-c-format
+msgid ""
+"Sys_LoadDll(%s) failed to find vmMain function:\n"
+"\"%s\" !\n"
+msgstr ""
+
+#: src/sys/sys_main.c:432
+#, possible-c-format
+msgid "Sys_LoadDll(%s) found vmMain function at %p\n"
+msgstr ""
+
+#: src/sys/sys_main.c:480
+#, c-format
+msgid "DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n"
+msgstr ""
+
+#: src/sys/sys_main.c:486
+#, c-format
+msgid "Received signal %d, exiting...\n"
+msgstr ""
+
+#: src/sys/sys_main.c:490
+msgid "Signal caught"
+msgstr ""
+
+#: src/sys/sys_main.c:525
+msgid "SDL version "
+msgstr ""
+
+#: src/sys/sys_unix.c:532
+#, possible-c-format
+msgid "ERROR: couldn't create path '%s' for crash log.\n"
+msgstr ""
+
+#: src/sys/sys_unix.c:542
+#, possible-c-format
+msgid "ERROR: couldn't open %s\n"
+msgstr ""
+
+#: src/sys/sys_unix.c:549
+#, possible-c-format
+msgid "ERROR: couldn't fully write to %s\n"
+msgstr ""
+
+#: src/sys/sys_win32.c:60
+msgid "Unable to load SHFolder.dll\n"
+msgstr ""
+
+#: src/sys/sys_win32.c:67
+msgid "Unable to find SHGetFolderPath in SHFolder.dll\n"
+msgstr ""
+
+#: src/sys/sys_win32.c:75
+msgid "Unable to detect CSIDL_APPDATA\n"
+msgstr ""
+
+#: src/sys/sys_win32.c:548
+#, possible-c-format
+msgid "%s. Copy console log to clipboard?"
+msgstr ""
+
+#: src/sys/sys_win32.c:659
+#, possible-c-format
+msgid ""
+"SDL_VIDEODRIVER is externally set to \"%s\", in_mouse -1 will have no "
+"effect\n"
+msgstr ""
+
+#: ../assets/ui/createfavorite.menu:50 ../assets/ui/findplayer.menu:58
+#: ../assets/ui/ingame_options.menu:179 ../assets/ui/options.menu:54
+msgid "Name:"
+msgstr ""
+
+#: ../assets/ui/createfavorite.menu:66
+msgid "Address:"
+msgstr ""
+
+#: ../assets/ui/createfavorite.menu:79 ../assets/ui/drop.menu:83
+#: ../assets/ui/error.menu:83 ../assets/ui/options.menu:295
+#: ../assets/ui/password.menu:69 ../assets/ui/tremulous_alienbuild.menu:98
+#: ../assets/ui/tremulous_alienclass.menu:119
+#: ../assets/ui/tremulous_aliendialogs.menu:80
+#: ../assets/ui/tremulous_alienupgrade.menu:98
+#: ../assets/ui/tremulous_dialogs.menu:81
+#: ../assets/ui/tremulous_humanbuild.menu:97
+#: ../assets/ui/tremulous_humandialogs.menu:81
+#: ../assets/ui/tremulous_humanitem.menu:119
+#: ../assets/ui/tremulous_teamselect.menu:98
+msgid "OK"
+msgstr ""
+
+#: ../assets/ui/createfavorite.menu:99 ../assets/ui/mod.menu:93
+#: ../assets/ui/tremulous_alienbuild.menu:119
+#: ../assets/ui/tremulous_alienclass.menu:140
+#: ../assets/ui/tremulous_alienupgrade.menu:119
+#: ../assets/ui/tremulous_humanbuild.menu:118
+#: ../assets/ui/tremulous_humanitem.menu:140
+#: ../assets/ui/tremulous_teamselect.menu:119
+msgid "Cancel"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:125
+msgid "Host Name:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:141 ../assets/ui/ingame_game.menu:702
+msgid "Time Limit:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:157
+msgid "Maximum Players:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:173
+msgid "Require Password:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:192 ../assets/ui/password.menu:55
+msgid "Password:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:210
+msgid "Pure Server:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:229
+msgid "Dedicated:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:251
+msgid "Auto Download:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:270
+msgid "Enable Voting:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:291
+msgid "Minimum Ping:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:307
+msgid "Maximum Ping:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:323
+msgid "Synchronous Client:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:342
+msgid "Max Rate:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:358
+msgid "Zombie Time:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:374
+msgid "Reconnect Limit:"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:423 ../assets/ui/joinserver.menu:647
+msgid "Back"
+msgstr ""
+
+#: ../assets/ui/createserver.menu:480
+msgid "Create"
+msgstr ""
+
+#: ../assets/ui/download.menu:47
+msgid "Download"
+msgstr ""
+
+#: ../assets/ui/download.menu:80
+msgid "Download from website"
+msgstr ""
+
+#: ../assets/ui/download.menu:103
+msgid "Download from server"
+msgstr ""
+
+#: ../assets/ui/download.menu:126 ../assets/ui/ingame_game.menu:127
+msgid "Ignore"
+msgstr ""
+
+#: ../assets/ui/download.menu:149
+msgid "Disconnect"
+msgstr ""
+
+#: ../assets/ui/drop.menu:55
+msgid "Disconnected"
+msgstr ""
+
+#: ../assets/ui/drop.menu:103
+msgid "Reconnect"
+msgstr ""
+
+#: ../assets/ui/error.menu:55 ../assets/ui/tremulous_aliendialogs.menu:45
+#: ../assets/ui/tremulous_dialogs.menu:46
+#: ../assets/ui/tremulous_humandialogs.menu:46
+msgid "Error"
+msgstr ""
+
+#: ../assets/ui/findplayer.menu:77
+msgid "Search"
+msgstr ""
+
+#: ../assets/ui/findplayer.menu:140 ../assets/ui/joinserver.menu:704
+msgid "Join"
+msgstr ""
+
+#: ../assets/ui/findplayer.menu:155 ../assets/ui/news.menu:84
+#: ../assets/ui/serverinfo.menu:94
+#: ../assets/ui/tremulous_humanarmoury.menu:152
+msgid "Close"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:101
+msgid "Vote"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:152
+msgid "Info"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:181
+msgid "Map"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:203 ../assets/ui/joinserver.menu:323
+msgid "Players"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:225
+msgid "Team"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:287
+msgid "Load Selected Map"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:307
+msgid "Load Selected Map Next"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:327
+msgid "Restart Current Map"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:347
+msgid "Begin Sudden Death"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:367
+msgid "End Match In Draw"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:408
+msgid "Mute Player"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:428
+msgid "Un-Mute Player"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:448
+msgid "Kick Player"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:490
+msgid "Kick Teammate"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:510
+msgid "Deny Building For Teammate"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:530
+msgid "Allow Building For Teammate"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:551
+msgid "Admit Defeat"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:573
+msgid "Player Name"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:586
+msgid "Ignored"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:598
+msgid "Ignoring You"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:638
+msgid "Ignore Player"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:658
+msgid "Stop Ignoring Player"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:684
+msgid "Server Name:"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:720
+msgid "Sudden Death Time:"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:738
+msgid "Max Clients:"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:756
+msgid "Map Name:"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:774
+msgid "Lag Correction:"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:792
+msgid "Friendly Fire:"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:810
+msgid "Buildable Friendly Fire:"
+msgstr ""
+
+#: ../assets/ui/ingame_game.menu:828
+msgid "Version:"
+msgstr ""
+
+#: ../assets/ui/ingame_leave.menu:53
+msgid "Main Menu"
+msgstr ""
+
+#: ../assets/ui/ingame_leave.menu:75 ../assets/ui/main.menu:138
+msgid "Quit"
+msgstr ""
+
+#: ../assets/ui/ingame_leave.menu:99
+msgid "Return To Main Menu?"
+msgstr ""
+
+#: ../assets/ui/ingame_leave.menu:114 ../assets/ui/ingame_leave.menu:171
+msgid "Yes"
+msgstr "éñ"
+
+#: ../assets/ui/ingame_leave.menu:134 ../assets/ui/ingame_leave.menu:191
+msgid "No"
+msgstr ""
+
+#: ../assets/ui/ingame_leave.menu:156
+msgid "Want To Quit Game?"
+msgstr ""
+
+#: ../assets/ui/ingame.menu:67
+msgid "Game"
+msgstr ""
+
+#: ../assets/ui/ingame.menu:86 ../assets/ui/main.menu:98
+msgid "Options"
+msgstr ""
+
+#: ../assets/ui/ingame.menu:105
+msgid "Help"
+msgstr ""
+
+#: ../assets/ui/ingame.menu:124
+msgid "Exit"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:69
+msgid "Player"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:94
+msgid "HUD"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:120
+msgid "Controls"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:147
+msgid "System"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:196
+msgid "Taunts Sounds Off:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:216
+msgid "Team Chats Only:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:236
+msgid "Sticky Spectate:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:256
+msgid "Tutorial Mode:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:276
+msgid "Disable Warning Dialogs:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:299
+msgid "Show Clock:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:320
+msgid "Show Crosshair:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:341
+msgid "Crosshair Size:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:362
+msgid "Show Charge Bar:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:382
+msgid "Show Lag-o-meter:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:402
+msgid "Show Team Overlay:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:422
+msgid "Show Gun:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:442
+msgid "Show Speed:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:463
+msgid "Show FPS:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:483
+msgid "Show Timer:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:503
+msgid "Show Demo State:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:524
+msgid "Look"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:550
+msgid "Lookup:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:570
+msgid "Look Down:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:590
+msgid "Mouse Look:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:610
+msgid "Centerview:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:630
+msgid "Free Look:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:650 ../assets/ui/options.menu:189
+msgid "Mouse Sensitivity:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:666 ../assets/ui/options.menu:203
+msgid "Invert Mouse:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:687
+msgid "Smooth Mouse:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:707
+msgid "Auto Wallwalk Pitching:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:727
+msgid "Move"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:751
+msgid "Sprint Toggles:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:771
+msgid "Wallwalk Control Toggles:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:791
+msgid "Wallwalking Speed:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:812
+msgid "Run / Walk:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:832
+msgid "Dodge:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:852
+msgid "Sprint:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:872
+msgid "Forward:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:892
+msgid "Backpedal:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:912
+msgid "Move Left:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:932
+msgid "Move Right:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:952
+msgid "Jump:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:972
+msgid "Crouch:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:992
+msgid "Turn Left:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1012
+msgid "Turn Right:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1032
+msgid "Strafe:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1054
+msgid "Upgrades"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1078
+msgid "Primary Attack:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1098
+msgid "Secondary Attack:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1118
+msgid "Previous Upgrade:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1138
+msgid "Next Upgrade:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1158
+msgid "Activate Upgrade:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1178
+msgid "Reload:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1198
+msgid "Buy Ammo:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1218
+msgid "Use Medkit:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1238
+msgid "Misc"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1262
+msgid "Show Scores:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1282
+msgid "Scroll Scores Up:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1302
+msgid "Scroll Scores Down:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1322
+msgid "Use Structure/Evolve:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1342
+msgid "Deconstruct Structure:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1362
+msgid "Gesture:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1382
+msgid "Chat:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1402
+msgid "Team Chat:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1422
+msgid "Vote Yes:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1442
+msgid "Vote No:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1462
+msgid "Team Vote Yes:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1482
+msgid "Team Vote No:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1502
+msgid "Screenshot:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1522
+msgid "GFX Hardware"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1548
+msgid "Quality:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1570
+msgid "GL Extensions:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1591 ../assets/ui/options.menu:89
+msgid "Video Mode:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1630
+msgid "Color Depth:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1653
+msgid "Fullscreen:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1674
+msgid "Lighting:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1696
+msgid "Geometric Detail:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1719
+msgid "Texture Detail:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1741
+msgid "Texture Quality:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1762
+msgid "Texture Filter:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1784
+msgid "Anisotropic Filtering:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1805
+msgid "Compress Textures:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1826 ../assets/ui/ingame_options.menu:2322
+#: ../assets/ui/options.menu:277
+msgid "APPLY"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1846
+msgid "GFX Software"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1870
+msgid "Brightness:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1886
+msgid "Screen Size:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1902
+msgid "Marks On Walls:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1922
+msgid "Dynamic Lights:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1942
+msgid "Draw Gun:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1962
+msgid "Low Quality Sky:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:1982
+msgid "Sync Every Frame:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2002
+msgid "Show Time:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2022
+msgid "In Game Videos:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2042
+msgid "Depth Sort Particles:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2062
+msgid "Particle Physics:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2083
+msgid "Light Flares:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2104
+msgid "OpenGL Info"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2144
+msgid "Net & Sound"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2169 ../assets/ui/quitcredit.menu:403
+msgid "Sound"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2188 ../assets/ui/options.menu:141
+msgid "Effects Volume:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2204 ../assets/ui/options.menu:155
+msgid "Music Volume:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2220
+msgid "OpenAL:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2240
+msgid "Sound Quality:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2261
+msgid "Doppler Sound:"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2282
+msgid "Network"
+msgstr ""
+
+#: ../assets/ui/ingame_options.menu:2301
+msgid "Net Data Rate:"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:85
+msgid "Source:"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:108
+msgid "Get New List"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:130
+msgid "Refresh List"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:154
+msgid "View Empty:"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:177
+msgid "View Full:"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:201
+msgid "[official] = Official Server\\n[featured] = Featured Server"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:235
+msgid "Server Name"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:280
+msgid "Map Name"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:367 ../assets/ui/teamscore.menu:181
+#: ../assets/ui/teamscore.menu:256
+msgid "Ping"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:476
+msgid "Set Password"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:495
+msgid "Create Favorite"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:514
+msgid "Add Favorite"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:534
+msgid "Delete Favorite"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:555
+msgid "Server Info"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:574
+msgid "Find a Friend"
+msgstr ""
+
+#: ../assets/ui/joinserver.menu:597
+msgid "Create Server"
+msgstr ""
+
+#: ../assets/ui/main.menu:30
+msgid "and"
+msgstr ""
+
+#: ../assets/ui/main.menu:59
+msgid "Play"
+msgstr "PL¿∞ououou"
+
+#: ../assets/ui/main.menu:78
+msgid "News"
+msgstr ""
+
+#: ../assets/ui/main.menu:118
+msgid "Mods"
+msgstr ""
+
+#: ../assets/ui/main.menu:158
+msgid "Tremulous (C) 2005-2009 darklegion development"
+msgstr ""
+
+#: ../assets/ui/mod.menu:74
+msgid "Load"
+msgstr ""
+
+#: ../assets/ui/news.menu:49
+msgid "Tremulous News"
+msgstr ""
+
+#: ../assets/ui/options.menu:69
+msgid "Video Quality:"
+msgstr ""
+
+#: ../assets/ui/options.menu:125
+msgid "Video Brightness:"
+msgstr ""
+
+#: ../assets/ui/options.menu:169
+msgid "OpenAL Sound:"
+msgstr ""
+
+#: ../assets/ui/options.menu:224
+msgid "Network Connection:"
+msgstr ""
+
+#: ../assets/ui/options.menu:243
+msgid "Allow Auto Download:"
+msgstr ""
+
+#: ../assets/ui/options.menu:261
+msgid "For further options please use the in-game options menu"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:73
+msgid "CREDITS"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:90
+msgid "Tim 'Timbo' Angus"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:106
+msgid "Programming and Direction"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:123
+msgid "Nick 'jex' Jansens"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:139
+msgid "Mapping, texturing and 2D artwork"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:156
+msgid "Robin 'OverFlow' Marshall"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:172
+msgid "Modelling, animation and mapping"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:189
+msgid "Jan 'Stannum' van der Weg"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:205
+msgid "Texturing and mapping"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:222
+msgid "Mike 'Veda' McInerney"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:238
+msgid "Modelling, animation and texturing"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:255
+msgid "Gordon 'Godmil' Miller"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:271 ../assets/ui/quitcredit.menu:304
+#: ../assets/ui/quitcredit.menu:337
+msgid "Mapping"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:288
+msgid "'Who-[Soup]'"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:321
+msgid "Tristan 'jhrx' Blease"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:354
+msgid "Paul 'MoP' Greveson"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:370
+msgid "Modelling and texturing"
+msgstr ""
+
+#: ../assets/ui/quitcredit.menu:387
+msgid "Chris 'Dolby' McCarthy"
+msgstr ""
+
+#: ../assets/ui/quit.menu:47
+msgid "Quit Tremulous?"
+msgstr ""
+
+#: ../assets/ui/quit.menu:63
+msgid "YES"
+msgstr ""
+
+#: ../assets/ui/quit.menu:82
+msgid "NO"
+msgstr ""
+
+#: ../assets/ui/say.menu:32
+msgid "Say:"
+msgstr ""
+
+#: ../assets/ui/say.menu:74
+msgid "Say to team:"
+msgstr ""
+
+#: ../assets/ui/say.menu:116
+msgid "Command:"
+msgstr ""
+
+#: ../assets/ui/serverinfo.menu:75
+msgid "Refresh"
+msgstr ""
+
+#: ../assets/ui/teamscore.menu:121 ../assets/ui/teamscore.menu:196
+msgid "Status"
+msgstr ""
+
+#: ../assets/ui/teamscore.menu:136 ../assets/ui/teamscore.menu:211
+msgid "Name"
+msgstr ""
+
+#: ../assets/ui/teamscore.menu:151 ../assets/ui/teamscore.menu:226
+msgid "Score"
+msgstr ""
+
+#: ../assets/ui/teamscore.menu:166 ../assets/ui/teamscore.menu:241
+msgid "Time"
+msgstr ""
+
+#: ../assets/ui/teamscore.menu:346
+msgid "Spectating:"
+msgstr ""
+
+#: ../assets/ui/tremulous_alienclass.menu:98
+#: ../assets/ui/tremulous_humanitem.menu:98
+msgid "< Back"
+msgstr ""
+
+#: ../assets/ui/tremulous_default_hud.menu:25
+msgid "SPECTATOR"
+msgstr ""
+
+#: ../assets/ui/tremulous_humanarmoury.menu:132
+msgid "Buy >"
+msgstr ""
+
+#: ../assets/ui/tremulous_humanarmoury.menu:172
+msgid "< Sell"
+msgstr ""
+
+
+###
+# Teams
+msgid "Aliens"
+msgstr ""
+
+msgid "Humans"
+msgstr ""
+
+msgid "Spectate"
+msgstr ""
+
+# bg_misc.c humanName
+msgid "Overmind"
+msgstr ""
+
+msgid "Barricade"
+msgstr ""
+
+msgid "Acid Tube"
+msgstr ""
+
+msgid "Trapper"
+msgstr ""
+
+msgid "Booster"
+msgstr ""
+
+#msgid "Hive"
+#msgstr ""
+
+msgid "Telenode"
+msgstr ""
+
+#msgid "Machinegun Turret"
+#msgstr ""
+
+#msgid "Tesla Generator"
+#msgstr ""
+
+msgid "Armoury"
+msgstr ""
+
+msgid "Defence Computer"
+msgstr ""
+
+msgid "Medistation"
+msgstr ""
+
+msgid "Reactor"
+msgstr ""
+
+msgid "Repeater"
+msgstr ""
+
+msgid "Bite"
+msgstr ""
+
+msgid "Claws"
+msgstr ""
+
+msgid "Claws Upgrade"
+msgstr ""
+
+#msgid "Bite"
+#msgstr ""
+
+msgid "Zap"
+msgstr ""
+
+msgid "Pounce"
+msgstr ""
+
+msgid "Pounce (upgrade)"
+msgstr ""
+
+msgid "Charge"
+msgstr ""
+
+msgid "Blaster"
+msgstr ""
+
+msgid "Rifle"
+msgstr ""
+
+msgid "Pain Saw"
+msgstr ""
+
+msgid "Shotgun"
+msgstr ""
+
+msgid "Las Gun"
+msgstr ""
+
+msgid "Mass Driver"
+msgstr ""
+
+msgid "Chaingun"
+msgstr ""
+
+msgid "Flame Thrower"
+msgstr ""
+
+msgid "Pulse Rifle"
+msgstr ""
+
+msgid "Lucifer Cannon"
+msgstr ""
+
+#msgid "Grenade"
+#msgstr ""
+
+msgid "Lock Blob"
+msgstr ""
+
+msgid "Hive"
+msgstr ""
+
+msgid "Tesla Generator"
+msgstr ""
+
+msgid "Machinegun Turret"
+msgstr ""
+
+msgid "Alien build weapon"
+msgstr ""
+
+msgid "Alien build weapon2"
+msgstr ""
+
+msgid "Construction Kit"
+msgstr ""
+
+msgid "Light Armour"
+msgstr ""
+
+msgid "Helmet"
+msgstr ""
+
+msgid "Medkit"
+msgstr ""
+
+msgid "Battery Pack"
+msgstr ""
+
+msgid "Jet Pack"
+msgstr ""
+
+msgid "Battlesuit"
+msgstr ""
+
+msgid "Grenade"
+msgstr ""
+
+msgid "Ammunition"
+msgstr ""
+
+# bg_misc.c descriptions
+msgid "The most basic alien structure. It allows aliens to spawn and protect the Overmind. Without any of these, the Overmind is left nearly defenseless and defeat is imminent."
+msgstr ""
+
+msgid "A collective consciousness that controls all the alien structures in its vicinity. It must be protected at all costs, since its death will render alien structures defenseless."
+msgstr ""
+
+msgid "Used to obstruct corridors and doorways, hindering humans from threatening the spawns and Overmind. Barricades will shrink to allow aliens to pass over them, however."
+msgstr ""
+
+msgid "Ejects lethal poisonous acid at an approaching human. These are highly effective when used in conjunction with a trapper to hold the victim in place."
+msgstr ""
+
+msgid "Fires a blob of adhesive spit at any non-alien in its line of sight. This hinders their movement, making them an easy target for other defensive structures or aliens."
+msgstr ""
+
+msgid "Laces the attacks of any alien that touches it with a poison that will gradually deal damage to any humans exposed to it. The booster also increases the rate of health regeneration for any nearby aliens."
+msgstr ""
+
+msgid "Houses millions of tiny insectoid aliens. When a human approaches this structure, the insectoids attack."
+msgstr ""
+
+msgid "The most basic human structure. It provides a means for humans to enter the battle arena. Without any of these the humans cannot spawn and defeat is imminent."
+msgstr ""
+
+msgid "Automated base defense that is effective against large targets but slow to begin firing. Should always be backed up by physical support."
+msgstr ""
+
+msgid "A structure equipped with a strong electrical attack that fires instantly and always hits its target. It is effective against smaller aliens and for consolidating basic defense."
+msgstr ""
+
+msgid "An essential part of the human base, providing a means to upgrade the basic human equipment. A range of upgrades and weapons are available for sale from the armoury."
+msgstr ""
+
+msgid "A structure that enables self-repair functionality in human structures. Each Defence Computer built increases repair rate slightly."
+msgstr ""
+
+msgid "A structure that automatically restores the health and stamina of any human that stands on it. It may only be used by one person at a time. This structure also issues medkits."
+msgstr ""
+
+msgid "All structures except the telenode rely on a reactor to operate. The reactor provides power for all the human structures either directly or via repeaters. Only one reactor can be built at a time."
+msgstr ""
+
+msgid "A power distributor that transmits power from the reactor to remote locations, so that bases may be built far from the reactor."
+msgstr ""
+
+msgid "Similar to the base Granger, except that in addition to being able to build structures it has a spit attack that slows victims and the ability to crawl on walls."
+msgstr ""
+
+msgid "Has a lethal reflexive bite and the ability to crawl on walls and ceilings."
+msgstr ""
+
+msgid "A support class able to crawl on walls and ceilings. Its melee attack is most effective when combined with the ability to grab and hold its victims in place. Provides a weak healing aura that accelerates the healing rate of nearby aliens."
+msgstr ""
+
+msgid "In addition to the basic Basilisk abilities, the Advanced Basilisk sprays a poisonous gas which disorients any nearby humans. Has a strong healing aura that that accelerates the healing rate of nearby aliens."
+msgstr ""
+
+msgid "Has a melee attack and the ability to jump off walls. This allows the Marauder to gather great speed in enclosed areas."
+msgstr ""
+
+msgid "The Advanced Marauder has all the abilities of the basic Marauder with the addition of an area effect electric shock attack."
+msgstr ""
+
+msgid "Possesses a melee attack and the pounce ability, which may be used as both an attack and a means to reach remote locations inaccessible from the ground."
+msgstr ""
+
+msgid "In addition to the basic Dragoon abilities, the Advanced Dragoon has 3 barbs which may be used to attack humans from a distance."
+msgstr ""
+
+msgid "A large alien with a strong melee attack, this class can also charge at enemy humans and structures, inflicting great damage. Any humans or their structures caught under a falling Tyrant will be crushed by its weight."
+msgstr ""
+
+msgid "Basic weapon. Cased projectile weapon, with a slow clip based reload system."
+msgstr ""
+
+msgid "Similar to a chainsaw, but instead of a chain it has an electric arc capable of dealing a great deal of damage at close range."
+msgstr ""
+
+msgid "Close range weapon that is useful against larger foes. It has a slow repeat rate, but can be devastatingly effective."
+msgstr ""
+
+msgid "Slightly more powerful than the basic rifle, rapidly fires small packets of energy."
+msgstr ""
+
+msgid "A portable particle accelerator which causes minor nuclear reactions at the point of impact. It has a very large payload, but fires slowly."
+msgstr ""
+
+msgid "Belt drive, cased projectile weapon. It has a high repeat rate but a wide firing angle and is therefore relatively inaccurate."
+msgstr ""
+
+msgid "Sprays fire at its target. It is powered by compressed gas. The relatively low rate of fire means this weapon is most effective against static targets."
+msgstr ""
+
+msgid "An energy weapon that fires rapid pulses of concentrated energy."
+msgstr ""
+
+msgid "Blaster technology scaled up to deliver devastating power. Primary fire must be charged before firing. It has a quick secondary attack that does not require charging."
+msgstr ""
+
+msgid "Used for building structures. This includes spawns, power and basic defense. More structures become available with new stages."
+msgstr ""
+
+msgid "Protective armour that helps to defend against light alien melee attacks."
+msgstr ""
+
+msgid "In addition to protecting your head, the helmet provides a scanner indicating the presence of any friendly or hostile lifeforms and structures in your immediate vicinity."
+msgstr ""
+
+msgid "Back-mounted battery pack that permits storage of one and a half times the normal energy capacity for energy weapons."
+msgstr ""
+
+msgid "Back-mounted jet pack that enables the user to fly to remote locations. It is very useful against alien spawns in hard to reach spots."
+msgstr ""
+
+msgid "A full body armour that is highly effective at repelling alien attacks. It allows the user to enter hostile situations with a greater degree of confidence."
+msgstr ""
+
+msgid "A small incendinary device ideal for damaging tightly packed alien structures. Has a five second timer."
+msgstr ""
+
+msgid "Ammunition for the currently held weapon."
+msgstr ""
+
+
+# Misc
+msgid "ui/help.txt"
+msgstr "ui/help-jbo.txt"

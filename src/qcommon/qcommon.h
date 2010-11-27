@@ -932,7 +932,7 @@ void CL_Frame( int msec );
 qboolean CL_GameCommand( void );
 void CL_KeyEvent (int key, qboolean down, unsigned time);
 
-void CL_CharEvent( int key );
+void CL_CharEvent( const char *key );
 // char events are for field typing, not game control
 
 void CL_MouseEvent( int dx, int dy, int time );

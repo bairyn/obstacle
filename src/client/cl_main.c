@@ -102,6 +102,14 @@ cvar_t	*cl_guidServerUniq;
 
 cvar_t	*cl_consoleKeys;
 
+cvar_t  *cl_consoleColor;
+cvar_t  *cl_consoleHeight;
+cvar_t  *cl_consoleFont;
+cvar_t  *cl_consoleFontSize;
+cvar_t  *cl_consoleFontKerning;
+cvar_t  *cl_consoleDynFont;
+
+
 clientActive_t		cl;
 clientConnection_t	clc;
 clientStatic_t		cls;
@@ -3035,13 +3043,49 @@ CL_InitRenderer
 ============
 */
 void CL_InitRenderer( void ) {
+	fileHandle_t f; 
+
 	// this sets up the renderer and calls R_Init
 	re.BeginRegistration( &cls.glconfig );
 
 	// load character sets
 	cls.charSetShader = re.RegisterShader( "gfx/2d/bigchars" );
+
+    cls.useLegacyConsoleFace = cls.useLegacyConsoleFont = qtrue;
+
+#ifdef BUILD_FREETYPE
+
+    // Register console font specified by cl_consoleFont, if any
+    // filehandle is unused but forces FS_FOpenFileRead() to heed purecheck because it does not when filehandle is NULL 
+    if( *cl_consoleFont->string )
+	{
+	  if( FS_FOpenFileRead( cl_consoleFont->string, &f, FS_READ ) >= 0 ) 
+      {
+        re.RegisterFont( cl_consoleFont->string, cl_consoleFontSize->integer, &cls.consoleFont);
+        cls.useLegacyConsoleFont = qfalse;
+      }
+      FS_FCloseFile( f );
+	}
+
+  if( *cl_consoleDynFont->string )
+  {
+    if( FS_FOpenFileRead( cl_consoleDynFont->string, &f, FS_READ ) >= 0 )
+    {
+        re.LoadFace( cl_consoleDynFont->string, cl_consoleFontSize->integer, cl_consoleDynFont->string, &cls.consoleFace );
+        cls.useLegacyConsoleFace = qfalse;
+    }
+    FS_FCloseFile( f );
+  }
+
+#endif
+
 	cls.whiteShader = re.RegisterShader( "white" );
-	cls.consoleShader = re.RegisterShader( "console" );
+
+    // For committing to Trem SVN, use "console" and change core.shader to use white instead of black.tga, 
+    // so that the console background image can be configured via that file and still let user color configuration work. 
+    // For inclusion in 1.1 clients, use "white" so that custom colors can be set and just skip the "console" shader altogether.
+	cls.consoleShader = re.RegisterShader( "white" );
+
 	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
 	g_consoleField.widthInChars = g_console_field_width;
 }
@@ -3375,7 +3419,7 @@ void CL_Init( void ) {
 	com_downloadPrompt = Cvar_Get ("com_downloadPrompt", "0", CVAR_TEMP);
 	Cvar_Get( "com_downloadPromptText", "", CVAR_TEMP );
 
-	cl_conXOffset = Cvar_Get ("cl_conXOffset", "0", 0);
+	cl_conXOffset = Cvar_Get ("cl_conXOffset", "3", 0);
 #ifdef MACOS_X
 	// In game video is REALLY slow in Mac OS X right now due to driver slowness
 	cl_inGameVideo = Cvar_Get ("r_inGameVideo", "0", CVAR_ARCHIVE);
@@ -3406,6 +3450,13 @@ void CL_Init( void ) {
 
 	// ~ and `, as keys and characters
 	cl_consoleKeys = Cvar_Get( "cl_consoleKeys", "~ ` 0x7e 0x60", CVAR_ARCHIVE);
+
+	cl_consoleColor = Cvar_Get ("cl_consoleColor", "0.0 0.0 0.0 1.0", CVAR_ARCHIVE);
+	cl_consoleHeight = Cvar_Get ("cl_consoleHeight", "50", CVAR_ARCHIVE);
+	cl_consoleFont = Cvar_Get ("cl_consoleFont", DEFAULT_CONSOLE_FONT, CVAR_ARCHIVE | CVAR_LATCH);
+	cl_consoleFontSize = Cvar_Get ("cl_consoleFontSize", "16", CVAR_ARCHIVE | CVAR_LATCH);
+	cl_consoleFontKerning = Cvar_Get ("cl_consoleFontKerning", "0", CVAR_ARCHIVE);
+	cl_consoleDynFont = Cvar_Get ("cl_consoleDynFont", DEFAULT_CONSOLE_FONT, CVAR_ARCHIVE | CVAR_LATCH);
 
 	// userinfo
 	Cvar_Get ("name", Sys_GetCurrentUser( ), CVAR_USERINFO | CVAR_ARCHIVE );

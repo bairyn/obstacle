@@ -1107,6 +1107,42 @@ qboolean CG_Asset_Parse( int handle )
       continue;
     }
 
+    // dynFont
+    if( Q_stricmp( token.string, "dynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      cgDC.loadFace( tempStr, pointSize, tempStr, &cgDC.Assets.dynFont );
+      continue;
+    }
+
+    // smallDynFont
+    if( Q_stricmp( token.string, "smallDynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      cgDC.loadFace( tempStr, pointSize, tempStr, &cgDC.Assets.smallDynFont );
+      continue;
+    }
+
+    // dynFont
+    if( Q_stricmp( token.string, "bigDynFont" ) == 0 )
+    {
+      int pointSize;
+
+      if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
+        return qfalse;
+
+      cgDC.loadFace( tempStr, pointSize, tempStr, &cgDC.Assets.bigDynFont );
+      continue;
+    }
+
     // gradientbar
     if( Q_stricmp( token.string, "gradientbar" ) == 0 )
     {
@@ -1358,7 +1394,7 @@ void CG_LoadMenus( const char *menuFile )
 
 
 
-static qboolean CG_OwnerDrawHandleKey( int ownerDraw, int key )
+static qboolean CG_OwnerDrawHandleKey( int ownerDraw, int key, int state )
 {
   return qfalse;
 }
@@ -1651,6 +1687,11 @@ void CG_LoadHudMenu( void )
   cgDC.addRefEntityToScene  = &trap_R_AddRefEntityToScene;
   cgDC.renderScene          = &trap_R_RenderScene;
   cgDC.registerFont         = &trap_R_RegisterFont;
+  cgDC.loadFace             = &trap_R_LoadFace;
+  cgDC.freeFace             = &trap_R_FreeFace;
+  cgDC.loadGlyph            = &trap_R_LoadGlyph;
+  cgDC.freeGlyph            = &trap_R_FreeGlyph;
+  cgDC.glyph                = &trap_R_Glyph;
   cgDC.ownerDrawItem        = &CG_OwnerDraw;
   cgDC.getValue             = &CG_GetValue;
   cgDC.ownerDrawVisible     = &CG_OwnerDrawVisible;
