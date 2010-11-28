@@ -1268,7 +1268,7 @@ qboolean Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      trap_R_LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.dynFont );
+      LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.dynFont );
       uiInfo.uiDC.Assets.dynFontRegistered = qtrue;
       continue;
     }
@@ -1280,7 +1280,7 @@ qboolean Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      trap_R_LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.smallDynFont );
+      LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.smallDynFont );
       continue;
     }
 
@@ -1291,7 +1291,7 @@ qboolean Asset_Parse( int handle )
       if( !PC_String_Parse( handle, &tempStr ) || !PC_Int_Parse( handle, &pointSize ) )
         return qfalse;
 
-      trap_R_LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.bigDynFont );
+      LoadFace( tempStr, pointSize, tempStr, &uiInfo.uiDC.Assets.bigDynFont );
       continue;
     }
 
@@ -4102,11 +4102,11 @@ void UI_Init( qboolean inGameLoad )
   uiInfo.uiDC.addRefEntityToScene = &trap_R_AddRefEntityToScene;
   uiInfo.uiDC.renderScene = &trap_R_RenderScene;
   uiInfo.uiDC.registerFont = &trap_R_RegisterFont;
-  uiInfo.uiDC.loadFace = &trap_R_LoadFace;
-  uiInfo.uiDC.freeFace = &trap_R_FreeFace;
-  uiInfo.uiDC.loadGlyph = &trap_R_LoadGlyph;
-  uiInfo.uiDC.freeGlyph = &trap_R_FreeGlyph;
-  uiInfo.uiDC.glyph = &trap_R_Glyph;
+  uiInfo.uiDC.loadFace = &LoadFace;
+  uiInfo.uiDC.freeFace = &FreeFace;
+  uiInfo.uiDC.loadGlyph = &LoadGlyph;
+  uiInfo.uiDC.freeGlyph = &FreeGlyph;
+  uiInfo.uiDC.glyph = &Glyph;
   uiInfo.uiDC.ownerDrawItem = &UI_OwnerDraw;
   uiInfo.uiDC.getValue = &UI_GetValue;
   uiInfo.uiDC.ownerDrawVisible = &UI_OwnerDrawVisible;
@@ -4726,13 +4726,135 @@ void UI_UpdateNews( qboolean begin )
     uiInfo.newsInfo.refreshActive = qfalse;
 }
 
+void LoadFace( const char *fileName, int pointSize, const char *name, face_t *face )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    trap_R_LoadFace( fileName, pointSize, name, face );
+}
+
+void FreeFace( face_t *face )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    trap_R_FreeFace( face );
+}
+
+void LoadGlyph( face_t *face, const char *str, int img, glyphInfo_t *glyphInfo )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    trap_R_LoadGlyph( face, str, img, glyphInfo );
+}
+
+void FreeGlyph( face_t *face, int img, glyphInfo_t *glyphInfo )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    trap_R_FreeGlyph( face, img, glyphInfo );
+}
+
+void Glyph( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    trap_R_Glyph( font, face, str, glyph );
+}
+
+void Gettext( char *buffer, const char *msgid, int bufferLength )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( !( engineState & 0x02 ) )
+    strncpy( buffer, msgid, bufferLength );
+  else
+    trap_Gettext( buffer, msgid, bufferLength );
+}
+
 char *gettext ( const char *msgid )
 {
   static char string[8][32000];
   static int  index = 0;
-	char        *buf = string[index++ & 7];
+  char        *buf = string[index++ & 7];
 
-  trap_Gettext( buf, msgid, sizeof( *string ) );
+  Gettext( buf, msgid, sizeof( *string ) );
 
   return buf;
 }
