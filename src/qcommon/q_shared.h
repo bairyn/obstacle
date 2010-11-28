@@ -804,6 +804,7 @@ int Q_CountChar(const char *string, char tocount);
 
 int Q_UTF8Width( const char *str );
 int Q_UTF8Strlen( const char *str );
+int Q_UTF8PrintStrlen( const char *str );
 qboolean Q_UTF8ContByte( char c );
 unsigned long Q_UTF8CodePoint( const char *str );
 char *Q_UTF8Encode( unsigned long codepoint );

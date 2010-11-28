@@ -2031,7 +2031,7 @@ float UI_Text_Width( const char *text, float scale, int limit )
 
   if( text )
   {
-    len = Q_PrintStrlen( text );
+    len = Q_UTF8PrintStrlen( text );
 
     if( limit > 0 && len > limit )
       len = limit;
@@ -4444,6 +4444,7 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
   unsigned int  i;
   float         indentWidth = 0.0f;
   float         testWidth;
+  face_t        *face = &DC->Assets.dynFont;
 
   if( strlen( text ) >= sizeof( out ) )
     return NULL;
@@ -4461,6 +4462,7 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
 
     while( testLength == 0 || UI_Text_Width( p, scale, testLength ) < testWidth )
     {
+      int      width;
       int      emoticonLen;
       qboolean emoticonEscaped;
       qboolean previousCharIsSpace = qfalse;
@@ -4484,6 +4486,12 @@ const char *Item_Text_Wrap( const char *text, float scale, float width )
       if( UI_Text_IsEmoticon( q, &emoticonEscaped, &emoticonLen, NULL, NULL ) )
       {
         testLength += emoticonLen;
+        continue;
+      }
+
+      if( ( width = UI_UTF8Width( face, p ) ) > 1 )
+      {
+        testLength += width;
         continue;
       }
 
