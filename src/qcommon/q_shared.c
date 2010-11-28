@@ -1024,6 +1024,26 @@ int Q_UTF8Strlen( const char *str )
   return l;
 }
 
+int Q_UTF8PrintStrlen( const char *str )
+{
+  int l = 0;
+
+  while( *str )
+  {
+    if( Q_IsColorString( str ) )
+    {
+      str += 2;
+      continue;
+    }
+
+    l++;
+
+    str += Q_UTF8Width( str );
+  }
+
+  return l;
+}
+
 qboolean Q_UTF8ContByte( char c )
 {
   return (unsigned char )0x80 <= (unsigned char)c && (unsigned char)c <= (unsigned char )0xBF;

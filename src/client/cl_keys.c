@@ -327,6 +327,10 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 			if ( edit->scroll < 0 ) {
 				edit->scroll = 0;
 			}
+      while( Q_UTF8ContByte( edit->buffer[ edit->scroll ] ) && edit->scroll > 0 )
+      {
+        edit->scroll--;
+      }
 		}
 		prestep = edit->scroll;
 	}
@@ -334,6 +338,9 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 	if ( prestep + drawLen > len ) {
 		drawLen = len - prestep;
 	}
+
+  while( Q_UTF8ContByte( edit->buffer[ prestep + drawLen ] ) && prestep + drawLen < len )
+    drawLen++;
 
 	// extract <drawLen> characters from the field at <prestep>
 	if ( drawLen >= MAX_STRING_CHARS ) {
@@ -367,22 +374,6 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 		}
 
 		i = drawLen - Q_UTF8Strlen( str );
-
-
-    /*
-		SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * size, y, cursorChar );
-	} else {
-		str[0] = cursorChar;
-		str[1] = 0;
-		SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * size, y, str, 1.0 );
-    */
-
-
-
-
-
-
-
 
 		if ( SMALLCHAR_WIDTH ) {
             static char c;
@@ -508,8 +499,10 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 	// Change scroll if cursor is no longer visible
 	if ( edit->cursor < edit->scroll ) {
 		edit->scroll = edit->cursor;
-	} else if ( edit->cursor >= edit->scroll + edit->widthInChars && edit->cursor <= len ) {
+	} else if ( edit->cursor >= edit->scroll + edit->widthInChars + Q_UTF8Width( edit->buffer + edit->scroll ) && edit->cursor <= len ) {
 		edit->scroll = edit->cursor - edit->widthInChars + 1;
+		while( Q_UTF8ContByte( edit->buffer[ edit->scroll ] && edit->scroll > 0 ) )
+      edit->scroll--;
 	}
 }
 
@@ -588,7 +581,10 @@ void Field_CharEvent( field_t *edit, const char *s ) {
 
 
 	if ( edit->cursor >= edit->widthInChars ) {
-		edit->scroll++;
+    do
+    {
+      edit->scroll++;
+    } while( Q_UTF8ContByte( edit->buffer[ edit->scroll ] ) && edit->scroll < edit->cursor );
 	}
 
 	if ( edit->cursor == len + 1) {

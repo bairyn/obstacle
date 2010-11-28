@@ -392,6 +392,11 @@ void      trap_R_FreeFace(face_t *face);
 void      trap_R_LoadGlyph(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
 void      trap_R_FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
 void      trap_R_Glyph(fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph);
+void      LoadFace(const char *fileName, int pointSize, const char *name, face_t *face);
+void      FreeFace(face_t *face);
+void      LoadGlyph(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
+void      FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
+void      Glyph(fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph);
 void      trap_S_StopBackgroundTrack( void );
 void      trap_S_StartBackgroundTrack( const char *intro, const char *loop );
 int       trap_CIN_PlayCinematic( const char *arg0, int xpos, int ypos, int width, int height, int bits );
@@ -405,6 +410,7 @@ void      trap_R_RemapShader( const char *oldShader, const char *newShader, cons
 void      trap_SetPbClStatus( int status );
 
 void      trap_Gettext ( char *buffer, const char *msgid, int bufferLength );
+void      Gettext ( char *buffer, const char *msgid, int bufferLength );
 char      *gettext ( const char *msgid );
 
 #endif
