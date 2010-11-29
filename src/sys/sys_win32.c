@@ -640,15 +640,22 @@ Initialise gettext
 void Sys_InitGettext( void )
 {
 	char dir[ 2 * MAX_CVAR_VALUE_STRING ];
+	Cvar_Get( "localepath", "", CVAR_ARCHIVE | CVAR_INIT );
+	Cvar_Get( "locale", "/locale", CVAR_ARCHIVE | CVAR_INIT );
 
 	Cvar_VariableStringBuffer( "localepath", dir, sizeof( dir ) );
 	if( !*dir )
-	{
 		Cvar_VariableStringBuffer( "fs_homepath", dir, MAX_CVAR_VALUE_STRING );
-		Q_strcat( dir, sizeof( dir ), Cvar_VariableString( "locale" ) );
-	}
+	Q_strcat( dir, sizeof( dir ), Cvar_VariableString( "locale" ) );
 
-	setlocale( LC_ALL, "" );
+    errno = 0;
+
+    if (!setlocale(LC_ALL, ""))
+    {
+        fprintf(stderr, "Failed to set LC_ALL to native locale: %s\n",
+                errno ? strerror(errno) : "Unknown error");
+    }
+
 	bindtextdomain( PRODUCT_NAME, dir );
 	textdomain( PRODUCT_NAME );
 }

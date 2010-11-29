@@ -588,13 +588,13 @@ Initialise gettext
 void Sys_InitGettext( void )
 {
 	char dir[ 2 * MAX_CVAR_VALUE_STRING ];
+	Cvar_Get( "localepath", "", CVAR_ARCHIVE | CVAR_INIT );
+	Cvar_Get( "locale", "/locale", CVAR_ARCHIVE | CVAR_INIT );
 
 	Cvar_VariableStringBuffer( "localepath", dir, sizeof( dir ) );
 	if( !*dir )
-	{
 		Cvar_VariableStringBuffer( "fs_homepath", dir, MAX_CVAR_VALUE_STRING );
-		Q_strcat( dir, sizeof( dir ), Cvar_VariableString( "locale" ) );
-	}
+	Q_strcat( dir, sizeof( dir ), Cvar_VariableString( "locale" ) );
 
     errno = 0;
 
