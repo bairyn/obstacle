@@ -1692,6 +1692,7 @@ void CG_LoadHudMenu( void )
   cgDC.loadGlyph            = &LoadGlyph;
   cgDC.freeGlyph            = &FreeGlyph;
   cgDC.glyph                = &Glyph;
+  cgDC.freeCachedGlyphs     = &FreeCachedGlyphs;
   cgDC.ownerDrawItem        = &CG_OwnerDraw;
   cgDC.getValue             = &CG_GetValue;
   cgDC.ownerDrawVisible     = &CG_OwnerDrawVisible;
@@ -1903,8 +1904,9 @@ Called before every level change or subsystem restart
 */
 void CG_Shutdown( void )
 {
-  // some mods may need to do cleanup work here,
-  // like closing files or archiving session data
+  FreeFace( &cgDC.Assets.dynFont );
+
+  UIS_Shutdown( );
 }
 
 /*
@@ -2056,6 +2058,26 @@ void Glyph( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph 
 
   if( engineState & 0x02 )
     trap_R_Glyph( font, face, str, glyph );
+}
+
+void FreeCachedGlyphs( face_t *face )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    trap_R_FreeCachedGlyphs( face );
 }
 
 void Gettext( char *buffer, const char *msgid, int bufferLength )

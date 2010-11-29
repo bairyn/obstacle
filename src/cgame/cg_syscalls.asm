@@ -125,4 +125,5 @@ equ trap_R_FreeFace                   -303
 equ trap_R_LoadGlyph                  -304
 equ trap_R_FreeGlyph                  -305
 equ trap_R_Glyph                      -306
+equ trap_R_FreeCachedGlyphs           -307
 

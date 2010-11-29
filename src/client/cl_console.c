@@ -310,7 +310,6 @@ void CL_ConsolePrint( char *txt ) {
 	int		y;
 	int		c, l;
 	int		color;
-	int     width;
 	qboolean skipnotify = qfalse;		// NERVE - SMF
 
 	// TTimo - prefix for text that shows up in console but not in notify

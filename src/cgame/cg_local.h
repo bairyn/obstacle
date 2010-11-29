@@ -1362,6 +1362,7 @@ typedef struct
   int           voteTime[ NUM_TEAMS ];
   int           voteYes[ NUM_TEAMS ];
   int           voteNo[ NUM_TEAMS ];
+  char          voteCaller[ NUM_TEAMS ][ MAX_NAME_LENGTH ];
   qboolean      voteModified[ NUM_TEAMS ];// beep whenever changed
   char          voteString[ NUM_TEAMS ][ MAX_STRING_TOKENS ];
 
@@ -2057,11 +2058,13 @@ void          trap_R_FreeFace(face_t *face);
 void          trap_R_LoadGlyph(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
 void          trap_R_FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
 void          trap_R_Glyph(fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph);
+void          trap_R_FreeCachedGlyphs(face_t *face);
 void          LoadFace(const char *fileName, int pointSize, const char *name, face_t *face);
 void          FreeFace(face_t *face);
 void          LoadGlyph(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
 void          FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
 void          Glyph(fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph);
+void          FreeCachedGlyphs(face_t *face);
 qboolean      trap_Key_IsDown( int keynum );
 int           trap_Key_GetCatcher( void );
 void          trap_Key_SetCatcher( int catcher );

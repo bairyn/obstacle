@@ -144,7 +144,8 @@ typedef enum
   UI_R_FREEFACE,
   UI_R_LOADGLYPH,
   UI_R_FREEGLYPH,
-  UI_R_GLYPH
+  UI_R_GLYPH,
+  UI_R_FREECACHEDGLYPHS
 }
 uiImport_t;
 

@@ -30,8 +30,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define _(String) gettext(String)
 
-void trap_Gettext ( char *buffer, const char *msgid, int bufferLength );
 char *gettext ( const char *msgid );
+void FreeFace(face_t *face);
+void FreeCachedGlyphs(face_t *face);
 
 typedef struct scrollInfo_s
 {
@@ -94,6 +95,21 @@ qboolean Item_Bind_HandleKey( itemDef_t *item, int key, int state );
 itemDef_t *Menu_SetPrevCursorItem( menuDef_t *menu );
 itemDef_t *Menu_SetNextCursorItem( menuDef_t *menu );
 static qboolean Menu_OverActiveItem( menuDef_t *menu, float x, float y );
+
+/*
+===============
+UIS_Shutdown
+===============
+*/
+void UIS_Shutdown( void )
+{
+  FreeCachedGlyphs( &DC->Assets.dynFont );
+  FreeFace( &DC->Assets.dynFont );
+  FreeCachedGlyphs( &DC->Assets.smallDynFont );
+  FreeFace( &DC->Assets.smallDynFont );
+  FreeCachedGlyphs( &DC->Assets.bigDynFont );
+  FreeFace( &DC->Assets.bigDynFont );
+}
 
 /*
 ===============

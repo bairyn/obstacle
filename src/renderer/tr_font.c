@@ -387,27 +387,17 @@ static void stream_close(FT_Stream stream)
 
 static void *memory_alloc(FT_Memory memory, long size)
 {
-  return Z_Malloc( size );
+  return malloc( size );
 }
 
 static void memory_free(FT_Memory memory, void *block)
 {
-  Z_Free( block );
+  free( block );
 }
 
 static void *memory_realloc(FT_Memory memory, long cur_size, long new_size, void *block)
 {
-  void *new_block = Z_Malloc( new_size );
-
-  if( new_block )
-  {
-    Z_Free( block );
-    return new_block;
-  }
-  else
-  {
-    return NULL;
-  }
+  return realloc( block, new_size );
 }
 
 void RE_LoadFace(const char *fileName, int pointSize, const char *name, face_t *face)
@@ -496,13 +486,30 @@ void RE_FreeFace(face_t *face)
   if( !face )
     return;
 
-  if( face->mem )
-    free( face->mem );
-
   ftFace = face->opaque;
 
+  if( !ftFace )
+  {
+    if( face->mem )
+    {
+      free( face->mem );
+      face->mem = NULL;
+    }
+
+	  return;
+  }
+
   if( ftLibrary )
+  {
     FT_Done_Face( (FT_Face) ftFace );
+    face->opaque = NULL;
+  }
+
+  if( face->mem )
+  {
+    free( face->mem );
+    face->mem = NULL;
+  }
 }
 
 void RE_LoadGlyph(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo)
@@ -663,7 +670,27 @@ void RE_Glyph( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *gly
   memcpy( glyph, &nextCache->glyph, sizeof( *glyph ) );
 }
 
-static void RE_FreeCachedGlyphs( void )
+void RE_FreeCachedGlyphs( face_t *face )
+{
+  int i;
+
+  for( i = 0; i < MAX_FACE_GLYPHS; i++ )
+  {
+    glyphCache_t *c = &glyphCache[ i ];
+
+    if( c->used )
+    {
+      if( c->face == face )
+      {
+        c->used = qfalse;
+
+        RE_FreeGlyph( face, i, &c->glyph );
+      }
+    }
+  }
+}
+
+static void RE_ClearGlyphCache( void )
 {
   int i;
 
@@ -695,6 +722,12 @@ void RE_FreeGlyph(face_t *face, glyphInfo_t *glyphInfo)
 void RE_Glyph( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph )
 {
   memcpy( glyph, &font->glyphs[ (int)*str ], sizeof( *glyph ) );
+}
+void RE_FreeCachedGlyphs( face_t *face )
+{
+}
+static void RE_ClearGlyphCache( void )
+{
 }
 #endif
 
@@ -956,7 +989,7 @@ void R_InitFreeType(void) {
 void R_DoneFreeType(void) {
 #ifdef BUILD_FREETYPE
   if (ftLibrary) {
-    RE_FreeCachedGlyphs( );
+    RE_ClearGlyphCache();
     FT_Done_FreeType( ftLibrary );
     ftLibrary = NULL;
   }

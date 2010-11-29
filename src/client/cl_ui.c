@@ -1070,6 +1070,10 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
     re.Glyph( VMA(1), VMA(2), VMA(3), VMA(4) );
     break;
 
+  case UI_R_FREECACHEDGLYPHS:
+    re.FreeCachedGlyphs( VMA(1) );
+    break;
+
 	default:
 		Com_Error( ERR_DROP, _("Bad UI system trap: %ld"), (long int) args[0] );
 

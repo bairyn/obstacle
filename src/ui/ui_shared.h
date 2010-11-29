@@ -416,6 +416,7 @@ typedef struct
 	void ( *loadGlyph )( face_t *face, const char *str, int img, glyphInfo_t *glyphInfo );
 	void ( *freeGlyph )( face_t *face, int img, glyphInfo_t *glyphInfo );
 	void ( *glyph )( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph );
+  void ( *freeCachedGlyphs )( face_t *face );
   void ( *ownerDrawItem ) ( float x, float y, float w, float h, float text_x,
                             float text_y, int ownerDraw, int ownerDrawFlags,
                             int align, int textalign, int textvalign,
@@ -473,6 +474,8 @@ typedef struct
 
 }
 displayContextDef_t;
+
+void UIS_Shutdown( void );
 
 const char *String_Alloc( const char *p );
 void String_Init( void );

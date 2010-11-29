@@ -778,7 +778,7 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 
 	for ( i=0; i<MAX_DRAWIMAGES ; i++ ) {
     if( !tr.used_images[ i ] ) {
-      image = tr.images[ i ] = Z_Malloc( sizeof( image_t ) );
+      image = tr.images[ i ] = malloc( sizeof( image_t ) );
       tr.used_images[ i ] = qtrue;
 
       break;
@@ -839,18 +839,34 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 
 void R_FreeImage( image_t *image )
 {
-  int     i;
+  int i;
 
 	for ( i=0; i<MAX_DRAWIMAGES ; i++ ) {
     if( tr.used_images[ i ] && tr.images[ i ] == image ) {
       tr.used_images[ i ] = qfalse;
-      Z_Free( image );
+      free( image );
+      tr.images[ i ] = NULL;
 
       return;
     }
   }
 
   ri.Printf( PRINT_ALL, "R_FreeImage: image not found\n" );
+}
+
+void R_FreeImages( void )
+{
+  int i;
+
+	for ( i=0; i<MAX_DRAWIMAGES ; i++ ) {
+    if( tr.used_images[ i ] && tr.images[ i ] ) {
+      tr.used_images[ i ] = qfalse;
+      free( tr.images[ i ] );
+      tr.images[ i ] = NULL;
+
+      return;
+    }
+  }
 }
 
 //===================================================================

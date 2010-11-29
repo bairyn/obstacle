@@ -203,7 +203,8 @@ typedef enum
   CG_R_FREEFACE,
   CG_R_LOADGLYPH,
   CG_R_FREEGLYPH,
-  CG_R_GLYPH
+  CG_R_GLYPH,
+  CG_R_FREECACHEDGLYPHS
 } cgameImport_t;
 
 

@@ -737,17 +737,17 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_INPVS:
 		return re.inPVS( VMA(1), VMA(2) );
 
-	case CG_GETTEXT:
-		strncpy( VMA(1), _(VMA(2)), args[3] );
-		return 0;
+  case CG_GETTEXT:
+    strncpy( VMA(1), _(VMA(2)), args[3] );
+    return 0;
 
-	case CG_R_LOADFACE:
-		re.LoadFace( VMA(1), args[2], VMA(3), VMA(4) );
-		return 0;
+  case CG_R_LOADFACE:
+    re.LoadFace( VMA(1), args[2], VMA(3), VMA(4) );
+    return 0;
 
-	case CG_R_FREEFACE:
-		re.FreeFace( VMA(1) );
-		return 0;
+  case CG_R_FREEFACE:
+    re.FreeFace( VMA(1) );
+    return 0;
 
   case CG_R_LOADGLYPH:
     re.LoadGlyph( VMA(1), VMA(2), args[3], VMA(4) );
@@ -759,6 +759,10 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 
   case CG_R_GLYPH:
     re.Glyph( VMA(1), VMA(2), VMA(3), VMA(4) );
+    break;
+
+  case CG_R_FREECACHEDGLYPHS:
+    re.FreeCachedGlyphs( VMA(1) );
     break;
 
 	default:

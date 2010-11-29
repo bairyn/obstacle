@@ -1203,6 +1203,15 @@ UI_Shutdown
 void UI_Shutdown( void )
 {
   trap_LAN_SaveCachedServers();
+
+  FreeCachedGlyphs( &uiInfo.uiDC.Assets.dynFont );
+  FreeFace( &uiInfo.uiDC.Assets.dynFont );
+  FreeCachedGlyphs( &uiInfo.uiDC.Assets.smallDynFont );
+  FreeFace( &uiInfo.uiDC.Assets.smallDynFont );
+  FreeCachedGlyphs( &uiInfo.uiDC.Assets.bigDynFont );
+  FreeFace( &uiInfo.uiDC.Assets.bigDynFont );
+
+  UIS_Shutdown( );
 }
 
 qboolean Asset_Parse( int handle )
@@ -4115,6 +4124,7 @@ void UI_Init( qboolean inGameLoad )
   uiInfo.uiDC.loadGlyph = &LoadGlyph;
   uiInfo.uiDC.freeGlyph = &FreeGlyph;
   uiInfo.uiDC.glyph = &Glyph;
+  uiInfo.uiDC.freeCachedGlyphs = &FreeCachedGlyphs;
   uiInfo.uiDC.ownerDrawItem = &UI_OwnerDraw;
   uiInfo.uiDC.getValue = &UI_GetValue;
   uiInfo.uiDC.ownerDrawVisible = &UI_OwnerDrawVisible;
@@ -4832,6 +4842,26 @@ void Glyph( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph 
 
   if( engineState & 0x02 )
     trap_R_Glyph( font, face, str, glyph );
+}
+
+void FreeCachedGlyphs( face_t *face )
+{
+  static int engineState = 0;
+
+  if( !( engineState & 0x01 ) )
+  {
+    char t[2];
+
+    engineState |= 0x01;
+
+    trap_Cvar_VariableStringBuffer( "\\IS_GETTEXT_SUPPORTED", t, 2 );
+
+    if( t[0] == '1' )
+      engineState |= 0x02;
+  }
+
+  if( engineState & 0x02 )
+    trap_R_FreeCachedGlyphs( face );
 }
 
 void Gettext( char *buffer, const char *msgid, int bufferLength )

@@ -1724,6 +1724,9 @@ void CL_Vid_Restart_f( void ) {
 	CL_ShutdownUI();
 	// shutdown the CGame
 	CL_ShutdownCGame();
+  // free face
+  re.FreeCachedGlyphs( &cls.consoleFace );
+  re.FreeFace( &cls.consoleFace );
 	// shutdown the renderer and clear the renderer interface
 	CL_ShutdownRef();
 	// client is no longer pure untill new checksums are sent
@@ -3574,10 +3577,14 @@ void CL_Shutdown( void ) {
 
 	CL_Disconnect( qtrue );
 
+	re.FreeCachedGlyphs( &cls.consoleFace );
+	re.FreeFace( &cls.consoleFace );
+
+	CL_ShutdownCGame();
+	CL_ShutdownUI();
+
 	S_Shutdown();
 	CL_ShutdownRef();
-	
-	CL_ShutdownUI();
 
 	Cmd_RemoveCommand ("cmd");
 	Cmd_RemoveCommand ("configstrings");
