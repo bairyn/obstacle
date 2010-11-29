@@ -187,6 +187,11 @@ void trap_R_Glyph( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t 
   syscall( UI_R_GLYPH, font, face, str, glyph );
 }
 
+void trap_R_FreeCachedGlyphs( face_t *face )
+{
+  syscall( UI_R_FREECACHEDGLYPHS, face );
+}
+
 qhandle_t trap_R_RegisterShaderNoMip( const char *name )
 {
   return syscall( UI_R_REGISTERSHADERNOMIP, name );

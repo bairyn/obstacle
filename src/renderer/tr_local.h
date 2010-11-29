@@ -1220,6 +1220,7 @@ image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicm
 image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, qboolean mipmap,
             qboolean allowPicmip, int wrapClampMode );
 void      R_FreeImage( image_t *image );
+void      R_FreeImages( void );
 
 void		R_SetColorMappings( void );
 void		R_GammaCorrect( byte *buffer, int bufSize );
@@ -1716,6 +1717,7 @@ void RE_FreeFace(face_t *face);
 void RE_LoadGlyph(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
 void RE_FreeGlyph(face_t *face, int img, glyphInfo_t *glyphInfo);
 void RE_Glyph(fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph);
+void RE_FreeCachedGlyphs(face_t *face);
 
 
 #endif //TR_LOCAL_H

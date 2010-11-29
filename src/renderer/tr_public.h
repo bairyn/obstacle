@@ -101,6 +101,7 @@ typedef struct {
 	void	(*LoadGlyph)(face_t *face, const char *str, int img, glyphInfo_t *glyphInfo);
 	void	(*FreeGlyph)(face_t *face, int img, glyphInfo_t *glyphInfo);
 	void	(*Glyph)( fontInfo_t *font, face_t *face, const char *str, glyphInfo_t *glyph );
+	void	(*FreeCachedGlyphs)(face_t *face);
 	void	(*RemapShader)(const char *oldShader, const char *newShader, const char *offsetTime);
 	qboolean (*GetEntityToken)( char *buffer, int size );
 	qboolean (*inPVS)( const vec3_t p1, const vec3_t p2 );

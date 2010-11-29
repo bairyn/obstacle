@@ -1160,6 +1160,7 @@ void RE_Shutdown( qboolean destroyWindow ) {
 
 
 	R_DoneFreeType();
+  R_FreeImages();
 
 	if ( tr.registered ) {
 		R_SyncRenderThread();
@@ -1250,6 +1251,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.LoadGlyph = RE_LoadGlyph;
 	re.FreeGlyph = RE_FreeGlyph;
   re.Glyph = RE_Glyph;
+  re.FreeCachedGlyphs = RE_FreeCachedGlyphs;
 	re.RemapShader = R_RemapShader;
 	re.GetEntityToken = R_GetEntityToken;
 	re.inPVS = R_inPVS;
