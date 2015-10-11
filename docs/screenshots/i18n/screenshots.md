@@ -1,4 +1,4 @@
-![screenshot: i18n.png](i18n.png
+![screenshot: i18n.png](i18n.png)
 
 ![screenshot: shot-i18n-chat.jpg](shot-i18n-chat.jpg)
 
