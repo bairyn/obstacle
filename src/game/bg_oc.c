@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define OC_BGAME
 
 #include "bg_oc.h"
+#include "bg_public.h"
 
 enum
 {
@@ -43,11 +44,29 @@ static int oc_noWallWalk = 0;  // if the layout being played has a certain flag 
 void BG_OC_SetOCModeNone(void)
 {
 	oc_gameMode = gameMode_none;
+
+	// reload overrides, so the client doesn't stick with old class .cfg files
+	// for GPP configs, but instead let it re-initialize with the new OC mode
+	// config strings, so the client has the same (correct) old configs
+	// (1.1-style) as the server for OC mode.
+	BG_InitClassConfigs( );
+	BG_InitBuildableConfigs( );
+	BG_InitWeaponConfigs( );
+	BG_InitAllowedGameElements( );
 }
 
 void BG_OC_SetOCModeOC(void)
 {
 	oc_gameMode = gameMode_OC;
+
+	// reload overrides, so the client doesn't stick with old class .cfg files
+	// for GPP configs, but instead let it re-initialize with the new OC mode
+	// config strings, so the client has the same (correct) old configs
+	// (1.1-style) as the server for OC mode.
+	BG_InitClassConfigs( );
+	BG_InitBuildableConfigs( );
+	BG_InitWeaponConfigs( );
+	BG_InitAllowedGameElements( );
 }
 
 int BG_OC_GetOCMode(void)  // should use faster BG_OC_OCMode() instead
