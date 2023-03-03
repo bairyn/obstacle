@@ -1008,11 +1008,17 @@ break;  /* TODO: the current ptrc for oc data causes memory corruption and doesn
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_BUILDER0) \
 		{ \
-			;; \
+			if (G_admin_canEditOC(ent)) \
+			{ \
+				buildFire( ent, MN_A_BUILD ); \
+			} \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_BUILDER0_UPG) \
 		{ \
-			;; \
+			if (G_admin_canEditOC(ent)) \
+			{ \
+				buildFire( ent, MN_A_BUILD ); \
+			} \
 		} \
 		else if(ent->client->pers.classSelection == PCL_ALIEN_LEVEL1) \
 		{ \
