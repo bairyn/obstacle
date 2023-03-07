@@ -1005,6 +1005,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     return;
   }
 
+  // (Check here before quitting to prevent a disabled friendly fire, so e.g.
+  // marauders can get checkpoints.)
+  G_OC_Damage();
+
   // check for completely getting out of the damage
   if( !( dflags & DAMAGE_NO_PROTECTION ) )
   {
@@ -1062,8 +1066,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     if ( targ->flags & FL_GODMODE )
       return;
   }
-
-  G_OC_Damage();
 
   // add to the attacker's hit counter
   if( attacker->client && targ != attacker && targ->health > 0
