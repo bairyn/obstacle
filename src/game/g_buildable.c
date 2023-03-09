@@ -2177,12 +2177,10 @@ Think for armoury
 void HArmoury_Think( gentity_t *self )
 {
   //make sure we have power
-  self->nextthink = level.time + POWER_REFRESH_TIME;
+  self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
 
   self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
-  if( !self->powered )
-    self->nextthink += G_OC_HumanBuildableOptimizedThinkTime();
 
   G_OC_BONUS_BUILDABLE_THINK();  // before return but after OC power functions
 
@@ -2208,12 +2206,10 @@ Think for dcc
 void HDCC_Think( gentity_t *self )
 {
   //make sure we have power
-  self->nextthink = level.time + POWER_REFRESH_TIME;
+  self->nextthink = level.time + POWER_REFRESH_TIME + G_OC_HumanBuildableOptimizedThinkTime();
 
   self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
-  if( !self->powered )
-    self->nextthink += G_OC_HumanBuildableOptimizedThinkTime();
 
   G_SuicideIfNoPower( self );
 }
@@ -2941,15 +2937,13 @@ Think function for MG turret
 void HMGTurret_Think( gentity_t *self )
 {
   self->nextthink = level.time + 
-                    BG_Buildable( self->s.modelindex )->nextthink;
+                    BG_Buildable( self->s.modelindex )->nextthink + G_OC_HumanBuildableOptimizedThinkTime();
 
   // Turn off client side muzzle flashes
   self->s.eFlags &= ~EF_FIRING;
 
   self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
-  if( !self->powered )
-    self->nextthink += G_OC_HumanBuildableOptimizedThinkTime();
 
   G_SuicideIfNoPower( self );
   G_IdlePowerState( self );
@@ -3029,7 +3023,7 @@ Think function for Tesla Generator
 */
 void HTeslaGen_Think( gentity_t *self )
 {
-  self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
+  self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink + G_OC_HumanBuildableOptimizedThinkTime();
 
   G_SuicideIfNoPower( self );
   G_IdlePowerState( self );
@@ -3037,8 +3031,6 @@ void HTeslaGen_Think( gentity_t *self )
   //if not powered don't do anything and check again for power next think
   self->powered = G_FindProvider( self, qfalse ) && G_Reactor( );
   G_OC_DefaultHumanPowered();
-  if( !self->powered )
-    self->nextthink += G_OC_HumanBuildableOptimizedThinkTime();
   if( !self->powered )
   {
     self->s.eFlags &= ~EF_FIRING;
